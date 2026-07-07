@@ -5,8 +5,6 @@ description: "Migration d'un service (interface d'administration domotique) depu
 tags: ["Cloud", "Labo", "bob"]
 heroImage: "/images/blog/banner-cloudflare-tunnel.png"
 ---
-![](/images/blog/banner-cloudflare-tunnel-1024x332.png)
-
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 > 
 > -   **Objectif** : éliminer complètement un groupe de sécurité AWS qui n'existait que pour laisser passer le trafic de Cloudflare vers deux services web, sans jamais avoir eu besoin d'exposer ces services autrement.

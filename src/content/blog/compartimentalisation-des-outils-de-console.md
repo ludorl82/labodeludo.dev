@@ -1,12 +1,10 @@
 ---
 title: "Compartimentalisation des outils de console"
 pubDate: 2026-07-05
-description: ""
+description: "Dans les dernières décennies, nous avons observé une compartimentalisation croissante dans la gestion des charges de travail. Alors qu'on hébergeait nos serveurs sur des machines physiques il y a 30 ans, aujourd'hui on…"
 tags: ["DevOps", "ludo"]
 heroImage: "/images/blog/docker-cover-1-e1655335176221.png"
 ---
-![](/images/blog/docker-cover-1-e1655335107268-1024x272.png)
-
 Dans les dernières décennies, nous avons observé une compartimentalisation croissante dans la gestion des charges de travail. Alors qu'on hébergeait nos serveurs sur des machines physiques il y a 30 ans, aujourd'hui on définit des bribes de code dans des environnements sans serveur qui s'exécutent sans égard aux couches sous-jacentes, facturées en Go-secondes d'exécution[1](https://aws.amazon.com/fr/lambda/pricing/).
 
 La boite à outils du bon DevOps contient principalement des outils de console. Les outils graphiques dans notre domaine ne sont bien souvent qu'une version diluée des outils de CLI. En tant que tel, il est très concevable de développer et d'opérer nos logiciels directement à partir de conteneurs. Je vous présenterai ici ma propre implémentation dont le code est disponible dans ces dépôts :  

@@ -1,12 +1,10 @@
 ---
 title: "Intégration de plugins asynchrones avec Neovim"
 pubDate: 2022-06-02
-description: ""
+description: "Ça fait un bon bout que j'utilise Vim au travail. Ça me permet d'être très prolifique quand je dois manipuler des configurations ou du code. Pour vrai j'espère plus jamais avoir à changer de mode d'édition de texte,…"
 tags: ["DevOps", "ludo"]
 heroImage: "/images/blog/Screenshot_20220418-162737_Termux.jpg"
 ---
-![](/images/blog/Screenshot_20220418-162737_Termux.jpg)
-
 Ça fait un bon bout que j'utilise Vim au travail. Ça me permet d'être très prolifique quand je dois manipuler des configurations ou du code. Pour vrai j'espère plus jamais avoir à changer de mode d'édition de texte, comme plusieurs d'ailleurs qui ont adopté la philosophie de Vim. J'ai intégré le mode Vim dans tous mes outils qui demandent de manipuler du texte. Le plugin zsh-vi-mode de oh-my-zsh fait mon bonheur quand je dois éditer des commandes. J'utilise le mode vi dans tmux pour parcourir le buffer de ma console et pour copier du texte.
 
 Par contre j'ai commencé à me questionner à force de côtoyer des devs qui utilisent des IDE graphiques. Je sais plus combien de fois on m'a demandé pourquoi je reste sur ma console alors que les outils graphiques permettent de visualiser le code facilement. J'ai considéré en prendre un avec un plugin qui permettrait de reproduire les raccourcis de clavier de Vim. Mais malheureusement l'essence même des IDE graphiques semble les empêcher de fonctionner dans le paradigme Vim. Les différents modes de Vim (Normal, Visual, Insert, etc.) ne sont pas disponibles autrement qu'en utilisant Vim (et gVim). C'est pour ça que j'ai continué longtemps avec Vim.

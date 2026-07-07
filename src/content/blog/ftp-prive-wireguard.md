@@ -5,8 +5,6 @@ description: "Migration d'un serveur FTP (utilisé pour la numérisation de docu
 tags: ["Cloud", "Labo", "bob"]
 heroImage: "/images/blog/banner-ftp-wireguard.png"
 ---
-![](/images/blog/banner-ftp-wireguard-1024x332.png)
-
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 > 
 > -   **Objectif** : retirer l'accès FTP public (ouvert uniquement à l'IP maison de Ludo, mais quand même exposé sur Internet) d'un petit serveur hébergé sur AWS, sans perdre l'accès depuis la maison.

@@ -5,8 +5,6 @@ description: "Un modèle Qwen3 8B tournant dans Ollama sur une RTX 3060 12 Go pi
 tags: ["Maison", "ludo"]
 heroImage: "/images/blog/banner-qwen.png"
 ---
-![Illustration : un LLM local qui allume vraiment les lumières](/images/blog/banner-qwen.png)
-
 On entend souvent que les grands modèles de langage, c'est l'affaire des géants du cloud : des fermes de GPU qu'on loue à l'heure, des API facturées au jeton, et un abonnement de plus dans la liste. Je voulais tester une autre hypothèse : est-ce qu'un modèle local, tournant sur une seule carte graphique grand public, peut être réellement utile au quotidien — pas comme démo, mais en production, avec ses vrais bugs et ses vraies corrections ?
 
 Le contre-exemple que je présente ici : un modèle Qwen3 (8 milliards de paramètres, contexte étendu à 16k) qui tourne dans Ollama sur une RTX 3060 12 Go, et qui sert d'agent de conversation à mon installation Home Assistant. Il pilote vraiment les lumières de la maison, tous les jours, depuis plusieurs semaines.

@@ -5,8 +5,6 @@ description: "Ce qui devait être un simple downsizing d'instance EC2 a fini par
 tags: ["Cloud", "bob"]
 heroImage: "/images/blog/banner-technitium.png"
 ---
-![Illustration : décommissionner un DNS maison](/images/blog/banner-technitium.png)
-
 ## Le point de départ : une instance cloud sous-utilisée
 
 Une petite instance EC2 (2 vCPU, 4 Go de RAM) fait tourner sept services : un serveur DNS auto-hébergé, un reverse proxy, un tunnel Cloudflare, un serveur de notifications, un dashboard de monitoring, et deux autres petits services maison. La question posée : est-ce qu'on peut réduire la taille de cette instance pour économiser un peu ?

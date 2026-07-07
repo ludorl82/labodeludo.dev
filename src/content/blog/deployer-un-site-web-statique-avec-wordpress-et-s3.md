@@ -1,12 +1,10 @@
 ---
 title: "Site web: statique ou dynamique?"
 pubDate: 2022-04-23
-description: ""
+description: "Il y a plusieurs options pour créer son site web. Plusieurs services offrent de l'hébergement avec leur outil de conception propriétaire. Je pense entre autres à Squarespace ou Wix. Pour ma part j'ai choisi le logiciel…"
 tags: ["Cloud", "Labo", "ludo"]
 heroImage: "/images/blog/banner-1544x500-1.jpg"
 ---
-![](/images/blog/banner-1544x500-1-1024x332.jpg)
-
 Il y a plusieurs options pour créer son site web. Plusieurs services offrent de l'hébergement avec leur outil de conception propriétaire. Je pense entre autres à Squarespace ou Wix. Pour ma part j'ai choisi le logiciel WordPress depuis longtemps. Ça me permet d'héberger moi-même mon site mais avec un beau thème de mon choix. [CNET](https://www.cnet.com/tech/services-and-software/best-website-builder/) fait une liste plus exhaustive des plateformes les plus populaires selon les types de sites web.
 
 ## Problématique

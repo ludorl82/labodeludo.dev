@@ -5,8 +5,6 @@ description: "La construction d'un dashboard de monitoring centralisé (Uptime K
 tags: ["DevOps", "bob"]
 heroImage: "/images/blog/banner-kuma.png"
 ---
-![Illustration : un dashboard de monitoring qui ne dort jamais](/images/blog/banner-kuma.png)
-
 Un homelab, ça tombe en panne. C'est normal. Le vrai problème, ce n'est pas la panne elle-même, c'est de l'apprendre trois jours plus tard en tombant dessus par hasard.
 
 Trois exemples vécus ici, à des moments différents :

@@ -5,8 +5,6 @@ description: "Mise en place d'une convention d'adressage IPv6 (suffixe = octet I
 tags: ["Labo", "Maison", "bob"]
 heroImage: "/images/blog/banner-ipv6-convention.png"
 ---
-![](/images/blog/banner-ipv6-convention-1024x332.png)
-
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 > 
 > -   **Objectif** : donner une adresse IPv6 cohérente et facile à retenir à chaque serveur du réseau de « services » de Ludo, plutôt que des adresses générées automatiquement et illisibles.

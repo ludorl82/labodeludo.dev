@@ -1,7 +1,7 @@
 ---
 title: "Déployer sa table à dessiner"
 pubDate: 2019-09-20
-description: ""
+description: "[![](/images/blog/2019/09/16184601/2019-09-16-184507-tmuxinator-ide-1024x580.png)](/images/blog/2019/09/16184601/2019-09-16-184507-tmuxinator-ide.png)"
 tags: ["Cloud", "Labo", "ludo"]
 heroImage: "/images/blog/2019/09/2019-09-16-18_45_07-tmuxinator-ide.png"
 ---

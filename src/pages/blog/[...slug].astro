@@ -2,7 +2,9 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CategoryChip from "../../components/CategoryChip.astro";
+import AuthorBadge from "../../components/AuthorBadge.astro";
 import { primaryCategory } from "../../lib/category";
+import { authorFromTags } from "../../lib/author";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");
@@ -24,9 +26,12 @@ const category = primaryCategory(post.data.tags);
     <header class="article-header">
       <CategoryChip category={category} />
       <h1>{post.data.title}</h1>
-      <time datetime={post.data.pubDate.toISOString()}>
-        {post.data.pubDate.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
-      </time>
+      <div class="article-meta">
+        <time datetime={post.data.pubDate.toISOString()}>
+          {post.data.pubDate.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
+        </time>
+        <AuthorBadge author={authorFromTags(post.data.tags)} />
+      </div>
     </header>
 
     {post.data.heroImage && (
@@ -62,7 +67,10 @@ const category = primaryCategory(post.data.tags);
     margin: 0.75rem 0 0.5rem;
   }
 
-  .article-header time {
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     font-family: var(--font-mono);
     font-size: 0.8125rem;
     color: var(--text-faint);

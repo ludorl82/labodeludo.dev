@@ -3,7 +3,9 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import TopologyStrip from "../components/TopologyStrip.astro";
 import CategoryChip from "../components/CategoryChip.astro";
+import AuthorBadge from "../components/AuthorBadge.astro";
 import { primaryCategory } from "../lib/category";
+import { authorFromTags } from "../lib/author";
 
 const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -26,6 +28,7 @@ const posts = (await getCollection("blog")).sort(
               <time datetime={post.data.pubDate.toISOString()}>
                 {post.data.pubDate.toLocaleDateString("fr-CA")}
               </time>
+              <AuthorBadge author={authorFromTags(post.data.tags)} />
             </div>
             <h2 class="row-title">{post.data.title}</h2>
             {post.data.description && (

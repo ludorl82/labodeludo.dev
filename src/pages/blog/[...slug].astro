@@ -1,0 +1,30 @@
+---
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>{post.data.title} — Le labo de Ludo</title>
+  </head>
+  <body>
+    <a href="/blog/">&larr; Tous les articles</a>
+    <h1>{post.data.title}</h1>
+    <p>{post.data.pubDate.toLocaleDateString("fr-CA")}</p>
+    {post.data.heroImage && <img src={post.data.heroImage} alt="" />}
+    <article>
+      <Content />
+    </article>
+  </body>
+</html>

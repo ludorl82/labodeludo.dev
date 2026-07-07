@@ -1,0 +1,28 @@
+---
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Le labo de Ludo</title>
+  </head>
+  <body>
+    <h1>Le labo de Ludo</h1>
+    <ul>
+      {
+        posts.map((post) => (
+          <li>
+            <a href={`/blog/${post.id}/`}>{post.data.title}</a>
+            {" — "}
+            {post.data.pubDate.toLocaleDateString("fr-CA")}
+          </li>
+        ))
+      }
+    </ul>
+  </body>
+</html>

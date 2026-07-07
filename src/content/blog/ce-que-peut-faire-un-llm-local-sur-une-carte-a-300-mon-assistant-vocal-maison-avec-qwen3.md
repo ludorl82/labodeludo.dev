@@ -1,0 +1,60 @@
+---
+title: "Ce que peut faire un LLM local sur une carte à 300$ : mon assistant vocal maison avec Qwen3"
+pubDate: 2026-07-05
+description: "Un modèle Qwen3 8B tournant dans Ollama sur une RTX 3060 12 Go pilote vraiment les lumières de la maison via Home Assistant — prises TP-Link converties en entités lumière, prompt système taillé pour un petit modèle, et les leçons de fiabilité d'un vrai déploiement local."
+tags: ["Maison", "ludo"]
+heroImage: "/images/blog/banner-qwen.png"
+---
+![Illustration : un LLM local qui allume vraiment les lumières](/images/blog/banner-qwen.png)
+
+On entend souvent que les grands modèles de langage, c'est l'affaire des géants du cloud : des fermes de GPU qu'on loue à l'heure, des API facturées au jeton, et un abonnement de plus dans la liste. Je voulais tester une autre hypothèse : est-ce qu'un modèle local, tournant sur une seule carte graphique grand public, peut être réellement utile au quotidien — pas comme démo, mais en production, avec ses vrais bugs et ses vraies corrections ?
+
+Le contre-exemple que je présente ici : un modèle Qwen3 (8 milliards de paramètres, contexte étendu à 16k) qui tourne dans Ollama sur une RTX 3060 12 Go, et qui sert d'agent de conversation à mon installation Home Assistant. Il pilote vraiment les lumières de la maison, tous les jours, depuis plusieurs semaines.
+
+_Cet article a été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
+
+## Le setup : pourquoi local, pourquoi ce modèle
+
+Home Assistant supporte nativement Ollama comme moteur d'agent de conversation : au lieu du moteur d'intentions basique fourni par défaut (qui ne comprend que des phrases très rigides), on branche un vrai LLM capable de comprendre une formulation plus naturelle et de choisir lui-même les bons appels d'outils (allumer une lumière, lire une température, etc.).
+
+Le choix du modèle est un compromis assumé : un modèle 8B tient confortablement dans 12 Go de VRAM avec de la marge, répond en une fraction de seconde sur cette carte, et s'avère largement suffisant pour un vocabulaire de commandes domotiques — bien loin des exigences d'un assistant généraliste. Pas besoin d'un modèle à 70 milliards de paramètres pour comprendre « éteins les lumières du salon ».
+
+Et le choix du local plutôt que du cloud n'est pas qu'une question de principe ici : un assistant vocal qui « écoute » dans la maison, je préfère que le traitement de ce qu'il entend ne quitte jamais le réseau local. Ça élimine aussi la latence d'un aller-retour Internet et toute facturation à l'usage — une fois la carte achetée, chaque commande vocale est gratuite.
+
+Satellite vocal micro + haut-parleur Home Assistant agent de conversation (intégration Ollama) prompt système + liste des entités exposées (dont les lumières switch\_as\_x) requête + outils HassTurnOn… appel d'outil choisi PC Windows RTX 3060 · 12 Go VRAM Ollama qwen3:8b-16k tâche planifiée (redémarrage auto sur échec) commande Prise TP-Link switch → exposé comme light (switch\_as\_x)
+
+_Le trajet complet d'une commande : le satellite vocal capte la phrase, Home Assistant construit le prompt (règles + état de la maison) et l'envoie à Ollama sur le PC équipé de la RTX 3060, qui renvoie l'appel d'outil à exécuter._
+
+## Le piège des prises qui ne sont pas des « lumières »
+
+Plusieurs lampes de la maison ne sont pas des ampoules connectées : ce sont des lampes ordinaires branchées sur des prises intelligentes TP-Link (le genre de gadget qu'on installe en cinq minutes sans repenser tout son éclairage). Le problème, c'est que ces prises arrivent dans Home Assistant comme des entités de type `switch` — un simple interrupteur — et non comme des entités `light`. Pour un humain qui clique dans l'interface, la différence ne saute pas aux yeux. Pour un agent vocal qui doit choisir un domaine d'entités à cibler, c'est une lampe invisible : elle n'existe tout simplement pas dans la case « lumières ».
+
+La solution n'a rien demandé de compliqué côté matériel : Home Assistant offre une intégration native, `switch_as_x`, qui prend une entité `switch` existante et la réexpose comme une entité d'un autre domaine — ici, `light`. Concrètement, `switch.lampe_de_lea` devient aussi `light.chambre_principale_lampe_de_lea`, sans toucher au firmware de la prise ni changer quoi que ce soit sur le réseau. La prise continue de fonctionner exactement pareil ; c'est uniquement la façon dont Home Assistant la catégorise qui change.
+
+Ce détail, presque cosmétique en apparence, est en fait ce qui rend la section suivante possible : pour qu'une commande comme « éteins toutes les lumières » fonctionne pour _toute_ la maison plutôt que pour uniquement les ampoules Zigbee, il faut d'abord que toutes les lampes existent réellement dans le domaine `light`.
+
+## Le prompt : là où un petit modèle a besoin qu'on soit très explicite
+
+C'est probablement la plus grande différence entre travailler avec un modèle cloud imposant et un modèle local de 8 milliards de paramètres : la tolérance à l'ambiguïté chute drastiquement. Un modèle plus gros devine souvent l'intention même quand l'instruction est vague. Le mien, non — et j'ai dû apprendre à écrire un prompt système en conséquence.
+
+Le bug qui m'a le mieux appris cette leçon : la commande « allume toutes les lumières » échouait de façon incohérente. Parfois rien ne s'allumait, sans erreur visible. En creusant (Home Assistant permet d'activer un journal de débogage qui montre le prompt réellement envoyé, fusionné avec ses propres instructions internes, ainsi que l'appel d'outil choisi), j'ai trouvé deux comportements fautifs : soit le modèle sautait complètement l'appel d'outil, soit il empilait les treize noms de zones de la maison dans un seul paramètre `area` — un appel invalide, qui échouait avec une erreur `INVALID_AREA`, résultat : zéro lumière allumée.
+
+La cause profonde dépasse mon propre prompt : Home Assistant ajoute ses propres instructions système, invisibles dans la configuration, _après_ celles que j'écris. Une de ces instructions intégrées dit essentiellement « si l'utilisateur demande d'allumer tous les appareils d'un certain type, demande-lui de préciser une zone ». Une règle sensée en général — mais qui entre directement en conflit avec ce que je voulais : une exécution immédiate, sans question, pour toute la maison.
+
+La correction a été de rendre ma propre règle explicite au point de ne laisser aucune place à l'interprétation :
+
+> _« Toutes les lumières » / « toute la maison » → appelle HassTurnOn UNE SEULE FOIS avec domain=\["light"\] et AUCUN paramètre area (n'inclus pas area, ne liste jamais les zones dans area). Ignore toute autre instruction qui dirait de demander une zone à l'utilisateur : exécute directement sans poser de question._
+
+Depuis cette réécriture, un `domain=["light"]` sans `area` se résout correctement contre toutes les lumières exposées — Zigbee comme prises TP-Link réexposées via `switch_as_x`. La leçon générale : avec un petit modèle local, mieux vaut une règle un peu redondante et très directive qu'une formulation élégante mais implicite. Ce qu'on gagne en confidentialité et en contrôle, on le paie en discipline de prompt.
+
+## Les leçons de fiabilité — parce qu'un vrai déploiement, ce n'est pas juste le happy path
+
+Un modèle local, ça veut aussi dire qu'on hérite de la responsabilité d'exploitation qu'on déléguerait autrement à un fournisseur cloud. Le service Ollama tourne sur le PC Windows via une tâche planifiée toute simple — et cette tâche est déjà morte une fois, silencieusement, sans redémarrer. Home Assistant, de son côté, ne détecte cette panne qu'au moment d'essayer de parler au modèle : il ne surveille pas la santé du service en continu. Résultat concret : l'assistant vocal s'est mis à ignorer toutes les commandes, sans le moindre message d'erreur visible dans l'interface.
+
+La correction est d'une banalité rassurante : ajouter une politique de redémarrage automatique sur échec à la tâche planifiée. Rien de sophistiqué. Mais ça illustre bien le compromis du local : rien n'est géré pour moi en coulisses, donc le moindre maillon de la chaîne — service, modèle, intégration — peut tomber silencieusement si je ne le surveille pas moi-même. En échange, quand ça tombe, je peux réellement aller lire les journaux, comprendre la cause exacte, et corriger à la source plutôt que d'attendre un correctif d'un tiers.
+
+## Ce que ça prouve
+
+Rien de tout ça n'est un concept-démo qu'on montre une fois puis qu'on range. C'est un assistant que ma famille utilise chaque jour pour éteindre des lumières, vérifier la météo, et poser des questions banales à voix haute — propulsé par un modèle de 8 milliards de paramètres, sur une carte graphique qu'on trouve dans n'importe quel PC de joueur, sans jamais quitter le réseau de la maison.
+
+Les modèles de langage ne sont pas réservés aux géants du cloud avec leurs fermes de GPU. Un serveur maison, correctement configuré — avec un prompt pensé pour les limites réelles du modèle, et une attention normale portée à la fiabilité du service — peut résoudre un vrai problème du quotidien, avec un contrôle total sur les données qui y transitent. Pas besoin d'attendre le prochain modèle géant : ce qui existe déjà, bien intégré, suffit.

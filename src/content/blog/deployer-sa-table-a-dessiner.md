@@ -1,12 +1,10 @@
 ---
 title: "Déployer sa table à dessiner"
 pubDate: 2019-09-20
-description: "[![](/images/blog/2019/09/16184601/2019-09-16-184507-tmuxinator-ide-1024x580.png)](/images/blog/2019/09/16184601/2019-09-16-184507-tmuxinator-ide.png)"
+description: "Dans cette publication, je vous partagerai ce que j'en suis venu à préconiser comme environnement de travail comme DevOps. Ces dernières semaines, je me suis fait un malin plaisir à lire plusieurs livres sur les…"
 tags: ["Cloud", "Labo", "ludo"]
 heroImage: "/images/blog/2019/09/2019-09-16-18_45_07-tmuxinator-ide.png"
 ---
-[![](/images/blog/2019/09/16184601/2019-09-16-18_45_07-tmuxinator-ide-1024x580.png)](/images/blog/2019/09/16184601/2019-09-16-18_45_07-tmuxinator-ide.png)
-
 Dans cette publication, je vous partagerai ce que j'en suis venu à préconiser comme environnement de travail comme DevOps. Ces dernières semaines, je me suis fait un malin plaisir à lire plusieurs livres sur les logiciels que nous utilisons à mon travail, mais un de ceux qui m'a procuré le plus de plaisir est un livre sur l'éditeur de texte Vim intitulé _Practical Vim: Edit Text at the Speed of Thought_. Dans la même collection, j'ai aussi dévoré un autre petit livre, _tmux 2: Productive Mouse-Free Development_. C'est surtout avec ces deux ouvrages que j'ai défini mon environnement de travail.
 
 ## Développer avec Vi IMproved

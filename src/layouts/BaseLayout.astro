@@ -42,6 +42,10 @@ const { title, description } = Astro.props;
         <p>
           Le labo de Ludo — articles écrits par Ludo, parfois avec Bob.
         </p>
+        <nav class="footer-nav">
+          <a href="/mission/">Mission</a>
+          <a href="/politique-de-confidentialite/">Politique de confidentialité</a>
+        </nav>
       </footer>
     </div>
   </body>
@@ -96,5 +100,20 @@ const { title, description } = Astro.props;
 
   .site-footer p {
     margin: 0;
+  }
+
+  .footer-nav {
+    display: flex;
+    gap: 1.25rem;
+    margin-top: 0.75rem;
+  }
+
+  .footer-nav a {
+    color: var(--text-faint);
+    text-decoration: none;
+  }
+
+  .footer-nav a:hover {
+    color: var(--accent-devops);
   }
 </style>

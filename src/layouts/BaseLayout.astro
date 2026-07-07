@@ -6,6 +6,7 @@ import "@fontsource/ibm-plex-sans/400.css";
 import "@fontsource/ibm-plex-sans/400-italic.css";
 import "@fontsource/ibm-plex-sans/600.css";
 import "../styles/global.css";
+import Lightbox from "../components/Lightbox.astro";
 
 interface Props {
   title: string;
@@ -47,6 +48,8 @@ const { title, description } = Astro.props;
         </nav>
       </footer>
     </div>
+
+    <Lightbox />
   </body>
 </html>
 

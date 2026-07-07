@@ -1,5 +1,8 @@
 ---
 import { getCollection, render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CategoryChip from "../../components/CategoryChip.astro";
+import { primaryCategory } from "../../lib/category";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");
@@ -11,20 +14,165 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await render(post);
+const category = primaryCategory(post.data.tags);
 ---
 
-<html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <title>{post.data.title} — Le labo de Ludo</title>
-  </head>
-  <body>
-    <a href="/blog/">&larr; Tous les articles</a>
-    <h1>{post.data.title}</h1>
-    <p>{post.data.pubDate.toLocaleDateString("fr-CA")}</p>
-    {post.data.heroImage && <img src={post.data.heroImage} alt="" />}
-    <article>
+<BaseLayout title={`${post.data.title} — Le labo de Ludo`} description={post.data.description}>
+  <a class="back" href="/">&larr; tous les articles</a>
+
+  <article>
+    <header class="article-header">
+      <CategoryChip category={category} />
+      <h1>{post.data.title}</h1>
+      <time datetime={post.data.pubDate.toISOString()}>
+        {post.data.pubDate.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
+      </time>
+    </header>
+
+    {post.data.heroImage && (
+      <img class="hero" src={post.data.heroImage} alt="" />
+    )}
+
+    <div class="prose">
       <Content />
-    </article>
-  </body>
-</html>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-devops);
+  }
+
+  .article-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0.75rem 0 0.5rem;
+  }
+
+  .article-header time {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+  }
+
+  .hero {
+    margin: 2rem 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+  }
+
+  .prose {
+    margin-top: 2rem;
+    max-width: var(--measure);
+  }
+
+  .prose :global(p) {
+    margin: 1.1em 0;
+  }
+
+  .prose :global(h2) {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 2.2em 0 0.8em;
+    padding-top: 0.6em;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .prose :global(h3) {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin: 1.8em 0 0.6em;
+  }
+
+  .prose :global(a) {
+    color: var(--accent-cloud);
+    text-decoration-color: color-mix(in srgb, var(--accent-cloud) 50%, transparent);
+  }
+
+  .prose :global(img) {
+    margin: 1.5em 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+  }
+
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--panel);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+  }
+
+  .prose :global(pre) {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-left: 3px solid var(--accent-devops);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    line-height: 1.55;
+  }
+
+  .prose :global(pre code) {
+    background: none;
+    padding: 0;
+  }
+
+  .prose :global(blockquote) {
+    margin: 1.5em 0;
+    padding: 0.2em 1.25em;
+    border-left: 3px solid var(--accent-labo);
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    padding-left: 1.4em;
+  }
+
+  .prose :global(li) {
+    margin: 0.4em 0;
+  }
+
+  .prose :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    font-size: 0.9375rem;
+  }
+
+  .prose :global(th),
+  .prose :global(td) {
+    border: 1px solid var(--panel-border);
+    padding: 0.5em 0.75em;
+    text-align: left;
+  }
+
+  .prose :global(th) {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .prose :global(hr) {
+    border: none;
+    border-top: 1px solid var(--panel-border);
+    margin: 2.5em 0;
+  }
+</style>

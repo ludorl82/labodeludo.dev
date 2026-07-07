@@ -1,0 +1,100 @@
+---
+import "@fontsource/ibm-plex-mono/400.css";
+import "@fontsource/ibm-plex-mono/500.css";
+import "@fontsource/ibm-plex-mono/600.css";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/400-italic.css";
+import "@fontsource/ibm-plex-sans/600.css";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    {description && <meta name="description" content={description} />}
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="page">
+      <header class="site-header">
+        <a class="wordmark" href="/">
+          <span class="wordmark-prompt">ludo@labo</span><span class="wordmark-sep">:~$</span>
+        </a>
+        <p class="tagline">homelab &amp; infra personnelle, en public</p>
+      </header>
+
+      <main>
+        <slot />
+      </main>
+
+      <footer class="site-footer">
+        <p>
+          Le labo de Ludo — articles écrits par Ludo, parfois avec Bob.
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>
+
+<style>
+  .page {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .site-header {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .wordmark {
+    display: inline-flex;
+    align-items: baseline;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.375rem;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+
+  .wordmark-prompt {
+    color: var(--text);
+  }
+
+  .wordmark-sep {
+    color: var(--accent-devops);
+    margin-left: 2px;
+  }
+
+  .tagline {
+    margin: 0.4rem 0 0;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+
+  .site-footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--panel-border);
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .site-footer p {
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,74 @@
+:root {
+  /* base */
+  --bg: #1c1a17;
+  --panel: #262320;
+  --panel-border: #37332c;
+  --text: #f0ebe2;
+  --text-muted: #b5ac9e;
+  --text-faint: #7d7669;
+
+  /* category / status accents — each tied to a real WordPress category */
+  --accent-devops: #e8a548; /* amber, activity LED */
+  --accent-cloud: #5fa88c; /* teal, link LED */
+  --accent-maison: #c1613f; /* rust */
+  --accent-labo: #8c86c4; /* violet */
+  --accent-default: #7d7669;
+
+  --font-display: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --measure: 40rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent-devops);
+  outline-offset: 3px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,63 @@
+---
+import { primaryCategory, categoryColorVar } from "../lib/category";
+
+interface Props {
+  posts: { data: { title: string; tags: string[] } }[];
+}
+
+const { posts } = Astro.props;
+---
+
+<div class="strip" role="img" aria-label={`${posts.length} articles publiés, chacun représenté par un port coloré selon sa catégorie`}>
+  {
+    posts.map((post, i) => {
+      const color = categoryColorVar(primaryCategory(post.data.tags));
+      return (
+        <span
+          class="port"
+          class:list={[{ lit: i === 0 }]}
+          style={`--port-color: var(${color})`}
+          title={post.data.title}
+        />
+      );
+    })
+  }
+</div>
+
+<style>
+  .strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 1.25rem 0;
+  }
+
+  .port {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--port-color);
+    opacity: 0.45;
+  }
+
+  .port.lit {
+    opacity: 1;
+    box-shadow: 0 0 8px 1px var(--port-color);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .port.lit {
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 8px 1px var(--port-color);
+    }
+    50% {
+      box-shadow: 0 0 3px 0px var(--port-color);
+    }
+  }
+</style>

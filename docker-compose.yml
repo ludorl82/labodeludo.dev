@@ -1,0 +1,9 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: labodeludo-staging
+    ports:
+      - "80:80"
+    volumes:
+      - ./dist:/usr/share/nginx/html:ro
+    restart: unless-stopped

@@ -1,0 +1,56 @@
+<div id="lightbox" class="lightbox" hidden>
+  <img id="lightbox-img" src="" alt="" />
+</div>
+
+<style>
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4vh 4vw;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(2px);
+    cursor: zoom-out;
+  }
+
+  .lightbox[hidden] {
+    display: none;
+  }
+
+  .lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    box-shadow: 0 20px 60px -20px rgb(0 0 0 / 0.6);
+  }
+</style>
+
+<script>
+  const overlay = document.getElementById("lightbox") as HTMLDivElement;
+  const overlayImg = document.getElementById("lightbox-img") as HTMLImageElement;
+
+  function open(src: string, alt: string) {
+    overlayImg.src = src;
+    overlayImg.alt = alt;
+    overlay.hidden = false;
+  }
+
+  function close() {
+    overlay.hidden = true;
+    overlayImg.src = "";
+  }
+
+  document.querySelectorAll<HTMLImageElement>(".prose img").forEach((img) => {
+    img.style.cursor = "zoom-in";
+    img.addEventListener("click", () => open(img.currentSrc || img.src, img.alt));
+  });
+
+  overlay.addEventListener("click", close);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+</script>

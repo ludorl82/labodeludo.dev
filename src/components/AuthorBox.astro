@@ -1,0 +1,55 @@
+---
+import { AUTHORS, type Author } from "../lib/author";
+
+interface Props {
+  author: Author;
+}
+
+const { author } = Astro.props;
+const info = AUTHORS[author];
+---
+
+<div class="author-box" class:list={[author]}>
+  <img src={info.avatar} alt="" width="56" height="56" />
+  <div>
+    <p class="name">{info.name}</p>
+    <p class="bio">{info.bio}</p>
+  </div>
+</div>
+
+<style>
+  .author-box {
+    display: flex;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--panel-border);
+    max-width: var(--measure);
+  }
+
+  .author-box img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .name {
+    margin: 0.1rem 0 0.35rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+
+  .author-box.bob .name {
+    color: var(--accent-labo);
+  }
+
+  .bio {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+</style>

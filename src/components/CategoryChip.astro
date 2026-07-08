@@ -1,0 +1,37 @@
+---
+import { categoryColorVar } from "../lib/category";
+
+interface Props {
+  category?: string;
+}
+
+const { category } = Astro.props;
+const colorVar = categoryColorVar(category);
+---
+
+<span class="chip" style={`--chip-color: var(${colorVar})`}>
+  <span class="dot" aria-hidden="true" />
+  {category ?? "Article"}
+</span>
+
+<style>
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--chip-color);
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    background: var(--chip-color);
+    box-shadow: 0 0 6px 0 var(--chip-color);
+  }
+</style>

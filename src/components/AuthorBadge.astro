@@ -1,0 +1,35 @@
+---
+import { AUTHORS, type Author } from "../lib/author";
+
+interface Props {
+  author: Author;
+}
+
+const { author } = Astro.props;
+---
+
+<span class="author" class:list={[author]}>
+  <img src={AUTHORS[author].avatar} alt="" width="16" height="16" />
+  {author}
+</span>
+
+<style>
+  .author {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    font-family: var(--font-mono);
+  }
+
+  .author img {
+    width: 16px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: block;
+  }
+
+  .author.bob {
+    color: var(--accent-labo);
+  }
+</style>

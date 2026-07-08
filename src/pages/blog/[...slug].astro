@@ -1,0 +1,89 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CategoryChip from "../../components/CategoryChip.astro";
+import AuthorBadge from "../../components/AuthorBadge.astro";
+import AuthorBox from "../../components/AuthorBox.astro";
+import { primaryCategory } from "../../lib/category";
+import { authorFromTags } from "../../lib/author";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const category = primaryCategory(post.data.tags);
+const author = authorFromTags(post.data.tags);
+---
+
+<BaseLayout title={`${post.data.title} — Le labo de Ludo`} description={post.data.description}>
+  <a class="back" href="/">&larr; tous les articles</a>
+
+  <article>
+    <header class="article-header">
+      <CategoryChip category={category} />
+      <h1>{post.data.title}</h1>
+      <div class="article-meta">
+        <time datetime={post.data.pubDate.toISOString()}>
+          {post.data.pubDate.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
+        </time>
+        <AuthorBadge author={author} />
+      </div>
+    </header>
+
+    {post.data.heroImage && (
+      <img class="hero" src={post.data.heroImage} alt="" />
+    )}
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <AuthorBox author={author} />
+  </article>
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-devops);
+  }
+
+  .article-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0.75rem 0 0.5rem;
+  }
+
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+  }
+
+  .hero {
+    margin: 2rem 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+  }
+
+</style>

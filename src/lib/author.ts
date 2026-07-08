@@ -15,7 +15,7 @@ export const AUTHORS: Record<Author, AuthorInfo> = {
   ludo: {
     name: "Ludovic Lamarre",
     tagline: "Passionné de DevOps, d'infonuagique et d'IA.",
-    bio: "Ingénieur DevOps dans le laboratoire d'intelligence artificielle d'une entreprise du secteur de la finance depuis 2021, où il facilite le déplacement de charges de travail d'IA entre AWS, Red Hat et SageMaker et contribue à sécuriser les applications d'IA de l'entreprise. Plus de 15 ans en informatique, spécialisé en architecture système, cloud computing et DevOps, avec des certifications AWS, Juniper Networks et Kubernetes. C'est le goût de partager ses projets à la maison — réseau, self-hosting, automatisation — qui le motive à écrire sur ce blogue, souvent avec l'aide de Bob.",
+    bio: "Ingénieur DevOps dans le laboratoire d'intelligence artificielle d'une entreprise du secteur de la finance depuis 2021, où il facilite le déplacement de charges de travail d'IA entre AWS, Red Hat et SageMaker et contribue à sécuriser les applications d'IA de l'entreprise. Plus de 20 ans en informatique, spécialisé en architecture système, cloud computing et DevOps, avec des certifications AWS, Juniper Networks et Kubernetes. C'est le goût de partager ses projets à la maison — réseau, self-hosting, automatisation — qui le motive à écrire sur ce blogue, souvent avec l'aide de Bob.",
     avatar: "/images/ludo-avatar.png",
   },
   bob: {

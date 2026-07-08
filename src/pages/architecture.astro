@@ -53,10 +53,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <text x="835" y="98">IP publique</text>
       </g>
       <g class="conn-label" font-family="var(--font-mono)" font-size="12" fill="var(--accent-live)">
-        <a class="node-link" href="/blog/ftp-prive-wireguard/">
+        <a class="node-link" href="/inventaire/pare-feu/">
           <text x="405" y="352">tunnel chiffré (VPN site-à-site)</text>
         </a>
-        <text x="95" y="382" font-size="11">VPN clients distants</text>
+        <a class="node-link" href="/inventaire/clients-mobiles/">
+          <text x="95" y="382" font-size="11">VPN clients distants</text>
+        </a>
       </g>
 
       <!-- Internet nodes -->
@@ -75,17 +77,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <rect x="620" y="110" width="380" height="225" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
         <text x="640" y="132" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VM cloud — relais.exemple.net</text>
 
-        <a class="node-link" href="/blog/retirer-pare-feu-tunnel-cloudflare/">
+        <a class="node-link" href="/inventaire/proxy-inverse/">
           <rect x="640" y="150" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
           <text x="660" y="176" font-family="var(--font-mono)" font-size="13" fill="var(--text)">proxy inverse (TLS)</text>
         </a>
 
-        <a class="node-link" href="/blog/deployer-un-site-web-statique-avec-wordpress-et-s3/">
+        <a class="node-link" href="/inventaire/site-web/">
           <rect x="640" y="205" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
           <text x="660" y="231" font-family="var(--font-mono)" font-size="13" fill="var(--text)">site web statique</text>
         </a>
 
-        <a class="node-link" href="/blog/construire-un-vrai-reseau-dalarme-pour-son-homelab-et-toutes-les-manieres-dont-ca-peut-foirer-en-silence/">
+        <a class="node-link" href="/inventaire/surveillance/">
           <rect x="640" y="260" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
           <text x="660" y="286" font-family="var(--font-mono)" font-size="13" fill="var(--text)">surveillance + alertes</text>
         </a>
@@ -100,47 +102,45 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </g>
 
       <!-- Home gateway -->
-      <g>
+      <a class="node-link" href="/inventaire/pare-feu/">
         <rect x="90" y="390" width="260" height="60" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
         <text x="220" y="414" text-anchor="middle" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">pare-feu domicile</text>
         <text x="220" y="431" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">portail.exemple.net</text>
-      </g>
+      </a>
 
       <!-- Mobile clients -->
-      <g font-family="var(--font-mono)" font-size="13" text-anchor="middle">
+      <a class="node-link" href="/inventaire/clients-mobiles/" font-family="var(--font-mono)" font-size="13" text-anchor="middle">
         <ellipse cx="480" cy="420" rx="90" ry="30" fill="var(--panel)" stroke="var(--panel-border)" />
         <text x="480" y="416" fill="var(--text)">clients mobiles</text>
         <text x="480" y="432" fill="var(--text-faint)" font-size="11">(VPN)</text>
-      </g>
+      </a>
 
       <!-- VLAN Serveurs -->
       <g>
         <rect x="40" y="490" width="460" height="330" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
-        <a class="node-link" href="/blog/convention-ipv6-vlan-serveurs/">
-          <text x="60" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Serveurs</text>
-        </a>
+        <text x="60" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Serveurs</text>
 
-        <a class="node-link" href="/blog/compartimentalisation-des-outils-de-console/">
+        <a class="node-link" href="/inventaire/bastion/">
           <rect x="60" y="530" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
           <text x="80" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">bastion / console</text>
         </a>
 
-        <a class="node-link" href="/blog/convention-ipv6-vlan-serveurs/">
+        <a class="node-link" href="/inventaire/stockage/">
           <rect x="60" y="580" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
           <text x="80" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">stockage (NAS)</text>
         </a>
 
-        <a class="node-link" href="/blog/convention-ipv6-vlan-serveurs/">
+        <a class="node-link" href="/inventaire/pipeline-media/">
           <rect x="60" y="630" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
           <text x="80" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">pipeline média</text>
         </a>
 
-        <a class="node-link" href="/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/">
+        <a class="node-link" href="/inventaire/calcul-gpu/">
           <rect x="60" y="680" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
           <text x="80" y="705" font-family="var(--font-mono)" font-size="13" fill="var(--text)">calcul GPU</text>
         </a>
 
-        <a class="node-link" href="/blog/convention-ipv6-vlan-serveurs/">
+        <a class="node-link" href="/inventaire/hote-conteneurs/">
           <rect x="60" y="730" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
           <text x="80" y="755" font-family="var(--font-mono)" font-size="13" fill="var(--text)">hôte conteneurs (web)</text>
         </a>
@@ -151,16 +151,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <rect x="560" y="490" width="380" height="210" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
         <text x="580" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Réseau local</text>
 
-        <rect x="580" y="530" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="600" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">postes personnels</text>
+        <a class="node-link" href="/inventaire/postes-personnels/">
+          <rect x="580" y="530" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="600" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">postes personnels</text>
+        </a>
 
-        <a class="node-link" href="/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/">
+        <a class="node-link" href="/inventaire/domotique/">
           <rect x="580" y="580" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
           <text x="600" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">domotique</text>
         </a>
 
-        <rect x="580" y="630" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="600" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">caméras / périphériques</text>
+        <a class="node-link" href="/inventaire/cameras-peripheriques/">
+          <rect x="580" y="630" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="600" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">caméras / périphériques</text>
+        </a>
       </g>
     </svg>
   </div>
@@ -168,7 +172,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   <div class="legend">
     <span class="legend-item"><span class="swatch structural" /> liaison réseau</span>
     <span class="legend-item"><span class="swatch live" /> tunnel chiffré / routage applicatif</span>
-    <span class="legend-item">les éléments soulignés au survol pointent vers l'article qui en parle</span>
+    <span class="legend-item">les éléments soulignés au survol pointent vers leur fiche d'<a href="/inventaire/">inventaire</a></span>
   </div>
 </BaseLayout>
 
@@ -239,6 +243,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     display: inline-flex;
     align-items: center;
     gap: 0.5em;
+  }
+
+  .legend-item a {
+    color: var(--accent-live);
   }
 
   .swatch {

@@ -1,0 +1,80 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostList from "../../components/PostList.astro";
+import { INVENTORY, type InventoryKey } from "../../lib/inventory";
+
+export async function getStaticPaths() {
+  return (Object.keys(INVENTORY) as InventoryKey[]).map((item) => ({
+    params: { item },
+  }));
+}
+
+const { item } = Astro.params as { item: InventoryKey };
+const info = INVENTORY[item];
+
+const allPosts = await getCollection("blog");
+const posts = info.articles
+  .map((id) => allPosts.find((post) => post.id === id))
+  .filter((post): post is NonNullable<typeof post> => post !== undefined)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout title={`${info.name} — Le labo de Ludo`} description={info.description}>
+  <a class="back" href="/inventaire/">&larr; inventaire</a>
+
+  <header class="item-header">
+    <h1>{info.name}</h1>
+  </header>
+
+  <p class="description">{info.description}</p>
+
+  {
+    posts.length > 0 ? (
+      <PostList posts={posts} />
+    ) : (
+      <p class="empty">Aucun article ne parle spécifiquement de ce rôle pour l'instant.</p>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-live);
+  }
+
+  .item-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.375rem, 1.05rem + 1.3vw, 1.875rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .description {
+    margin: 1rem 0 0;
+    max-width: var(--measure);
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  .empty {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--panel-border);
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+</style>

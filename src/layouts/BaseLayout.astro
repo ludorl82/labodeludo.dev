@@ -174,28 +174,38 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     color: var(--bg);
   }
 
-  /* Powerline-style slanted separators, using the Powerline glyph range
-     already bundled in the self-hosted Hack Nerd Font. */
+  /* Powerline-style slanted separators. A clip-path triangle (rather than
+     the Powerline font glyph) guarantees the arrow always fills the exact
+     height of its segment, regardless of font metrics. */
   .arrow {
-    display: flex;
-    align-items: center;
-    font-family: "Hack Nerd Font Mono", monospace;
-    line-height: 1;
-    transition: color 0.15s ease, background-color 0.15s ease;
+    position: relative;
+    width: 0.6em;
+    align-self: stretch;
+    transition: background-color 0.15s ease;
   }
 
   .arrow::before {
-    content: "\e0b0";
+    content: "";
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    transition: background-color 0.15s ease;
   }
 
   .arrow-a {
-    color: var(--seg-a);
     background: var(--seg-b);
   }
 
-  .arrow-b {
-    color: var(--seg-b);
+  .arrow-a::before {
     background: var(--seg-a);
+  }
+
+  .arrow-b {
+    background: var(--seg-a);
+  }
+
+  .arrow-b::before {
+    background: var(--seg-b);
   }
 
   .arrow-end {
@@ -204,8 +214,8 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
 
   /* Let the hover color bleed into the neighboring arrows, so the
      highlight reads as one continuous slanted segment. */
-  .seg:hover + .arrow {
-    color: var(--accent-live);
+  .seg:hover + .arrow::before {
+    background: var(--accent-live);
   }
 
   .arrow:has(+ .seg:hover) {

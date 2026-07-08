@@ -13,6 +13,8 @@ set -euo pipefail
 export PATH="$HOME/.local/bin:$PATH"
 
 BUCKET="labodeludo.dev"
+EMPTY_FILE="$(mktemp)"
+trap 'rm -f "$EMPTY_FILE"' EXIT
 
 # old-path (no leading/trailing slash) -> new slug
 declare -A REDIRECTS=(
@@ -47,7 +49,7 @@ for old in "${!REDIRECTS[@]}"; do
     --key "${old}/index.html" \
     --website-redirect-location "$target" \
     --content-type "text/html; charset=UTF-8" \
-    --body /dev/null
+    --body "$EMPTY_FILE"
 done
 
 echo "==> Done."

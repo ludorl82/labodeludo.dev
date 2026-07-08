@@ -1,0 +1,97 @@
+---
+interface Props {
+  url: string;
+  title: string;
+  lang?: "fr" | "en";
+}
+
+const { url, title, lang = "fr" } = Astro.props;
+
+const label = lang === "en" ? "Share:" : "Partager :";
+const linkedinHref = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+const xHref = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+---
+
+<div class="share">
+  <span class="share-label">{label}</span>
+
+  <a class="share-btn" href={linkedinHref} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+    <span class="icon">&#xf0e1;</span>
+  </a>
+
+  <a class="share-btn" href={xHref} target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)">
+    <span class="icon">&#xf099;</span>
+  </a>
+
+  <button class="share-btn copy-link" type="button" data-url={url} aria-label={lang === "en" ? "Copy link" : "Copier le lien"}>
+    <span class="icon">&#xf0c1;</span>
+    <span class="copy-label">{lang === "en" ? "Copy link" : "Copier le lien"}</span>
+  </button>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>(".copy-link").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.dataset.url;
+      if (!url) return;
+      try {
+        await navigator.clipboard.writeText(url);
+        const label = btn.querySelector(".copy-label");
+        if (label) {
+          const original = label.textContent;
+          label.textContent = label.textContent?.startsWith("Copy") ? "Copied!" : "Copié !";
+          setTimeout(() => {
+            if (label) label.textContent = original;
+          }, 1800);
+        }
+      } catch {
+        // Clipboard API unavailable (non-HTTPS context, older browser) — no-op.
+      }
+    });
+  });
+</script>
+
+<style>
+  .share {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 2.5rem 0 0;
+    font-family: var(--font-mono);
+  }
+
+  .share-label {
+    color: var(--text-faint);
+    font-size: 0.8125rem;
+  }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.35em 0.6em;
+    border: 1px solid var(--panel-border);
+    border-radius: 5px;
+    background: var(--panel);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .share-btn:hover {
+    border-color: var(--accent-live);
+    color: var(--accent-live);
+  }
+
+  .icon {
+    font-family: "Hack Nerd Font Mono", monospace;
+    line-height: 1;
+  }
+
+  .copy-label {
+    white-space: nowrap;
+  }
+</style>

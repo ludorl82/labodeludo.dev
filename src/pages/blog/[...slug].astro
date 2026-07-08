@@ -4,6 +4,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import CategoryChip from "../../components/CategoryChip.astro";
 import AuthorBadge from "../../components/AuthorBadge.astro";
 import AuthorLine from "../../components/AuthorLine.astro";
+import ShareButtons from "../../components/ShareButtons.astro";
 import { primaryCategory } from "../../lib/category";
 import { authorFromTags } from "../../lib/author";
 
@@ -49,6 +50,8 @@ const hasEnglish = englishPosts.some((p) => p.id === post.id);
     <div class="prose">
       <Content />
     </div>
+
+    <ShareButtons url={new URL(`/blog/${post.id}/`, Astro.site).toString()} title={post.data.title} lang="fr" />
 
     <AuthorLine author={author} />
   </article>

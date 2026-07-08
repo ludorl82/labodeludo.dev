@@ -42,7 +42,7 @@ Le fichier qui définit l'ensemble d'instructions pour bâtir une image Docker e
 
 Le montage de `$HOME` au complet dans le conteneur (plutôt qu'une copie des fichiers de configuration dans l'image) est ce qui permet de garder `.shell-configs` et `.shell-scripts` comme de simples dépôts git sur l'hôte, modifiables sans reconstruire quoi que ce soit :
 
-```
+```yaml
 services:
   console:
     build:
@@ -70,7 +70,7 @@ Le fichier `devcontainer.json`[4](https://containers.dev/implementors/json_refer
 
 Pour l'image de base, deux Features suffisent :
 
-```
+```json
 {
   "name": "console",
   "build": {
@@ -95,7 +95,7 @@ Pour l'image de base, deux Features suffisent :
 
 `common-utils` crée l'utilisateur non-root — ici laissé en `"automatic"` pour ne pas entrer en collision avec le compte `ubuntu` déjà présent dans l'image `ubuntu:24.04`, la personnalisation par compte réel se faisant dans l'autre couche. `docker-outside-of-docker`[6](https://github.com/devcontainers/features/tree/main/src/docker-outside-of-docker) donne accès au démon Docker de l'hôte depuis l'intérieur du conteneur sans faire tourner un second démon imbriqué (docker-in-docker) : elle installe un script `docker-init.sh` qui, au démarrage, aligne le GID du groupe `docker` du conteneur sur celui du socket monté, puis s'efface via `exec "$@"`. C'est exactement le problème que je réglais auparavant à la main en montant directement `/var/run/docker.sock`[7](https://stackoverflow.com/questions/23439126/how-to-mount-a-host-directory-in-a-docker-container)[8](https://medium.com/@andreacolangelo/sibling-docker-container-2e664858f87a) pour lancer des « conteneurs frères » depuis la console, avec le risque de collision de GID entre l'hôte et le conteneur que ça implique — la Feature encapsule maintenant cette solution. C'est ce script que mon `entrypoint.sh` chaîne avant de lancer `sshd` :
 
-```
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -120,7 +120,7 @@ Autre conséquence pratique : construire l'image avec un simple `docker build` o
 
 La couche de personnalisation ajoute deux autres Features officielles, `github-cli`[9](https://github.com/devcontainers/features/tree/main/src/github-cli) et `aws-cli`[10](https://github.com/devcontainers/features/tree/main/src/aws-cli), en plus de son propre bloc de renommage d'utilisateur :
 
-```
+```json
 {
   "name": "console-personal",
   "build": {
@@ -149,7 +149,7 @@ Notez l'usage de `${localEnv:USER}` dans les arguments de build : cette syntaxe 
 
 Dans un premier temps, ce script [bootstrap\_shell.sh](https://github.com/ludorl82/.shell-scripts/blob/main/bootstrap-shell/bootstrap_shell.sh) clone (ou met à jour) mes deux dépôts de configuration, installe Docker via un script dédié, fixe le fuseau horaire, puis installe les paquets système nécessaires — dont `nodejs` et `npm`, qui n'y étaient pas requis avant et qui servent uniquement à exécuter le CLI devcontainer via `npx` sans avoir à l'installer globalement. Il termine en construisant la couche de personnalisation avec ce même CLI plutôt qu'un simple `docker compose build`, pour que ses Features (`github-cli`, `aws-cli`) soient bien appliquées, puis démarre le conteneur avec `docker compose up -d` (`$COMPOSE_CMD` ci-dessous, choisi un peu plus haut dans le script selon que `docker-compose` ou le plugin `docker compose` est disponible) :
 
-```
+```bash
 # Un simple `docker compose build` ignore les Features devcontainer de cette
 # image (github-cli, aws-cli) -- on construit plutôt via le CLI devcontainer,
 # qui les applique et re-télécharge la base ludorl82/console:latest à chaque

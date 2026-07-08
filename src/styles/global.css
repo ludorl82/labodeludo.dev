@@ -156,7 +156,7 @@ img {
 }
 
 .prose pre {
-  background: var(--panel);
+  background: var(--panel) !important;
   border: 1px solid var(--panel-border);
   border-left: 3px solid var(--panel-border);
   border-radius: 6px;

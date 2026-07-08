@@ -52,7 +52,7 @@ Dans le laboratoire d'avant, nous avons créé une zone hébergée dans Route 53
 
 Dans mon cas, voici les trois commandes que je vais devoir lancer:
 
-```
+```bash
 terraform import aws_s3_bucket.short_urls_bucket lrl.io
 terraform import aws_cloudfront_distribution.short_urls_cloudfront EOYGSDES71UW4
 terraform import aws_route53_zone.short_url_domain Z1D633PJN98FT9
@@ -60,7 +60,7 @@ terraform import aws_route53_zone.short_url_domain Z1D633PJN98FT9
 
 Pour appliquer ces commandes à votre cas, vous devrez substituer mon domaine court avec le vôtre. Ensuite il vous faudra trouver l'identifiant de votre distribution CloudFront et celui de votre zone hébergée de Route 53. Les commandes suivantes vous retournerons ces valeurs.
 
-```
+```bash
 aws cloudfront list-distributions | grep Id
 aws route53 list-hosted-zones-by-name --dns-name lrl.io
 ```
@@ -73,7 +73,7 @@ Il faut toutefois avoir initialisé le plan avant de pouvoir importer quoique ce
 
 Nous commencerons d'abord par télécharger le code dans lequel se trouve définie l'infrastructure de notre projet.
 
-```
+```bash
 git clone https://github.com/ludorl82/aws-lambda-short-url.git
 ```
 
@@ -81,7 +81,7 @@ git clone https://github.com/ludorl82/aws-lambda-short-url.git
 
 Ensuite, nous continuerons en initialisant le plan Terraform.
 
-```
+```bash
 cd aws-lambda-short-url
 terraform init
 ```
@@ -90,7 +90,7 @@ Pour des fins de simplicité, nous créons ici le plan sur notre propre station 
 
 Une fois le plan initialisé nous devrions avoir reçu un message de succès comme celui-ci.
 
-```
+```text
 Terraform has been successfully initialized!
 
 You may now begin working with Terraform. Try running "terraform plan" to see
@@ -106,7 +106,7 @@ commands will detect it and remind you to do so if necessary.
 
 Il est possible que le code Terraform doive être mis à jour avec les nouvelles versions du logiciel. Dans le cas qui nous concerne, j'ai utilisé la version suivante de Terraform.
 
-```
+```shellsession
 $ terraform -version
 Terraform v0.12.12
 + provider.archive v1.3.0
@@ -121,7 +121,7 @@ Une fois que vous avez initialisé le projet avec succès, vous pouvez maintenan
 
 Pour éviter d'être questionné sur les valeurs que vous souhaitez donner à vos variables chaque fois que vous lancez le plan, vous pouvez définir ces dernières dans un fichier de variables comme ci-bas.
 
-```
+```bash
 echo 'region = "ca-central-1"' > short_urls.tfvars
 echo 'short_url_domain = "lrl.io"' >> short_urls.tfvars
 echo 'base_domain_url = "https://www.ludoviclamarre.ca"' >> short_urls.tfvars
@@ -134,7 +134,7 @@ Si vous avez importé des ressources dans le plan, assurez-vous de choisir la m�
 
 Vous êtes maintenant prêt à déployer votre redirecteur d'URL. Pour ce faire, toujours à partir du répertoire du projet avec vos fichiers Terraform lancez la commande suivante:
 
-```
+```bash
 terraform apply -var-file="short_urls.tfvars"
 ```
 
@@ -147,7 +147,7 @@ Si vous n'avez pas créé de fichier de variable alors on vous demandera les val
 
 On vous présentera alors l'ensemble des choses qui seront déployées. Vous pouvez alors faire `yes`.Vous devrez alors attendre plusieurs minutes le temps du déploiement. Finalement, on vous retournera un message de succès.
 
-```
+```text
 Outputs:
 
 BaseDomainURL = https://www.monsiteweb.com

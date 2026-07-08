@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 #
-# One-time (well, re-runnable/idempotent) script: creates S3 redirect
-# objects at the old WordPress URLs (category-prefixed) so they 301 to
-# the new Astro /blog/<slug>/ paths, instead of 404ing once the S3
-# bucket serves the Astro site instead of the WordPress static export.
+# Idempotent: creates S3 redirect objects at the old WordPress URLs
+# (category-prefixed) so they 301 to the new Astro /blog/<slug>/ paths.
 #
-# Run this on coquille (aws-cli configured there) AFTER the S3 bucket
-# is switched over to serving the Astro build.
+# `aws s3 sync --delete` in the deploy workflow wipes these on every prod
+# deploy since they aren't part of dist/ — this script runs automatically
+# as the step right after the sync (see .github/workflows/deploy.yml) to
+# recreate them every time. Requires AWS credentials in the environment
+# (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY), same as the sync step.
 #
 set -euo pipefail
 

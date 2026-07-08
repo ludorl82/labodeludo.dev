@@ -49,3 +49,13 @@ Traefik on `aws` (`~/web-docker/traefik/dynamic/astro.yml`) routes `Host(labodel
 | `npm run dev` | Local dev server at `localhost:4321` |
 | `npm run build` | Build to `./dist/` |
 | `npm run preview` | Preview the build locally |
+
+## License
+
+The site's code (everything under `src/`, `public/`, config files, scripts,
+CI workflow) is [MIT-licensed](LICENSE) — reuse the Astro theme, components,
+or terminal-style nav freely.
+
+Blog post content and images (`src/content/blog/`, `public/images/`) are
+**not** covered by that license and remain © Ludovic Lamarre, all rights
+reserved, unless a post says otherwise.

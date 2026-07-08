@@ -1,0 +1,337 @@
+---
+interface NavItem {
+  href: string;
+  label: string;
+}
+
+interface Props {
+  lang?: "fr" | "en";
+  homeHref?: string;
+  navItems?: NavItem[];
+}
+
+const { lang = "fr", homeHref = "/", navItems = [] } = Astro.props;
+
+const pages = [{ href: homeHref, label: lang === "en" ? "Home" : "Accueil" }, ...navItems];
+
+const shortcuts =
+  lang === "en"
+    ? [
+        ["j / k", "move between posts, or scroll an article"],
+        ["f / b", "page down / up, faster"],
+        ["gg / G", "top / bottom of the list or article"],
+        ["gh", "go to the homepage"],
+        ["gn / gp", "next / previous nav page"],
+        ["g1-g9", "jump straight to nav page N"],
+        ["Enter", "open focused post"],
+        ["Esc", "clear focus / close this"],
+        ["?", "toggle this cheat sheet"],
+      ]
+    : [
+        ["j / k", "se déplacer entre les articles, ou faire défiler un article"],
+        ["f / b", "avancer / reculer d'une page, plus vite"],
+        ["gg / G", "haut / bas de la liste ou de l'article"],
+        ["gh", "revenir à l'accueil"],
+        ["gn / gp", "page de nav suivante / précédente"],
+        ["g1-g9", "aller directement à la page de nav N"],
+        ["Entrée", "ouvrir l'article ciblé"],
+        ["Échap", "annuler le focus / fermer ceci"],
+        ["?", "afficher / masquer cette aide"],
+      ];
+
+const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
+---
+
+<div id="keyboard-help" class="keyboard-help" hidden>
+  <div class="keyboard-help-panel">
+    <p class="keyboard-help-title">$ {title.toLowerCase().replace(/ /g, "_")} --help</p>
+    <dl>
+      {
+        shortcuts.map(([key, desc]) => (
+          <div class="row">
+            <dt>{key}</dt>
+            <dd>{desc}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</div>
+
+<div id="sudo-toast" class="sudo-toast" hidden></div>
+
+<style>
+  .keyboard-help {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4vh 4vw;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(2px);
+  }
+
+  .keyboard-help[hidden] {
+    display: none;
+  }
+
+  .keyboard-help-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 1.5rem 1.75rem;
+    max-width: 24rem;
+    width: 100%;
+    font-family: var(--font-mono);
+  }
+
+  .keyboard-help-title {
+    margin: 0 0 1rem;
+    color: var(--accent-live);
+    font-size: 0.875rem;
+  }
+
+  dl {
+    margin: 0;
+  }
+
+  .row {
+    display: flex;
+    gap: 1rem;
+    padding: 0.4rem 0;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .row:first-child {
+    border-top: none;
+  }
+
+  dt {
+    flex: 0 0 6rem;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.8125rem;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .sudo-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 250;
+    max-width: 22rem;
+    background: var(--panel);
+    border: 1px solid var(--accent-live);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text);
+    white-space: pre-line;
+    box-shadow: 0 4px 24px rgb(0 0 0 / 0.6);
+  }
+
+  .sudo-toast[hidden] {
+    display: none;
+  }
+
+  @keyframes sudo-glitch {
+    0%,
+    100% {
+      filter: none;
+    }
+    25%,
+    75% {
+      filter: invert(1);
+    }
+  }
+
+  :global(body.sudo-glitch) {
+    animation: sudo-glitch 0.5s steps(2, end);
+  }
+</style>
+
+<script define:vars={{ lang, homeHref, pages }}>
+  const help = document.getElementById("keyboard-help");
+  const toast = document.getElementById("sudo-toast");
+  const links = Array.from(document.querySelectorAll(".list .row-link"));
+
+  function toggleHelp() {
+    help.hidden = !help.hidden;
+  }
+
+  function focusAt(index) {
+    if (!links.length) return;
+    const clamped = Math.max(0, Math.min(index, links.length - 1));
+    links[clamped].focus();
+    links[clamped].scrollIntoView({ block: "nearest" });
+  }
+
+  function gotoPage(index) {
+    const page = pages[index];
+    if (page) window.location.href = page.href;
+  }
+
+  function gotoRelativePage(delta) {
+    const current = pages.findIndex((p) => p.href === window.location.pathname);
+    const next = ((current === -1 ? 0 : current) + delta + pages.length) % pages.length;
+    gotoPage(next);
+  }
+
+  let pendingG = false;
+  let pendingGAt = 0;
+  const G_TIMEOUT = 500;
+
+  document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const tag = document.activeElement?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    if (e.key === "?") {
+      e.preventDefault();
+      toggleHelp();
+      pendingG = false;
+      return;
+    }
+
+    if (e.key === "Escape") {
+      if (!help.hidden) {
+        help.hidden = true;
+      } else {
+        document.activeElement?.blur();
+      }
+      pendingG = false;
+      return;
+    }
+
+    const gPending = pendingG && Date.now() - pendingGAt < G_TIMEOUT;
+    pendingG = false;
+
+    if (gPending) {
+      if (e.key === "g") {
+        e.preventDefault();
+        if (links.length) {
+          focusAt(0);
+        } else {
+          window.scrollTo({ top: 0 });
+        }
+        return;
+      }
+      if (e.key === "h") {
+        e.preventDefault();
+        window.location.href = homeHref;
+        return;
+      }
+      if (e.key === "n") {
+        e.preventDefault();
+        gotoRelativePage(1);
+        return;
+      }
+      if (e.key === "p") {
+        e.preventDefault();
+        gotoRelativePage(-1);
+        return;
+      }
+      if (/^[1-9]$/.test(e.key)) {
+        e.preventDefault();
+        gotoPage(Number(e.key));
+        return;
+      }
+    }
+
+    if (e.key === "g") {
+      pendingG = true;
+      pendingGAt = Date.now();
+      return;
+    }
+
+    const SCROLL_STEP = 100;
+    const PAGE_ROWS = 5;
+    const PAGE_FRACTION = 0.85;
+    const current = links.indexOf(document.activeElement);
+
+    if (e.key === "j") {
+      e.preventDefault();
+      if (links.length) {
+        focusAt(current + 1);
+      } else {
+        window.scrollBy({ top: SCROLL_STEP });
+      }
+    } else if (e.key === "k") {
+      e.preventDefault();
+      if (links.length) {
+        focusAt(current === -1 ? links.length - 1 : current - 1);
+      } else {
+        window.scrollBy({ top: -SCROLL_STEP });
+      }
+    } else if (e.key === "f") {
+      e.preventDefault();
+      if (links.length) {
+        focusAt((current === -1 ? 0 : current) + PAGE_ROWS);
+      } else {
+        window.scrollBy({ top: window.innerHeight * PAGE_FRACTION });
+      }
+    } else if (e.key === "b") {
+      e.preventDefault();
+      if (links.length) {
+        focusAt((current === -1 ? links.length - 1 : current) - PAGE_ROWS);
+      } else {
+        window.scrollBy({ top: -window.innerHeight * PAGE_FRACTION });
+      }
+    } else if (e.key === "G") {
+      e.preventDefault();
+      if (links.length) {
+        focusAt(links.length - 1);
+      } else {
+        window.scrollTo({ top: document.documentElement.scrollHeight });
+      }
+    }
+  });
+
+  help.addEventListener("click", (e) => {
+    if (e.target === help) help.hidden = true;
+  });
+
+  const KONAMI = [
+    "arrowup",
+    "arrowup",
+    "arrowdown",
+    "arrowdown",
+    "arrowleft",
+    "arrowright",
+    "arrowleft",
+    "arrowright",
+    "b",
+    "a",
+  ];
+  let progress = 0;
+  let toastTimer;
+
+  document.addEventListener("keydown", (e) => {
+    const key = e.key.toLowerCase();
+    progress = key === KONAMI[progress] ? progress + 1 : key === KONAMI[0] ? 1 : 0;
+
+    if (progress === KONAMI.length) {
+      progress = 0;
+      const message =
+        lang === "en"
+          ? "$ sudo su -\n[sudo] password for ludo: ********\nroot access granted (5s, don't tell ludo)"
+          : "$ sudo su -\n[sudo] mot de passe pour ludo : ********\nAccès root accordé (5s, ne le dites pas à ludo)";
+      toast.textContent = message;
+      toast.hidden = false;
+      document.body.classList.add("sudo-glitch");
+      window.clearTimeout(toastTimer);
+      window.setTimeout(() => document.body.classList.remove("sudo-glitch"), 500);
+      toastTimer = window.setTimeout(() => {
+        toast.hidden = true;
+      }, 5000);
+    }
+  });
+</script>

@@ -9,7 +9,13 @@ const { author } = Astro.props;
 ---
 
 <span class="author" class:list={[author]}>
-  <img src={AUTHORS[author].avatar} alt="" width="16" height="16" />
+  <img
+    src={AUTHORS[author].avatar}
+    alt=""
+    width="16"
+    height="16"
+    class:list={[author === "bob" && "bob-blink"]}
+  />
   {author}
 </span>
 

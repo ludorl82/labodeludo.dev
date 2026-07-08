@@ -12,27 +12,35 @@ interface Props {
 
 const { posts, basePath = "/blog", lang = "fr" } = Astro.props;
 const dateLocale = lang === "en" ? "en-CA" : "fr-CA";
+const emptyMessage =
+  lang === "en"
+    ? `$ ls ${basePath}/\nls: no matches found`
+    : `$ ls ${basePath}/\nls: aucune correspondance trouvée`;
 ---
 
-<ul class="list">
-  {
-    posts.map((post) => (
-      <li class="row">
-        <a class="row-link" href={`${basePath}/${post.id}/`}>
-          <div class="row-meta">
-            <CategoryChip category={primaryCategory(post.data.tags)} />
-            <time datetime={post.data.pubDate.toISOString()}>
-              {post.data.pubDate.toLocaleDateString(dateLocale)}
-            </time>
-            <AuthorBadge author={authorFromTags(post.data.tags)} />
-          </div>
-          <h2 class="row-title">{post.data.title}</h2>
-          {post.data.description && <p class="row-desc">{post.data.description}</p>}
-        </a>
-      </li>
-    ))
-  }
-</ul>
+{
+  posts.length === 0 ? (
+    <pre class="empty"><code>{emptyMessage}</code></pre>
+  ) : (
+    <ul class="list">
+      {posts.map((post) => (
+        <li class="row">
+          <a class="row-link" href={`${basePath}/${post.id}/`}>
+            <div class="row-meta">
+              <CategoryChip category={primaryCategory(post.data.tags)} />
+              <time datetime={post.data.pubDate.toISOString()}>
+                {post.data.pubDate.toLocaleDateString(dateLocale)}
+              </time>
+              <AuthorBadge author={authorFromTags(post.data.tags)} />
+            </div>
+            <h2 class="row-title">{post.data.title}</h2>
+            {post.data.description && <p class="row-desc">{post.data.description}</p>}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 <style>
   .list {
@@ -54,7 +62,8 @@ const dateLocale = lang === "en" ? "en-CA" : "fr-CA";
     transition: background-color 0.15s ease;
   }
 
-  .row-link:hover {
+  .row-link:hover,
+  .row-link:focus-visible {
     background: var(--panel);
   }
 
@@ -81,5 +90,18 @@ const dateLocale = lang === "en" ? "en-CA" : "fr-CA";
     color: var(--text-muted);
     max-width: var(--measure);
     font-size: 0.9375rem;
+  }
+
+  .empty {
+    margin: 1rem 0 0;
+    padding: 1rem 1.25rem;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-left: 3px solid var(--panel-border);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-faint);
+    line-height: 1.6;
   }
 </style>

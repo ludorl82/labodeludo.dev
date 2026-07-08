@@ -102,6 +102,21 @@ img {
   white-space: nowrap;
 }
 
+/* Bob is a bot — give his avatar a quick wink on hover wherever it shows up. */
+@keyframes bob-blink {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.1);
+  }
+}
+
+.bob-blink:hover {
+  animation: bob-blink 0.35s ease-in-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1544 500" font-family="'Courier New', monospace">
+  <rect width="1544" height="500" fill="#241a17"/>
+  <polygon points="0,0 1544,0 1544,500 700,500" fill="#a5461f"/>
+  <text x="70" y="130" font-size="52" font-weight="bold" fill="#ffffff">Zero firewall,</text>
+  <text x="70" y="200" font-size="52" font-weight="bold" fill="#ffffff">one tunnel</text>
+  <text x="70" y="260" font-size="24" fill="#ffe3d3">Migrating one last service to a Cloudflare</text>
+  <text x="70" y="292" font-size="24" fill="#ffe3d3">Tunnel to remove an entire security group</text>
+
+  <g stroke="#ffffff" stroke-width="2.5" fill="none">
+    <rect x="1170" y="150" width="50" height="30" rx="4"/>
+    <rect x="1230" y="150" width="50" height="30" rx="4"/>
+    <rect x="1150" y="195" width="50" height="30" rx="4" opacity="0.5"/>
+    <rect x="1200" y="195" width="50" height="30" rx="4" opacity="0.5"/>
+    <rect x="1250" y="195" width="50" height="30" rx="4"/>
+    <rect x="1120" y="240" width="50" height="30" rx="4"/>
+    <rect x="1170" y="240" width="50" height="30" rx="4" opacity="0.5"/>
+    <rect x="1220" y="240" width="50" height="30" rx="4"/>
+    <rect x="1270" y="240" width="50" height="30" rx="4"/>
+    <rect x="1150" y="285" width="50" height="30" rx="4"/>
+    <rect x="1200" y="285" width="50" height="30" rx="4" opacity="0.5"/>
+    <rect x="1250" y="285" width="50" height="30" rx="4"/>
+  </g>
+  <line x1="1080" y1="390" x2="1370" y2="390" stroke="#ffffff" stroke-width="6"/>
+  <path d="M1370,390 l-16,-11 v22 z" fill="#ffffff"/>
+  <text x="1225" y="425" text-anchor="middle" font-size="20" fill="#ffffff">outbound tunnel</text>
+</svg>

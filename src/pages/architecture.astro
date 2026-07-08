@@ -1,0 +1,286 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Architecture — Le labo de Ludo"
+  description="Vue d'ensemble du homelab : réseau, tunnel chiffré, VLANs et rôles des serveurs."
+>
+  <a class="back" href="/">&larr; tous les articles</a>
+
+  <header class="page-header">
+    <h1>Architecture</h1>
+    <p class="subtitle">
+      Vue d'ensemble du réseau — noms et adresses fictifs (préfixe de
+      documentation <code>2001:db8:.../64</code>, RFC 3849), l'idée est de
+      montrer la forme du réseau, pas le détail réel.
+    </p>
+  </header>
+
+  <div class="diagram-wrap">
+    <svg
+      class="diagram"
+      viewBox="0 0 1100 870"
+      role="img"
+      aria-label="Diagramme d'architecture : deux fournisseurs Internet reliés respectivement à un pare-feu domicile et à une VM cloud, connectés entre eux par un tunnel chiffré ; le pare-feu domicile distribue vers deux VLANs (Serveurs, Réseau local) et vers des clients mobiles en VPN. La VM cloud achemine par proxy inverse vers des services précis à l'intérieur du réseau domicile."
+    >
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- structural connectors -->
+      <g class="conn" fill="none" stroke="var(--text-faint)" stroke-width="1.5">
+        <path d="M200,80 L220,390" marker-end="url(#arrow)" />
+        <path d="M820,80 L810,110" marker-end="url(#arrow)" />
+        <path d="M220,450 L270,490" marker-end="url(#arrow)" />
+        <path d="M220,450 C 400,470 620,470 750,490" marker-end="url(#arrow)" />
+      </g>
+
+      <!-- live / encrypted connectors (kept short, routed through open space only) -->
+      <g class="conn-live" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4">
+        <path d="M700,335 L700,360 L350,360 L350,390" marker-end="url(#arrow-live)" />
+        <path d="M350,420 L390,420" marker-end="url(#arrow-live)" />
+      </g>
+
+      <!-- connector labels -->
+      <g class="conn-label" font-family="var(--font-mono)" font-size="12" fill="var(--text-faint)">
+        <text x="150" y="240">WAN</text>
+        <text x="835" y="98">IP publique</text>
+      </g>
+      <g class="conn-label" font-family="var(--font-mono)" font-size="12" fill="var(--accent-live)">
+        <a class="node-link" href="/inventaire/pare-feu/">
+          <text x="405" y="352">tunnel chiffré (VPN site-à-site)</text>
+        </a>
+        <a class="node-link" href="/inventaire/clients-mobiles/">
+          <text x="95" y="382" font-size="11">VPN clients distants</text>
+        </a>
+      </g>
+
+      <!-- Internet nodes -->
+      <g font-family="var(--font-mono)" font-size="13" text-anchor="middle">
+        <ellipse cx="200" cy="45" rx="140" ry="35" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="200" y="41" fill="var(--text)">Internet</text>
+        <text x="200" y="58" fill="var(--text-faint)" font-size="11">(FAI résidentiel)</text>
+
+        <ellipse cx="820" cy="45" rx="150" ry="35" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="820" y="41" fill="var(--text)">Internet</text>
+        <text x="820" y="58" fill="var(--text-faint)" font-size="11">(fournisseur cloud)</text>
+      </g>
+
+      <!-- Cloud VM -->
+      <g>
+        <rect x="620" y="110" width="380" height="225" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="640" y="132" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VM cloud — relais.exemple.net</text>
+
+        <a class="node-link" href="/inventaire/proxy-inverse/">
+          <rect x="640" y="150" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="660" y="176" font-family="var(--font-mono)" font-size="13" fill="var(--text)">proxy inverse (TLS)</text>
+        </a>
+
+        <a class="node-link" href="/inventaire/site-web/">
+          <rect x="640" y="205" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="660" y="231" font-family="var(--font-mono)" font-size="13" fill="var(--text)">site web statique</text>
+        </a>
+
+        <a class="node-link" href="/inventaire/surveillance/">
+          <rect x="640" y="260" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="660" y="286" font-family="var(--font-mono)" font-size="13" fill="var(--text)">surveillance + alertes</text>
+        </a>
+      </g>
+
+      <!-- Proxy routing note (avoids drawing long crossing lines across the whole diagram) -->
+      <g font-family="var(--font-mono)" font-size="12">
+        <text x="640" y="365" fill="var(--text-faint)">acheminement (proxy inverse) :</text>
+        <text x="650" y="384" fill="var(--accent-live)">labo.exemple.net &#8594; hôte conteneurs</text>
+        <text x="650" y="402" fill="var(--accent-live)">media.exemple.net &#8594; pipeline média</text>
+        <text x="650" y="420" fill="var(--accent-live)">assistant.exemple.net &#8594; domotique</text>
+      </g>
+
+      <!-- Home gateway -->
+      <a class="node-link" href="/inventaire/pare-feu/">
+        <rect x="90" y="390" width="260" height="60" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="220" y="414" text-anchor="middle" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">pare-feu domicile</text>
+        <text x="220" y="431" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">portail.exemple.net</text>
+      </a>
+
+      <!-- Mobile clients -->
+      <a class="node-link" href="/inventaire/clients-mobiles/" font-family="var(--font-mono)" font-size="13" text-anchor="middle">
+        <ellipse cx="480" cy="420" rx="90" ry="30" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="480" y="416" fill="var(--text)">clients mobiles</text>
+        <text x="480" y="432" fill="var(--text-faint)" font-size="11">(VPN)</text>
+      </a>
+
+      <!-- VLAN Serveurs -->
+      <g>
+        <rect x="40" y="490" width="460" height="330" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="60" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Serveurs</text>
+
+        <a class="node-link" href="/inventaire/bastion/">
+          <rect x="60" y="530" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">bastion / console</text>
+        </a>
+
+        <a class="node-link" href="/inventaire/stockage/">
+          <rect x="60" y="580" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">stockage (NAS)</text>
+        </a>
+
+        <a class="node-link" href="/inventaire/pipeline-media/">
+          <rect x="60" y="630" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">pipeline média</text>
+        </a>
+
+        <a class="node-link" href="/inventaire/calcul-gpu/">
+          <rect x="60" y="680" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="705" font-family="var(--font-mono)" font-size="13" fill="var(--text)">calcul GPU</text>
+        </a>
+
+        <a class="node-link" href="/inventaire/hote-conteneurs/">
+          <rect x="60" y="730" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="755" font-family="var(--font-mono)" font-size="13" fill="var(--text)">hôte conteneurs (web)</text>
+        </a>
+      </g>
+
+      <!-- VLAN Réseau local -->
+      <g>
+        <rect x="560" y="490" width="380" height="210" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="580" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Réseau local</text>
+
+        <a class="node-link" href="/inventaire/postes-personnels/">
+          <rect x="580" y="530" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="600" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">postes personnels</text>
+        </a>
+
+        <a class="node-link" href="/inventaire/domotique/">
+          <rect x="580" y="580" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="600" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">domotique</text>
+        </a>
+
+        <a class="node-link" href="/inventaire/cameras-peripheriques/">
+          <rect x="580" y="630" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="600" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">caméras / périphériques</text>
+        </a>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="swatch structural" /> liaison réseau</span>
+    <span class="legend-item"><span class="swatch live" /> tunnel chiffré / routage applicatif</span>
+    <span class="legend-item">les éléments soulignés au survol pointent vers leur fiche d'<a href="/inventaire/">inventaire</a></span>
+  </div>
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-live);
+  }
+
+  .page-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.75rem;
+  }
+
+  .subtitle {
+    max-width: var(--measure);
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    margin: 0 0 2rem;
+  }
+
+  .subtitle code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--panel);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  .diagram {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+  }
+
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+
+  .legend-item a {
+    color: var(--accent-live);
+  }
+
+  .swatch {
+    width: 18px;
+    height: 2px;
+    display: inline-block;
+  }
+
+  .swatch.structural {
+    background: var(--text-faint);
+  }
+
+  .swatch.live {
+    background: repeating-linear-gradient(
+      to right,
+      var(--accent-live) 0 4px,
+      transparent 4px 7px
+    );
+  }
+
+  .diagram :global(.node-link) {
+    cursor: pointer;
+  }
+
+  .diagram :global(.node-link rect) {
+    transition: stroke 0.15s ease;
+  }
+
+  .diagram :global(.node-link:hover rect) {
+    stroke: var(--accent-live);
+  }
+
+  .diagram :global(.node-link:hover text) {
+    fill: var(--accent-live);
+    text-decoration: underline;
+  }
+</style>

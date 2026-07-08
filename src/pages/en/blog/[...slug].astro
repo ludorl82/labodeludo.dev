@@ -1,14 +1,13 @@
 ---
 import { getCollection, render } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import CategoryChip from "../../components/CategoryChip.astro";
-import AuthorBadge from "../../components/AuthorBadge.astro";
-import AuthorLine from "../../components/AuthorLine.astro";
-import { primaryCategory } from "../../lib/category";
-import { authorFromTags } from "../../lib/author";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import CategoryChip from "../../../components/CategoryChip.astro";
+import AuthorBadge from "../../../components/AuthorBadge.astro";
+import { primaryCategory } from "../../../lib/category";
+import { authorFromTags } from "../../../lib/author";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog");
+  const posts = await getCollection("blogEn");
   return posts.map((post) => ({
     params: { slug: post.id },
     props: { post },
@@ -20,12 +19,12 @@ const { Content } = await render(post);
 const category = primaryCategory(post.data.tags);
 const author = authorFromTags(post.data.tags);
 
-const englishPosts = await getCollection("blogEn");
-const hasEnglish = englishPosts.some((p) => p.id === post.id);
+const frenchPosts = await getCollection("blog");
+const hasFrench = frenchPosts.some((p) => p.id === post.id);
 ---
 
-<BaseLayout title={`${post.data.title} — Le labo de Ludo`} description={post.data.description}>
-  <a class="back" href="/">&larr; tous les articles</a>
+<BaseLayout lang="en" title={`${post.data.title} — Le labo de Ludo`} description={post.data.description}>
+  <a class="back" href="/en/">&larr; all posts</a>
 
   <article>
     <header class="article-header">
@@ -33,11 +32,11 @@ const hasEnglish = englishPosts.some((p) => p.id === post.id);
       <h1>{post.data.title}</h1>
       <div class="article-meta">
         <time datetime={post.data.pubDate.toISOString()}>
-          {post.data.pubDate.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
+          {post.data.pubDate.toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}
         </time>
         <AuthorBadge author={author} />
-        {hasEnglish && (
-          <a class="lang-link" href={`/en/blog/${post.id}/`}>English version</a>
+        {hasFrench && (
+          <a class="lang-link" href={`/blog/${post.id}/`}>Version française</a>
         )}
       </div>
     </header>
@@ -49,8 +48,6 @@ const hasEnglish = englishPosts.some((p) => p.id === post.id);
     <div class="prose">
       <Content />
     </div>
-
-    <AuthorLine author={author} />
   </article>
 </BaseLayout>
 

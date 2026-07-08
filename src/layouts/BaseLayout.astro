@@ -1,22 +1,38 @@
 ---
-import "@fontsource/ibm-plex-mono/400.css";
-import "@fontsource/ibm-plex-mono/500.css";
-import "@fontsource/ibm-plex-mono/600.css";
-import "@fontsource/ibm-plex-sans/400.css";
-import "@fontsource/ibm-plex-sans/400-italic.css";
-import "@fontsource/ibm-plex-sans/600.css";
 import "../styles/global.css";
 import Lightbox from "../components/Lightbox.astro";
 
 interface Props {
   title: string;
   description?: string;
+  lang?: "fr" | "en";
 }
 
-const { title, description } = Astro.props;
+const { title, description, lang = "fr" } = Astro.props;
+
+const homeHref = lang === "en" ? "/en/" : "/";
+const tagline =
+  lang === "en"
+    ? "homelab & personal infra, in public"
+    : "homelab & infra personnelle, en public";
+const footerLine =
+  lang === "en"
+    ? "Le labo de Ludo — the journal of our experiments at home."
+    : "Le labo de Ludo — le journal de nos expérimentations à la maison.";
+
+const navItems =
+  lang === "en"
+    ? [{ href: "/", label: "Français" }]
+    : [
+        { href: "/mission/", label: "Mission" },
+        { href: "/architecture/", label: "Architecture" },
+        { href: "/inventaire/", label: "Inventaire" },
+        { href: "/auteurs/", label: "Auteurs" },
+      ];
+navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
 ---
 
-<html lang="fr">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -30,10 +46,10 @@ const { title, description } = Astro.props;
   <body>
     <div class="page">
       <header class="site-header">
-        <a class="wordmark" href="/">
+        <a class="wordmark" href={homeHref}>
           <span class="wordmark-prompt">ludo@labo</span><span class="wordmark-sep">:~$</span>
         </a>
-        <p class="tagline">homelab &amp; infra personnelle, en public</p>
+        <p class="tagline">{tagline}</p>
       </header>
 
       <main>
@@ -42,11 +58,26 @@ const { title, description } = Astro.props;
 
       <footer class="site-footer">
         <p>
-          Le labo de Ludo — articles écrits par Ludo, parfois avec Bob.
+          {footerLine}
         </p>
         <nav class="footer-nav">
-          <a href="/mission/">Mission</a>
-          <a href="https://github.com/ludorl82">GitHub</a>
+          {
+            navItems.map((item, i) => (
+              <>
+                <span class:list={["seg", i % 2 === 0 ? "seg-a" : "seg-b"]}>
+                  <a href={item.href}>{item.label}</a>
+                </span>
+                <span
+                  class:list={[
+                    "arrow",
+                    i % 2 === 0 ? "arrow-a" : "arrow-b",
+                    i === navItems.length - 1 && "arrow-end",
+                  ]}
+                  aria-hidden="true"
+                />
+              </>
+            ))
+          }
         </nav>
       </footer>
     </div>
@@ -82,7 +113,7 @@ const { title, description } = Astro.props;
   }
 
   .wordmark-sep {
-    color: var(--accent-devops);
+    color: var(--accent-live);
     margin-left: 2px;
   }
 
@@ -107,17 +138,87 @@ const { title, description } = Astro.props;
   }
 
   .footer-nav {
+    --seg-a: #1c1c1c;
+    --seg-b: #2a2a2a;
     display: flex;
-    gap: 1.25rem;
+    align-items: stretch;
+    flex-wrap: wrap;
     margin-top: 0.75rem;
   }
 
-  .footer-nav a {
-    color: var(--text-faint);
+  .seg {
+    display: flex;
+    align-items: center;
+    padding: 0.35em 0.85em;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .seg a {
+    color: var(--text-muted);
     text-decoration: none;
   }
 
-  .footer-nav a:hover {
-    color: var(--accent-devops);
+  .seg-a {
+    background: var(--seg-a);
+  }
+
+  .seg-b {
+    background: var(--seg-b);
+  }
+
+  .seg:hover {
+    background: var(--accent-live);
+  }
+
+  .seg:hover a {
+    color: var(--bg);
+  }
+
+  /* Powerline-style slanted separators. A clip-path triangle (rather than
+     the Powerline font glyph) guarantees the arrow always fills the exact
+     height of its segment, regardless of font metrics. */
+  .arrow {
+    position: relative;
+    width: 0.6em;
+    align-self: stretch;
+    transition: background-color 0.15s ease;
+  }
+
+  .arrow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    transition: background-color 0.15s ease;
+  }
+
+  .arrow-a {
+    background: var(--seg-b);
+  }
+
+  .arrow-a::before {
+    background: var(--seg-a);
+  }
+
+  .arrow-b {
+    background: var(--seg-a);
+  }
+
+  .arrow-b::before {
+    background: var(--seg-b);
+  }
+
+  .arrow-end {
+    background: transparent;
+  }
+
+  /* Let the hover color bleed into the neighboring arrows, so the
+     highlight reads as one continuous slanted segment. */
+  .seg:hover + .arrow::before {
+    background: var(--accent-live);
+  }
+
+  .arrow:has(+ .seg:hover) {
+    background: var(--accent-live);
   }
 </style>

@@ -1,0 +1,32 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostList from "../../components/PostList.astro";
+
+const posts = (await getCollection("blogEn")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<BaseLayout
+  lang="en"
+  title="Le labo de Ludo — English"
+  description="A journal of homelab experiments — network, self-hosting, automation. Selected posts translated to English."
+>
+  <p class="note">
+    Most of this blog is written in French. These are the posts translated to
+    English so far — more get added as needed.
+  </p>
+
+  <PostList posts={posts} basePath="/en/blog" lang="en" />
+</BaseLayout>
+
+<style>
+  .note {
+    max-width: var(--measure);
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    margin: 0 0 1rem;
+  }
+</style>

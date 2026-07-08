@@ -2,10 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import TopologyStrip from "../components/TopologyStrip.astro";
-import CategoryChip from "../components/CategoryChip.astro";
-import AuthorBadge from "../components/AuthorBadge.astro";
-import { primaryCategory } from "../lib/category";
-import { authorFromTags } from "../lib/author";
+import PostList from "../components/PostList.astro";
 
 const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -17,76 +14,5 @@ const posts = (await getCollection("blog")).sort(
   description="Journal d'incidents et de bricolages d'un homelab réel — réseau, self-hosting, automatisation."
 >
   <TopologyStrip posts={posts} />
-
-  <ul class="list">
-    {
-      posts.map((post) => (
-        <li class="row">
-          <a class="row-link" href={`/blog/${post.id}/`}>
-            <div class="row-meta">
-              <CategoryChip category={primaryCategory(post.data.tags)} />
-              <time datetime={post.data.pubDate.toISOString()}>
-                {post.data.pubDate.toLocaleDateString("fr-CA")}
-              </time>
-              <AuthorBadge author={authorFromTags(post.data.tags)} />
-            </div>
-            <h2 class="row-title">{post.data.title}</h2>
-            {post.data.description && (
-              <p class="row-desc">{post.data.description}</p>
-            )}
-          </a>
-        </li>
-      ))
-    }
-  </ul>
+  <PostList posts={posts} />
 </BaseLayout>
-
-<style>
-  .list {
-    list-style: none;
-    margin: 1rem 0 0;
-    padding: 0;
-    border-top: 1px solid var(--panel-border);
-  }
-
-  .row {
-    border-bottom: 1px solid var(--panel-border);
-  }
-
-  .row-link {
-    display: block;
-    padding: 1.5rem 0.75rem;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: background-color 0.15s ease;
-  }
-
-  .row-link:hover {
-    background: var(--panel);
-  }
-
-  .row-meta {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    color: var(--text-faint);
-  }
-
-  .row-title {
-    margin: 0.6rem 0 0;
-    font-family: var(--font-display);
-    font-size: 1.1875rem;
-    font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: -0.005em;
-  }
-
-  .row-desc {
-    margin: 0.5rem 0 0;
-    color: var(--text-muted);
-    max-width: var(--measure);
-    font-size: 0.9375rem;
-  }
-</style>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="'Courier New', monospace">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b2a4a"/>
+      <stop offset="100%" stop-color="#0e5c47"/>
+    </linearGradient>
+    <linearGradient id="lock2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd479"/>
+      <stop offset="100%" stop-color="#e8a93a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="320" fill="url(#bg3)"/>
+  <g fill="#ffffff" opacity="0.06">
+    <ellipse cx="150" cy="70" rx="120" ry="40"/>
+    <ellipse cx="880" cy="60" rx="150" ry="45"/>
+    <ellipse cx="520" cy="40" rx="90" ry="28"/>
+  </g>
+  <g transform="translate(70,110)">
+    <rect width="70" height="120" rx="12" fill="#ffffff" opacity="0.92"/>
+    <rect x="8" y="12" width="54" height="86" rx="3" fill="#0e5c47"/>
+    <circle cx="35" cy="108" r="4" fill="#0e5c47"/>
+  </g>
+  <path d="M160 150 C 260 90, 360 90, 430 140" fill="none" stroke="#bfe9ff" stroke-width="4"/>
+  <path d="M430 190 C 360 240, 260 240, 165 190" fill="none" stroke="#ff8577" stroke-width="4" stroke-dasharray="10,8"/>
+  <g transform="translate(275,205)">
+    <circle r="22" fill="#5a1e1e"/>
+    <text x="0" y="6" text-anchor="middle" font-size="16" font-weight="bold" fill="#ffb3ab">502</text>
+  </g>
+  <g transform="translate(460,90)">
+    <rect x="0" y="40" width="150" height="120" rx="14" fill="#2a2a2a"/>
+    <rect x="12" y="52" width="126" height="96" rx="8" fill="#3d3d3d"/>
+    <path d="M35 40 v-20 a40 40 0 0 1 80 0 v20" fill="none" stroke="url(#lock2)" stroke-width="14"/>
+    <circle cx="75" cy="95" r="16" fill="url(#lock2)"/>
+    <rect x="69" y="95" width="12" height="26" rx="4" fill="url(#lock2)"/>
+    <text x="75" y="185" text-anchor="middle" font-size="14" fill="#ffe9c2">.kdbx vault</text>
+  </g>
+  <path d="M610 150 C 700 60, 800 60, 900 130" fill="none" stroke="#8fe3b0" stroke-width="5"/>
+  <text x="760" y="70" text-anchor="middle" font-size="15" fill="#c9f5da" font-weight="bold">tunnel</text>
+  <g transform="translate(880,150)">
+    <ellipse cx="0" cy="10" rx="55" ry="30" fill="#ffffff"/>
+    <ellipse cx="-25" cy="0" rx="30" ry="22" fill="#ffffff"/>
+    <ellipse cx="25" cy="0" rx="32" ry="24" fill="#ffffff"/>
+    <text x="0" y="16" text-anchor="middle" font-size="13" fill="#0e5c47" font-weight="bold">Cloudflare</text>
+  </g>
+  <text x="512" y="30" text-anchor="middle" font-size="20" fill="#ffffff" font-weight="bold" opacity="0.9">The MOVE that kept failing</text>
+</svg>

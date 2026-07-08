@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" font-family="'Courier New', monospace">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1440"/>
+      <stop offset="100%" stop-color="#241a4d"/>
+    </linearGradient>
+    <marker id="b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e0664f"/>
+    </marker>
+    <marker id="b2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3ddc97"/>
+    </marker>
+    <marker id="b3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f0a83c"/>
+    </marker>
+    <marker id="b4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b8def"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="400" fill="url(#bg2)"/>
+  <ellipse cx="140" cy="90" rx="150" ry="60" fill="#ffffff" opacity="0.05"/>
+  <ellipse cx="1060" cy="90" rx="160" ry="60" fill="#ffffff" opacity="0.05"/>
+  <text x="600" y="70" text-anchor="middle" font-size="30" font-weight="bold" fill="#ffffff">Decommissioning a home DNS</text>
+
+  <rect x="110" y="175" width="180" height="60" rx="6" fill="none" stroke="#e0664f" stroke-width="2"/>
+  <text x="200" y="200" text-anchor="middle" font-size="15" font-weight="bold" fill="#e8ecff">home DNS</text>
+  <text x="200" y="220" text-anchor="middle" font-size="13" fill="#e0664f">decommissioned</text>
+  <line x1="290" y1="205" x2="365" y2="205" stroke="#e0664f" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#b1)"/>
+
+  <circle cx="390" cy="200" r="28" fill="none" stroke="#5b8def" stroke-width="2"/>
+  <ellipse cx="390" cy="200" rx="12" ry="28" fill="none" stroke="#5b8def" stroke-width="1.5"/>
+  <line x1="362" y1="200" x2="418" y2="200" stroke="#5b8def" stroke-width="1.5"/>
+  <text x="390" y="250" text-anchor="middle" font-size="12" fill="#a9b3d9">public DNS</text>
+  <line x1="418" y1="200" x2="490" y2="200" stroke="#3ddc97" stroke-width="2" marker-end="url(#b2)"/>
+
+  <rect x="500" y="175" width="65" height="50" rx="4" fill="none" stroke="#3ddc97" stroke-width="2"/>
+  <line x1="510" y1="192" x2="555" y2="192" stroke="#3ddc97" stroke-width="1.5"/>
+  <text x="532" y="250" text-anchor="middle" font-size="12" fill="#a9b3d9">before</text>
+  <line x1="565" y1="200" x2="640" y2="200" stroke="#f0a83c" stroke-width="2" marker-end="url(#b3)"/>
+
+  <rect x="650" y="175" width="65" height="50" rx="4" fill="none" stroke="#f0a83c" stroke-width="2"/>
+  <text x="682" y="250" text-anchor="middle" font-size="12" fill="#a9b3d9">after</text>
+  <line x1="715" y1="200" x2="775" y2="200" stroke="#5b8def" stroke-width="2" marker-end="url(#b4)"/>
+
+  <path d="M810,180 a20,20 0 0 1 40,0 v14 h-40 z" fill="none" stroke="#5b8def" stroke-width="2.5"/>
+  <rect x="805" y="194" width="50" height="35" rx="4" fill="none" stroke="#5b8def" stroke-width="2.5"/>
+  <text x="830" y="250" text-anchor="middle" font-size="12" fill="#a9b3d9">reduced surface</text>
+
+  <text x="600" y="345" text-anchor="middle" font-size="17" fill="#a9b3d9">Cloudflare migration + EC2 downsizing — with a self-inflicted DNS outage along the way</text>
+</svg>

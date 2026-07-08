@@ -29,14 +29,14 @@ Une fois dans une session tmux, il est essentiel de connaître les raccourcis cl
 
 Tout d'abord, pour installer les outils sur Ubuntu 18.04 nous commencerons comme toujours par mettre à jour le système.
 
-```
+```bash
 sudo apt update
 sudo apt upgrade
 ```
 
 Vim est normalement installé de base sur Ubuntu, mais vous pouvez utiliser cette commande pour vous en assurer.
 
-```
+```bash
 sudo apt install vim
 ```
 
@@ -45,7 +45,7 @@ https://github.com/tmuxinator/tmuxinator#installation
 
 Quand au binaire de tmux, il est disponible dans le gestionnaire de paquets de base de Ubuntu.
 
-```
+```bash
 sudo apt install tmux
 sudo apt install ruby-full
 gem install tmuxinator
@@ -55,7 +55,7 @@ source ~/.bin/tmuxinator.zsh
 
 En plus de profiter des outils précédemment décrits, j'utilise depuis longtemps la console **ZSH** notamment pour la facilité qu'elle offre pour parcourir les différentes commandes que nous sommes appelées à utiliser au jour le jour. Par dessus ZSH, j'ai aussi ajouté une configuration déjà codée par Robby Russell: **Oh My ZSH**.
 
-```
+```bash
 sudo apt install git-core zsh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 ```
@@ -67,7 +67,7 @@ Oh My ZSH offre plusieurs thèmes que je vous invite à explorer sur la page de 
 
 Si vous êtes un DevOps, vous aurez sans doute le réflexe louable de mettre ces outils à votre main. Je vous encourage à le faire en consultant les nombreuses ressources du web, mais à titre d'exemple je vous partage ma configuration personnelle très sommaire avec les instructions qui m'intéressent le plus.
 
-```
+```bash
 cd ~
 wget https://labodeludo.dev/wp-content/uploads/2019/09/20110651/zshrc.tar
 wget https://labodeludo.dev/wp-content/uploads/2019/09/20110208/tmux.tar

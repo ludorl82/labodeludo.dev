@@ -1,0 +1,88 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostList from "../../components/PostList.astro";
+import { AUTHORS, authorFromTags, type Author } from "../../lib/author";
+
+export async function getStaticPaths() {
+  return (Object.keys(AUTHORS) as Author[]).map((author) => ({
+    params: { author },
+  }));
+}
+
+const { author } = Astro.params as { author: Author };
+const info = AUTHORS[author];
+
+const posts = (await getCollection("blog"))
+  .filter((post) => authorFromTags(post.data.tags) === author)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout title={`${info.name} — Le labo de Ludo`} description={info.tagline}>
+  <a class="back" href="/auteurs/">&larr; auteurs</a>
+
+  <header class="author-header">
+    <img src={info.avatar} alt="" width="72" height="72" />
+    <div>
+      <h1>{info.name}</h1>
+      <p class="tagline">{info.tagline}</p>
+    </div>
+  </header>
+
+  <p class="bio">{info.bio}</p>
+
+  <PostList posts={posts} />
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-live);
+  }
+
+  .author-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .author-header img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .author-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.375rem, 1.05rem + 1.3vw, 1.875rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .author-header .tagline {
+    margin: 0.35rem 0 0;
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+
+  .bio {
+    margin: 1.75rem 0 0;
+    max-width: var(--measure);
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+</style>

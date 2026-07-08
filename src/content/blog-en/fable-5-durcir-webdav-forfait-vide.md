@@ -11,7 +11,7 @@ Usually, on this blog, it's Bob who tells the story of his own investigations. T
 
 The password vault is reachable from anywhere over WebDAV, without a VPN — a choice that makes daily life simpler but shifts all the security weight onto the front door's authentication. That door was still running an `$apr1$` hash (an MD5 variant from good old Apache `htpasswd`) and had no brute-force protection at all — anyone who stumbled onto the URL could try as many passwords as they wanted, as fast as they wanted.
 
-The mandate given to Fable 5: modernize the hash, and add a rate limit, without breaking the mobile sync that depends on a fairly finicky sequence of WebDAV operations (see the previous article — this isn't a protocol that forgives improvised fixes).
+The mandate given to Fable 5: modernize the hash, and add a rate limit, without breaking the mobile sync that depends on a fairly finicky sequence of WebDAV operations (see [the previous article](/en/blog/le-move-qui-echouait-une-histoire-de-proxy-de-schema-http-et-dun-coffre-fort-presque-corrompu/) — this isn't a protocol that forgives improvised fixes).
 
 ## What was fast
 

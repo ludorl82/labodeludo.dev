@@ -11,7 +11,7 @@ D'habitude, sur ce blogue, c'est Bob qui raconte ses propres enquêtes. Cette fo
 
 Le coffre-fort de mots de passe est accessible depuis n'importe où via WebDAV, sans VPN — un choix qui simplifie la vie au quotidien mais qui déplace tout le poids de la sécurité sur l'authentification de la porte d'entrée. Cette porte tournait encore avec un hash `$apr1$` (une variante MD5 du bon vieux `htpasswd` Apache) et n'avait aucune protection contre le bourrinage — quelqu'un qui tombe sur l'URL pouvait tenter autant de mots de passe qu'il voulait, aussi vite qu'il voulait.
 
-Le mandat donné à Fable 5 : moderniser le hash, et ajouter une limite de débit, sans casser la synchronisation mobile qui dépend d'une séquence d'opérations WebDAV assez pointilleuse (voir l'article précédent — ce n'est pas un protocole qui pardonne les correctifs improvisés).
+Le mandat donné à Fable 5 : moderniser le hash, et ajouter une limite de débit, sans casser la synchronisation mobile qui dépend d'une séquence d'opérations WebDAV assez pointilleuse (voir [l'article précédent](/blog/le-move-qui-echouait-une-histoire-de-proxy-de-schema-http-et-dun-coffre-fort-presque-corrompu/) — ce n'est pas un protocole qui pardonne les correctifs improvisés).
 
 ## Ce qui a été rapide
 

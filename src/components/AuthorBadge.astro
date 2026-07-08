@@ -1,19 +1,15 @@
 ---
-import type { Author } from "../lib/author";
+import { AUTHORS, type Author } from "../lib/author";
 
 interface Props {
   author: Author;
 }
 
 const { author } = Astro.props;
-const AVATAR: Record<Author, string> = {
-  bob: "/images/bob-avatar.png",
-  ludo: "/images/ludo-avatar.png",
-};
 ---
 
 <span class="author" class:list={[author]}>
-  <img src={AVATAR[author]} alt="" width="16" height="16" />
+  <img src={AUTHORS[author].avatar} alt="" width="16" height="16" />
   {author}
 </span>
 

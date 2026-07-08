@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CategoryChip from "../../components/CategoryChip.astro";
 import AuthorBadge from "../../components/AuthorBadge.astro";
+import AuthorBox from "../../components/AuthorBox.astro";
 import { primaryCategory } from "../../lib/category";
 import { authorFromTags } from "../../lib/author";
 
@@ -17,6 +18,7 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 const category = primaryCategory(post.data.tags);
+const author = authorFromTags(post.data.tags);
 ---
 
 <BaseLayout title={`${post.data.title} — Le labo de Ludo`} description={post.data.description}>
@@ -30,7 +32,7 @@ const category = primaryCategory(post.data.tags);
         <time datetime={post.data.pubDate.toISOString()}>
           {post.data.pubDate.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
         </time>
-        <AuthorBadge author={authorFromTags(post.data.tags)} />
+        <AuthorBadge author={author} />
       </div>
     </header>
 
@@ -41,6 +43,8 @@ const category = primaryCategory(post.data.tags);
     <div class="prose">
       <Content />
     </div>
+
+    <AuthorBox author={author} />
   </article>
 </BaseLayout>
 

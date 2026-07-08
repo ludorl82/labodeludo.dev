@@ -1,25 +1,37 @@
 ---
+interface NavItem {
+  href: string;
+  label: string;
+}
+
 interface Props {
   lang?: "fr" | "en";
   homeHref?: string;
+  navItems?: NavItem[];
 }
 
-const { lang = "fr", homeHref = "/" } = Astro.props;
+const { lang = "fr", homeHref = "/", navItems = [] } = Astro.props;
+
+const pages = [{ href: homeHref, label: lang === "en" ? "Home" : "Accueil" }, ...navItems];
 
 const shortcuts =
   lang === "en"
     ? [
-        ["j / k", "move between posts"],
-        ["gg / G", "jump to top / bottom"],
+        ["j / k", "move between posts, or scroll an article"],
+        ["gg / G", "top / bottom of the list or article"],
         ["gh", "go to the homepage"],
+        ["C-b n / p", "next / previous page (tmux-style)"],
+        ["C-b 0-9", "jump straight to page N"],
         ["Enter", "open focused post"],
         ["Esc", "clear focus / close this"],
         ["?", "toggle this cheat sheet"],
       ]
     : [
-        ["j / k", "se déplacer entre les articles"],
-        ["gg / G", "aller en haut / en bas"],
+        ["j / k", "se déplacer entre les articles, ou faire défiler un article"],
+        ["gg / G", "haut / bas de la liste ou de l'article"],
         ["gh", "revenir à l'accueil"],
+        ["C-b n / p", "page suivante / précédente (façon tmux)"],
+        ["C-b 0-9", "aller directement à la page N"],
         ["Entrée", "ouvrir l'article ciblé"],
         ["Échap", "annuler le focus / fermer ceci"],
         ["?", "afficher / masquer cette aide"],
@@ -144,7 +156,7 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
   }
 </style>
 
-<script define:vars={{ lang, homeHref }}>
+<script define:vars={{ lang, homeHref, pages }}>
   const help = document.getElementById("keyboard-help");
   const toast = document.getElementById("sudo-toast");
   const links = Array.from(document.querySelectorAll(".list .row-link"));
@@ -160,14 +172,59 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
     links[clamped].scrollIntoView({ block: "nearest" });
   }
 
+  function gotoPage(index) {
+    const page = pages[index];
+    if (page) window.location.href = page.href;
+  }
+
+  function gotoRelativePage(delta) {
+    const current = pages.findIndex((p) => p.href === window.location.pathname);
+    const next = ((current === -1 ? 0 : current) + delta + pages.length) % pages.length;
+    gotoPage(next);
+  }
+
   let pendingG = false;
   let pendingGAt = 0;
   const G_TIMEOUT = 500;
 
+  let tmuxPrefix = false;
+  let tmuxPrefixAt = 0;
+  const TMUX_PREFIX_TIMEOUT = 2000;
+
   document.addEventListener("keydown", (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
     const tag = document.activeElement?.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    if (e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "b") {
+      e.preventDefault();
+      tmuxPrefix = true;
+      tmuxPrefixAt = Date.now();
+      return;
+    }
+
+    if (tmuxPrefix) {
+      const active = Date.now() - tmuxPrefixAt < TMUX_PREFIX_TIMEOUT;
+      tmuxPrefix = false;
+      if (active) {
+        if (e.key === "n") {
+          e.preventDefault();
+          gotoRelativePage(1);
+          return;
+        }
+        if (e.key === "p") {
+          e.preventDefault();
+          gotoRelativePage(-1);
+          return;
+        }
+        if (/^[0-9]$/.test(e.key)) {
+          e.preventDefault();
+          gotoPage(Number(e.key));
+          return;
+        }
+      }
+    }
+
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
 
     if (e.key === "?") {
       e.preventDefault();
@@ -192,7 +249,11 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
     if (gPending) {
       if (e.key === "g") {
         e.preventDefault();
-        focusAt(0);
+        if (links.length) {
+          focusAt(0);
+        } else {
+          window.scrollTo({ top: 0 });
+        }
         return;
       }
       if (e.key === "h") {
@@ -208,16 +269,29 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
       return;
     }
 
+    const SCROLL_STEP = 100;
     const current = links.indexOf(document.activeElement);
     if (e.key === "j") {
       e.preventDefault();
-      focusAt(current + 1);
+      if (links.length) {
+        focusAt(current + 1);
+      } else {
+        window.scrollBy({ top: SCROLL_STEP, behavior: "smooth" });
+      }
     } else if (e.key === "k") {
       e.preventDefault();
-      focusAt(current === -1 ? links.length - 1 : current - 1);
+      if (links.length) {
+        focusAt(current === -1 ? links.length - 1 : current - 1);
+      } else {
+        window.scrollBy({ top: -SCROLL_STEP, behavior: "smooth" });
+      }
     } else if (e.key === "G") {
       e.preventDefault();
-      focusAt(links.length - 1);
+      if (links.length) {
+        focusAt(links.length - 1);
+      } else {
+        window.scrollTo({ top: document.documentElement.scrollHeight });
+      }
     }
   });
 

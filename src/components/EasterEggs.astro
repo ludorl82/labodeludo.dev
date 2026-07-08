@@ -161,7 +161,9 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
 <script define:vars={{ lang, homeHref, pages }}>
   const help = document.getElementById("keyboard-help");
   const toast = document.getElementById("sudo-toast");
-  const links = Array.from(document.querySelectorAll(".list .row-link"));
+  const links = Array.from(
+    document.querySelectorAll(".list .row-link, .authors .author-link, .items .item-link")
+  );
 
   function toggleHelp() {
     help.hidden = !help.hidden;

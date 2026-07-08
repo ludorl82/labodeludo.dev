@@ -1,0 +1,89 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { AUTHORS } from "../lib/author";
+
+const authors = Object.entries(AUTHORS);
+---
+
+<BaseLayout title="Auteurs — Le labo de Ludo" description="Qui écrit sur le labo de Ludo.">
+  <a class="back" href="/">&larr; tous les articles</a>
+
+  <header class="page-header">
+    <h1>Auteurs</h1>
+  </header>
+
+  <ul class="authors">
+    {
+      authors.map(([key, info]) => (
+        <li id={key} class="author-entry">
+          <img src={info.avatar} alt="" width="72" height="72" />
+          <div>
+            <p class="name">{info.name}</p>
+            <p class="bio">{info.bio}</p>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-live);
+  }
+
+  .page-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0 0 2rem;
+  }
+
+  .authors {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: var(--measure);
+  }
+
+  .author-entry {
+    display: flex;
+    gap: 1.25rem;
+    padding: 2rem 0;
+    border-top: 1px solid var(--panel-border);
+    scroll-margin-top: 2rem;
+  }
+
+  .author-entry img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .name {
+    margin: 0.1rem 0 0.5rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.0625rem;
+  }
+
+  .bio {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+</style>

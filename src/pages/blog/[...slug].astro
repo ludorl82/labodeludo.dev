@@ -3,7 +3,7 @@ import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CategoryChip from "../../components/CategoryChip.astro";
 import AuthorBadge from "../../components/AuthorBadge.astro";
-import AuthorBox from "../../components/AuthorBox.astro";
+import AuthorLine from "../../components/AuthorLine.astro";
 import { primaryCategory } from "../../lib/category";
 import { authorFromTags } from "../../lib/author";
 
@@ -44,7 +44,7 @@ const author = authorFromTags(post.data.tags);
       <Content />
     </div>
 
-    <AuthorBox author={author} />
+    <AuthorLine author={author} />
   </article>
 </BaseLayout>
 

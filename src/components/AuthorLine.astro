@@ -1,0 +1,48 @@
+---
+import { AUTHORS, type Author } from "../lib/author";
+
+interface Props {
+  author: Author;
+}
+
+const { author } = Astro.props;
+const info = AUTHORS[author];
+---
+
+<div class="author-line-wrap">
+  <a class="author-line" href={`/auteurs/#${author}`}>
+    <img src={info.avatar} alt="" width="20" height="20" />
+    <span>Écrit par {info.name}</span>
+  </a>
+</div>
+
+<style>
+  .author-line-wrap {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--panel-border);
+    max-width: var(--measure);
+  }
+
+  .author-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    text-decoration: none;
+  }
+
+  .author-line img {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+  }
+
+  .author-line:hover {
+    color: var(--accent-live);
+  }
+</style>

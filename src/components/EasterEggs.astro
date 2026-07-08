@@ -1,15 +1,17 @@
 ---
 interface Props {
   lang?: "fr" | "en";
+  homeHref?: string;
 }
 
-const { lang = "fr" } = Astro.props;
+const { lang = "fr", homeHref = "/" } = Astro.props;
 
 const shortcuts =
   lang === "en"
     ? [
         ["j / k", "move between posts"],
         ["gg / G", "jump to top / bottom"],
+        ["gh", "go to the homepage"],
         ["Enter", "open focused post"],
         ["Esc", "clear focus / close this"],
         ["?", "toggle this cheat sheet"],
@@ -17,6 +19,7 @@ const shortcuts =
     : [
         ["j / k", "se déplacer entre les articles"],
         ["gg / G", "aller en haut / en bas"],
+        ["gh", "revenir à l'accueil"],
         ["Entrée", "ouvrir l'article ciblé"],
         ["Échap", "annuler le focus / fermer ceci"],
         ["?", "afficher / masquer cette aide"],
@@ -141,13 +144,25 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
   }
 </style>
 
-<script define:vars={{ lang }}>
+<script define:vars={{ lang, homeHref }}>
   const help = document.getElementById("keyboard-help");
   const toast = document.getElementById("sudo-toast");
+  const links = Array.from(document.querySelectorAll(".list .row-link"));
 
   function toggleHelp() {
     help.hidden = !help.hidden;
   }
+
+  function focusAt(index) {
+    if (!links.length) return;
+    const clamped = Math.max(0, Math.min(index, links.length - 1));
+    links[clamped].focus();
+    links[clamped].scrollIntoView({ block: "nearest" });
+  }
+
+  let pendingG = false;
+  let pendingGAt = 0;
+  const G_TIMEOUT = 500;
 
   document.addEventListener("keydown", (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -157,8 +172,52 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
     if (e.key === "?") {
       e.preventDefault();
       toggleHelp();
-    } else if (e.key === "Escape" && !help.hidden) {
-      help.hidden = true;
+      pendingG = false;
+      return;
+    }
+
+    if (e.key === "Escape") {
+      if (!help.hidden) {
+        help.hidden = true;
+      } else {
+        document.activeElement?.blur();
+      }
+      pendingG = false;
+      return;
+    }
+
+    const gPending = pendingG && Date.now() - pendingGAt < G_TIMEOUT;
+    pendingG = false;
+
+    if (gPending) {
+      if (e.key === "g") {
+        e.preventDefault();
+        focusAt(0);
+        return;
+      }
+      if (e.key === "h") {
+        e.preventDefault();
+        window.location.href = homeHref;
+        return;
+      }
+    }
+
+    if (e.key === "g") {
+      pendingG = true;
+      pendingGAt = Date.now();
+      return;
+    }
+
+    const current = links.indexOf(document.activeElement);
+    if (e.key === "j") {
+      e.preventDefault();
+      focusAt(current + 1);
+    } else if (e.key === "k") {
+      e.preventDefault();
+      focusAt(current === -1 ? links.length - 1 : current - 1);
+    } else if (e.key === "G") {
+      e.preventDefault();
+      focusAt(links.length - 1);
     }
   });
 

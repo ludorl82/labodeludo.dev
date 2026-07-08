@@ -6,20 +6,23 @@ import { authorFromTags } from "../lib/author";
 
 interface Props {
   posts: { id: string; data: { title: string; description?: string; pubDate: Date; tags: string[] } }[];
+  basePath?: string;
+  lang?: "fr" | "en";
 }
 
-const { posts } = Astro.props;
+const { posts, basePath = "/blog", lang = "fr" } = Astro.props;
+const dateLocale = lang === "en" ? "en-CA" : "fr-CA";
 ---
 
 <ul class="list">
   {
     posts.map((post) => (
       <li class="row">
-        <a class="row-link" href={`/blog/${post.id}/`}>
+        <a class="row-link" href={`${basePath}/${post.id}/`}>
           <div class="row-meta">
             <CategoryChip category={primaryCategory(post.data.tags)} />
             <time datetime={post.data.pubDate.toISOString()}>
-              {post.data.pubDate.toLocaleDateString("fr-CA")}
+              {post.data.pubDate.toLocaleDateString(dateLocale)}
             </time>
             <AuthorBadge author={authorFromTags(post.data.tags)} />
           </div>

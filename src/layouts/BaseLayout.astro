@@ -5,12 +5,23 @@ import Lightbox from "../components/Lightbox.astro";
 interface Props {
   title: string;
   description?: string;
+  lang?: "fr" | "en";
 }
 
-const { title, description } = Astro.props;
+const { title, description, lang = "fr" } = Astro.props;
+
+const homeHref = lang === "en" ? "/en/" : "/";
+const tagline =
+  lang === "en"
+    ? "homelab & personal infra, in public"
+    : "homelab & infra personnelle, en public";
+const footerLine =
+  lang === "en"
+    ? "Le labo de Ludo — the journal of our experiments at home."
+    : "Le labo de Ludo — le journal de nos expérimentations à la maison.";
 ---
 
-<html lang="fr">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -24,10 +35,10 @@ const { title, description } = Astro.props;
   <body>
     <div class="page">
       <header class="site-header">
-        <a class="wordmark" href="/">
+        <a class="wordmark" href={homeHref}>
           <span class="wordmark-prompt">ludo@labo</span><span class="wordmark-sep">:~$</span>
         </a>
-        <p class="tagline">homelab &amp; infra personnelle, en public</p>
+        <p class="tagline">{tagline}</p>
       </header>
 
       <main>
@@ -36,13 +47,21 @@ const { title, description } = Astro.props;
 
       <footer class="site-footer">
         <p>
-          Le labo de Ludo — le journal de nos expérimentations à la maison.
+          {footerLine}
         </p>
         <nav class="footer-nav">
-          <a href="/mission/">Mission</a>
-          <a href="/architecture/">Architecture</a>
-          <a href="/inventaire/">Inventaire</a>
-          <a href="/auteurs/">Auteurs</a>
+          {
+            lang === "en" ? (
+              <a href="/">Français</a>
+            ) : (
+              <>
+                <a href="/mission/">Mission</a>
+                <a href="/architecture/">Architecture</a>
+                <a href="/inventaire/">Inventaire</a>
+                <a href="/auteurs/">Auteurs</a>
+              </>
+            )
+          }
           <a href="https://github.com/ludorl82">GitHub</a>
         </nav>
       </footer>

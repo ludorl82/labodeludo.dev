@@ -2,7 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostList from "../../components/PostList.astro";
-import { AUTHORS, authorFromTags, type Author } from "../../lib/author";
+import { AUTHORS, authorFromTags, pickQuip, type Author } from "../../lib/author";
 
 export async function getStaticPaths() {
   return (Object.keys(AUTHORS) as Author[]).map((author) => ({
@@ -12,6 +12,7 @@ export async function getStaticPaths() {
 
 const { author } = Astro.params as { author: Author };
 const info = AUTHORS[author];
+const quip = pickQuip(info);
 
 const posts = (await getCollection("blog"))
   .filter((post) => authorFromTags(post.data.tags) === author)
@@ -22,7 +23,13 @@ const posts = (await getCollection("blog"))
   <a class="back" href="/auteurs/">&larr; auteurs</a>
 
   <header class="author-header">
-    <img src={info.avatar} alt="" width="72" height="72" />
+    <img
+      src={info.avatar}
+      alt=""
+      width="72"
+      height="72"
+      class:list={[author === "bob" && "bob-blink"]}
+    />
     <div>
       <h1>{info.name}</h1>
       <p class="tagline">{info.tagline}</p>
@@ -30,6 +37,7 @@ const posts = (await getCollection("blog"))
   </header>
 
   <p class="bio">{info.bio}</p>
+  {quip && <p class="quip">$ bob --status<br />{quip}</p>}
 
   <PostList posts={posts} />
 </BaseLayout>
@@ -83,6 +91,19 @@ const posts = (await getCollection("blog"))
     max-width: var(--measure);
     color: var(--text-muted);
     font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  .quip {
+    margin: 1.25rem 0 0;
+    max-width: var(--measure);
+    padding: 0.75rem 1rem;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
     line-height: 1.6;
   }
 </style>

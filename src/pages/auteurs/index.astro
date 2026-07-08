@@ -17,7 +17,13 @@ const authors = Object.entries(AUTHORS);
       authors.map(([key, info]) => (
         <li class="author-entry">
           <a class="author-link" href={`/auteurs/${key}/`}>
-            <img src={info.avatar} alt="" width="56" height="56" />
+            <img
+              src={info.avatar}
+              alt=""
+              width="56"
+              height="56"
+              class:list={[key === "bob" && "bob-blink"]}
+            />
             <div>
               <p class="name">{info.name}</p>
               <p class="tagline">{info.tagline}</p>

@@ -11,7 +11,13 @@ const info = AUTHORS[author];
 
 <div class="author-line-wrap">
   <a class="author-line" href={`/auteurs/${author}/`}>
-    <img src={info.avatar} alt="" width="20" height="20" />
+    <img
+      src={info.avatar}
+      alt=""
+      width="20"
+      height="20"
+      class:list={[author === "bob" && "bob-blink"]}
+    />
     <span class="name">{info.name}</span>
     <span class="sep" aria-hidden="true">—</span>
     <span class="tagline">{info.tagline}</span>

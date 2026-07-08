@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import Lightbox from "../components/Lightbox.astro";
+import EasterEggs from "../components/EasterEggs.astro";
 
 interface Props {
   title: string;
@@ -79,10 +80,16 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
             ))
           }
         </nav>
+        <p class="kbd-hint">
+          {lang === "en"
+            ? "Tip: press ? for keyboard shortcuts."
+            : "Astuce : appuyez sur ? pour les raccourcis clavier."}
+        </p>
       </footer>
     </div>
 
     <Lightbox />
+    <EasterEggs lang={lang} />
   </body>
 </html>
 
@@ -144,6 +151,11 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     align-items: stretch;
     flex-wrap: wrap;
     margin-top: 0.75rem;
+  }
+
+  .site-footer .kbd-hint {
+    margin-top: 0.85rem;
+    color: var(--text-faint);
   }
 
   .seg {

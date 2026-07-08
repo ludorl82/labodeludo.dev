@@ -1,0 +1,66 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout lang="en" title="404 — Le labo de Ludo">
+  <a class="back" href="/en/">&larr; all posts</a>
+
+  <header class="page-header">
+    <h1>404</h1>
+  </header>
+
+  <pre class="term"><code>$ locate this-page
+locate: no matches found
+
+$ echo $?
+404</code></pre>
+
+  <p class="hint">This page doesn't exist (anymore). Back to the homepage?</p>
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-live);
+  }
+
+  .page-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0 0 1.5rem;
+  }
+
+  .term {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-left: 3px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    line-height: 1.55;
+    max-width: var(--measure);
+  }
+
+  .term code {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+
+  .hint {
+    margin: 1.5rem 0 0;
+    max-width: var(--measure);
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+  }
+</style>

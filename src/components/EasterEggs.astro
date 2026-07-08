@@ -18,20 +18,22 @@ const shortcuts =
   lang === "en"
     ? [
         ["j / k", "move between posts, or scroll an article"],
+        ["f / b", "page down / up, faster"],
         ["gg / G", "top / bottom of the list or article"],
         ["gh", "go to the homepage"],
-        ["C-b n / p", "next / previous page (tmux-style)"],
-        ["C-b 0-9", "jump straight to page N"],
+        ["gn / gp", "next / previous nav page"],
+        ["g1-g9", "jump straight to nav page N"],
         ["Enter", "open focused post"],
         ["Esc", "clear focus / close this"],
         ["?", "toggle this cheat sheet"],
       ]
     : [
         ["j / k", "se déplacer entre les articles, ou faire défiler un article"],
+        ["f / b", "avancer / reculer d'une page, plus vite"],
         ["gg / G", "haut / bas de la liste ou de l'article"],
         ["gh", "revenir à l'accueil"],
-        ["C-b n / p", "page suivante / précédente (façon tmux)"],
-        ["C-b 0-9", "aller directement à la page N"],
+        ["gn / gp", "page de nav suivante / précédente"],
+        ["g1-g9", "aller directement à la page de nav N"],
         ["Entrée", "ouvrir l'article ciblé"],
         ["Échap", "annuler le focus / fermer ceci"],
         ["?", "afficher / masquer cette aide"],
@@ -187,44 +189,10 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
   let pendingGAt = 0;
   const G_TIMEOUT = 500;
 
-  let tmuxPrefix = false;
-  let tmuxPrefixAt = 0;
-  const TMUX_PREFIX_TIMEOUT = 2000;
-
   document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     const tag = document.activeElement?.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA") return;
-
-    if (e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "b") {
-      e.preventDefault();
-      tmuxPrefix = true;
-      tmuxPrefixAt = Date.now();
-      return;
-    }
-
-    if (tmuxPrefix) {
-      const active = Date.now() - tmuxPrefixAt < TMUX_PREFIX_TIMEOUT;
-      tmuxPrefix = false;
-      if (active) {
-        if (e.key === "n") {
-          e.preventDefault();
-          gotoRelativePage(1);
-          return;
-        }
-        if (e.key === "p") {
-          e.preventDefault();
-          gotoRelativePage(-1);
-          return;
-        }
-        if (/^[0-9]$/.test(e.key)) {
-          e.preventDefault();
-          gotoPage(Number(e.key));
-          return;
-        }
-      }
-    }
-
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
 
     if (e.key === "?") {
       e.preventDefault();
@@ -261,6 +229,21 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
         window.location.href = homeHref;
         return;
       }
+      if (e.key === "n") {
+        e.preventDefault();
+        gotoRelativePage(1);
+        return;
+      }
+      if (e.key === "p") {
+        e.preventDefault();
+        gotoRelativePage(-1);
+        return;
+      }
+      if (/^[1-9]$/.test(e.key)) {
+        e.preventDefault();
+        gotoPage(Number(e.key));
+        return;
+      }
     }
 
     if (e.key === "g") {
@@ -270,20 +253,37 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
     }
 
     const SCROLL_STEP = 100;
+    const PAGE_ROWS = 5;
+    const PAGE_FRACTION = 0.85;
     const current = links.indexOf(document.activeElement);
+
     if (e.key === "j") {
       e.preventDefault();
       if (links.length) {
         focusAt(current + 1);
       } else {
-        window.scrollBy({ top: SCROLL_STEP, behavior: "smooth" });
+        window.scrollBy({ top: SCROLL_STEP });
       }
     } else if (e.key === "k") {
       e.preventDefault();
       if (links.length) {
         focusAt(current === -1 ? links.length - 1 : current - 1);
       } else {
-        window.scrollBy({ top: -SCROLL_STEP, behavior: "smooth" });
+        window.scrollBy({ top: -SCROLL_STEP });
+      }
+    } else if (e.key === "f") {
+      e.preventDefault();
+      if (links.length) {
+        focusAt((current === -1 ? 0 : current) + PAGE_ROWS);
+      } else {
+        window.scrollBy({ top: window.innerHeight * PAGE_FRACTION });
+      }
+    } else if (e.key === "b") {
+      e.preventDefault();
+      if (links.length) {
+        focusAt((current === -1 ? links.length - 1 : current) - PAGE_ROWS);
+      } else {
+        window.scrollBy({ top: -window.innerHeight * PAGE_FRACTION });
       }
     } else if (e.key === "G") {
       e.preventDefault();

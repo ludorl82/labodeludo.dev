@@ -19,6 +19,17 @@ const footerLine =
   lang === "en"
     ? "Le labo de Ludo — the journal of our experiments at home."
     : "Le labo de Ludo — le journal de nos expérimentations à la maison.";
+
+const navItems =
+  lang === "en"
+    ? [{ href: "/", label: "Français" }]
+    : [
+        { href: "/mission/", label: "Mission" },
+        { href: "/architecture/", label: "Architecture" },
+        { href: "/inventaire/", label: "Inventaire" },
+        { href: "/auteurs/", label: "Auteurs" },
+      ];
+navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
 ---
 
 <html lang={lang}>
@@ -51,18 +62,22 @@ const footerLine =
         </p>
         <nav class="footer-nav">
           {
-            lang === "en" ? (
-              <a href="/">Français</a>
-            ) : (
+            navItems.map((item, i) => (
               <>
-                <a href="/mission/">Mission</a>
-                <a href="/architecture/">Architecture</a>
-                <a href="/inventaire/">Inventaire</a>
-                <a href="/auteurs/">Auteurs</a>
+                <span class:list={["seg", i % 2 === 0 ? "seg-a" : "seg-b"]}>
+                  <a href={item.href}>{item.label}</a>
+                </span>
+                <span
+                  class:list={[
+                    "arrow",
+                    i % 2 === 0 ? "arrow-a" : "arrow-b",
+                    i === navItems.length - 1 && "arrow-end",
+                  ]}
+                  aria-hidden="true"
+                />
               </>
-            )
+            ))
           }
-          <a href="https://github.com/ludorl82">GitHub</a>
         </nav>
       </footer>
     </div>
@@ -123,17 +138,77 @@ const footerLine =
   }
 
   .footer-nav {
+    --seg-a: #1c1c1c;
+    --seg-b: #2a2a2a;
     display: flex;
-    gap: 1.25rem;
+    align-items: stretch;
+    flex-wrap: wrap;
     margin-top: 0.75rem;
   }
 
-  .footer-nav a {
-    color: var(--text-faint);
+  .seg {
+    display: flex;
+    align-items: center;
+    padding: 0.35em 0.85em;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .seg a {
+    color: var(--text-muted);
     text-decoration: none;
   }
 
-  .footer-nav a:hover {
+  .seg-a {
+    background: var(--seg-a);
+  }
+
+  .seg-b {
+    background: var(--seg-b);
+  }
+
+  .seg:hover {
+    background: var(--accent-live);
+  }
+
+  .seg:hover a {
+    color: var(--bg);
+  }
+
+  /* Powerline-style slanted separators, using the Powerline glyph range
+     already bundled in the self-hosted Hack Nerd Font. */
+  .arrow {
+    display: flex;
+    align-items: center;
+    font-family: "Hack Nerd Font Mono", monospace;
+    line-height: 1;
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .arrow::before {
+    content: "\e0b0";
+  }
+
+  .arrow-a {
+    color: var(--seg-a);
+    background: var(--seg-b);
+  }
+
+  .arrow-b {
+    color: var(--seg-b);
+    background: var(--seg-a);
+  }
+
+  .arrow-end {
+    background: transparent;
+  }
+
+  /* Let the hover color bleed into the neighboring arrows, so the
+     highlight reads as one continuous slanted segment. */
+  .seg:hover + .arrow {
     color: var(--accent-live);
+  }
+
+  .arrow:has(+ .seg:hover) {
+    background: var(--accent-live);
   }
 </style>

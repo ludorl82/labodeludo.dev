@@ -20,9 +20,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   <div class="diagram-wrap">
     <svg
       class="diagram"
-      viewBox="0 0 1100 850"
+      viewBox="0 0 1100 870"
       role="img"
-      aria-label="Diagramme d'architecture : deux fournisseurs Internet reliés respectivement à un pare-feu domicile et à une VM cloud, connectés entre eux par un tunnel chiffré ; le pare-feu domicile distribue vers deux VLANs (Serveurs, Réseau local) et vers des clients mobiles en VPN."
+      aria-label="Diagramme d'architecture : deux fournisseurs Internet reliés respectivement à un pare-feu domicile et à une VM cloud, connectés entre eux par un tunnel chiffré ; le pare-feu domicile distribue vers deux VLANs (Serveurs, Réseau local) et vers des clients mobiles en VPN. La VM cloud achemine par proxy inverse vers des services précis à l'intérieur du réseau domicile."
     >
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -35,32 +35,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
       <!-- structural connectors -->
       <g class="conn" fill="none" stroke="var(--text-faint)" stroke-width="1.5">
-        <path d="M200,74 L220,360" marker-end="url(#arrow)" />
-        <path d="M820,74 L810,110" marker-end="url(#arrow)" />
-        <path d="M220,420 L270,470" marker-end="url(#arrow)" />
-        <path d="M220,420 C 400,440 620,440 750,470" marker-end="url(#arrow)" />
+        <path d="M200,80 L220,390" marker-end="url(#arrow)" />
+        <path d="M820,80 L810,110" marker-end="url(#arrow)" />
+        <path d="M220,450 L270,490" marker-end="url(#arrow)" />
+        <path d="M220,450 C 400,470 620,470 750,490" marker-end="url(#arrow)" />
       </g>
 
-      <!-- live / encrypted connectors -->
+      <!-- live / encrypted connectors (kept short, routed through open space only) -->
       <g class="conn-live" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4">
-        <path d="M700,330 C 550,380 420,380 350,392" marker-end="url(#arrow-live)" />
-        <path d="M350,405 C 550,470 750,500 900,545" marker-end="url(#arrow-live)" />
-        <path d="M900,172 C 400,250 150,600 90,710" marker-end="url(#arrow-live)" />
-        <path d="M900,190 C 500,300 250,540 100,610" marker-end="url(#arrow-live)" />
-        <path d="M900,208 C 650,320 700,480 700,510" marker-end="url(#arrow-live)" />
+        <path d="M700,335 L700,360 L350,360 L350,390" marker-end="url(#arrow-live)" />
+        <path d="M350,420 L390,420" marker-end="url(#arrow-live)" />
       </g>
 
       <!-- connector labels -->
       <g class="conn-label" font-family="var(--font-mono)" font-size="12" fill="var(--text-faint)">
-        <text x="150" y="220">WAN</text>
-        <text x="835" y="95">IP publique</text>
-        <text x="470" y="358">tunnel chiffré (VPN site-à-site)</text>
-        <text x="705" y="475">VPN clients distants</text>
+        <text x="150" y="240">WAN</text>
+        <text x="835" y="98">IP publique</text>
       </g>
-      <g class="conn-label" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">
-        <text x="330" y="655">labo.exemple.net</text>
-        <text x="330" y="565">media.exemple.net</text>
-        <text x="560" y="500">assistant.exemple.net</text>
+      <g class="conn-label" font-family="var(--font-mono)" font-size="12" fill="var(--accent-live)">
+        <text x="405" y="352">tunnel chiffré (VPN site-à-site)</text>
+        <text x="95" y="382" font-size="11">VPN clients distants</text>
       </g>
 
       <!-- Internet nodes -->
@@ -89,54 +83,62 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <text x="660" y="286" font-family="var(--font-mono)" font-size="13" fill="var(--text)">surveillance + alertes</text>
       </g>
 
+      <!-- Proxy routing note (avoids drawing long crossing lines across the whole diagram) -->
+      <g font-family="var(--font-mono)" font-size="12">
+        <text x="640" y="365" fill="var(--text-faint)">acheminement (proxy inverse) :</text>
+        <text x="650" y="384" fill="var(--accent-live)">labo.exemple.net &#8594; hôte conteneurs</text>
+        <text x="650" y="402" fill="var(--accent-live)">media.exemple.net &#8594; pipeline média</text>
+        <text x="650" y="420" fill="var(--accent-live)">assistant.exemple.net &#8594; domotique</text>
+      </g>
+
       <!-- Home gateway -->
       <g>
-        <rect x="90" y="360" width="260" height="60" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-        <text x="220" y="384" text-anchor="middle" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">pare-feu domicile</text>
-        <text x="220" y="401" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">portail.exemple.net</text>
-      </g>
-
-      <!-- VLAN Serveurs -->
-      <g>
-        <rect x="40" y="470" width="460" height="330" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
-        <text x="60" y="494" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Serveurs</text>
-
-        <rect x="60" y="510" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="535" font-family="var(--font-mono)" font-size="13" fill="var(--text)">bastion / console</text>
-
-        <rect x="60" y="560" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="585" font-family="var(--font-mono)" font-size="13" fill="var(--text)">stockage (NAS)</text>
-
-        <rect x="60" y="610" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="635" font-family="var(--font-mono)" font-size="13" fill="var(--text)">pipeline média</text>
-
-        <rect x="60" y="660" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="685" font-family="var(--font-mono)" font-size="13" fill="var(--text)">calcul GPU</text>
-
-        <rect x="60" y="710" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="735" font-family="var(--font-mono)" font-size="13" fill="var(--text)">hôte conteneurs (web)</text>
-      </g>
-
-      <!-- VLAN Réseau local -->
-      <g>
-        <rect x="560" y="470" width="380" height="210" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
-        <text x="580" y="494" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Réseau local</text>
-
-        <rect x="580" y="510" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="600" y="535" font-family="var(--font-mono)" font-size="13" fill="var(--text)">postes personnels</text>
-
-        <rect x="580" y="560" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="600" y="585" font-family="var(--font-mono)" font-size="13" fill="var(--text)">domotique</text>
-
-        <rect x="580" y="610" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="600" y="635" font-family="var(--font-mono)" font-size="13" fill="var(--text)">caméras / périphériques</text>
+        <rect x="90" y="390" width="260" height="60" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="220" y="414" text-anchor="middle" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">pare-feu domicile</text>
+        <text x="220" y="431" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">portail.exemple.net</text>
       </g>
 
       <!-- Mobile clients -->
       <g font-family="var(--font-mono)" font-size="13" text-anchor="middle">
-        <ellipse cx="950" cy="545" rx="130" ry="38" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="950" y="541" fill="var(--text)">clients mobiles</text>
-        <text x="950" y="558" fill="var(--text-faint)" font-size="11">(VPN)</text>
+        <ellipse cx="480" cy="420" rx="90" ry="30" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="480" y="416" fill="var(--text)">clients mobiles</text>
+        <text x="480" y="432" fill="var(--text-faint)" font-size="11">(VPN)</text>
+      </g>
+
+      <!-- VLAN Serveurs -->
+      <g>
+        <rect x="40" y="490" width="460" height="330" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="60" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Serveurs</text>
+
+        <rect x="60" y="530" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="80" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">bastion / console</text>
+
+        <rect x="60" y="580" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="80" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">stockage (NAS)</text>
+
+        <rect x="60" y="630" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="80" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">pipeline média</text>
+
+        <rect x="60" y="680" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="80" y="705" font-family="var(--font-mono)" font-size="13" fill="var(--text)">calcul GPU</text>
+
+        <rect x="60" y="730" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="80" y="755" font-family="var(--font-mono)" font-size="13" fill="var(--text)">hôte conteneurs (web)</text>
+      </g>
+
+      <!-- VLAN Réseau local -->
+      <g>
+        <rect x="560" y="490" width="380" height="210" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="580" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Réseau local</text>
+
+        <rect x="580" y="530" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="600" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">postes personnels</text>
+
+        <rect x="580" y="580" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="600" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">domotique</text>
+
+        <rect x="580" y="630" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="600" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">caméras / périphériques</text>
       </g>
     </svg>
   </div>

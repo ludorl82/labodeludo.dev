@@ -57,7 +57,7 @@ J'ai finalement arrêté mon choix sur le **Happy Hacking Keyboard Professional 
 
 [![](/images/blog/2020/03/21081357/vue-de-dessus-1024x383.jpg)](/images/blog/2020/03/21081357/vue-de-dessus.jpg)
 
-Happy Hacking Keyboard Professional Type-S
+Happy Hacking Keyboard Professional Type-S — [voir sur Instagram ↗](https://www.instagram.com/p/B9z50FzjBiE/?img_index=1)
 
 Comme on peut le voir ici, le HHKB possède par défaut la touche `Ctrl` dans la position traditionnellement occupée par `Verr. Maj.` Aussi on remarquera que les flèches sont relayées à des touches de deuxième couche accessible avec la clé `Fn`, comme plusieurs autres touches. La touche de retour arrière est plus facile d'accès en étant située dans la deuxième rangée à partir du haut, juste au dessus de la touche `Entrée`. Finalement les touches `Meta` et `Alt` sont inversées par rapport aux claviers de Windows, suivant plutôt la convention des ordinateurs MacOS. Quand on passe d'un ordinateur à l'autre, ce n'est pas toujours pratique de devoir réaffecter les touches au niveau logiciel. Personnellement j'ai choisi de m'investir avec un clavier que je peux traîner avec moi partout et avec lequel je suis bien à l'aise de travailler.
 

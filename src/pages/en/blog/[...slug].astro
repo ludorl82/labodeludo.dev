@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import CategoryChip from "../../../components/CategoryChip.astro";
 import AuthorBadge from "../../../components/AuthorBadge.astro";
+import ShareButtons from "../../../components/ShareButtons.astro";
 import { primaryCategory } from "../../../lib/category";
 import { authorFromTags } from "../../../lib/author";
 
@@ -48,6 +49,8 @@ const hasFrench = frenchPosts.some((p) => p.id === post.id);
     <div class="prose">
       <Content />
     </div>
+
+    <ShareButtons url={new URL(`/en/blog/${post.id}/`, Astro.site).toString()} title={post.data.title} lang="en" />
   </article>
 </BaseLayout>
 

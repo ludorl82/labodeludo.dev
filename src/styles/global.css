@@ -1,22 +1,60 @@
+@font-face {
+  font-family: "Hack Nerd Font Mono";
+  src: url("/fonts/hack-nerd-mono/hack-nerd-mono-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Hack Nerd Font Mono";
+  src: url("/fonts/hack-nerd-mono/hack-nerd-mono-bold.woff2") format("woff2");
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Hack Nerd Font Mono";
+  src: url("/fonts/hack-nerd-mono/hack-nerd-mono-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Hack Nerd Font Mono";
+  src: url("/fonts/hack-nerd-mono/hack-nerd-mono-bolditalic.woff2") format("woff2");
+  font-weight: 600 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
-  /* base */
-  --bg: #1c1a17;
-  --panel: #262320;
-  --panel-border: #37332c;
-  --text: #f0ebe2;
-  --text-muted: #b5ac9e;
-  --text-faint: #7d7669;
+  /* base — true black console, grayscale ramp lifted from the tmux
+     powerline "gray" theme (colour233..colour250) */
+  --bg: #000000;
+  --panel: #121212;
+  --panel-border: #444444;
+  --text: #ffffff;
+  --text-muted: #bcbcbc;
+  --text-faint: #767676;
 
-  /* category / status accents — each tied to a real WordPress category */
-  --accent-devops: #e8a548; /* amber, activity LED */
-  --accent-cloud: #5fa88c; /* teal, link LED */
-  --accent-maison: #c1613f; /* rust */
-  --accent-labo: #8c86c4; /* violet */
-  --accent-default: #7d7669;
+  /* a single live accent, echoing the plain zsh prompt's `$>` green —
+     reserved for interactive/active elements only */
+  --accent-live: #5fbf5f;
 
-  --font-display: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
-  --font-body: "IBM Plex Sans", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  /* category / status accents — grayscale ramp instead of hue, each
+     port/chip differentiated by shade rather than color */
+  --accent-devops: #bcbcbc;
+  --accent-cloud: #8a8a8a;
+  --accent-maison: #767676;
+  --accent-labo: #585858;
+  --accent-default: #444444;
+
+  --font-display: "Hack Nerd Font Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-body: "Hack Nerd Font Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-mono: "Hack Nerd Font Mono", ui-monospace, "SFMono-Regular", monospace;
 
   --measure: 40rem;
 }
@@ -45,7 +83,7 @@ a {
 
 a:focus-visible,
 button:focus-visible {
-  outline: 2px solid var(--accent-devops);
+  outline: 2px solid var(--accent-live);
   outline-offset: 3px;
 }
 
@@ -99,8 +137,8 @@ img {
 }
 
 .prose a {
-  color: var(--accent-cloud);
-  text-decoration-color: color-mix(in srgb, var(--accent-cloud) 50%, transparent);
+  color: var(--accent-live);
+  text-decoration-color: color-mix(in srgb, var(--accent-live) 50%, transparent);
 }
 
 .prose img {
@@ -120,7 +158,7 @@ img {
 .prose pre {
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  border-left: 3px solid var(--accent-devops);
+  border-left: 3px solid var(--panel-border);
   border-radius: 6px;
   padding: 1rem 1.25rem;
   overflow-x: auto;
@@ -135,7 +173,7 @@ img {
 .prose blockquote {
   margin: 1.5em 0;
   padding: 0.2em 1.25em;
-  border-left: 3px solid var(--accent-labo);
+  border-left: 3px solid var(--panel-border);
   color: var(--text-muted);
   font-style: italic;
 }

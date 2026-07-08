@@ -53,7 +53,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <text x="835" y="98">IP publique</text>
       </g>
       <g class="conn-label" font-family="var(--font-mono)" font-size="12" fill="var(--accent-live)">
-        <text x="405" y="352">tunnel chiffré (VPN site-à-site)</text>
+        <a class="node-link" href="/blog/ftp-prive-wireguard/">
+          <text x="405" y="352">tunnel chiffré (VPN site-à-site)</text>
+        </a>
         <text x="95" y="382" font-size="11">VPN clients distants</text>
       </g>
 
@@ -73,14 +75,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <rect x="620" y="110" width="380" height="225" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
         <text x="640" y="132" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VM cloud — relais.exemple.net</text>
 
-        <rect x="640" y="150" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="660" y="176" font-family="var(--font-mono)" font-size="13" fill="var(--text)">proxy inverse (TLS)</text>
+        <a class="node-link" href="/blog/retirer-pare-feu-tunnel-cloudflare/">
+          <rect x="640" y="150" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="660" y="176" font-family="var(--font-mono)" font-size="13" fill="var(--text)">proxy inverse (TLS)</text>
+        </a>
 
-        <rect x="640" y="205" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="660" y="231" font-family="var(--font-mono)" font-size="13" fill="var(--text)">site web statique</text>
+        <a class="node-link" href="/blog/deployer-un-site-web-statique-avec-wordpress-et-s3/">
+          <rect x="640" y="205" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="660" y="231" font-family="var(--font-mono)" font-size="13" fill="var(--text)">site web statique</text>
+        </a>
 
-        <rect x="640" y="260" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="660" y="286" font-family="var(--font-mono)" font-size="13" fill="var(--text)">surveillance + alertes</text>
+        <a class="node-link" href="/blog/construire-un-vrai-reseau-dalarme-pour-son-homelab-et-toutes-les-manieres-dont-ca-peut-foirer-en-silence/">
+          <rect x="640" y="260" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="660" y="286" font-family="var(--font-mono)" font-size="13" fill="var(--text)">surveillance + alertes</text>
+        </a>
       </g>
 
       <!-- Proxy routing note (avoids drawing long crossing lines across the whole diagram) -->
@@ -108,22 +116,34 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <!-- VLAN Serveurs -->
       <g>
         <rect x="40" y="490" width="460" height="330" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
-        <text x="60" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Serveurs</text>
+        <a class="node-link" href="/blog/convention-ipv6-vlan-serveurs/">
+          <text x="60" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Serveurs</text>
+        </a>
 
-        <rect x="60" y="530" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">bastion / console</text>
+        <a class="node-link" href="/blog/compartimentalisation-des-outils-de-console/">
+          <rect x="60" y="530" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">bastion / console</text>
+        </a>
 
-        <rect x="60" y="580" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">stockage (NAS)</text>
+        <a class="node-link" href="/blog/convention-ipv6-vlan-serveurs/">
+          <rect x="60" y="580" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">stockage (NAS)</text>
+        </a>
 
-        <rect x="60" y="630" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">pipeline média</text>
+        <a class="node-link" href="/blog/convention-ipv6-vlan-serveurs/">
+          <rect x="60" y="630" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">pipeline média</text>
+        </a>
 
-        <rect x="60" y="680" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="705" font-family="var(--font-mono)" font-size="13" fill="var(--text)">calcul GPU</text>
+        <a class="node-link" href="/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/">
+          <rect x="60" y="680" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="705" font-family="var(--font-mono)" font-size="13" fill="var(--text)">calcul GPU</text>
+        </a>
 
-        <rect x="60" y="730" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="80" y="755" font-family="var(--font-mono)" font-size="13" fill="var(--text)">hôte conteneurs (web)</text>
+        <a class="node-link" href="/blog/convention-ipv6-vlan-serveurs/">
+          <rect x="60" y="730" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="80" y="755" font-family="var(--font-mono)" font-size="13" fill="var(--text)">hôte conteneurs (web)</text>
+        </a>
       </g>
 
       <!-- VLAN Réseau local -->
@@ -134,8 +154,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <rect x="580" y="530" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
         <text x="600" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">postes personnels</text>
 
-        <rect x="580" y="580" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="600" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">domotique</text>
+        <a class="node-link" href="/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/">
+          <rect x="580" y="580" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+          <text x="600" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">domotique</text>
+        </a>
 
         <rect x="580" y="630" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
         <text x="600" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">caméras / périphériques</text>
@@ -146,6 +168,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   <div class="legend">
     <span class="legend-item"><span class="swatch structural" /> liaison réseau</span>
     <span class="legend-item"><span class="swatch live" /> tunnel chiffré / routage applicatif</span>
+    <span class="legend-item">les éléments soulignés au survol pointent vers l'article qui en parle</span>
   </div>
 </BaseLayout>
 
@@ -234,5 +257,22 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       var(--accent-live) 0 4px,
       transparent 4px 7px
     );
+  }
+
+  .diagram :global(.node-link) {
+    cursor: pointer;
+  }
+
+  .diagram :global(.node-link rect) {
+    transition: stroke 0.15s ease;
+  }
+
+  .diagram :global(.node-link:hover rect) {
+    stroke: var(--accent-live);
+  }
+
+  .diagram :global(.node-link:hover text) {
+    fill: var(--accent-live);
+    text-decoration: underline;
   }
 </style>

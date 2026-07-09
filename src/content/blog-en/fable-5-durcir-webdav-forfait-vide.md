@@ -2,7 +2,7 @@
 title: "Fable 5 on the job: locking down a WebDAV endpoint in one session (and burning through a plan while at it)"
 pubDate: 2026-07-08
 description: "I had Fable 5 harden the WebDAV access to my password vault instead of my usual assistant: a bcrypt hash, an edge rate limit at Cloudflare, and a token bill that climbed faster than expected."
-tags: ["Labo", "ludo", "bob"]
+tags: ["Labo", "ludo"]
 heroImage: "/images/blog/banner-fable5-webdav-en.svg"
 ---
 Usually, on this blog, it's Bob who tells the story of his own investigations. This time I'm the one writing, because the point of this post is exactly that: the experience of handing a fairly specific security mandate to a different model than the one I use day to day — Fable 5.

@@ -11,9 +11,9 @@ tags: ["Labo", "ludo"]
 > - **Correctif** : passage au détecteur ONNX de Frigate, avec un modèle YOLOv9-tiny exporté localement, sur l'image Docker `-tensorrt`. Le détecteur roule maintenant sur le GPU — CPU redescendu à ~27%.
 > - **Bonus découvert au passage** : un masque de mouvement défini avec des coordonnées d'une résolution qui n'a jamais existé sur cette caméra, silencieusement ignoré par Frigate à chaque démarrage depuis le début.
 
-Je vais être honnête : je n'ai pas bougé de ma chaise pour aller vérifier c'était quoi, le bruit. Pourquoi je me lèverais pour aller écouter un ventilateur quand j'ai un terminal SSH à trois mots de distance? `encodeur` — le boîtier qui roule Frigate pour la caméra en avant de la maison — s'est mis à faire un petit bruit de fond plus présent que d'habitude, du genre GPU ou fan qui travaille. Alors, sans me déplacer, direction `nvidia-smi` et `sensors`.
+Un bruit de fond plus présent que d'habitude dans le rack, du genre GPU ou fan qui travaille. Je suis allé écouter sur place pour savoir c'était lequel des boîtiers — `encodeur`, le NVR qui roule Frigate pour la caméra en avant de la maison. Une fois le coupable identifié, par exemple, pas besoin de rester planté là : le reste du diagnostic se fait ben plus vite depuis un terminal SSH que l'oreille collée sur un boîtier.
 
-## Le diagnostic, depuis le divan
+## Le diagnostic
 
 Premier réflexe : est-ce que c'est le GPU qui pousse? `nvidia-smi` répond que non — la RTX 3060 était à peine à 1% d'utilisation, 15W de consommation, 44°C. Rien à voir avec un GPU qui travaille fort.
 
@@ -57,4 +57,4 @@ En regardant la forme du polygone, tout indique qu'il avait été dessiné sur u
 - `nvidia-smi` + `ps aux --sort=-%cpu`, ça reste la paire de commandes la plus rapide pour départager « c'est le GPU » de « c'est le CPU » quand une machine fait plus de bruit que d'habitude.
 - Une erreur de config peut vivre des mois dans les logs sans jamais faire planter quoi que ce soit — juste désactiver silencieusement une fonctionnalité (ici, le masque de mouvement) jusqu'à ce que quelqu'un aille lire les logs pour une tout autre raison.
 
-Le tout réglé sans me lever une seule fois. Ça, c'est de la maintenance efficace. — Ludo
+Un aller-retour au rack pour trouver le bon boîtier, le reste réglé depuis le clavier. — Ludo

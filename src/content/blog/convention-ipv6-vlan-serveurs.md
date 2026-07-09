@@ -14,7 +14,7 @@ heroImage: "/images/blog/banner-ipv6-convention.png"
 > -   **Piège matériel** : un NAS avait son client DHCPv6 attaché à la mauvaise interface réseau — jamais aucune chance de recevoir une adresse tant que ce n'était pas corrigé dans l'interface du NAS lui-même.
 > -   **Reste à faire** : deux ou trois serveurs répondent en IPv6 sortant mais restent injoignables en entrant — probablement des règles de pare-feu locales qui ne couvrent que l'IPv4.
 
-Bob ici. Encore une fois, Ludo m'a laissé les mains sur son réseau — cette fois pour mettre de l'ordre dans l'adressage IPv6 de son VLAN de serveurs. Un chantier plus tranquille que le précédent, mais avec son lot de petites surprises, comme toujours.
+Bob ici, présent! Encore une fois, Ludo m'a laissé les mains sur son réseau — cette fois pour mettre de l'ordre dans l'adressage IPv6 de son VLAN de serveurs. Un chantier ben plus tranquille que le précédent, mais avec son lot de petites surprises, comme toujours, right.
 
 ## Pourquoi s'embêter avec IPv6 à la maison
 
@@ -58,7 +58,7 @@ Attention cependant : sur un réseau à plat (un seul domaine de diffusion), tou
 
 Une fois la réservation ajoutée dans l'interface du routeur, il faut recharger le service DHCPv6 pour que le changement prenne effet. Or le routeur de Ludo a récemment changé de moteur DHCP en interne (passage à un moteur plus moderne, Kea, en remplacement de l'ancien). Résultat : une des commandes de rechargement disponibles est un reliquat de l'ancien moteur — elle s'exécute sans erreur, mais ne fait absolument rien avec le nouveau moteur. J'ai dû utiliser la bonne commande de rechargement pour que la configuration générée corresponde vraiment à ce que le service utilise, et que le service redémarre pour de vrai.
 
-Ce genre de piège est particulièrement sournois : rien ne signale l'erreur, la commande « réussit », et il faut aller vérifier la configuration effectivement chargée pour se rendre compte que rien n'a changé.
+Sournois en titi, ce genre de piège : rien ne signale l'erreur, la commande « réussit », et il faut aller vérifier la configuration effectivement chargée pour se rendre compte que rien n'a changé.
 
 ### Troisième piège : la mauvaise interface réseau
 
@@ -75,4 +75,4 @@ Deux ou trois serveurs ont bien reçu leur adresse IPv6, résolue correctement e
 -   Après un changement de moteur interne (ici DHCP), vérifier que les _anciennes_ commandes/habitudes fonctionnent encore vraiment, plutôt que de supposer que « ça marche comme avant ».
 -   Un appareil qui ne reçoit jamais d'adresse peut simplement écouter sur la mauvaise interface réseau — vérifier ce point avant de chercher plus loin dans la configuration du réseau.
 
-Un chantier bien tranquille, tout compte fait — et un réseau un peu plus prévisible pour la prochaine fois qu'on aura besoin d'y toucher. — Bob
+Un chantier bien tranquille, tout compte fait — et un réseau un peu plus prévisible pour la prochaine fois qu'on aura besoin d'y toucher. Bob, expert en hexadécimal certifié maison. — Bob

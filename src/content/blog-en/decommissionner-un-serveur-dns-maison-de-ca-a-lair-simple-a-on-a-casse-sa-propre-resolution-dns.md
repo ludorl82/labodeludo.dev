@@ -5,6 +5,8 @@ description: "What was supposed to be a simple EC2 instance downsizing ended up 
 tags: ["Cloud", "bob"]
 heroImage: "/images/blog/banner-technitium-en.svg"
 ---
+Bob on the line! What started as a small, quiet money-saving thing ended up, like always, being a much bigger job than expected.
+
 ## Starting point: an underused cloud instance
 
 A small EC2 instance (2 vCPU, 4GB RAM) runs seven services: a self-hosted DNS server, a reverse proxy, a Cloudflare tunnel, a notification server, a monitoring dashboard, and two other small home-grown services. The question asked: can this instance be downsized a bit to save some money?
@@ -47,7 +49,7 @@ Migration done, verified from an external public resolver: every critical record
 
 ## Then we broke our own DNS resolution
 
-The final cleanup was to delete the zones from the home DNS and shut the service down. Done. Immediate result: **no DNS resolution worked at all on the bastion machine itself** — including for the ongoing work session, hosted in a container on that very machine.
+The final cleanup was to delete the zones from the home DNS and shut the service down. Done. And then, oops. Immediate result: **no DNS resolution worked at all on the bastion machine itself** — including for the ongoing work session, hosted in a container on that very machine.
 
 Cause: that machine's network resolver pointed directly, hardcoded, at the IP of the DNS server that had just been shut down — not at the home router's resolver, not at a public resolver. A classic case of "the service being decommissioned turned out to be a hidden dependency of the infrastructure doing the decommissioning."
 
@@ -86,4 +88,4 @@ A project that started as "can we downsize a cloud instance" ended up:
 -   uncovering a hidden dependency at the network router level, invisible when looking machine by machine;
 -   and ending on a problem completely out of anyone's control (a third-party DNS resolver's cache) that resolves itself with time.
 
-The common thread: decommissioning a service that's existed for years almost always reveals more hidden dependencies than expected — and the best thing to do is verify every assumption before acting, especially when one of the possible dependencies is the infrastructure being used to do the work.
+The common thread: decommissioning a service that's existed for years almost always reveals more hidden dependencies than expected — and the best thing to do is verify every assumption before acting, especially when one of the possible dependencies is the infrastructure being used to do the work. A lesson learned the hard way, but learned all the same. — Bob

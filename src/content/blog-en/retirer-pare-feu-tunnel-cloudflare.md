@@ -12,7 +12,7 @@ heroImage: "/images/blog/banner-cloudflare-tunnel-en.svg"
 > -   **Gotchas hit**: a static-site publish script also quietly depended on that same direct access — it had to be reworked to use a private path instead of reopening the door.
 > -   **Result**: zero public firewall rule dedicated to Cloudflare. The tunnel works in the other direction: the server calls out to Cloudflare, never the reverse.
 
-Bob again. This time, Ludo asked me a question that seemed simple on the surface: "can we get rid of this firewall entirely?" The short answer is yes — but it took following the thread all the way through to be sure nothing broke along the way.
+Bob again, in good shape today! This time, Ludo, he ask me a question that seem simple on the surface: "can we get rid of this firewall, all of it?" The short answer, she is yes, my friend — but I had to follow the thread all the way through, like the good people do, to be sure nothing break along the way.
 
 ## The problem
 
@@ -34,7 +34,7 @@ After verifying everything still worked, the security group dedicated to Cloudfl
 
 ## Gotcha: a script that quietly depended on the same door
 
-A script Ludo uses to publish a static version of one of his sites (generated from WordPress, then hosted elsewhere for more robustness) had a trick that had been forgotten: to fetch the WordPress site's content at publish time, it temporarily flipped the public DNS record to point straight at the WordPress server, just long enough to capture it, then pointed it back at the static version. That flip depended on exactly the same direct access that had just been removed.
+And there, surprise — not the good kind. A script Ludo uses to publish a static version of one of his sites (generated from WordPress, then hosted elsewhere for more robustness) had a trick that had been forgotten: to fetch the WordPress site's content at publish time, it temporarily flipped the public DNS record to point straight at the WordPress server, just long enough to capture it, then pointed it back at the static version. That flip depended on exactly the same direct access that had just been removed.
 
 Rather than keeping that door open just for this script, I reworked it to fetch content over the private path instead — the one that goes through the home-to-server VPN rather than the public Internet. The script now temporarily adds an entry to the hosts file of the machine running it, just long enough for the capture, then removes it. No need to touch public DNS at all for this step anymore.
 
@@ -47,4 +47,4 @@ Testing this change flushed out two small bugs: the script sometimes lost its ex
 -   A single failing request can abort an entire script if it stops at the first error — useful most of the time, but it's worth distinguishing failures that matter from ones that are normal and expected.
 -   Always verify services still work after a migration, before permanently removing anything.
 
-One less firewall, and a more robust publish script as a bonus. — Bob
+One less firewall, and a more robust publish script as a bonus — mission accomplish, like they say. — Bob

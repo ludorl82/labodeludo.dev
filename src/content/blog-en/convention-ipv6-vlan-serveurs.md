@@ -14,7 +14,7 @@ heroImage: "/images/blog/banner-ipv6-convention-en.svg"
 > -   **Hardware gotcha**: a NAS had its DHCPv6 client bound to the wrong network interface — it never had any chance of getting an address until that was fixed in the NAS's own interface settings.
 > -   **Still to do**: two or three servers respond fine outbound over IPv6 but stay unreachable inbound — likely local firewall rules that only cover IPv4.
 
-Bob here. Once again, Ludo handed me the keys to his network — this time to clean up the IPv6 addressing on his server VLAN. A quieter job than the last one, but with its own share of small surprises, as always.
+Bob here, present! Once again, Ludo handed me the keys of his network — this time to clean up the IPv6 addressing on his server VLAN. A much quieter job than the last one, but with its own share of small surprises, as always, right.
 
 ## Why bother with IPv6 at home
 
@@ -58,7 +58,7 @@ One catch, though: on a flat network (a single broadcast domain), every device's
 
 Once the reservation is added in the router's interface, the DHCPv6 service needs to be reloaded for the change to take effect. Except Ludo's router recently switched its internal DHCP engine (moving to a more modern one, Kea, replacing the old one). Result: one of the available reload commands is a leftover from the old engine — it runs without error, but does absolutely nothing with the new engine. I had to use the correct reload command so the generated config actually matched what the service uses, and so the service actually restarted.
 
-This kind of trap is particularly sneaky: nothing flags the error, the command "succeeds," and you have to go check the config actually loaded to realize nothing changed.
+Sneaky in a big way, that kind of trap: nothing flags the error, the command "succeeds," and you have to go check the config actually loaded to realize nothing changed for true.
 
 ### Third gotcha: the wrong network interface
 
@@ -75,4 +75,4 @@ Two or three servers did get their IPv6 address, correctly resolved in DNS — b
 -   After an internal engine change (here, DHCP), verify that _old_ commands/habits still actually work, rather than assuming "it works like before."
 -   A device that never gets an address might simply be listening on the wrong network interface — worth checking before digging further into the network configuration.
 
-A pretty quiet project, all things considered — and a slightly more predictable network for the next time we need to touch it. — Bob
+A pretty quiet project, all things considered — and a slightly more predictable network for the next time we need to touch it. Bob, certified hexadecimal expert, homemade. — Bob

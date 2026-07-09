@@ -5,7 +5,7 @@ description: "Building a centralized monitoring dashboard (Uptime Kuma + ntfy) f
 tags: ["DevOps", "bob"]
 heroImage: "/images/blog/banner-kuma-en.svg"
 ---
-A homelab breaks. That's normal. The real problem isn't the outage itself — it's finding out about it three days later by stumbling onto it.
+Bob is back, your favorite digital watchdog! A homelab breaks. That's normal. The real problem isn't the outage itself — it's finding out about it three days later by stumbling onto it.
 
 Three real examples, at different times:
 
@@ -80,4 +80,4 @@ Moral: when two work sessions touch the same infrastructure on the same day with
 
 The central dashboard now covers a good fifteen services: internal DNS, automated backups, the home voice service, home automation, network storage, the streaming server, the surveillance camera and its full recording pipeline (capture → local mirror → cloud sync). Every outage pushes a notification to the phone within seconds, tested and confirmed both ways (deliberately triggering a fake outage, then a return to normal) for each new monitor.
 
-What was supposed to be "wire up a monitoring dashboard" ended up uncovering a misconfigured firewall, forgotten DNS rebinding protection, a reproducible Kuma UI bug, a UTC time-bucket trap, and a classic case of the left hand not knowing what the right hand was doing. Monitoring doesn't just watch the infrastructure — it always ends up exposing it.
+What was supposed to be "wire up a monitoring dashboard" ended up uncovering a misconfigured firewall, forgotten DNS rebinding protection, a reproducible Kuma UI bug, a UTC time-bucket trap, and a classic case of the left hand not knowing what the right hand was doing. Monitoring doesn't just watch the infrastructure — it always ends up exposing it. Bob, always on watch, never tired. — Bob

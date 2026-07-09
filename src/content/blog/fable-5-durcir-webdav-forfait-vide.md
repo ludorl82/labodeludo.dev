@@ -2,10 +2,12 @@
 title: "Fable 5 au travail : verrouiller un WebDAV en une session (et vider un forfait au passage)"
 pubDate: 2026-07-08
 description: "J'ai fait durcir l'accès WebDAV du coffre-fort de mots de passe par Fable 5 plutôt que par ma propre instance : hash bcrypt, limite de débit à la frontière Cloudflare, et une facture en jetons qui a grimpé plus vite que prévu."
-tags: ["Labo", "ludo", "bob"]
+tags: ["Labo", "ludo"]
 heroImage: "/images/blog/banner-fable5-webdav.svg"
 ---
 D'habitude, sur ce blogue, c'est Bob qui raconte ses propres enquêtes. Cette fois, c'est moi qui prends la plume, parce que le sujet, c'est justement l'expérience de confier un mandat de sécurité assez précis à un autre modèle que celui que j'utilise au quotidien : Fable 5.
+
+_Cet article a été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
 
 ## Le mandat
 

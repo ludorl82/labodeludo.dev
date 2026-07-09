@@ -1,7 +1,7 @@
 ---
 title: "Fable 5 on the job: locking down a WebDAV endpoint in one session (and burning through a plan while at it)"
 pubDate: 2026-07-08
-description: "I had Fable 5 harden the WebDAV access to my password vault instead of my usual assistant: a bcrypt hash, a Traefik rate limit, and a token bill that climbed faster than expected."
+description: "I had Fable 5 harden the WebDAV access to my password vault instead of my usual assistant: a bcrypt hash, an edge rate limit at Cloudflare, and a token bill that climbed faster than expected."
 tags: ["Labo", "ludo"]
 heroImage: "/images/blog/banner-fable5-webdav-en.svg"
 ---
@@ -17,11 +17,11 @@ The mandate given to Fable 5: modernize the hash, and add a rate limit, without 
 
 No wasted round-trips here. Fable 5 went straight for the right tool to generate the bcrypt hash — going through the `httpd:2.4` image itself rather than installing `apache2-utils` somewhere just for that — and picked a cost of 10, a standard compromise between robustness and per-request verification time. No detours, no visible hesitation in the session summary: the right command (`htpasswd -niBC 10`), the right container, the right Traefik config file.
 
-Same story for the rate limit: `sourceCriterion.requestHeaderName: Cf-Connecting-Ip` on the first try — the detail that matters when all public traffic goes through a Cloudflare tunnel and the IP address Traefik actually sees is the tunnel's, not the client's. Without that header, a "per client" limit would have ended up rate-limiting everyone at once, which would have defeated the purpose.
+For the rate limit, Fable 5 went straight to placing it at the network edge — a Cloudflare rule instead of a Traefik middleware — so blocked traffic never even crosses the tunnel. Counted by IP address, with a threshold of 20 requests per 10 seconds, the rule blocks before the request ever reaches the origin.
 
 ## Right the first time, on the points that matter
 
-The most telling detail: middleware ordering. The rate limit had to be evaluated **before** authentication, otherwise every rejected password attempt still costs a full bcrypt computation server-side — and bcrypt is deliberately designed to be slow. A rate limit placed after authentication protects against network brute-forcing but leaves the door wide open to compute brute-forcing. Fable 5 put both in the right order without needing it pointed out, and the validation test (40 parallel requests, 21 rejected by authentication and 19 by the rate limit) confirmed the behavior was exactly as expected.
+The most telling detail: putting the rate limit at the edge instead of on the inside quietly solves a problem I hadn't even thought to spell out in the mandate. A rate limit placed after authentication protects against network brute-forcing but leaves the door wide open to compute brute-forcing — every rejected password attempt still costs a full bcrypt computation server-side, and bcrypt is deliberately designed to be slow. By placing the limit at the border, before traffic ever reaches Traefik and its authentication, Fable 5 made the question of middleware ordering moot: there's structurally no way to compute-brute-force something that never arrives. The validation test (40 requests in a burst) confirmed the first 20 reached authentication while the next 20 were blocked by Cloudflare, never touching the tunnel at all.
 
 ## The choices it didn't make — and why
 
@@ -30,7 +30,7 @@ What stands out most in the summary isn't the configuration lines, but the two o
 -   **Separate credentials per vault.** The five databases share a single account, with write access to all five. Splitting credentials would have been cleaner in theory, but nobody asked for that granularity, and adding it now would have been security built for a need that doesn't exist.
 -   **Cloudflare Access or mTLS.** Objectively the strongest protection available at this layer of the network — and rejected, because it breaks the mobile KeePass clients, which can't negotiate that kind of extra authentication layer. A stronger lock that keeps the legitimate owner out isn't progress.
 
-There's also a limitation that got honestly documented instead of glossed over: the available Cloudflare token doesn't have the permissions needed to set a rate-limit rule at the network edge (at Cloudflare itself, before traffic even reaches the tunnel). Protection therefore stays at the Traefik layer only, on the inside. That's not nothing — but it isn't the same as protection at the border, and the summary says so plainly instead of implying coverage that isn't there.
+There's also a limitation that got honestly documented instead of glossed over: the shortest block window my free Cloudflare plan offers is 10 seconds — plenty to discourage an automated scanner, but far from the continuous throttling a paid plan would offer. It isn't the strongest protection theoretically possible, and the summary says so plainly instead of implying coverage that isn't there.
 
 ## The real cost
 
@@ -40,9 +40,9 @@ I don't have exact numbers on hand to explain precisely why — I'm just reporti
 
 ## Takeaways
 
--   Handing a precise security mandate to a different model is a good way to test whether its security reasoning — not just its syntax — holds up: here, the middleware ordering and the refusal to add layers too rigid for the real clients were the real tests.
+-   Handing a precise security mandate to a different model is a good way to test whether its security reasoning — not just its syntax — holds up: here, choosing the border over the inside and the refusal to add layers too rigid for the real clients were the real tests.
 -   Explicitly documenting what you choose **not** to do, and why, is worth as much as documenting what you do — it saves a future pass from mistaking it for an oversight.
--   Partial protection (Traefik only, no edge-level rule), honestly flagged as such, is more useful than a false impression of full coverage.
+-   An honestly bounded protection (a 10-second block window rather than the theoretical maximum) flagged as such is more useful than a false impression of full coverage.
 -   A model's speed and correctness say nothing about its real cost in use — that's measured separately, and sometimes the surprise comes from there rather than from the technical result.
 
 A stronger hash, a door that slows down the persistent, and a plan that, unlike the vault, didn't hold up quite as well. — Ludo

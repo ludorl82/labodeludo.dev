@@ -7,7 +7,7 @@ heroImage: "/images/blog/docker-cover-1-e1655335176221.png"
 ---
 Dans les dernières décennies, nous avons observé une compartimentalisation croissante dans la gestion des charges de travail. Alors qu'on hébergeait nos serveurs sur des machines physiques il y a 30 ans, aujourd'hui on définit des bribes de code dans des environnements sans serveur qui s'exécutent sans égard aux couches sous-jacentes, facturées en Go-secondes d'exécution[1](https://aws.amazon.com/fr/lambda/pricing/).
 
-La boite à outils du bon DevOps contient principalement des outils de console. Les outils graphiques dans notre domaine ne sont bien souvent qu'une version diluée des outils de CLI. En tant que tel, il est très concevable de développer et d'opérer nos logiciels directement à partir de conteneurs. Je vous présenterai ici ma propre implémentation dont le code est disponible dans ces dépôts :  
+La boîte à outils du bon DevOps contient principalement des outils de console. Les outils graphiques dans notre domaine ne sont bien souvent qu'une version diluée des outils de CLI. C'est donc tout à fait envisageable de développer et d'opérer nos logiciels directement à partir de conteneurs. Je vous présenterai ici ma propre implémentation dont le code est disponible dans ces dépôts :  
 [ludorl82/console](https://github.com/ludorl82/console) (image de base) | [ludorl82/.shell-scripts/console](https://github.com/ludorl82/.shell-scripts/tree/main/console) (couche de personnalisation) | [ludorl82/.shell-configs](https://github.com/ludorl82/.shell-configs)
 
 _Cet article a été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
@@ -16,7 +16,7 @@ _Cet article a été écrit avec l'aide de l'intelligence artificielle — la m�
 
 En isolant les outils que nous utilisons dans des conteneurs, nous procédons à une définition exacte et précise de toutes les configurations et des étapes de construction de notre environnement de travail sous forme de code. Ceci rend notre console et notre environnement de travail très portables.
 
-Comme DevOps nous sommes souvent confrontés à diagnostiquer des problèmes réseaux dans des environnements très hermétiques et dans lesquels nous devons opérer avec rien de plus qu'une console. Ou bien bien souvent les développeurs auront à travailler avec des jeux de données qu'on doit exploiter de l'intérieur de segmentations réseaux à l'intérieur desquelles un environnement graphique n'est pas disponible.
+Comme DevOps nous sommes souvent confrontés à diagnostiquer des problèmes réseaux dans des environnements très hermétiques et dans lesquels nous devons opérer avec rien de plus qu'une console. Bien souvent aussi, les développeurs auront à travailler avec des jeux de données qu'on doit exploiter de l'intérieur de segmentations réseaux à l'intérieur desquelles un environnement graphique n'est pas disponible.
 
 Finalement le rôle de DevOps est très lié à l'automatisation. On est doublement gagnant de baigner sur une base régulière dans un environnement de travail dans lequel on travaille avec des commandes d'interpréteur que l'on pourra aisément transposer dans des pipelines de CICD.
 
@@ -28,7 +28,7 @@ Avant de commencer je vais tout de suite énoncer que cette solution n'est pas p
 
 ## Design et architecture
 
-Pour mon projet de console sous docker, j'ai d'abord dû choisir comment j'allais grouper les outils dont je me sers sur une base régulière. Il m'apparaissait évident qu'une base commune avec les outils que j'utilise toujours devrait être faite. Par contre d'autres outils me servent seulement qu'à l'occasion et ceux-ci devraient être inclus strictement dans des couches docker au-dessus de celles qui définissent l'image de base. Et c'est là que pour moi l'utilisation des conteneurs trouve beaucoup de son sens. En construisant des images spécialisées de la console par dessus la base, j'évite la duplication de l'espace disque et de la consommation de mémoire des charges de travail.
+Pour mon projet de console sous docker, j'ai d'abord dû choisir comment j'allais grouper les outils dont je me sers sur une base régulière. C'était clair pour moi qu'une base commune avec les outils que j'utilise toujours devrait être faite. Par contre d'autres outils me servent seulement qu'à l'occasion et ceux-ci devraient être inclus strictement dans des couches docker au-dessus de celles qui définissent l'image de base. Et c'est là que pour moi l'utilisation des conteneurs trouve beaucoup de son sens. En construisant des images spécialisées de la console par dessus la base, j'évite la duplication de l'espace disque et de la consommation de mémoire des charges de travail.
 
 La vraie motivation derrière cette approche, en pratique, c'est que mes besoins varient beaucoup selon la machine où je travaille. Au bureau, j'ai une longue liste d'outils et de configurations propres à mon employeur à ajouter par-dessus la base ; à la maison, la couche de personnalisation reste beaucoup plus légère. Plutôt que de maintenir deux consoles complètement distinctes qui dupliqueraient tout ce qui est commun aux deux, je n'ai qu'à faire varier la couche du dessus — la base, elle, ne change pas.
 
@@ -38,7 +38,7 @@ Pour faire une solution plus complète, j'ai créé un bootstrap script pour pou
 
 ## Conteneurisation des configs pour une meilleure portabilité
 
-Le fichier qui définit l'ensemble d'instructions pour bâtir une image Docker est le Dockerfile[2](https://docs.docker.com/engine/reference/builder/). Aussi il existe plusieurs engins pour rouler des conteneurs, dont docker, containerd, lxd, podman, etc. Par contre le Dockerfile est un standard universel pour décrire une image docker. Le projet Docker met de l'avant aussi sa propre solution pour bâtir et déployer plusieurs conteneurs à l'aide de docker compose[3](https://docs.docker.com/compose/). C'est ceci que j'ai utilisé pour bâtir la demo pour cet article.
+Le fichier qui définit l'ensemble d'instructions pour bâtir une image Docker est le Dockerfile[2](https://docs.docker.com/engine/reference/builder/). Il existe aussi plusieurs engins pour rouler des conteneurs, dont docker, containerd, lxd, podman, etc. Par contre le Dockerfile est un standard universel pour décrire une image docker. Le projet Docker met de l'avant aussi sa propre solution pour bâtir et déployer plusieurs conteneurs à l'aide de docker compose[3](https://docs.docker.com/compose/). C'est ceci que j'ai utilisé pour bâtir la demo pour cet article.
 
 Le montage de `$HOME` au complet dans le conteneur (plutôt qu'une copie des fichiers de configuration dans l'image) est ce qui permet de garder `.shell-configs` et `.shell-scripts` comme de simples dépôts git sur l'hôte, modifiables sans reconstruire quoi que ce soit :
 

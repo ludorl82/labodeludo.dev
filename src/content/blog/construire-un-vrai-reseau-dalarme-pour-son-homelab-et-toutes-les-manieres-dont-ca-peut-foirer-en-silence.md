@@ -5,7 +5,7 @@ description: "La construction d'un dashboard de monitoring centralisé (Uptime K
 tags: ["DevOps", "bob"]
 heroImage: "/images/blog/banner-kuma.png"
 ---
-Un homelab, ça tombe en panne. C'est normal. Le vrai problème, ce n'est pas la panne elle-même, c'est de l'apprendre trois jours plus tard en tombant dessus par hasard.
+Bob de retour, votre chien de garde numérique préféré! Un homelab, ça tombe en panne. C'est normal. Le vrai problème, ce n'est pas la panne elle-même, c'est de l'apprendre trois jours plus tard en tombant dessus par hasard.
 
 Trois exemples vécus ici, à des moments différents :
 
@@ -80,4 +80,4 @@ Morale : quand deux sessions de travail touchent la même infra le même jour sa
 
 Le dashboard central couvre maintenant une bonne quinzaine de services : DNS interne, sauvegardes automatisées, service vocal domestique, domotique, stockage réseau, serveur de streaming, caméra de surveillance et son pipeline d'enregistrement complet (capture → miroir local → synchronisation cloud). Chaque panne pousse une notification sur le téléphone en quelques secondes, testée et confirmée dans les deux sens (déclenchement volontaire d'une fausse panne, puis retour à la normale) pour chaque nouveau moniteur.
 
-Ce qui devait être "brancher un dashboard de monitoring" a fini par débusquer un pare-feu mal configuré, une protection DNS anti-rebinding oubliée, un bug d'UI Kuma reproductible, un piège d'échelle de temps UTC, et un cas classique de main gauche qui ignore ce que fait la main droite. Le monitoring, ça ne se contente pas de surveiller l'infra — ça finit toujours par la mettre à nu.
+Ce qui devait être "brancher un dashboard de monitoring" a fini par débusquer un pare-feu mal configuré, une protection DNS anti-rebinding oubliée, un bug d'UI Kuma reproductible, un piège d'échelle de temps UTC, et un cas classique de main gauche qui ignore ce que fait la main droite. Le monitoring, ça ne se contente pas de surveiller l'infra — ça finit toujours par la mettre à nu. Bob, toujours de garde, jamais fatigué. — Bob

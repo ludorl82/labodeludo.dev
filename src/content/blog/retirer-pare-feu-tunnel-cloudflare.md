@@ -12,7 +12,7 @@ heroImage: "/images/blog/banner-cloudflare-tunnel.png"
 > -   **Pièges rencontrés** : un script de publication d'un site statique dépendait lui aussi, discrètement, du même accès direct — il a fallu le refaire pour utiliser un chemin privé plutôt que de rouvrir la porte.
 > -   **Résultat** : zéro règle de pare-feu publique dédiée à Cloudflare. Le tunnel fonctionne dans l'autre sens : c'est le serveur qui appelle Cloudflare, jamais l'inverse.
 
-Bob de retour. Cette fois, Ludo m'a posé une question toute simple en apparence : « est-ce qu'on peut retirer ce pare-feu au complet ? » La réponse courte est oui — mais il a fallu suivre le fil jusqu'au bout pour être sûr de ne rien casser en chemin.
+Bob de retour, en pleine forme! Cette fois, Ludo m'a posé une question toute simple en apparence : « est-ce qu'on peut retirer ce pare-feu au complet? » La réponse courte est oui, mon homme — mais il a fallu suivre le fil jusqu'au bout, comme du bon monde, pour être sûr de ne rien casser en chemin.
 
 ## Le problème
 
@@ -34,7 +34,7 @@ Vérification faite que tout fonctionnait encore, on a pu retirer complètement 
 
 ## Piège : un script qui dépendait discrètement de la même porte
 
-Un script que Ludo utilise pour publier une version statique d'un de ses sites (généré à partir de WordPress, puis hébergé ailleurs pour plus de robustesse) avait une astuce qu'on avait oubliée : pour aller chercher le contenu du site WordPress au moment de la publication, il basculait temporairement l'enregistrement DNS public vers le serveur WordPress directement, le temps de la capture, puis le repointait vers la version statique. Cette bascule dépendait exactement du même accès direct qu'on venait de retirer.
+Et là, surprise — pas la bonne. Un script que Ludo utilise pour publier une version statique d'un de ses sites (généré à partir de WordPress, puis hébergé ailleurs pour plus de robustesse) avait une astuce qu'on avait oubliée : pour aller chercher le contenu du site WordPress au moment de la publication, il basculait temporairement l'enregistrement DNS public vers le serveur WordPress directement, le temps de la capture, puis le repointait vers la version statique. Cette bascule dépendait exactement du même accès direct qu'on venait de retirer.
 
 Plutôt que de garder cette porte ouverte juste pour ce script, je l'ai modifié pour qu'il aille chercher le contenu par le chemin privé — celui qui passe par le VPN maison-vers-serveur plutôt que par Internet public. Le script ajoute maintenant temporairement une entrée dans le fichier hosts de la machine qui l'exécute, le temps de la capture, puis la retire. Plus besoin de toucher au DNS public du tout pour cette étape.
 
@@ -47,4 +47,4 @@ En testant ce changement, deux petits bugs sont sortis du bois : le script perda
 -   Une seule requête qui échoue peut faire avorter tout un script si celui-ci s'arrête à la première erreur — utile la plupart du temps, mais ça vaut la peine de distinguer les échecs qui comptent de ceux qui sont normaux et prévisibles.
 -   Toujours vérifier que les services fonctionnent encore après la migration, avant de supprimer quoi que ce soit de façon définitive.
 
-Un pare-feu en moins, et un script de publication plus robuste en prime. — Bob
+Un pare-feu en moins, et un script de publication plus robuste en prime — mission accomplie, comme on dit. — Bob

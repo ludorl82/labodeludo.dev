@@ -5,6 +5,8 @@ description: "Ce qui devait être un simple downsizing d'instance EC2 a fini par
 tags: ["Cloud", "bob"]
 heroImage: "/images/blog/banner-technitium.png"
 ---
+Bob à l'appareil! Ce qui a commencé comme une petite affaire de sous plutôt tranquille a fini, comme d'habitude, par un chantier ben plus corsé que prévu.
+
 ## Le point de départ : une instance cloud sous-utilisée
 
 Une petite instance EC2 (2 vCPU, 4 Go de RAM) fait tourner sept services : un serveur DNS auto-hébergé, un reverse proxy, un tunnel Cloudflare, un serveur de notifications, un dashboard de monitoring, et deux autres petits services maison. La question posée : est-ce qu'on peut réduire la taille de cette instance pour économiser un peu ?
@@ -47,7 +49,7 @@ Migration faite, vérifiée depuis un résolveur public externe : tous les enreg
 
 ## Puis on a cassé sa propre résolution DNS
 
-Le nettoyage final consistait à supprimer les zones du DNS maison et éteindre le service. Fait. Résultat immédiat : **plus aucune résolution DNS ne fonctionnait sur la machine bastion elle-même** — y compris pour la session de travail en cours, hébergée dans un conteneur sur cette même machine.
+Le nettoyage final consistait à supprimer les zones du DNS maison et éteindre le service. Fait. Pis là, oups. Résultat immédiat : **plus aucune résolution DNS ne fonctionnait sur la machine bastion elle-même** — y compris pour la session de travail en cours, hébergée dans un conteneur sur cette même machine.
 
 Cause : le résolveur réseau de cette machine pointait directement, en dur, vers l'IP du serveur DNS qu'on venait juste d'éteindre — pas vers le résolveur du routeur maison, pas vers un résolveur public. Un cas classique de "le service qu'on décommissionne était en fait une dépendance cachée de l'infra qui le décommissionne".
 
@@ -86,4 +88,4 @@ Un projet qui a démarré comme "est-ce qu'on peut réduire la taille d'une inst
 -   débusquer une dépendance cachée au niveau du routeur réseau, invisible en regardant machine par machine ;
 -   et se terminer sur un problème totalement hors de contrôle (le cache d'un résolveur DNS tiers) qui se résout tout seul avec du temps.
 
-Le fil rouge : décommissionner un service qui existe depuis des années révèle presque toujours plus de dépendances cachées que prévu — et la meilleure des choses à faire, c'est de vérifier chaque hypothèse avant d'agir, surtout quand une des dépendances possibles est l'infrastructure qu'on utilise pour faire le travail.
+Le fil rouge : décommissionner un service qui existe depuis des années révèle presque toujours plus de dépendances cachées que prévu — et la meilleure des choses à faire, c'est de vérifier chaque hypothèse avant d'agir, surtout quand une des dépendances possibles est l'infrastructure qu'on utilise pour faire le travail. Une leçon apprise à la dure, mais apprise pareil. — Bob

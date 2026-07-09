@@ -2,14 +2,19 @@
 import "../styles/global.css";
 import Lightbox from "../components/Lightbox.astro";
 import EasterEggs from "../components/EasterEggs.astro";
+import { resolveOgImage } from "../lib/ogImage";
 
 interface Props {
   title: string;
   description?: string;
   lang?: "fr" | "en";
+  heroImage?: string;
 }
 
-const { title, description, lang = "fr" } = Astro.props;
+const { title, description, lang = "fr", heroImage } = Astro.props;
+
+const ogImageUrl = new URL(resolveOgImage(heroImage), Astro.site).toString();
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
 
 const homeHref = lang === "en" ? "/en/" : "/";
 const tagline =
@@ -43,6 +48,17 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     <meta name="generator" content={Astro.generator} />
     {description && <meta name="description" content={description} />}
     <title>{title}</title>
+
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:image" content={ogImageUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    {description && <meta name="twitter:description" content={description} />}
+    <meta name="twitter:image" content={ogImageUrl} />
   </head>
   <body>
     <div class="page">

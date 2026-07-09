@@ -25,7 +25,11 @@ const englishPosts = await getCollection("blogEn");
 const hasEnglish = englishPosts.some((p) => p.id === post.id);
 ---
 
-<BaseLayout title={`${post.data.title} — Le labo de Ludo`} description={post.data.description}>
+<BaseLayout
+  title={`${post.data.title} — Le labo de Ludo`}
+  description={post.data.description}
+  heroImage={post.data.heroImage}
+>
   <a class="back" href="/">&larr; tous les articles</a>
 
   <article>

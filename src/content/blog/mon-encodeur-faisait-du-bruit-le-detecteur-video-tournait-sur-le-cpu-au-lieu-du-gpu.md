@@ -13,6 +13,8 @@ tags: ["Labo", "ludo"]
 
 J'ai remarqué un bruit de fond plus présent que d'habitude dans le rack, du genre GPU ou ventilateur qui travaille fort. Je suis allé écouter sur place pour identifier le coupable : `encodeur`, le boîtier qui roule Frigate pour la caméra en avant de la maison. Une fois le bon boîtier identifié, j'ai embarqué en SSH pour aller creuser comme du monde.
 
+_Cet article a été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
+
 ## Le diagnostic
 
 Premier réflexe : est-ce que c'est le GPU qui pousse? `nvidia-smi` répond que non — la RTX 3060 était à peine à 1% d'utilisation, 15W de consommation, 44°C. Rien à voir avec un GPU qui travaille fort.

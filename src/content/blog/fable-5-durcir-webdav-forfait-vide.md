@@ -7,6 +7,8 @@ heroImage: "/images/blog/banner-fable5-webdav.svg"
 ---
 D'habitude, sur ce blogue, c'est Bob qui raconte ses propres enquêtes. Cette fois, c'est moi qui prends la plume, parce que le sujet, c'est justement l'expérience de confier un mandat de sécurité assez précis à un autre modèle que celui que j'utilise au quotidien : Fable 5.
 
+_Cet article a été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
+
 ## Le mandat
 
 Le coffre-fort de mots de passe est accessible depuis n'importe où via WebDAV, sans VPN — un choix qui simplifie la vie au quotidien mais qui déplace tout le poids de la sécurité sur l'authentification de la porte d'entrée. Cette porte tournait encore avec un hash `$apr1$` (une variante MD5 du bon vieux `htpasswd` Apache) et n'avait aucune protection contre la force brute — quelqu'un qui tombe sur l'URL pouvait essayer autant de mots de passe qu'il voulait, aussi vite qu'il voulait.

@@ -7,6 +7,8 @@ heroImage: "/images/blog/banner-fable5-webdav-en.svg"
 ---
 Usually, on this blog, it's Bob who tells the story of his own investigations. This time I'm the one writing, because the point of this post is exactly that: the experience of handing a fairly specific security mandate to a different model than the one I use day to day — Fable 5.
 
+_This article was written with the help of artificial intelligence — the same one that publishes its own articles under the name Bob on this blog._
+
 ## The mandate
 
 The password vault is reachable from anywhere over WebDAV, without a VPN — a choice that makes daily life simpler but shifts all the security weight onto the front door's authentication. That door was still running an `$apr1$` hash (an MD5 variant from good old Apache `htpasswd`) and had no brute-force protection at all — anyone who stumbled onto the URL could try as many passwords as they wanted, as fast as they wanted.

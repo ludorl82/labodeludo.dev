@@ -11,21 +11,21 @@ tags: ["Labo", "ludo"]
 > - **Correctif** : passage au détecteur ONNX de Frigate, avec un modèle YOLOv9-tiny exporté localement, sur l'image Docker `-tensorrt`. Le détecteur roule maintenant sur le GPU — CPU redescendu à ~27%.
 > - **Bonus découvert au passage** : un masque de mouvement défini avec des coordonnées d'une résolution qui n'a jamais existé sur cette caméra, silencieusement ignoré par Frigate à chaque démarrage depuis le début.
 
-Un bruit de fond plus présent que d'habitude dans le rack, du genre GPU ou fan qui travaille. Je suis allé écouter sur place pour savoir c'était lequel des boîtiers — `encodeur`, le NVR qui roule Frigate pour la caméra en avant de la maison. Une fois le coupable identifié, par exemple, pas besoin de rester planté là : le reste du diagnostic se fait ben plus vite depuis un terminal SSH que l'oreille collée sur un boîtier.
+J'ai remarqué un bruit de fond plus présent que d'habitude dans le rack, du genre GPU ou ventilateur qui travaille fort. Je suis allé écouter sur place pour identifier le coupable : `encodeur`, le boîtier qui roule Frigate pour la caméra en avant de la maison. Une fois le bon boîtier identifié, j'ai embarqué en SSH pour aller creuser comme du monde.
 
 ## Le diagnostic
 
 Premier réflexe : est-ce que c'est le GPU qui pousse? `nvidia-smi` répond que non — la RTX 3060 était à peine à 1% d'utilisation, 15W de consommation, 44°C. Rien à voir avec un GPU qui travaille fort.
 
-`ps aux --sort=-%cpu`, par exemple, ça ne ment jamais. Et là, en haut de liste : `frigate.detector.default`, à 250% CPU, tout seul. Les cœurs du processeur étaient à 66-70°C, la charge système autour de 2,6 — clairement le vrai coupable, pas le GPU.
+`ps aux --sort=-%cpu` ne ment jamais. En haut de liste : `frigate.detector.default`, à 250% CPU, tout seul. Les cœurs du processeur étaient à 66-70°C, la charge système autour de 2,6 — clairement le vrai coupable, pas le GPU.
 
-Ça m'a rappelé un détail que j'avais déjà noté dans mes affaires : Frigate 0.16 a retiré le détecteur TensorRT côté amd64. Mon `config.yml` était resté sur `detectors: default: type: cpu` — le fallback logiciel, celui qui fait travailler le CPU à pleine capacité pendant que la carte graphique, achetée justement pour ça, se tourne les pouces à côté.
+Ça m'a fait tilt sur un détail que j'avais déjà noté dans mes affaires : Frigate 0.16 a retiré le détecteur TensorRT côté amd64. Mon `config.yml` était resté sur `detectors: default: type: cpu` — le fallback logiciel, celui qui fait travailler le CPU à pleine capacité pendant que la carte graphique, achetée justement pour ça, se tourne les pouces à côté. Ça faisait un bout que c'était comme ça sans que je m'en aperçoive — le genre de détail qui traîne dans le fond d'une config tant que rien ne le pousse à faire du bruit.
 
 ## Le correctif : passer au détecteur ONNX
 
 La bonne nouvelle, c'est que Frigate a un remplaçant pour le défunt détecteur TensorRT : le détecteur ONNX, capable d'utiliser le GPU via `onnxruntime`, à condition de tourner sur l'image Docker `-tensorrt` et de lui fournir son propre modèle — parce que, comme de raison, ce modèle n'est plus fourni d'office avec l'image depuis la 0.16.
 
-J'ai donc exporté un modèle YOLOv9 en version « tiny », à 320×320, directement sur `encodeur` avec le build Docker multi-étapes documenté par Frigate — ça télécharge le repo YOLOv9, les poids pré-entraînés, et ça sort un `.onnx` d'à peine 8 Mo. Placé dans `model_cache`, référencé dans la config avec `model_type: yolo-generic`, et le tour est joué :
+J'aime ben ça, ce genre de chantier-là : une contrainte technique précise, une doc à suivre, et un résultat mesurable à la fin. J'ai exporté un modèle YOLOv9 en version « tiny », à 320×320, directement sur `encodeur` avec le build Docker multi-étapes documenté par Frigate — ça télécharge le repo YOLOv9, les poids pré-entraînés, et ça sort un `.onnx` d'à peine 8 Mo. Placé dans `model_cache`, référencé dans la config avec `model_type: yolo-generic`, et le tour est joué :
 
 ```yaml
 detectors:
@@ -57,4 +57,4 @@ En regardant la forme du polygone, tout indique qu'il avait été dessiné sur u
 - `nvidia-smi` + `ps aux --sort=-%cpu`, ça reste la paire de commandes la plus rapide pour départager « c'est le GPU » de « c'est le CPU » quand une machine fait plus de bruit que d'habitude.
 - Une erreur de config peut vivre des mois dans les logs sans jamais faire planter quoi que ce soit — juste désactiver silencieusement une fonctionnalité (ici, le masque de mouvement) jusqu'à ce que quelqu'un aille lire les logs pour une tout autre raison.
 
-Un aller-retour au rack pour trouver le bon boîtier, le reste réglé depuis le clavier. — Ludo
+Un bruit de ventilateur, une hypothèse à vérifier, un modèle à exporter à la main — c'est exactement le genre de petit chantier qui me garde accroché à mon labo à la maison. — Ludo

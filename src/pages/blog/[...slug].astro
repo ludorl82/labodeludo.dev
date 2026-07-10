@@ -6,6 +6,7 @@ import AuthorBadge from "../../components/AuthorBadge.astro";
 import AuthorLine from "../../components/AuthorLine.astro";
 import ShareButtons from "../../components/ShareButtons.astro";
 import FrigateDetectorDiagram from "../../components/FrigateDetectorDiagram.astro";
+import CloudflareTunnelDiagram from "../../components/CloudflareTunnelDiagram.astro";
 import { primaryCategory } from "../../lib/category";
 import { authorFromTags } from "../../lib/author";
 import { INVENTORY, inventoryForArticle } from "../../lib/inventory";
@@ -26,6 +27,13 @@ const author = authorFromTags(post.data.tags);
 const englishPosts = await getCollection("blogEn");
 const hasEnglish = englishPosts.some((p) => p.id === post.id);
 const relatedInventory = inventoryForArticle(post.id);
+
+/** Articles that get an "exploded" architecture-detail diagram, also shown on /architecture/. */
+const ARTICLE_DIAGRAMS: Record<string, typeof FrigateDetectorDiagram> = {
+  "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu": FrigateDetectorDiagram,
+  "retirer-pare-feu-tunnel-cloudflare": CloudflareTunnelDiagram,
+};
+const ArticleDiagram = ARTICLE_DIAGRAMS[post.id];
 ---
 
 <BaseLayout
@@ -54,9 +62,7 @@ const relatedInventory = inventoryForArticle(post.id);
       <img class="hero" src={post.data.heroImage} alt="" />
     )}
 
-    {post.id === "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu" && (
-      <FrigateDetectorDiagram context="article" />
-    )}
+    {ArticleDiagram && <ArticleDiagram context="article" />}
 
     <div class="prose">
       <Content />

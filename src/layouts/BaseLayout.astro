@@ -59,6 +59,21 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     <meta name="twitter:title" content={title} />
     {description && <meta name="twitter:description" content={description} />}
     <meta name="twitter:image" content={ogImageUrl} />
+    <script is:inline>
+      // Some in-app browsers (LinkedIn, Instagram, etc.) render the first
+      // paint of a freshly-opened link at a stale desktop viewport width and
+      // only recompute layout on an explicit reload. Nudging the viewport
+      // meta's initial-scale forces those WebViews to re-layout immediately.
+      (function () {
+        if (document.documentElement.clientWidth <= screen.width * 1.5) return;
+        var vp = document.querySelector('meta[name="viewport"]');
+        if (!vp) return;
+        vp.setAttribute("content", "width=device-width, initial-scale=1.0001");
+        requestAnimationFrame(function () {
+          vp.setAttribute("content", "width=device-width, initial-scale=1");
+        });
+      })();
+    </script>
   </head>
   <body>
     <div class="page">

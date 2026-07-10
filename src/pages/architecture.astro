@@ -36,7 +36,7 @@ import FrigateDetectorDiagram from "../components/FrigateDetectorDiagram.astro";
 
       <!-- structural connectors (orthogonal: straight where the target lines up, right-angle jogs otherwise) -->
       <g class="conn" fill="none" stroke="var(--text-faint)" stroke-width="1.5">
-        <path d="M200,80 V390" marker-end="url(#arrow)" />
+        <path d="M200,80 V360 H290 V390" marker-end="url(#arrow)" />
         <path d="M820,80 V110" marker-end="url(#arrow)" />
         <path d="M220,450 V490" marker-end="url(#arrow)" />
         <path d="M220,450 V470 H750 V490" marker-end="url(#arrow)" />
@@ -281,13 +281,19 @@ import FrigateDetectorDiagram from "../components/FrigateDetectorDiagram.astro";
     transition: stroke 0.15s ease;
   }
 
-  .diagram :global(.node-link:hover rect) {
+  .diagram :global(.node-link:hover rect),
+  .diagram :global(.node-link:focus-visible rect) {
     stroke: var(--accent-live);
   }
 
-  .diagram :global(.node-link:hover text) {
+  .diagram :global(.node-link:hover text),
+  .diagram :global(.node-link:focus-visible text) {
     fill: var(--accent-live);
     text-decoration: underline;
+  }
+
+  .diagram :global(.node-link:focus-visible) {
+    outline: none;
   }
 
   .detail {

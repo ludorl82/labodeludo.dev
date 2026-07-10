@@ -5,8 +5,10 @@ import CategoryChip from "../../components/CategoryChip.astro";
 import AuthorBadge from "../../components/AuthorBadge.astro";
 import AuthorLine from "../../components/AuthorLine.astro";
 import ShareButtons from "../../components/ShareButtons.astro";
+import FrigateDetectorDiagram from "../../components/FrigateDetectorDiagram.astro";
 import { primaryCategory } from "../../lib/category";
 import { authorFromTags } from "../../lib/author";
+import { INVENTORY, inventoryForArticle } from "../../lib/inventory";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");
@@ -23,6 +25,7 @@ const author = authorFromTags(post.data.tags);
 
 const englishPosts = await getCollection("blogEn");
 const hasEnglish = englishPosts.some((p) => p.id === post.id);
+const relatedInventory = inventoryForArticle(post.id);
 ---
 
 <BaseLayout
@@ -51,9 +54,24 @@ const hasEnglish = englishPosts.some((p) => p.id === post.id);
       <img class="hero" src={post.data.heroImage} alt="" />
     )}
 
+    {post.id === "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu" && (
+      <FrigateDetectorDiagram context="article" />
+    )}
+
     <div class="prose">
       <Content />
     </div>
+
+    {relatedInventory.length > 0 && (
+      <aside class="related-inventory">
+        <h2>Composants liés</h2>
+        <ul>
+          {relatedInventory.map((key) => (
+            <li><a href={`/inventaire/${key}/`}>{INVENTORY[key].name}</a></li>
+          ))}
+        </ul>
+      </aside>
+    )}
 
     <ShareButtons url={new URL(`/blog/${post.id}/`, Astro.site).toString()} title={post.data.title} lang="fr" />
 
@@ -107,5 +125,47 @@ const hasEnglish = englishPosts.some((p) => p.id === post.id);
 
   .lang-link:hover {
     text-decoration: underline;
+  }
+
+  .related-inventory {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .related-inventory h2 {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    margin: 0 0 0.75rem;
+  }
+
+  .related-inventory ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .related-inventory a {
+    display: inline-block;
+    padding: 0.3em 0.75em;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .related-inventory a:hover {
+    border-color: var(--accent-live);
+    color: var(--accent-live);
   }
 </style>

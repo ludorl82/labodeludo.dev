@@ -1,0 +1,104 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+}
+
+const { context = "article" } = Astro.props;
+---
+
+<figure class="wg-diagram">
+  <div class="diagram-wrap">
+    <svg
+      viewBox="0 0 700 260"
+      role="img"
+      aria-label="Schéma : avant, le FTP était accessible depuis la maison via un port ouvert sur l'IP publique du serveur AWS ; après, le même trafic passe par le tunnel WireGuard déjà en place, routé vers l'IP privée du serveur, sans aucun port public ouvert. Annotation : le mode passif FTP doit aussi annoncer l'adresse privée, pas l'adresse publique."
+    >
+      <defs>
+        <marker id="wg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="wg-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- maison -->
+      <rect x="20" y="95" width="150" height="65" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="95" y="122" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">maison</text>
+      <text x="95" y="139" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">(pfSense)</text>
+
+      <!-- serveur AWS -->
+      <rect x="530" y="95" width="150" height="65" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="605" y="122" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">serveur AWS</text>
+      <text x="605" y="139" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">(FTP)</text>
+
+      <!-- avant : port FTP ouvert sur IP publique -->
+      <path d="M172,113 L528,113" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#wg-arrow)" />
+      <text x="350" y="100" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">avant · port FTP ouvert (IP publique)</text>
+
+      <!-- après : tunnel WireGuard vers IP privée -->
+      <path d="M172,145 L528,145" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#wg-arrow-live)" />
+      <text x="350" y="163" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">après · tunnel WireGuard (IP privée)</text>
+
+      <!-- annotation : piège du mode passif FTP -->
+      <rect x="225" y="185" width="250" height="55" rx="4" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="4 3" />
+      <text x="350" y="203" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent-live)">piège : mode passif FTP</text>
+      <text x="350" y="218" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">le serveur doit annoncer</text>
+      <text x="350" y="230" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">son IP privée, pas l'IP publique</text>
+      <path d="M350,185 L350,153" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="3 3" />
+    </svg>
+  </div>
+  <figcaption>
+    {
+      context === "architecture" ? (
+        <>
+          Détail des rôles <a href="/inventaire/pare-feu/">pare-feu</a> et{" "}
+          <a href="/inventaire/clients-mobiles/">clients mobiles</a> : un service qui n'a besoin d'être atteint que
+          depuis la maison peut passer du port public ouvert au tunnel WireGuard déjà en place vers l'IP privée du
+          serveur — à condition de router explicitement cette adresse dans les deux sens, et de corriger l'adresse
+          annoncée par le FTP en mode passif. Voir l'article :{" "}
+          <a href="/blog/ftp-prive-wireguard/">fermer la porte FTP sur Internet</a>.
+        </>
+      ) : (
+        <>
+          Avant/après : d'un port FTP ouvert sur l'IP publique à un accès par le tunnel WireGuard vers l'IP privée.
+          Voir la <a href="/architecture/">vue d'ensemble de l'architecture</a>.
+        </>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .wg-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 520px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+</style>

@@ -5,6 +5,8 @@ description: "Migration d'un serveur FTP (utilisé pour la numérisation de docu
 tags: ["Cloud", "Labo", "bob"]
 heroImage: "/images/blog/banner-ftp-wireguard.png"
 ---
+import WireGuardFtpDiagram from "../../components/WireGuardFtpDiagram.astro";
+
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 > 
 > -   **Objectif** : retirer l'accès FTP public (ouvert uniquement à l'IP maison de Ludo, mais quand même exposé sur Internet) d'un petit serveur hébergé sur AWS, sans perdre l'accès depuis la maison.
@@ -27,7 +29,7 @@ La maison et l'instance AWS sont déjà reliées par un tunnel WireGuard — il 
 
 L'idée était donc simple sur papier : apprendre au routeur maison (pfSense) à envoyer le trafic destiné à l'IP privée du serveur AWS à travers le tunnel WireGuard, plutôt que par Internet. Une fois ça fait, plus besoin d'exposer le port FTP publiquement : on peut y accéder « comme si » le serveur était sur le réseau local.
 
-![Schéma avant/après : FTP exposé directement sur Internet, puis accessible uniquement via le tunnel WireGuard vers l'IP privée du serveur AWS](/images/blog/wg-diagram-1024x475.png)
+<WireGuardFtpDiagram context="article" />
 
 ### Premier piège : le tunnel ne routait qu'une seule adresse
 

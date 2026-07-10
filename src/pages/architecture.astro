@@ -3,6 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import FrigateDetectorDiagram from "../components/FrigateDetectorDiagram.astro";
 import CloudflareTunnelDiagram from "../components/CloudflareTunnelDiagram.astro";
 import WebdavProxyDiagram from "../components/WebdavProxyDiagram.astro";
+import WireGuardFtpDiagram from "../components/WireGuardFtpDiagram.astro";
 ---
 
 <BaseLayout
@@ -191,6 +192,11 @@ import WebdavProxyDiagram from "../components/WebdavProxyDiagram.astro";
   <section class="detail">
     <h2>Détail : requête WebDAV (proxy et en-tête Destination)</h2>
     <WebdavProxyDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : accès privé (tunnel WireGuard)</h2>
+    <WireGuardFtpDiagram context="architecture" />
   </section>
 </BaseLayout>
 

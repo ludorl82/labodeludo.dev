@@ -2,18 +2,42 @@
 interface Props {
   /** Slightly different framing/caption depending on where the diagram is embedded. */
   context?: "article" | "architecture";
+  lang?: "fr" | "en";
 }
 
-const { context = "article" } = Astro.props;
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma : caméra reliée à un boîtier NVR (Frigate), dont le détecteur d'objets tournait sur le CPU (250%, ventilateur bruyant) avant de basculer sur le GPU via le détecteur ONNX (27% CPU, 160 Mo de VRAM).",
+    camera: "caméra",
+    boitier: "boîtier NVR",
+    frigate: "Frigate",
+    detecteurCpu: "détecteur CPU",
+    avant: "avant · ~250% CPU · ventilateur bruyant",
+    detecteurGpu: "détecteur GPU (ONNX)",
+    apres: "après · ~27% CPU · 160 Mo VRAM",
+  },
+  en: {
+    ariaLabel:
+      "Diagram: camera connected to an NVR box (Frigate), whose object detector ran on the CPU (250%, noisy fan) before switching to the GPU via the ONNX detector (27% CPU, 160MB VRAM).",
+    camera: "camera",
+    boitier: "NVR box",
+    frigate: "Frigate",
+    detecteurCpu: "CPU detector",
+    avant: "before · ~250% CPU · noisy fan",
+    detecteurGpu: "GPU detector (ONNX)",
+    apres: "after · ~27% CPU · 160MB VRAM",
+  },
+} as const;
+
+const t = copy[lang];
 ---
 
 <figure class="frigate-diagram">
   <div class="diagram-wrap">
-    <svg
-      viewBox="0 0 640 250"
-      role="img"
-      aria-label="Schéma : caméra reliée à un boîtier NVR (Frigate), dont le détecteur d'objets tournait sur le CPU (250%, ventilateur bruyant) avant de basculer sur le GPU via le détecteur ONNX (27% CPU, 160 Mo de VRAM)."
-    >
+    <svg viewBox="0 0 640 250" role="img" aria-label={t.ariaLabel}>
       <defs>
         <marker id="fd-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
@@ -25,38 +49,54 @@ const { context = "article" } = Astro.props;
 
       <!-- caméra -->
       <ellipse cx="70" cy="125" rx="55" ry="30" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="70" y="129" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">caméra</text>
+      <text x="70" y="129" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.camera}</text>
 
       <path d="M126,125 L168,125" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#fd-arrow)" />
 
       <!-- boîtier NVR -->
       <rect x="170" y="90" width="150" height="70" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="245" y="120" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">boîtier NVR</text>
-      <text x="245" y="136" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">Frigate</text>
+      <text x="245" y="120" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.boitier}</text>
+      <text x="245" y="136" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">{t.frigate}</text>
 
       <!-- avant : détecteur CPU -->
       <path d="M320,110 L365,80" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#fd-arrow)" />
       <rect x="368" y="45" width="230" height="55" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="386" y="66" font-family="var(--font-mono)" font-size="12" fill="var(--text)">détecteur CPU</text>
-      <text x="386" y="84" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">avant · ~250% CPU · ventilateur bruyant</text>
+      <text x="386" y="66" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.detecteurCpu}</text>
+      <text x="386" y="84" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{t.avant}</text>
 
       <!-- après : détecteur GPU (ONNX) -->
       <path d="M320,140 L365,170" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fd-arrow-live)" />
       <rect x="368" y="150" width="230" height="55" rx="4" fill="var(--panel)" stroke="var(--accent-live)" />
-      <text x="386" y="171" font-family="var(--font-mono)" font-size="12" fill="var(--text)">détecteur GPU (ONNX)</text>
-      <text x="386" y="189" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">après · ~27% CPU · 160 Mo VRAM</text>
+      <text x="386" y="171" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.detecteurGpu}</text>
+      <text x="386" y="189" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">{t.apres}</text>
     </svg>
   </div>
   <figcaption>
     {
       context === "architecture" ? (
+        lang === "en" ? (
+          <>
+            Detail of the <a href="/inventaire/pipeline-media/">media pipeline</a> role: the home NVR's object
+            detector ran on the CPU after TensorRT support was dropped (Frigate 0.16), before switching to the GPU
+            via the ONNX detector. See the article:{" "}
+            <a href="/blog/mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu/">
+              my encoder was making noise
+            </a>.
+          </>
+        ) : (
+          <>
+            Détail du rôle <a href="/inventaire/pipeline-media/">pipeline média</a> : le détecteur d'objets du NVR
+            domestique roulait sur le CPU depuis le retrait du support TensorRT (Frigate 0.16), avant de basculer sur
+            le GPU via le détecteur ONNX. Voir l'article :{" "}
+            <a href="/blog/mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu/">
+              mon encodeur faisait du bruit
+            </a>.
+          </>
+        )
+      ) : lang === "en" ? (
         <>
-          Détail du rôle <a href="/inventaire/pipeline-media/">pipeline média</a> : le détecteur d'objets du NVR
-          domestique roulait sur le CPU depuis le retrait du support TensorRT (Frigate 0.16), avant de basculer sur
-          le GPU via le détecteur ONNX. Voir l'article :{" "}
-          <a href="/blog/mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu/">
-            mon encodeur faisait du bruit
-          </a>.
+          Before/after: the NVR's object detector, from the CPU (software fallback) to the GPU (ONNX detector). See
+          the <a href="/architecture/">architecture overview</a>.
         </>
       ) : (
         <>

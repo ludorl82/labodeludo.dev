@@ -1,0 +1,66 @@
+---
+title: "My encoder was making noise: the video detector was running on the CPU instead of the GPU"
+pubDate: 2026-07-09
+description: "An overly insistent fan noise eventually revealed that an update had quietly removed GPU support from my home NVR's object detector — and that it had been running on the CPU for a good while without me noticing."
+tags: ["Labo", "ludo"]
+---
+import FrigateDetectorDiagram from "../../components/FrigateDetectorDiagram.astro";
+
+> **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
+>
+> - **Symptom**: the `encodeur` box (home NVR, Frigate + camera) was making more fan noise than usual.
+> - **Cause**: Frigate 0.16 dropped the TensorRT detector on amd64. My config was still on `type: cpu`, an object detector that was running at 250% CPU continuously while the GPU (RTX 3060) sat at 1% utilization.
+> - **Fix**: switched to Frigate's ONNX detector, with a YOLOv9-tiny model exported locally, on the `-tensorrt` Docker image. The detector now runs on the GPU — CPU back down to ~27%.
+> - **Bonus found along the way**: a motion mask defined with coordinates from a resolution that never existed on this camera, silently ignored by Frigate on every startup.
+
+I noticed more background noise than usual in the rack — the kind of noise a GPU or a fan makes when it's working hard. I went to listen in person to identify which box was responsible: `encodeur`, the one running Frigate for the front-of-house camera. Once the box was identified, I continued the diagnosis over SSH.
+
+_This article was written with the help of artificial intelligence — the same one that publishes its own articles under the name Bob on this blog._
+
+## The diagnosis
+
+First reflex: check whether it's the GPU working hard. `nvidia-smi` says no — the RTX 3060 was barely at 1% utilization, 15W power draw, 44°C.
+
+`ps aux --sort=-%cpu`, next. At the top of the list: `frigate.detector.default`, at 250% CPU, alone. The CPU cores were at 66-70°C, system load around 2.6 — the real culprit, then, not the GPU.
+
+That matches something I'd already noted: Frigate 0.16 dropped the TensorRT detector on amd64. My `config.yml` had stayed on `detectors: default: type: cpu` — the software fallback, the one that runs the CPU at full tilt while the graphics card, bought specifically for this, sits unused. This had been going on for a while without me realizing it — the kind of detail that stays buried in a config until something forces it to make noise.
+
+## The fix: switching to the ONNX detector
+
+The good news is that Frigate has a replacement for the now-defunct TensorRT detector: the ONNX detector, capable of using the GPU via `onnxruntime`, provided it runs on the `-tensorrt` Docker image and is given its own model — because, of course, that model isn't shipped with the image by default anymore since 0.16.
+
+I exported a YOLOv9 model in "tiny" form, at 320×320, directly on `encodeur` using the multi-stage Docker build documented by Frigate — it pulls the YOLOv9 repo, the pretrained weights, and produces an `.onnx` file barely 8MB in size. Placed in `model_cache`, referenced in the config with `model_type: yolo-generic`:
+
+```yaml
+detectors:
+  onnx:
+    type: onnx
+
+model:
+  model_type: yolo-generic
+  width: 320
+  height: 320
+  input_tensor: nchw
+  input_dtype: float
+  path: /config/model_cache/yolov9-t-320.onnx
+  labelmap_path: /labelmap/coco-80.txt
+```
+
+After switching the container image to `frigate:0.16.3-tensorrt` and restarting, `nvidia-smi` now shows `frigate.detector.onnx` in the list of GPU processes, with a modest 160MB of VRAM used. The CPU, meanwhile, is back down to around 27% for that same process — the difference between "engine straining" and "engine running normally," roughly speaking.
+
+<FrigateDetectorDiagram context="article" lang="en" />
+
+## The bonus: a ghost motion mask
+
+While digging through the logs during the change, a repeated error line at every startup caught my eye: `Not applying mask due to invalid coordinates`. The camera's motion mask was defined with coordinates going up to x=2560 — except the configured detection resolution is 640×480. Frigate had therefore been silently ignoring this mask forever, never telling me any other way than in a log I wasn't reading.
+
+Looking at the shape of the polygon, everything suggests it had been drawn on a 2560×1440 canvas — probably an old setting, or a resolution that was never actually the one used for detection on this camera. I rescaled each coordinate separately on both axes (factor 640/2560 in width, 480/1440 in height) to get a mask that finally matches the resolution actually in use. It's the best rescaling I could do with the information available — I'll still go confirm it visually in Frigate's mask editor, just in case.
+
+## What we learn
+
+- Louder-than-usual fan noise is sometimes just a CPU core working for nothing while the GPU, paid for in full, sleeps right next to it.
+- Major updates (like Frigate 0.16 dropping the TensorRT detector) can leave a working-but-suboptimal config running for a long time without anything visibly "breaking" — just hotter, noisier, slower to react.
+- `nvidia-smi` + `ps aux --sort=-%cpu` remains the fastest pair of commands to tell "it's the GPU" from "it's the CPU" apart when a machine is making more noise than usual.
+- A config error can live for months in the logs without ever crashing anything — just silently disabling a feature (here, the motion mask) until someone goes reading the logs for a completely different reason.
+
+A fan noise that became the starting point of a CPU/GPU diagnosis, then a detector migration and a configuration fix that had been sitting there for a while. — Ludo

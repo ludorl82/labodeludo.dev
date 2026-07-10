@@ -5,6 +5,8 @@ description: "Over the last few decades, we've seen growing compartmentalization
 tags: ["DevOps", "ludo"]
 heroImage: "/images/blog/docker-cover-1-e1655335176221.png"
 ---
+import ConsoleLayersDiagram from "../../components/ConsoleLayersDiagram.astro";
+
 Over the last few decades, we've seen growing compartmentalization in how workloads are managed. While we used to host our servers on physical machines 30 years ago, today we define snippets of code in serverless environments that run without regard for the underlying layers, billed in GB-seconds of execution[1](https://aws.amazon.com/lambda/pricing/).
 
 A good DevOps toolbox is mostly made of console tools. Graphical tools in our field are very often just a diluted version of the CLI tools. As such, it's very reasonable to develop and operate our software directly from containers. I'll present here my own implementation, whose code is available in these repos:  
@@ -31,6 +33,8 @@ Before starting, I'll say right away that this solution isn't for everyone. Work
 For my Docker console project, I first had to decide how I was going to group the tools I use on a regular basis. It seemed obvious that a common base with the tools I always use should exist. On the other hand, other tools only serve me occasionally, and those should be included strictly in Docker layers on top of the ones defining the base image. This is where, to me, using containers really pays off. By building specialized console images on top of the base, I avoid duplicating disk space and memory usage across workloads.
 
 The real motivation behind this approach, in practice, is that my needs vary a lot depending on which machine I'm working on. At the office, I have a long list of tools and configurations specific to my employer to add on top of the base; at home, the customization layer stays much lighter. Rather than maintaining two completely separate consoles that would duplicate everything common to both, I only need to vary the top layer — the base itself doesn't change.
+
+<ConsoleLayersDiagram context="article" lang="en" />
 
 Concretely, this translated into two separate repos. The [ludorl82/console](https://github.com/ludorl82/console) repo defines the base image: an Ubuntu 24.04 with the tools I use everywhere (zsh, tmux, Neovim, Node.js, an SSH server to connect to it) and nothing specific to any machine or user account. The [ludorl82/.shell-scripts/console](https://github.com/ludorl82/.shell-scripts/tree/main/console) repo defines a customization layer that starts `FROM ludorl82/console:latest`, renames the generic `ubuntu` account to my own account (UID/GID, shell, home directory) and adds tools I only use on certain machines, like `gh` and `aws`. The same base thus serves both my bastion server and my work laptop, each only adding on top what's specific to it.
 

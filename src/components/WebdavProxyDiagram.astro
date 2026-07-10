@@ -1,18 +1,58 @@
 ---
 interface Props {
   context?: "article" | "architecture";
+  lang?: "fr" | "en";
 }
 
-const { context = "article" } = Astro.props;
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma : le téléphone envoie la requête WebDAV vers Cloudflare, qui la relaie au serveur via un tunnel sortant initié par le serveur ; à l'intérieur, le proxy interne relaie vers le serveur WebDAV (mod_dav), qui écrit dans le coffre-fort chiffré. Le correctif — réécriture de l'en-tête Destination de https:// vers http:// — se situe juste avant le serveur WebDAV, là où le schéma public et le schéma interne cessaient de correspondre.",
+    telephone: "téléphone",
+    telephoneSub: "client WebDAV",
+    cloudflare: "Cloudflare",
+    cloudflareSub: "TLS, edge public",
+    serveurAws: "serveur AWS",
+    tunnelSortant: "tunnel sortant",
+    proxyInterne: "proxy interne",
+    proxyInterneSub: "http:// interne",
+    serveurWebdav: "serveur WebDAV",
+    serveurWebdavSub: "mod_dav",
+    coffreFort: "coffre-fort",
+    coffreFortSub: ".kdbx chiffré",
+    correctifIci: "correctif ici",
+    correctifLine1: "Destination :",
+    correctifLine2: "https:// → http://",
+  },
+  en: {
+    ariaLabel:
+      "Diagram: the phone sends the WebDAV request to Cloudflare, which relays it to the server through an outbound tunnel initiated by the server; inside, the internal proxy relays to the WebDAV server (mod_dav), which writes to the encrypted vault. The fix — rewriting the Destination header from https:// to http:// — sits right before the WebDAV server, where the public and internal schemes stopped matching.",
+    telephone: "phone",
+    telephoneSub: "WebDAV client",
+    cloudflare: "Cloudflare",
+    cloudflareSub: "TLS, public edge",
+    serveurAws: "AWS server",
+    tunnelSortant: "outbound tunnel",
+    proxyInterne: "internal proxy",
+    proxyInterneSub: "internal http://",
+    serveurWebdav: "WebDAV server",
+    serveurWebdavSub: "mod_dav",
+    coffreFort: "vault",
+    coffreFortSub: "encrypted .kdbx",
+    correctifIci: "fix goes here",
+    correctifLine1: "Destination:",
+    correctifLine2: "https:// → http://",
+  },
+} as const;
+
+const t = copy[lang];
 ---
 
 <figure class="webdav-diagram">
   <div class="diagram-wrap">
-    <svg
-      viewBox="0 0 900 300"
-      role="img"
-      aria-label="Schéma : le téléphone envoie la requête WebDAV vers Cloudflare, qui la relaie au serveur via un tunnel sortant initié par le serveur ; à l'intérieur, le proxy interne relaie vers le serveur WebDAV (mod_dav), qui écrit dans le coffre-fort chiffré. Le correctif — réécriture de l'en-tête Destination de https:// vers http:// — se situe juste avant le serveur WebDAV, là où le schéma public et le schéma interne cessaient de correspondre."
-    >
+    <svg viewBox="0 0 900 300" role="img" aria-label={t.ariaLabel}>
       <defs>
         <marker id="wd-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
@@ -24,63 +64,82 @@ const { context = "article" } = Astro.props;
 
       <!-- téléphone -->
       <rect x="20" y="115" width="130" height="60" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="85" y="140" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">téléphone</text>
-      <text x="85" y="157" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">client WebDAV</text>
+      <text x="85" y="140" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.telephone}</text>
+      <text x="85" y="157" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{t.telephoneSub}</text>
 
       <!-- Cloudflare -->
       <rect x="200" y="115" width="140" height="60" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="270" y="140" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">Cloudflare</text>
-      <text x="270" y="157" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">TLS, edge public</text>
+      <text x="270" y="140" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.cloudflare}</text>
+      <text x="270" y="157" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{t.cloudflareSub}</text>
 
       <path d="M150,145 L198,145" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#wd-arrow)" />
 
       <!-- Serveur AWS -->
       <rect x="390" y="70" width="480" height="210" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="408" y="90" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">serveur AWS</text>
+      <text x="408" y="90" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.serveurAws}</text>
 
       <path d="M340,145 L388,145" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#wd-arrow)" />
       <path d="M388,178 L340,178" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#wd-arrow-live)" />
-      <text x="364" y="197" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">tunnel sortant</text>
+      <text x="364" y="197" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{t.tunnelSortant}</text>
 
       <!-- proxy interne -->
       <rect x="410" y="100" width="150" height="55" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="485" y="121" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">proxy interne</text>
-      <text x="485" y="138" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">http:// interne</text>
+      <text x="485" y="121" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.proxyInterne}</text>
+      <text x="485" y="138" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.proxyInterneSub}</text>
 
       <!-- serveur WebDAV -->
       <rect x="620" y="100" width="150" height="55" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="695" y="121" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">serveur WebDAV</text>
-      <text x="695" y="138" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">mod_dav</text>
+      <text x="695" y="121" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.serveurWebdav}</text>
+      <text x="695" y="138" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.serveurWebdavSub}</text>
 
       <path d="M560,127 L618,127" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#wd-arrow)" />
 
       <!-- coffre-fort -->
       <rect x="620" y="195" width="150" height="55" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="695" y="216" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">coffre-fort</text>
-      <text x="695" y="233" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">.kdbx chiffré</text>
+      <text x="695" y="216" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.coffreFort}</text>
+      <text x="695" y="233" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.coffreFortSub}</text>
 
       <path d="M695,155 L695,193" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#wd-arrow)" />
 
       <!-- correctif : réécriture de l'en-tête Destination -->
       <rect x="410" y="195" width="150" height="55" rx="4" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="4 3" />
-      <text x="485" y="213" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent-live)">correctif ici</text>
-      <text x="485" y="228" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">Destination :</text>
-      <text x="485" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">https:// &#8594; http://</text>
+      <text x="485" y="213" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent-live)">{t.correctifIci}</text>
+      <text x="485" y="228" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.correctifLine1}</text>
+      <text x="485" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.correctifLine2}</text>
       <path d="M485,193 L485,158" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="3 3" />
     </svg>
   </div>
   <figcaption>
     {
       context === "architecture" ? (
+        lang === "en" ? (
+          <>
+            Detail of the <a href="/inventaire/proxy-inverse/">reverse proxy</a> role: WebDAV's{" "}
+            <code>MOVE</code>/<code>COPY</code> commands carry an absolute URL in the <code>Destination</code>{" "}
+            header, built by the client with the public scheme (<code>https://</code>) — but the WebDAV module,
+            behind the proxy, only speaks <code>http://</code> internally. The fix rewrites that header right
+            before it reaches the module. See the article:{" "}
+            <a href="/blog/le-move-qui-echouait-une-histoire-de-proxy-de-schema-http-et-dun-coffre-fort-presque-corrompu/">
+              the MOVE that kept failing
+            </a>.
+          </>
+        ) : (
+          <>
+            Détail du rôle <a href="/inventaire/proxy-inverse/">proxy inverse</a> : les commandes WebDAV{" "}
+            <code>MOVE</code>/<code>COPY</code> transportent une URL absolue dans l'en-tête <code>Destination</code>,
+            construite par le client avec le schéma public (<code>https://</code>) — mais le module WebDAV, derrière
+            le proxy, ne parle que <code>http://</code> en interne. Le correctif réécrit cet en-tête juste avant qu'il
+            n'atteigne le module. Voir l'article :{" "}
+            <a href="/blog/le-move-qui-echouait-une-histoire-de-proxy-de-schema-http-et-dun-coffre-fort-presque-corrompu/">
+              le MOVE qui échouait
+            </a>.
+          </>
+        )
+      ) : lang === "en" ? (
         <>
-          Détail du rôle <a href="/inventaire/proxy-inverse/">proxy inverse</a> : les commandes WebDAV{" "}
-          <code>MOVE</code>/<code>COPY</code> transportent une URL absolue dans l'en-tête <code>Destination</code>,
-          construite par le client avec le schéma public (<code>https://</code>) — mais le module WebDAV, derrière
-          le proxy, ne parle que <code>http://</code> en interne. Le correctif réécrit cet en-tête juste avant qu'il
-          n'atteigne le module. Voir l'article :{" "}
-          <a href="/blog/le-move-qui-echouait-une-histoire-de-proxy-de-schema-http-et-dun-coffre-fort-presque-corrompu/">
-            le MOVE qui échouait
-          </a>.
+          The path of a <code>MOVE</code> request: from the phone to the encrypted vault, through the point where
+          the <code>Destination</code> header must be rewritten for the scheme to match. See the{" "}
+          <a href="/architecture/">architecture overview</a>.
         </>
       ) : (
         <>

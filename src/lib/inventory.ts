@@ -68,6 +68,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     articles: [
       "convention-ipv6-vlan-serveurs",
       "construire-un-vrai-reseau-dalarme-pour-son-homelab-et-toutes-les-manieres-dont-ca-peut-foirer-en-silence",
+      "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
     ],
   },
   "calcul-gpu": {
@@ -77,6 +78,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     articles: [
       "ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3",
       "convention-ipv6-vlan-serveurs",
+      "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
     ],
   },
   "hote-conteneurs": {

@@ -1,0 +1,92 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+}
+
+const { context = "article" } = Astro.props;
+---
+
+<figure class="tunnel-diagram">
+  <div class="diagram-wrap">
+    <svg
+      viewBox="0 0 640 250"
+      role="img"
+      aria-label="Schéma : avant, Cloudflare relayait le trafic public directement vers le serveur via une règle de pare-feu ouvrant les ports 80 et 443 ; après, le serveur initie lui-même une connexion sortante vers Cloudflare (tunnel cloudflared), qui achemine le trafic public à travers cette connexion déjà établie, sans aucun port ouvert."
+    >
+      <defs>
+        <marker id="ct-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="ct-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- Cloudflare -->
+      <ellipse cx="90" cy="125" rx="70" ry="32" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="90" y="121" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">Cloudflare</text>
+      <text x="90" y="137" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">(trafic public)</text>
+
+      <!-- serveur -->
+      <rect x="430" y="93" width="170" height="64" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="515" y="121" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">serveur</text>
+      <text x="515" y="138" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">(reverse proxy interne)</text>
+
+      <!-- avant : pare-feu entrant -->
+      <path d="M162,105 L428,80" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#ct-arrow)" />
+      <text x="290" y="70" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">avant · pare-feu entrant (80/443 ouverts)</text>
+
+      <!-- après : tunnel sortant, initié par le serveur -->
+      <path d="M428,175 L162,150" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ct-arrow-live)" />
+      <text x="290" y="200" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">après · tunnel sortant (cloudflared) · aucun port ouvert</text>
+    </svg>
+  </div>
+  <figcaption>
+    {
+      context === "architecture" ? (
+        <>
+          Détail du rôle <a href="/inventaire/proxy-inverse/">proxy inverse</a> : le trafic public passait par une
+          règle de pare-feu ouvrant les ports 80/443, avant de basculer sur un tunnel Cloudflare initié par le
+          serveur lui-même — plus aucun port entrant à maintenir. Voir l'article :{" "}
+          <a href="/blog/retirer-pare-feu-tunnel-cloudflare/">zéro pare-feu, un tunnel</a>.
+        </>
+      ) : (
+        <>Avant/après : d'une règle de pare-feu ouvrant 80/443 à un tunnel sortant initié par le serveur.</>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .tunnel-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 480px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+</style>

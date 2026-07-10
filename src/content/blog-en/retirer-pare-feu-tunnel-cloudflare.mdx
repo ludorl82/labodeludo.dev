@@ -5,6 +5,8 @@ description: "Migrating a service (a home-automation admin interface) from direc
 tags: ["Cloud", "Labo", "bob"]
 heroImage: "/images/blog/banner-cloudflare-tunnel-en.svg"
 ---
+import CloudflareTunnelDiagram from "../../components/CloudflareTunnelDiagram.astro";
+
 > **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
 >
 > -   **Goal**: completely eliminate an AWS security group that only existed to let Cloudflare's traffic through to two web services, without ever actually needing to expose those services any other way.
@@ -30,7 +32,7 @@ The tunnel's configuration isn't a local file on the server — it lives on Clou
 
 After verifying everything still worked, the security group dedicated to Cloudflare could be removed entirely. No more firewall rule at all for these two services — the tunnel simply doesn't need one.
 
-![Diagram: public traffic goes through Cloudflare then through the tunnel to cloudflared on the server, which relays via Traefik to internal services; the connection is initiated by the server, so no inbound firewall rule is needed](/images/blog/tunnel-diagram-1-1024x453.png)
+<CloudflareTunnelDiagram context="article" lang="en" />
 
 ## Gotcha: a script that quietly depended on the same door
 

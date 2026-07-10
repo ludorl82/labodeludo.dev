@@ -1,18 +1,48 @@
 ---
 interface Props {
   context?: "article" | "architecture";
+  lang?: "fr" | "en";
 }
 
-const { context = "article" } = Astro.props;
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma : avant, deux Dockerfile séparés (bureau et maison) dérivent l'un de l'autre et dupliquent les mêmes outils ; après, une image de base commune (ludorl82/console) sert de fondation à deux couches de personnalisation distinctes, une par machine, sans dupliquer ce qui est commun.",
+    avantLabel: "avant · deux Dockerfile qui dérivent l'un de l'autre",
+    dockerfileBureau: "Dockerfile bureau",
+    dockerfileMaison: "Dockerfile maison",
+    dupliqueSub: "zsh, tmux, nvim… (dupliqué)",
+    apresLabel: "après · une base commune, une couche par machine",
+    imageBase: "image de base",
+    imageBaseSub: "ludorl82/console",
+    coucheBureau: "couche bureau",
+    coucheMaison: "couche maison",
+    coucheSub: "gh, aws + compte",
+  },
+  en: {
+    ariaLabel:
+      "Diagram: before, two separate Dockerfiles (office and home) drift from one another and duplicate the same tools; after, a common base image (ludorl82/console) is the foundation for two distinct customization layers, one per machine, without duplicating what's shared.",
+    avantLabel: "before · two Dockerfiles drifting from each other",
+    dockerfileBureau: "office Dockerfile",
+    dockerfileMaison: "home Dockerfile",
+    dupliqueSub: "zsh, tmux, nvim… (duplicated)",
+    apresLabel: "after · one common base, one layer per machine",
+    imageBase: "base image",
+    imageBaseSub: "ludorl82/console",
+    coucheBureau: "office layer",
+    coucheMaison: "home layer",
+    coucheSub: "gh, aws + account",
+  },
+} as const;
+
+const t = copy[lang];
 ---
 
 <figure class="console-diagram">
   <div class="diagram-wrap">
-    <svg
-      viewBox="0 0 700 300"
-      role="img"
-      aria-label="Schéma : avant, deux Dockerfile séparés (bureau et maison) dérivent l'un de l'autre et dupliquent les mêmes outils ; après, une image de base commune (ludorl82/console) sert de fondation à deux couches de personnalisation distinctes, une par machine, sans dupliquer ce qui est commun."
-    >
+    <svg viewBox="0 0 700 300" role="img" aria-label={t.ariaLabel}>
       <defs>
         <marker id="cl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
@@ -22,47 +52,61 @@ const { context = "article" } = Astro.props;
         </marker>
       </defs>
 
-      <text x="350" y="22" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">avant · deux Dockerfile qui dérivent l'un de l'autre</text>
+      <text x="350" y="22" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">{t.avantLabel}</text>
 
       <!-- avant : deux Dockerfile indépendants -->
       <rect x="60" y="35" width="180" height="55" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="150" y="58" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">Dockerfile bureau</text>
-      <text x="150" y="75" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">zsh, tmux, nvim… (dupliqué)</text>
+      <text x="150" y="58" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.dockerfileBureau}</text>
+      <text x="150" y="75" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.dupliqueSub}</text>
 
       <rect x="460" y="35" width="180" height="55" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="550" y="58" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">Dockerfile maison</text>
-      <text x="550" y="75" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">zsh, tmux, nvim… (dupliqué)</text>
+      <text x="550" y="58" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.dockerfileMaison}</text>
+      <text x="550" y="75" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.dupliqueSub}</text>
 
       <path d="M242,62 L458,62" fill="none" stroke="var(--text-faint)" stroke-width="1.5" stroke-dasharray="3 3" />
 
-      <text x="350" y="152" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">après · une base commune, une couche par machine</text>
+      <text x="350" y="152" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">{t.apresLabel}</text>
 
       <!-- après : base commune -->
       <rect x="250" y="165" width="200" height="55" rx="4" fill="var(--panel)" stroke="var(--accent-live)" stroke-width="1.5" />
-      <text x="350" y="188" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">image de base</text>
-      <text x="350" y="205" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">ludorl82/console</text>
+      <text x="350" y="188" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.imageBase}</text>
+      <text x="350" y="205" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.imageBaseSub}</text>
 
       <path d="M290,220 L160,248" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#cl-arrow-live)" />
       <path d="M410,220 L540,248" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#cl-arrow-live)" />
 
       <!-- après : couches de personnalisation -->
       <rect x="60" y="250" width="180" height="50" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="150" y="270" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">couche bureau</text>
-      <text x="150" y="286" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">gh, aws + compte</text>
+      <text x="150" y="270" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.coucheBureau}</text>
+      <text x="150" y="286" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.coucheSub}</text>
 
       <rect x="460" y="250" width="180" height="50" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="550" y="270" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">couche maison</text>
-      <text x="550" y="286" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">gh, aws + compte</text>
+      <text x="550" y="270" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">{t.coucheMaison}</text>
+      <text x="550" y="286" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.coucheSub}</text>
     </svg>
   </div>
   <figcaption>
     {
       context === "architecture" ? (
+        lang === "en" ? (
+          <>
+            Detail of the <a href="/inventaire/bastion/">bastion / console</a> role: rather than two Dockerfiles
+            drifting from each other, a common base image (devcontainer Features) is the foundation for one
+            customization layer per machine. See the article:{" "}
+            <a href="/blog/compartimentalisation-des-outils-de-console/">compartmentalizing console tools</a>.
+          </>
+        ) : (
+          <>
+            Détail du rôle <a href="/inventaire/bastion/">bastion / console</a> : plutôt que deux Dockerfile qui
+            dérivent l'un de l'autre, une image de base commune (Features devcontainer) sert de fondation à une
+            couche de personnalisation par machine. Voir l'article :{" "}
+            <a href="/blog/compartimentalisation-des-outils-de-console/">compartimentalisation des outils de console</a>.
+          </>
+        )
+      ) : lang === "en" ? (
         <>
-          Détail du rôle <a href="/inventaire/bastion/">bastion / console</a> : plutôt que deux Dockerfile qui
-          dérivent l'un de l'autre, une image de base commune (Features devcontainer) sert de fondation à une
-          couche de personnalisation par machine. Voir l'article :{" "}
-          <a href="/blog/compartimentalisation-des-outils-de-console/">compartimentalisation des outils de console</a>.
+          Before/after: from two Dockerfiles drifting from each other to a common base with one customization layer
+          per machine. See the <a href="/architecture/">architecture overview</a>.
         </>
       ) : (
         <>

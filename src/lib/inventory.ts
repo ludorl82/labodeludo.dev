@@ -115,3 +115,10 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     articles: ["ftp-prive-wireguard"],
   },
 };
+
+/** Inventory items that list the given blog post id among their articles. */
+export function inventoryForArticle(id: string): InventoryKey[] {
+  return (Object.keys(INVENTORY) as InventoryKey[]).filter((key) =>
+    INVENTORY[key].articles.includes(id),
+  );
+}

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import FrigateDetectorDiagram from "../components/FrigateDetectorDiagram.astro";
 ---
 
 <BaseLayout
@@ -174,6 +175,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <span class="legend-item"><span class="swatch live" /> tunnel chiffré / routage applicatif</span>
     <span class="legend-item">les éléments soulignés au survol pointent vers leur fiche d'<a href="/inventaire/">inventaire</a></span>
   </div>
+
+  <section class="detail">
+    <h2>Détail : détection vidéo (Frigate)</h2>
+    <FrigateDetectorDiagram context="architecture" />
+  </section>
 </BaseLayout>
 
 <style>
@@ -282,5 +288,19 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   .diagram :global(.node-link:hover text) {
     fill: var(--accent-live);
     text-decoration: underline;
+  }
+
+  .detail {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .detail h2 {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 1rem;
   }
 </style>

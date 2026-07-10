@@ -1,0 +1,133 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+}
+
+const { context = "article" } = Astro.props;
+---
+
+<figure class="voice-diagram">
+  <div class="diagram-wrap">
+    <svg
+      viewBox="0 0 900 380"
+      role="img"
+      aria-label="Schéma : le satellite vocal capte la commande et la transmet à Home Assistant, qui l'envoie avec le prompt système et la liste des entités exposées à Ollama sur un PC équipé d'une RTX 3060 ; Ollama renvoie l'appel d'outil choisi, et Home Assistant l'exécute sur la prise TP-Link, réexposée comme lumière via switch_as_x."
+    >
+      <defs>
+        <marker id="va-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+      </defs>
+
+      <!-- satellite vocal -->
+      <rect x="20" y="140" width="150" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="95" y="172" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">satellite vocal</text>
+      <text x="95" y="189" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">micro + haut-parleur</text>
+
+      <path d="M172,180 L208,180" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#va-arrow)" />
+
+      <!-- Home Assistant -->
+      <rect x="210" y="110" width="190" height="140" rx="8" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="305" y="133" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">Home Assistant</text>
+      <text x="305" y="151" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">agent de conversation</text>
+      <text x="305" y="165" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">(intégration Ollama)</text>
+      <text x="305" y="187" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">prompt système +</text>
+      <text x="305" y="201" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">entités exposées</text>
+      <text x="305" y="215" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">(dont switch_as_x)</text>
+
+      <path d="M402,165 L508,165" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#va-arrow)" />
+      <text x="455" y="155" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">requête + outils</text>
+
+      <path d="M508,205 L402,205" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#va-arrow)" />
+      <text x="455" y="222" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">appel d'outil choisi</text>
+
+      <!-- PC Windows / Ollama -->
+      <rect x="510" y="90" width="220" height="180" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="528" y="112" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">PC Windows</text>
+      <text x="528" y="128" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">RTX 3060 · 12 Go VRAM</text>
+
+      <rect x="530" y="145" width="180" height="100" rx="6" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="620" y="170" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">Ollama</text>
+      <text x="620" y="188" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">qwen3:8b-16k</text>
+      <text x="620" y="203" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">tâche planifiée</text>
+      <text x="620" y="218" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">(redémarrage auto sur échec)</text>
+
+      <!-- Home Assistant -> Prise -->
+      <path d="M305,252 L305,318" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#va-arrow)" />
+      <text x="315" y="288" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">commande</text>
+
+      <!-- prise TP-Link -->
+      <rect x="210" y="320" width="190" height="55" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="305" y="341" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">prise TP-Link</text>
+      <text x="305" y="356" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">switch &#8594; light (switch_as_x)</text>
+
+      <!-- annotation : piège switch_as_x -->
+      <rect x="560" y="290" width="230" height="55" rx="4" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="4 3" />
+      <text x="675" y="308" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent-live)">piège : switch ≠ light</text>
+      <text x="675" y="323" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">un agent ciblant domain=light</text>
+      <text x="675" y="336" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">ne voit pas un switch non réexposé</text>
+    </svg>
+  </div>
+  <figcaption>
+    {
+      context === "architecture" ? (
+        <>
+          Détail des rôles <a href="/inventaire/calcul-gpu/">calcul GPU</a> et{" "}
+          <a href="/inventaire/domotique/">domotique</a> : la commande vocale passe par Home Assistant, qui interroge
+          Ollama (GPU) avec le prompt système et la liste des entités exposées, puis exécute l'appel d'outil choisi.
+          Les prises intelligentes n'apparaissent comme des lumières pilotables que si elles sont réexposées via{" "}
+          <code>switch_as_x</code>. Voir l'article :{" "}
+          <a href="/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/">
+            ce que peut faire un LLM local sur une carte à 300$
+          </a>.
+        </>
+      ) : (
+        <>
+          Le trajet d'une commande vocale : du satellite au GPU (Ollama) via Home Assistant, jusqu'à l'appareil
+          contrôlé. Voir la <a href="/architecture/">vue d'ensemble de l'architecture</a>.
+        </>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .voice-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+
+  figcaption code {
+    font-family: var(--font-mono);
+    background: var(--panel);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+</style>

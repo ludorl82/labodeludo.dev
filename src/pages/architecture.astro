@@ -4,6 +4,7 @@ import FrigateDetectorDiagram from "../components/FrigateDetectorDiagram.astro";
 import CloudflareTunnelDiagram from "../components/CloudflareTunnelDiagram.astro";
 import WebdavProxyDiagram from "../components/WebdavProxyDiagram.astro";
 import WireGuardFtpDiagram from "../components/WireGuardFtpDiagram.astro";
+import VoiceAssistantDiagram from "../components/VoiceAssistantDiagram.astro";
 ---
 
 <BaseLayout
@@ -197,6 +198,11 @@ import WireGuardFtpDiagram from "../components/WireGuardFtpDiagram.astro";
   <section class="detail">
     <h2>Détail : accès privé (tunnel WireGuard)</h2>
     <WireGuardFtpDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : assistant vocal (Home Assistant + Ollama)</h2>
+    <VoiceAssistantDiagram context="architecture" />
   </section>
 </BaseLayout>
 

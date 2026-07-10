@@ -7,12 +7,14 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "generate-og-images": "node scripts/generate-og-images.mjs",
+    "build": "npm run generate-og-images && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.2",
-    "astro": "^7.0.6"
+    "astro": "^7.0.6",
+    "sharp": "^0.35.3"
   }
 }

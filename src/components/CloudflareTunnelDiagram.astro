@@ -9,9 +9,9 @@ const { context = "article" } = Astro.props;
 <figure class="tunnel-diagram">
   <div class="diagram-wrap">
     <svg
-      viewBox="0 0 640 250"
+      viewBox="0 0 760 260"
       role="img"
-      aria-label="Schéma : avant, Cloudflare relayait le trafic public directement vers le serveur via une règle de pare-feu ouvrant les ports 80 et 443 ; après, le serveur initie lui-même une connexion sortante vers Cloudflare (tunnel cloudflared), qui achemine le trafic public à travers cette connexion déjà établie, sans aucun port ouvert."
+      aria-label="Schéma : avant, Cloudflare relayait le trafic public directement vers le serveur via une règle de pare-feu ouvrant les ports 80 et 443 ; après, le serveur initie lui-même une connexion sortante vers Cloudflare (tunnel cloudflared), qui achemine le trafic public à travers cette connexion déjà établie, sans aucun port ouvert. Une fois arrivé sur le serveur, le trafic est relayé par le proxy inverse vers les services internes, peu importe le chemin emprunté."
     >
       <defs>
         <marker id="ct-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -23,22 +23,33 @@ const { context = "article" } = Astro.props;
       </defs>
 
       <!-- Cloudflare -->
-      <ellipse cx="90" cy="125" rx="70" ry="32" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="90" y="121" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">Cloudflare</text>
-      <text x="90" y="137" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">(trafic public)</text>
+      <ellipse cx="70" cy="130" rx="65" ry="32" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="70" y="126" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">Cloudflare</text>
+      <text x="70" y="142" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">(trafic public)</text>
 
-      <!-- serveur -->
-      <rect x="430" y="93" width="170" height="64" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="515" y="121" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">serveur</text>
-      <text x="515" y="138" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">(reverse proxy interne)</text>
+      <!-- serveur (cloudflared) -->
+      <rect x="260" y="98" width="150" height="64" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="335" y="124" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">serveur</text>
+      <text x="335" y="141" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">(cloudflared)</text>
+
+      <!-- proxy inverse -->
+      <rect x="470" y="98" width="150" height="64" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="545" y="124" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">proxy inverse</text>
+      <text x="545" y="141" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">(TLS, routage)</text>
 
       <!-- avant : pare-feu entrant -->
-      <path d="M162,105 L428,80" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#ct-arrow)" />
-      <text x="290" y="70" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">avant · pare-feu entrant (80/443 ouverts)</text>
+      <path d="M136,113 L258,113" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#ct-arrow)" />
+      <text x="197" y="100" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">avant · pare-feu (80/443 ouverts)</text>
 
       <!-- après : tunnel sortant, initié par le serveur -->
-      <path d="M428,175 L162,150" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ct-arrow-live)" />
-      <text x="290" y="200" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">après · tunnel sortant (cloudflared) · aucun port ouvert</text>
+      <path d="M258,150 L136,150" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ct-arrow-live)" />
+      <text x="197" y="177" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">après · tunnel sortant</text>
+
+      <!-- serveur -> proxy inverse -> services internes (inchangé avant/après) -->
+      <path d="M412,130 L468,130" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#ct-arrow)" />
+      <path d="M622,130 L700,130" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#ct-arrow)" />
+      <text x="700" y="112" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">services</text>
+      <text x="700" y="126" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">internes</text>
     </svg>
   </div>
   <figcaption>
@@ -47,7 +58,8 @@ const { context = "article" } = Astro.props;
         <>
           Détail du rôle <a href="/inventaire/proxy-inverse/">proxy inverse</a> : le trafic public passait par une
           règle de pare-feu ouvrant les ports 80/443, avant de basculer sur un tunnel Cloudflare initié par le
-          serveur lui-même — plus aucun port entrant à maintenir. Voir l'article :{" "}
+          serveur lui-même — plus aucun port entrant à maintenir. Une fois arrivé, le trafic est relayé comme avant
+          vers les services internes. Voir l'article :{" "}
           <a href="/blog/retirer-pare-feu-tunnel-cloudflare/">zéro pare-feu, un tunnel</a>.
         </>
       ) : (
@@ -73,7 +85,7 @@ const { context = "article" } = Astro.props;
   svg {
     display: block;
     width: 100%;
-    min-width: 480px;
+    min-width: 560px;
     height: auto;
   }
 

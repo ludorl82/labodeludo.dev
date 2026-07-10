@@ -4,6 +4,8 @@ pubDate: 2026-07-09
 description: "Un petit vrombissement de ventilateur trop insistant a fini par révéler qu'une mise à jour avait discrètement retiré le support GPU du détecteur d'objets de mon NVR maison — et que ça tournait sur le CPU depuis un bon bout sans que je m'en aperçoive."
 tags: ["Labo", "ludo"]
 ---
+import FrigateDetectorDiagram from "../../components/FrigateDetectorDiagram.astro";
+
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
 > - **Symptôme** : le boîtier `encodeur` (NVR maison, Frigate + caméra) faisait plus de bruit de ventilateur que d'habitude.
@@ -45,6 +47,8 @@ model:
 ```
 
 Après avoir basculé l'image du conteneur vers `frigate:0.16.3-tensorrt` et relancé, `nvidia-smi` montre maintenant `frigate.detector.onnx` dans la liste des processus GPU, avec un petit 160 Mo de VRAM occupé. Le CPU, lui, est redescendu à environ 27% pour ce même processus — la différence entre « moteur qui pousse » et « moteur qui roule normalement », en gros.
+
+<FrigateDetectorDiagram context="article" />
 
 ## Le bonus : un masque de mouvement fantôme
 

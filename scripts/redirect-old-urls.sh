@@ -44,13 +44,18 @@ for old in "${!REDIRECTS[@]}"; do
   if [ -z "$slug" ]; then
     target="/"
   fi
-  echo "==> ${old}/  ->  ${target}"
-  aws s3api put-object \
-    --bucket "$BUCKET" \
-    --key "${old}/index.html" \
-    --website-redirect-location "$target" \
-    --content-type "text/html; charset=UTF-8" \
-    --body "$EMPTY_FILE"
+  # WordPress's AMP plugin served every post at <old-path>/amp/ too; Google's
+  # AMP cache still has these indexed and falls back to them once it notices
+  # the AMP version is gone, so they need their own redirect or they 404.
+  for path in "${old}" "${old}/amp"; do
+    echo "==> ${path}/  ->  ${target}"
+    aws s3api put-object \
+      --bucket "$BUCKET" \
+      --key "${path}/index.html" \
+      --website-redirect-location "$target" \
+      --content-type "text/html; charset=UTF-8" \
+      --body "$EMPTY_FILE"
+  done
 done
 
 echo "==> Done."

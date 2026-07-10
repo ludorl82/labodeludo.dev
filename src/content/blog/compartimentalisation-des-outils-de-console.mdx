@@ -5,6 +5,8 @@ description: "Dans les dernières décennies, nous avons observé une compartime
 tags: ["DevOps", "ludo"]
 heroImage: "/images/blog/docker-cover-1-e1655335176221.png"
 ---
+import ConsoleLayersDiagram from "../../components/ConsoleLayersDiagram.astro";
+
 Dans les dernières décennies, nous avons observé une compartimentalisation croissante dans la gestion des charges de travail. Alors qu'on hébergeait nos serveurs sur des machines physiques il y a 30 ans, aujourd'hui on définit des bribes de code dans des environnements sans serveur qui s'exécutent sans égard aux couches sous-jacentes, facturées en Go-secondes d'exécution[1](https://aws.amazon.com/fr/lambda/pricing/).
 
 La boîte à outils du bon DevOps contient principalement des outils de console. Les outils graphiques dans notre domaine ne sont bien souvent qu'une version diluée des outils de CLI. C'est donc tout à fait envisageable de développer et d'opérer nos logiciels directement à partir de conteneurs. Je vous présenterai ici ma propre implémentation dont le code est disponible dans ces dépôts :  
@@ -31,6 +33,8 @@ Avant de commencer je vais tout de suite énoncer que cette solution n'est pas p
 Pour mon projet de console sous docker, j'ai d'abord dû choisir comment j'allais grouper les outils dont je me sers sur une base régulière. C'était clair pour moi qu'une base commune avec les outils que j'utilise toujours devrait être faite. Par contre d'autres outils me servent seulement qu'à l'occasion et ceux-ci devraient être inclus strictement dans des couches docker au-dessus de celles qui définissent l'image de base. Et c'est là que pour moi l'utilisation des conteneurs trouve beaucoup de son sens. En construisant des images spécialisées de la console par dessus la base, j'évite la duplication de l'espace disque et de la consommation de mémoire des charges de travail.
 
 La vraie motivation derrière cette approche, en pratique, c'est que mes besoins varient beaucoup selon la machine où je travaille. Au bureau, j'ai une longue liste d'outils et de configurations propres à mon employeur à ajouter par-dessus la base ; à la maison, la couche de personnalisation reste beaucoup plus légère. Plutôt que de maintenir deux consoles complètement distinctes qui dupliqueraient tout ce qui est commun aux deux, je n'ai qu'à faire varier la couche du dessus — la base, elle, ne change pas.
+
+<ConsoleLayersDiagram context="article" />
 
 Concrètement, cela s'est traduit par deux dépôts distincts. Le dépôt [ludorl82/console](https://github.com/ludorl82/console) définit l'image de base : un Ubuntu 24.04 avec les outils que j'utilise partout (zsh, tmux, Neovim, Node.js, un serveur SSH pour m'y connecter) et rien de spécifique à une machine ou à un compte utilisateur. Le dépôt [ludorl82/.shell-scripts/console](https://github.com/ludorl82/.shell-scripts/tree/main/console) définit une couche de personnalisation qui part de `FROM ludorl82/console:latest`, renomme le compte générique `ubuntu` pour mon propre compte (UID/GID, shell, répertoire personnel) et ajoute les outils que je n'utilise que sur certaines machines, comme `gh` et `aws`. La même base sert donc autant sur mon serveur bastion que sur mon poste de travail professionnel, chacun n'ajoutant par-dessus que ce qui lui est propre.
 

@@ -5,6 +5,8 @@ description: "Migration d'un service (interface d'administration domotique) depu
 tags: ["Cloud", "Labo", "bob"]
 heroImage: "/images/blog/banner-cloudflare-tunnel.png"
 ---
+import CloudflareTunnelDiagram from "../../components/CloudflareTunnelDiagram.astro";
+
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 > 
 > -   **Objectif** : éliminer complètement un groupe de sécurité AWS qui n'existait que pour laisser passer le trafic de Cloudflare vers deux services web, sans jamais avoir eu besoin d'exposer ces services autrement.
@@ -30,7 +32,7 @@ La configuration du tunnel n'est pas un fichier local sur le serveur — elle vi
 
 Vérification faite que tout fonctionnait encore, on a pu retirer complètement le groupe de sécurité dédié à Cloudflare. Plus aucune règle de pare-feu pour ces deux services — le tunnel n'en a simplement pas besoin.
 
-![Schéma : le trafic public passe par Cloudflare puis par le tunnel vers cloudflared sur le serveur, qui relaie via Traefik vers les services internes ; la connexion est initiée par le serveur, donc aucune règle de pare-feu entrante n'est nécessaire](/images/blog/tunnel-diagram-1-1024x453.png)
+<CloudflareTunnelDiagram context="article" />
 
 ## Piège : un script qui dépendait discrètement de la même porte
 

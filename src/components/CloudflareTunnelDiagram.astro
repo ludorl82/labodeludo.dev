@@ -63,7 +63,10 @@ const { context = "article" } = Astro.props;
           <a href="/blog/retirer-pare-feu-tunnel-cloudflare/">zéro pare-feu, un tunnel</a>.
         </>
       ) : (
-        <>Avant/après : d'une règle de pare-feu ouvrant 80/443 à un tunnel sortant initié par le serveur.</>
+        <>
+          Avant/après : d'une règle de pare-feu ouvrant 80/443 à un tunnel sortant initié par le serveur. Voir la{" "}
+          <a href="/architecture/">vue d'ensemble de l'architecture</a>.
+        </>
       )
     }
   </figcaption>

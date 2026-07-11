@@ -26,6 +26,7 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run build
+      - run: docker compose up -d --force-recreate
       - env:
           AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}

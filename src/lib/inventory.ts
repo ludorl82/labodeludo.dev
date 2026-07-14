@@ -96,6 +96,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "Automatisation de la maison et assistant vocal local, piloté par un LLM tournant sur le calcul GPU du réseau serveurs.",
     articles: [
       "ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3",
+      "ok-bob-entrainer-un-mot-de-reveil-francais-quebecois",
     ],
   },
   "postes-personnels": {

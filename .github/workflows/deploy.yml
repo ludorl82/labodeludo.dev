@@ -6,7 +6,7 @@ on:
 jobs:
   deploy-staging:
     if: github.ref != 'refs/heads/main'
-    runs-on: [self-hosted, docker]
+    runs-on: [self-hosted, k3s]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -14,11 +14,19 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run build
-      - run: docker compose up -d --force-recreate
+      - name: Install kubectl
+        run: |
+          curl -sLO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+      - name: Deploy to k3s
+        run: |
+          POD=$(./kubectl get pod -n labodeludo -l app=dev-labodeludo -o jsonpath='{.items[0].metadata.name}')
+          ./kubectl exec -n labodeludo "$POD" -- sh -c 'rm -rf /usr/share/nginx/html/* /usr/share/nginx/html/.[!.]* 2>/dev/null || true'
+          ./kubectl cp dist/. "labodeludo/$POD:/usr/share/nginx/html"
 
   deploy-prod:
     if: github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, docker]
+    runs-on: [self-hosted, k3s]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,7 +34,6 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run build
-      - run: docker compose up -d --force-recreate
       - env:
           AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}

@@ -41,7 +41,7 @@ The Raspberry Pi 5s run a recent Linux distribution where memory control groups 
 
 None of it was hard on its own. The real trap was expecting a single install recipe to apply identically to all six machines — when in practice, every hardware type and every base image had its own little surprise in store.
 
-To give a concrete sense of what this looks like in practice, here's an excerpt from the session on the very first Raspberry Pi:
+The first of these gotchas — the cgroups one, on the very first Raspberry Pi — is a good example of what this looks like in session, from diagnosis to fix:
 
 <ConversationExcerpt
   turns={[
@@ -56,6 +56,8 @@ To give a concrete sense of what this looks like in practice, here's an excerpt 
   caption="Infrastructure names sanitized. See the bastion article for how headless mode works."
   disclaimer="⚠ This is not a literal transcript: it's a condensed reconstruction, written after the fact from real session notes, for illustration only."
 />
+
+Once that kind of fix was applied node by node, here's what the assembled cluster looks like: the old single container host on the left, the cloud control plane and the five home nodes on the right.
 
 <K3sClusterDiagram context="article" lang="en" />
 

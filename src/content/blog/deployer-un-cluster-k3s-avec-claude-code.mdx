@@ -41,7 +41,7 @@ Les Raspberry Pi 5 tournent une distribution Linux récente où les groupes de c
 
 Rien de ça n'était difficile en soi. Le vrai piège, c'était de s'attendre à ce qu'une seule recette d'installation s'applique identiquement aux six machines — alors qu'en pratique, chaque type de matériel et chaque image de base avait sa propre petite surprise à réserver.
 
-Pour donner une idée concrète de comment ça se passe en pratique, voici un extrait de la session sur le tout premier Raspberry Pi :
+Le premier de ces pièges — celui des cgroups sur le premier Raspberry Pi — est un bon exemple de comment ça se passe concrètement en session, du diagnostic au correctif :
 
 <ConversationExcerpt
   turns={[
@@ -56,6 +56,8 @@ Pour donner une idée concrète de comment ça se passe en pratique, voici un ex
   caption="Noms d'infrastructure sanitisés. Voir l'article sur le bastion pour le détail du mode headless."
   disclaimer="⚠ Ceci n'est pas une transcription littérale : c'est une reconstitution condensée, écrite après coup à partir des notes réelles de la session, à des fins d'illustration seulement."
 />
+
+Une fois ce genre de correctif appliqué nœud par nœud, voici à quoi ressemble la grappe une fois assemblée : l'ancien hôte conteneurs unique à gauche, le plan de contrôle dans le nuage et les cinq nœuds maison à droite.
 
 <K3sClusterDiagram context="article" />
 

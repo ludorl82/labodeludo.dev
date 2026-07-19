@@ -1,7 +1,7 @@
 ---
-title: "Bâtir une grappe k3s avec Claude Code aux commandes"
+title: "Bâtir une grappe k3s pour le labo"
 pubDate: 2026-07-18
-description: "Remplacer l'hôte conteneurs unique du labo par une petite grappe k3s de six nœuds — un plan de contrôle dans le nuage, cinq nœuds à la maison — en travaillant de bout en bout avec Claude Code, jusqu'au déménagement du pipeline de déploiement de ce site sur la nouvelle grappe."
+description: "Remplacer l'hôte conteneurs unique du labo par une petite grappe k3s de six nœuds — un plan de contrôle dans le nuage, cinq nœuds à la maison — jusqu'au déménagement du pipeline de déploiement de ce site sur la nouvelle grappe."
 tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-k3s-claude-code.svg"
 ---
@@ -11,11 +11,11 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Contexte** : mon labo tournait sur un seul hôte conteneurs Docker — pratique, mais un point de panne unique pour tout ce qui roulait dessus, dont ce site.
-> -   **Solution** : bâtir une petite grappe **k3s** — une distribution Kubernetes allégée, plus adaptée qu'un Kubernetes « classique » à six machines dont deux sont des Raspberry Pi — de six nœuds, répartie entre un plan de contrôle dans le nuage et cinq nœuds à la maison, en travaillant de bout en bout avec Claude Code comme copilote pour le déploiement.
+> -   **Solution** : bâtir une petite grappe **k3s** — une distribution Kubernetes allégée, plus adaptée qu'un Kubernetes « classique » à six machines dont deux sont des Raspberry Pi — répartie entre un plan de contrôle dans le nuage et cinq nœuds à la maison.
 > -   **Pièges rencontrés** : chaque type de machine avait sa propre étape cachée avant d'accepter de démarrer l'agent k3s — cgroups désactivés par défaut sur les Raspberry Pi, `iptables` absent des images cloud minimalistes, une VM qui pensait avoir 560 Mo de RAM.
 > -   **Résultat** : le pipeline de déploiement de ce site roule maintenant sur la grappe plutôt que sur une seule machine, avec un vrai gain de résilience.
 
-Cette semaine, j'ai pris l'hôte conteneurs unique qui faisait tourner mon labo — dont ce site — et je l'ai transformé en une vraie petite grappe Kubernetes. Comme pour la plupart des projets d'infrastructure ici, j'ai fait le gros du travail en session avec Claude Code : je pose le contexte et les décisions d'architecture, il exécute, diagnostique et documente au fur et à mesure. Ce n'est d'ailleurs pas la première fois que je parle de la manière dont je travaille avec lui — j'ai décrit récemment comment [une instance headless de Claude Code](/blog/claude-code-headless-bastion/), tournant sans supervision depuis mon bastion, s'occupe déjà des sauvegardes et des mises à jour système de tout le labo. C'est cette même instance qui a exécuté une bonne partie de ce qui suit.
+Cette semaine, j'ai pris l'hôte conteneurs unique qui faisait tourner mon labo — dont ce site — et je l'ai transformé en une vraie petite grappe Kubernetes. Comme pour la plupart des projets d'infrastructure ici, j'ai fait le gros du travail en session avec Claude Code (j'explique comment dans [un article dédié](/blog/claude-code-headless-bastion/)) — cette fois-ci, l'histoire, c'est surtout la grappe elle-même.
 
 ## Pourquoi une grappe plutôt qu'un seul serveur
 

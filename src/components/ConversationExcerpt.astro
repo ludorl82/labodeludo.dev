@@ -1,0 +1,106 @@
+---
+interface Turn {
+  speaker: "ludo" | "claude";
+  text: string;
+}
+
+interface Props {
+  turns: Turn[];
+  caption: string;
+  disclaimer: string;
+}
+
+const { turns, caption, disclaimer } = Astro.props;
+---
+
+<figure class="transcript">
+  <p class="disclaimer">{disclaimer}</p>
+  <div class="transcript-wrap">
+    {
+      turns.map((turn) => (
+        <div class:list={["turn", turn.speaker]}>
+          <span class="speaker">{turn.speaker === "ludo" ? "ludo@bastion" : "claude-code"}</span>
+          <p>{turn.text}</p>
+        </div>
+      ))
+    }
+  </div>
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<style>
+  .transcript {
+    margin: 2rem 0;
+  }
+
+  .disclaimer {
+    margin: 0 0 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--text-muted);
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-left: 3px solid var(--accent-live);
+    border-radius: 4px;
+    padding: 0.6rem 0.85rem;
+  }
+
+  .transcript-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .turn {
+    min-width: 340px;
+  }
+
+  .speaker {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.25rem;
+  }
+
+  .turn.ludo .speaker {
+    color: var(--text-faint);
+  }
+
+  .turn.claude .speaker {
+    color: var(--accent-live);
+  }
+
+  .turn p {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  .turn.claude p {
+    padding-left: 1rem;
+    border-left: 2px solid var(--accent-live);
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+    font-style: italic;
+  }
+</style>

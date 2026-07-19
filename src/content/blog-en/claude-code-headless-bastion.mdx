@@ -1,0 +1,90 @@
+---
+title: "Claude Code in headless mode: automating the lab from the bastion"
+pubDate: 2026-07-16
+description: "How I run Claude Code in a persistent tmux session on my containerized bastion, how auto mode turns a small prompt into long unattended work sessions, how a headless instance of the same agent runs my backups and system upgrades unsupervised — and why the Claude Pro subscription costs me $40/month instead of hundreds in API tokens."
+tags: ["Cloud", "DevOps", "ludo"]
+heroImage: "/images/blog/banner-claude-headless-bastion-en.svg"
+---
+import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
+
+> **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
+>
+> -   **Context**: Claude Code runs day to day inside the console container on my bastion, in a persistent tmux session.
+> -   **Goal**: get it to run recurring tasks (backups, system upgrades) without me having to open an interactive session.
+> -   **Solution**: scheduled tasks start a Claude Code instance in headless mode on the bastion; the remote control feature lets me check in on or steer a running session from my phone when needed, no SSH terminal required.
+> -   **In between**: an auto mode that turns a tiny starting prompt into long stretches of work, making the reasonable calls itself instead of stopping at every step to ask for confirmation.
+> -   **Cost**: moved from pay-per-use billing (up to $100 in a single heavy day) to the Claude Pro subscription, $40/month, covering both interactive sessions and headless work.
+> -   **Also**: Claude Code also writes some of this blog's posts end to end, under the name "Bob," drawing on its own session notes.
+
+For several months now, Claude Code has been my main tool for everything infrastructure-related in my home lab. What's changed recently is that I'm no longer the only one triggering it: part of that work now runs entirely on its own, without me sitting down at a keyboard.
+
+## The bastion: a container, not the host machine
+
+I've already described [my containerized console](/en/blog/compartimentalisation-des-outils-de-console/) elsewhere: rather than installing my development tools directly on my bastion (the SSH entry point of my server network), I run them in a container defined as code, rebuildable identically anywhere. Claude Code runs inside that container — not on the host itself.
+
+## A session that lives in tmux
+
+Inside that container, I keep Claude Code in a `tmux` session that runs continuously. The advantage is that the session — its context, its history, the state of whatever it's doing — survives a disconnect. I can close my terminal, come back an hour later, reattach to the `tmux` session, and pick up exactly where I left off, as if I'd never left.
+
+## Remote control, no SSH terminal required
+
+Claude Code has a remote control feature that lets me check in on, and if needed steer, a running session from my phone — no need to open an SSH client or manually reattach to the bastion's `tmux`. It's especially useful for a headless task running unsupervised: I can glance at what it's done, or give it a new instruction, without sitting down at a computer.
+
+## Headless mode: tasks that run without me
+
+This is the real shift in scale. A Claude Code instance started with no interface at all — "headless" mode, kicked off from a scheduled task on the bastion — now handles two things every week, at night, while everything sleeps:
+
+-   **Encrypted backups** of every machine in my lab, pushed to off-site storage.
+-   **System upgrades** across my whole fleet: it connects to each machine, checks what needs updating, applies the patches, and documents what it did.
+
+It's the same agent, the same reasoning and command-execution loop as my interactive sessions — just triggered on a schedule instead of by me. I don't have to think about it anymore.
+
+A condensed excerpt from when we set this up:
+
+<ConversationExcerpt
+  turns={[
+    { speaker: "ludo", text: "I want backups and system upgrades to run entirely on their own, weekly, without me having to open a session. Propose an approach." },
+    { speaker: "claude", text: "I can start in headless mode from a scheduled task on the bastion — no interface, a single prompt as input, I execute and log the result to a tracking file. I'll need restricted access to fetch the encryption passphrase without it sitting in plaintext on disk." },
+    { speaker: "ludo", text: "Fine with restricted access, but only for that one specific command, nothing broader." },
+    { speaker: "claude", text: "Understood. I'll set up a dedicated SSH key with a forced command in authorized_keys — it can only run that one command, nothing else, even if the key leaks." },
+    { speaker: "claude", text: "Scheduled task created, ran a manual test: backup pushed successfully, system upgrades applied on the first two test machines. Leaving it on the normal schedule tonight and checking in tomorrow morning." },
+  ]}
+  caption="Infrastructure names sanitized."
+  disclaimer="⚠ This is not a literal transcript: it's a condensed reconstruction, written after the fact from real session notes, for illustration only."
+/>
+
+## Auto mode: small prompts, long sessions
+
+Between the session where I guide every step and fully autonomous headless mode, there's a middle ground I use more and more: auto mode. With a fairly short starting instruction, Claude Code makes the reasonable calls itself instead of stopping to ask for confirmation at every step, and can chain hours of work together from that one initial prompt. It only stops when it's genuinely blocked — a decision that's really mine to make, an ambiguity it can't resolve on its own — rather than at every small fork in the road.
+
+That's the mode that made most of the work behind [my k3s cluster](/en/blog/deployer-un-cluster-k3s-avec-claude-code/) possible: a fairly short starting prompt, then hours of continuous work — diagnosing, fixing, validating — without me approving every single command one by one.
+
+An actual screenshot, taken inside the console container on the bastion, while this very post was being written: auto mode active at the bottom left, remote control active on the right, and the `tmux` status bar showing the persistent session (`k3s-article`) and the two windows (`1:claude*`, `2:zsh-`) mentioned above.
+
+![Screenshot of a Claude Code session in the console container on the bastion, showing the tmux status bar with auto mode and remote control active](/images/blog/claude-code-tmux-auto-mode-screenshot-1400x669.png)
+
+## Bob: when Claude Code signs its own posts
+
+This blog has two bylines: mine, and [Bob's](/auteurs/bob/). Bob is Claude Code itself writing some posts end to end — not just writing assistance, but the whole article, first word to last. It works from the same sessions described here: the memory it builds up over time about my infrastructure, the decisions made, the gotchas hit, the documentation it produces itself along the way. When a project is worth telling, it can take its own notes and turn them into a post, without me writing a word of it.
+
+The tone is deliberately different from mine: Bob has a more comic touch, loosely inspired by the Elvis Gratton character — not a full-blown caricature, just a light wink that sets his posts apart from mine at a glance.
+
+## The economics: a subscription instead of tokens
+
+A word on cost, because the question comes up often when I talk about this. For a long time I ran Claude Code on pay-per-use API billing — convenient to get started, but it can add up fast: a single heavy work day once cost me around $100 in tokens alone. I've since switched to the Claude Pro subscription, at $40 a month, which covers both my interactive sessions and the headless work described above. For usage as sustained as mine, the flat monthly subscription comes out well ahead of metered billing — and it completely removes the anxiety of checking the bill after a big work session.
+
+## Next up: Claude Cowork
+
+That same Claude Pro subscription also includes Claude Cowork, which I haven't tried yet. It's on my list for a future post — stay tuned.
+
+## What we're taking away
+
+-   A containerized bastion gives a portable, rebuildable environment instead of a pile of hand-configured state on the host.
+-   Keeping a session in `tmux` lets me reattach any time without losing context.
+-   Remote control removes the need for an SSH terminal just to check on or steer a running task.
+-   The same agent that helps me in interactive sessions can run unsupervised, on a schedule, for recurring tasks like backups or system upgrades.
+-   An in-between auto mode turns a tiny starting prompt into long stretches of continuous work, only stopping for the calls that genuinely need a human.
+-   If usage is sustained, a flat subscription (Claude Pro, $40/month) beats pay-per-token billing by a wide margin — I've burned $100 in a single day on API alone.
+-   The same agent can also write, from its own session notes — that's how "Bob" comes to sign part of this blog's posts.
+
+That same headless instance did most of the execution work in my [next project](/en/blog/deployer-un-cluster-k3s-avec-claude-code/): replacing my single container host with a small k3s cluster. — Ludo

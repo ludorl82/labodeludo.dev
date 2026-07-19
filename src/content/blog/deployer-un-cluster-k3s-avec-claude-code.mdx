@@ -1,0 +1,92 @@
+---
+title: "Bâtir une grappe k3s avec Claude Code aux commandes"
+pubDate: 2026-07-18
+description: "Remplacer l'hôte conteneurs unique du labo par une petite grappe k3s de six nœuds — un plan de contrôle dans le nuage, cinq nœuds à la maison — en travaillant de bout en bout avec Claude Code, jusqu'au déménagement du pipeline de déploiement de ce site sur la nouvelle grappe."
+tags: ["Cloud", "DevOps", "ludo"]
+heroImage: "/images/blog/banner-k3s-claude-code.svg"
+---
+import K3sClusterDiagram from "../../components/K3sClusterDiagram.astro";
+import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Contexte** : mon labo tournait sur un seul hôte conteneurs Docker — pratique, mais un point de panne unique pour tout ce qui roulait dessus, dont ce site.
+> -   **Solution** : bâtir une petite grappe **k3s** — une distribution Kubernetes allégée, plus adaptée qu'un Kubernetes « classique » à six machines dont deux sont des Raspberry Pi — répartie entre un plan de contrôle dans le nuage et cinq nœuds à la maison.
+> -   **Pièges rencontrés** : chaque type de machine avait sa propre étape cachée avant d'accepter de démarrer l'agent k3s — cgroups désactivés par défaut sur les Raspberry Pi, `iptables` absent des images cloud minimalistes.
+> -   **Constat** : Claude Code a créé et provisionné les VM Linux de bout en bout, sans intervention de ma part ; sur la VM Windows sous Hyper-V, un réglage de mémoire dynamique a demandé que je mette la main à la pâte moi-même.
+> -   **Résultat** : le pipeline de déploiement de ce site roule maintenant sur la grappe plutôt que sur une seule machine, avec un vrai gain de résilience.
+
+Cette semaine, j'ai pris l'hôte conteneurs unique qui faisait tourner mon labo — dont ce site — et je l'ai transformé en une vraie petite grappe Kubernetes. Comme pour la plupart des projets d'infrastructure ici, j'ai fait le gros du travail en session avec Claude Code (j'explique comment dans [un article dédié](/blog/claude-code-headless-bastion/)). Ce qui m'a frappé cette fois-ci, c'est à quel point son niveau d'autonomie a varié d'une plateforme à l'autre — je reviens là-dessus plus bas.
+
+## Pourquoi une grappe plutôt qu'un seul serveur
+
+Un seul hôte conteneurs, c'est simple à comprendre et facile à administrer. C'est aussi, par définition, un point de panne unique : si cette machine tombe, tout ce qui tourne dessus tombe avec elle — le tableau de bord de surveillance, le pipeline de déploiement de ce blogue, tout. Avec une grappe k3s répartie sur plusieurs machines physiques, la charge peut être redistribuée si un nœud disparaît, et rien n'empêche d'ajouter ou de retirer des nœuds sans tout redémarrer.
+
+## Pourquoi k3s plutôt que Kubernetes « classique »
+
+Kubernetes au sens strict (ce qu'on obtient avec `kubeadm`, par exemple) est pensé pour des environnements de production à grande échelle : plusieurs binaires séparés à opérer, une base de données `etcd` externe à maintenir, et une empreinte mémoire qui part vite en flèche même avant d'y déployer la moindre charge de travail. C'est justifié dans un centre de données ; c'est franchement excessif pour six machines dont deux sont des Raspberry Pi.
+
+**k3s** (de Rancher/SUSE) est une distribution Kubernetes certifiée — même API, mêmes manifestes, même écosystème d'outils — mais compressée dans un seul binaire de moins de 100 Mo qui embarque le plan de contrôle, le kubelet et l'exécuteur de conteneurs ensemble. Par défaut, elle remplace `etcd` par une base de données embarquée plus légère (SQLite pour un plan de contrôle à un seul nœud, ou `etcd` intégré si on veut de la haute disponibilité), et retire une partie des intégrations de fournisseurs cloud et des fonctionnalités encore alpha dont je n'ai simplement pas besoin à la maison.
+
+Concrètement, ça donne une installation en une seule commande plutôt qu'un bootstrap en plusieurs étapes, et une empreinte mémoire qui laisse de la place aux charges de travail plutôt qu'au système lui-même — un détail qui compte beaucoup sur un Raspberry Pi 5. Pour un labo de cette taille, la légèreté de k3s l'emporte largement sur des fonctionnalités que seuls les très grands clusters multi-locataires exploitent vraiment.
+
+## Les nœuds : un pied dans le nuage, un pied à la maison
+
+La grappe compte six nœuds. Le plan de contrôle tourne sur une machine dans le nuage — c'est **Capitaine**, la même instance dont je parlais dans un article récent, née justement pour ce projet-là. Les cinq autres nœuds vivent à la maison : deux Raspberry Pi 5, et trois machines virtuelles réparties chacune sur une machine de calcul déjà en place dans le labo. Rien de tout ça n'a de port ouvert directement sur Internet — la grappe communique par un tunnel privé, comme le reste de mon infrastructure maison.
+
+## Créer les VM : autonomie sur Linux, un coup de main sur Hyper-V
+
+Des trois machines virtuelles, deux tournent sur des machines de calcul Ubuntu déjà en place dans le labo, la troisième sur une machine Windows avec Hyper-V. C'est une bonne occasion de voir la polyvalence de Claude Code à l'œuvre — la même session, le même agent, mais un niveau d'autonomie très différent selon la plateforme.
+
+Sur les deux machines Ubuntu, l'hyperviseur est KVM, piloté par libvirt (`virsh`) — la combinaison standard sur ce genre de machine. Claude Code a fait la création des VM de bout en bout sans que j'aie à toucher à quoi que ce soit : définir la VM (CPU, mémoire, disque), l'attacher au bon réseau, démarrer l'image de base, s'y connecter en SSH, et enchaîner directement sur l'installation de k3s. Les deux VM tournent Debian « trixie », le même choix de distribution que sur les deux Raspberry Pi, question de garder une base cohérente à travers la grappe. Zéro intervention manuelle de ma part.
+
+Sur la machine Windows, c'était différent. Claude Code a bien pu créer et démarrer la VM à distance, mais un problème s'est glissé au passage : elle s'est retrouvée avec à peine 560 Mo de mémoire vive, à cause d'un réglage de mémoire dynamique mal configuré à sa création — largement insuffisant pour un nœud k3s. Il a bien diagnostiqué le problème, mais corriger un réglage de mémoire dynamique Hyper-V demande d'ouvrir le gestionnaire Hyper-V, un outil graphique Windows qu'on ne pilote pas proprement à distance dans ce cas-ci. C'est le seul endroit de tout ce projet où j'ai dû mettre la main à la pâte moi-même.
+
+Ce contraste résume assez bien où Claude Code excelle et où il a encore besoin de moi : sur des systèmes standards, scriptables et bien documentés — à peu près tout ce qui tourne sous Linux — l'autonomie est presque totale. Sur des outils d'administration graphiques propriétaires, il reste un point où une paire de mains humaines est encore la façon la plus simple de finir la job.
+
+## Les pièges du démarrage
+
+Aucune des cinq machines à la maison n'a voulu démarrer l'agent k3s du premier coup, et chacune pour une raison différente — un festival de petits pièges que Claude Code a documenté au fur et à mesure, et qui vaut la peine d'être répété ici.
+
+Les Raspberry Pi 5 tournent une distribution Linux récente où les groupes de contrôle mémoire (`cgroups`) ne sont pas activés par défaut au démarrage — un réglage qui doit être ajouté explicitement à la configuration de démarrage, suivi d'un redémarrage, avant que l'agent k3s consente à rester en vie plus de quelques secondes. Les machines virtuelles basées sur des images cloud minimalistes, elles, n'avaient tout simplement pas `iptables` installé — l'installation de k3s réussissait, mais le service refusait de démarrer tant que le paquet manquant n'était pas ajouté. (La VM Hyper-V avait son propre problème, décrit plus haut, avant même d'en arriver là.)
+
+Rien de ça n'était difficile en soi. Le vrai piège, c'était de s'attendre à ce qu'une seule recette d'installation s'applique identiquement aux six machines — alors qu'en pratique, chaque type de matériel et chaque image de base avait sa propre petite surprise à réserver.
+
+Le premier de ces pièges — celui des cgroups sur le premier Raspberry Pi — est un bon exemple de comment ça se passe concrètement en session, du diagnostic au correctif :
+
+<ConversationExcerpt
+  turns={[
+    { speaker: "ludo", text: "On ajoute le premier nœud à la maison — un Raspberry Pi 5. Connecte-toi et installe l'agent k3s en le pointant vers Capitaine." },
+    { speaker: "claude", text: "Connexion établie, installation lancée : curl -sfL https://get.k3s.io | K3S_URL=https://capitaine:6443 K3S_TOKEN=*** sh -\n\nL'installation se termine, mais le service k3s-agent redémarre en boucle. Je regarde les journaux." },
+    { speaker: "claude", text: "journalctl -u k3s-agent -n 30 montre \"failed to find memory cgroup\" — le contrôleur de cgroup mémoire n'est pas activé au démarrage sur cette image. C'est un problème connu sur les Raspberry Pi 5 récents, pas propre à ce nœud en particulier." },
+    { speaker: "claude", text: "J'ajoute cgroup_memory=1 cgroup_enable=memory à /boot/firmware/cmdline.txt et je redémarre la machine." },
+    { speaker: "claude", text: "Après le redémarrage : k3s-agent actif, kubectl get nodes montre le nœud à l'état Ready. Je documente le correctif — les quatre autres nœuds ne partagent pas nécessairement ce problème, chaque image de base a son propre profil." },
+    { speaker: "ludo", text: "Bien vu. On enchaîne avec le deuxième Raspberry Pi et les trois VM ?" },
+    { speaker: "claude", text: "Oui. Le deuxième Pi aura probablement le même correctif à appliquer ; pour les VM basées sur des images cloud minimalistes, je vérifie d'abord si iptables est installé avant de tenter le démarrage de l'agent — c'est un piège différent, découvert sur un projet précédent." },
+  ]}
+  caption="Noms d'infrastructure sanitisés. Voir l'article sur le bastion pour le détail du mode headless."
+  disclaimer="⚠ Ceci n'est pas une transcription littérale : c'est une reconstitution condensée, écrite après coup à partir des notes réelles de la session, à des fins d'illustration seulement."
+/>
+
+Une fois ce genre de correctif appliqué nœud par nœud, voici à quoi ressemble la grappe une fois assemblée : l'ancien hôte conteneurs unique à gauche, le plan de contrôle dans le nuage et les cinq nœuds maison à droite.
+
+<K3sClusterDiagram context="article" />
+
+## Le pipeline de déploiement du site déménage
+
+Le site que vous êtes en train de lire tourne maintenant lui aussi sur cette grappe. L'exécuteur d'intégration continue, qui compile et déploie le site à chaque changement, s'exécute maintenant comme une charge de travail Kubernetes ordinaire plutôt que comme un service installé à demeure sur une seule machine — si le nœud qui l'héberge disparaît, la grappe peut le relancer ailleurs. Le site de prévisualisation, celui qui me permet de vérifier qu'un article s'affiche correctement avant publication, est passé d'un simple montage de fichiers partagé — qui pouvait, dans de rares cas, être écrasé par deux déploiements qui se chevauchaient — à un volume dédié par déploiement, ce qui élimine complètement cette classe de bogue.
+
+## Les sauvegardes et les mises à jour suivent la grappe
+
+Les six nœuds de la grappe, y compris les cinq nouveaux, sont maintenant couverts par la même routine headless [dont je parlais dans mon article précédent](/blog/claude-code-headless-bastion/) : chaque semaine, la nuit, pendant que tout dort, une instance de Claude Code se connecte à chaque nœud, pousse une sauvegarde chiffrée vers un espace de stockage hors site, et applique les mises à jour système. Ajouter cinq machines à surveiller n'a rien demandé de plus qu'ajouter leurs préfixes à cette routine déjà en place.
+
+## Ce qu'on retient
+
+-   Un seul hôte conteneurs est simple, mais c'est un point de panne unique déguisé en simplicité.
+-   Chaque machine qui rejoint une grappe a son propre petit rituel de démarrage caché — ne pas supposer qu'une recette qui a marché sur la première s'appliquera telle quelle à la suivante.
+-   Déplacer le pipeline de déploiement vers la grappe élimine des bogues qui n'existaient que parce que tout partageait la même machine.
+-   Travailler ce genre de migration en session avec un agent comme Claude Code accélère énormément la partie exécution et diagnostic, mais les décisions d'architecture — combien de nœuds, où les placer, quoi migrer en premier — restent miennes.
+-   Une routine d'automatisation déjà en place (sauvegardes, mises à jour) s'étend facilement à de nouvelles machines plutôt que d'être réinventée à chaque fois.
+-   L'autonomie de Claude Code varie beaucoup selon la plateforme : quasi totale sur Linux, plus limitée dès qu'un outil d'administration graphique comme Hyper-V Manager entre dans l'équation.
+
+La grappe tourne, le site que vous lisez roule dessus, et les nouveaux nœuds sont déjà couverts par les mêmes filets de sécurité que le reste du labo. Pas mal pour une semaine de travail. — Ludo

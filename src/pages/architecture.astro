@@ -6,6 +6,7 @@ import WebdavProxyDiagram from "../components/WebdavProxyDiagram.astro";
 import WireGuardFtpDiagram from "../components/WireGuardFtpDiagram.astro";
 import VoiceAssistantDiagram from "../components/VoiceAssistantDiagram.astro";
 import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
+import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
 ---
 
 <BaseLayout
@@ -148,7 +149,7 @@ import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
 
         <a class="node-link" href="/inventaire/hote-conteneurs/">
           <rect x="60" y="730" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="80" y="755" font-family="var(--font-mono)" font-size="13" fill="var(--text)">hôte conteneurs (web)</text>
+          <text x="80" y="755" font-family="var(--font-mono)" font-size="13" fill="var(--text)">grappe conteneurs (k3s)</text>
         </a>
       </g>
 
@@ -209,6 +210,11 @@ import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
   <section class="detail">
     <h2>Détail : console conteneurisée (bastion)</h2>
     <ConsoleLayersDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : grappe conteneurs (k3s)</h2>
+    <K3sClusterDiagram context="architecture" />
   </section>
 </BaseLayout>
 

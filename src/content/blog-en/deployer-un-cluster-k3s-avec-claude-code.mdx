@@ -1,0 +1,92 @@
+---
+title: "Building a k3s cluster with Claude Code at the controls"
+pubDate: 2026-07-18
+description: "Replacing the lab's single container host with a small six-node k3s cluster — one cloud control plane, five home nodes — working end to end with Claude Code, down to moving this site's deploy pipeline onto the new cluster."
+tags: ["Cloud", "DevOps", "ludo"]
+heroImage: "/images/blog/banner-k3s-claude-code-en.svg"
+---
+import K3sClusterDiagram from "../../components/K3sClusterDiagram.astro";
+import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
+
+> **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
+>
+> -   **Context**: my lab ran on a single Docker container host — convenient, but a single point of failure for everything on it, including this site.
+> -   **Solution**: build a small **k3s** cluster — a lightweight Kubernetes distribution, a better fit than "vanilla" Kubernetes for six machines, two of them Raspberry Pis — split between a cloud control plane and five home nodes.
+> -   **Gotchas hit**: every kind of machine had its own hidden step before it would agree to start the k3s agent — cgroups disabled by default on the Raspberry Pis, `iptables` missing from the minimal cloud images.
+> -   **Takeaway**: Claude Code created and provisioned the Linux VMs end to end, with no intervention from me; on the Windows VM under Hyper-V, a dynamic memory setting needed me to step in and fix it myself.
+> -   **Result**: this site's deploy pipeline now runs on the cluster instead of a single machine, with a real gain in resilience.
+
+This week I took the single container host that ran my lab — including this site — and turned it into a real little Kubernetes cluster. As with most infrastructure projects here, I did the bulk of the work in session with Claude Code (I explain how in [a dedicated post](/en/blog/claude-code-headless-bastion/)). What struck me this time is how much its level of autonomy varied from one platform to another — more on that below.
+
+## Why a cluster instead of a single server
+
+A single container host is simple to reason about and easy to administer. It's also, by definition, a single point of failure: if that machine goes down, everything running on it goes down with it — the monitoring dashboard, this blog's deploy pipeline, all of it. With a k3s cluster spread across several physical machines, load can be redistributed if a node disappears, and nothing stops adding or removing nodes without restarting everything.
+
+## Why k3s instead of "vanilla" Kubernetes
+
+Kubernetes in the strict sense (what you get with `kubeadm`, for instance) is built for large-scale production environments: several separate binaries to operate, an external `etcd` database to maintain, and a memory footprint that climbs fast even before deploying a single workload. That's justified in a data center; it's frankly overkill for six machines, two of which are Raspberry Pis.
+
+**k3s** (from Rancher/SUSE) is a certified Kubernetes distribution — same API, same manifests, same tooling ecosystem — but compressed into a single binary under 100MB that bundles the control plane, the kubelet, and the container runtime together. By default it swaps `etcd` for a lighter embedded database (SQLite for a single-node control plane, or embedded `etcd` if you want high availability), and drops some cloud-provider integrations and still-alpha features I simply don't need at home.
+
+In practice, that means a one-command install instead of a multi-step bootstrap, and a memory footprint that leaves room for actual workloads instead of the system itself — a detail that matters a lot on a Raspberry Pi 5. For a lab this size, k3s's lightness wins out by a wide margin over features only very large multi-tenant clusters really exploit.
+
+## The nodes: one foot in the cloud, one at home
+
+The cluster has six nodes. The control plane runs on a cloud machine — that's **Captain**, the same instance I mentioned in a recent post, born specifically for this project. The other five nodes live at home: two Raspberry Pi 5s, and three virtual machines each running on a compute machine already in place in the lab. None of this has a port open directly on the Internet — the cluster talks over a private tunnel, like the rest of my home infrastructure.
+
+## Building the VMs: autonomous on Linux, a helping hand on Hyper-V
+
+Of the three virtual machines, two run on Ubuntu compute machines already in place in the lab, the third on a Windows machine with Hyper-V. It's a good chance to see Claude Code's versatility at work — same session, same agent, but a very different level of autonomy depending on the platform.
+
+On the two Ubuntu machines, the hypervisor is KVM, driven through libvirt (`virsh`) — the standard combination on that kind of box. Claude Code handled VM creation end to end without me touching anything: defining the VM (CPU, memory, disk), attaching it to the right network, booting the base image, SSHing in, and moving straight on to installing k3s. Both VMs run Debian "trixie," the same distro choice as the two Raspberry Pis, to keep a consistent base across the cluster. Zero manual intervention on my part.
+
+On the Windows machine, it was different. Claude Code could create and start the VM remotely just fine, but a problem slipped in along the way: it ended up with barely 560MB of RAM, because of a dynamic memory setting misconfigured at creation time — nowhere near enough for a k3s node. It diagnosed the problem correctly, but fixing a Hyper-V dynamic memory setting means opening Hyper-V Manager, a Windows GUI tool that isn't something you cleanly drive remotely in this case. That's the one place in this whole project where I had to get my own hands dirty.
+
+That contrast sums up pretty well where Claude Code excels and where it still needs me: on standard, scriptable, well-documented systems — pretty much anything running Linux — autonomy is nearly total. On proprietary graphical admin tools, there's still a point where a pair of human hands is still the simplest way to finish the job.
+
+## The startup gotchas
+
+None of the five home machines agreed to start the k3s agent on the first try, and each for a different reason — a whole festival of small traps that Claude Code documented along the way, and that's worth repeating here.
+
+The Raspberry Pi 5s run a recent Linux distribution where memory control groups (`cgroups`) aren't enabled by default at boot — a setting that has to be explicitly added to the boot configuration, followed by a reboot, before the k3s agent agrees to stay alive for more than a few seconds. The virtual machines built from minimal cloud images, meanwhile, simply didn't have `iptables` installed — the k3s install succeeded, but the service refused to start until the missing package was added. (The Hyper-V VM had its own problem, described above, before it even got that far.)
+
+None of it was hard on its own. The real trap was expecting a single install recipe to apply identically to all six machines — when in practice, every hardware type and every base image had its own little surprise in store.
+
+The first of these gotchas — the cgroups one, on the very first Raspberry Pi — is a good example of what this looks like in session, from diagnosis to fix:
+
+<ConversationExcerpt
+  turns={[
+    { speaker: "ludo", text: "Let's add the first home node — a Raspberry Pi 5. Connect to it and install the k3s agent, pointing it at Captain." },
+    { speaker: "claude", text: "Connected, kicking off the install: curl -sfL https://get.k3s.io | K3S_URL=https://captain:6443 K3S_TOKEN=*** sh -\n\nThe install finishes, but the k3s-agent service keeps restarting in a loop. Checking the logs." },
+    { speaker: "claude", text: "journalctl -u k3s-agent -n 30 shows \"failed to find memory cgroup\" — the memory cgroup controller isn't enabled at boot on this image. Known issue on recent Raspberry Pi 5s, not specific to this particular node." },
+    { speaker: "claude", text: "Adding cgroup_memory=1 cgroup_enable=memory to /boot/firmware/cmdline.txt and rebooting the machine." },
+    { speaker: "claude", text: "After the reboot: k3s-agent is active, kubectl get nodes shows the node as Ready. Documenting the fix — the other four nodes won't necessarily share this exact problem, every base image has its own profile." },
+    { speaker: "ludo", text: "Good catch. Let's move on to the second Raspberry Pi and the three VMs?" },
+    { speaker: "claude", text: "Yes. The second Pi will likely need the same fix; for the VMs built from minimal cloud images, I'll check whether iptables is installed before attempting to start the agent — that's a different gotcha, found on an earlier project." },
+  ]}
+  caption="Infrastructure names sanitized. See the bastion article for how headless mode works."
+  disclaimer="⚠ This is not a literal transcript: it's a condensed reconstruction, written after the fact from real session notes, for illustration only."
+/>
+
+Once that kind of fix was applied node by node, here's what the assembled cluster looks like: the old single container host on the left, the cloud control plane and the five home nodes on the right.
+
+<K3sClusterDiagram context="article" lang="en" />
+
+## This site's deploy pipeline moves in
+
+The site you're reading right now now also runs on this cluster. The continuous-integration runner, which builds and deploys the site on every change, now runs as an ordinary Kubernetes workload instead of a service installed permanently on a single machine — if the node hosting it disappears, the cluster can restart it elsewhere. The staging preview, the one I use to confirm an article renders correctly before publishing, moved from a shared file mount — which could, in rare cases, get overwritten by two overlapping deploys — to a dedicated volume per deploy, which eliminates that whole class of bug completely.
+
+## Backups and upgrades follow the cluster
+
+All six nodes, including the five new ones, are now covered by the same headless routine [I described in my previous post](/en/blog/claude-code-headless-bastion/): weekly, at night, while everything sleeps, a Claude Code instance connects to every node, pushes an encrypted backup to off-site storage, and applies system upgrades. Adding five machines to watch over didn't take anything more than adding their prefixes to the routine already in place.
+
+## What we're taking away
+
+-   A single container host is simple, but it's a single point of failure disguised as simplicity.
+-   Every machine joining a cluster has its own small hidden startup ritual — don't assume a recipe that worked on the first one will apply unchanged to the next.
+-   Moving the deploy pipeline onto the cluster eliminates bugs that only existed because everything shared the same machine.
+-   Working through this kind of migration in session with an agent like Claude Code massively speeds up the execution and diagnostics side, but the architectural calls — how many nodes, where to place them, what to migrate first — stay mine.
+-   An automation routine already in place (backups, upgrades) extends easily to new machines instead of being reinvented every time.
+-   Claude Code's autonomy varies a lot by platform: nearly total on Linux, more limited as soon as a GUI admin tool like Hyper-V Manager enters the picture.
+
+The cluster is running, the site you're reading is on it, and the new nodes are already covered by the same safety nets as the rest of the lab. Not bad for a week's work. — Ludo

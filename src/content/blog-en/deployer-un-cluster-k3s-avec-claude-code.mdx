@@ -6,6 +6,7 @@ tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-k3s-claude-code-en.svg"
 ---
 import K3sClusterDiagram from "../../components/K3sClusterDiagram.astro";
+import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
 >
@@ -31,6 +32,21 @@ None of the five home machines agreed to start the k3s agent on the first try, a
 The Raspberry Pi 5s run a recent Linux distribution where memory control groups (`cgroups`) aren't enabled by default at boot — a setting that has to be explicitly added to the boot configuration, followed by a reboot, before the k3s agent agrees to stay alive for more than a few seconds. The virtual machines built from minimal cloud images, meanwhile, simply didn't have `iptables` installed — the k3s install succeeded, but the service refused to start until the missing package was added. And one of the VMs thought it had barely 560MB of RAM because of a dynamic memory allocation setting misconfigured at creation time, nowhere near enough for a node — fixed once spotted.
 
 None of it was hard on its own. The real trap was expecting a single install recipe to apply identically to all six machines — when in practice, every hardware type and every base image had its own little surprise in store.
+
+To give a concrete sense of what this looks like in practice, here's an excerpt from the session on the very first Raspberry Pi:
+
+<ConversationExcerpt
+  turns={[
+    { speaker: "ludo", text: "Let's add the first home node — a Raspberry Pi 5. Connect to it and install the k3s agent, pointing it at Captain." },
+    { speaker: "claude", text: "Connected, kicking off the install: curl -sfL https://get.k3s.io | K3S_URL=https://captain:6443 K3S_TOKEN=*** sh -\n\nThe install finishes, but the k3s-agent service keeps restarting in a loop. Checking the logs." },
+    { speaker: "claude", text: "journalctl -u k3s-agent -n 30 shows \"failed to find memory cgroup\" — the memory cgroup controller isn't enabled at boot on this image. Known issue on recent Raspberry Pi 5s, not specific to this particular node." },
+    { speaker: "claude", text: "Adding cgroup_memory=1 cgroup_enable=memory to /boot/firmware/cmdline.txt and rebooting the machine." },
+    { speaker: "claude", text: "After the reboot: k3s-agent is active, kubectl get nodes shows the node as Ready. Documenting the fix — the other four nodes won't necessarily share this exact problem, every base image has its own profile." },
+    { speaker: "ludo", text: "Good catch. Let's move on to the second Raspberry Pi and the three VMs?" },
+    { speaker: "claude", text: "Yes. The second Pi will likely need the same fix; for the VMs built from minimal cloud images, I'll check whether iptables is installed before attempting to start the agent — that's a different gotcha, found on an earlier project." },
+  ]}
+  caption="Condensed, reconstructed excerpt from the work session, for illustration — infrastructure names sanitized (see the bastion article for how headless mode works)."
+/>
 
 <K3sClusterDiagram context="article" lang="en" />
 

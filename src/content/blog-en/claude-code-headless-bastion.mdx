@@ -5,6 +5,7 @@ description: "How I run Claude Code in a persistent tmux session on my container
 tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-claude-headless-bastion-en.svg"
 ---
+import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
 >
@@ -36,6 +37,19 @@ This is the real shift in scale. A Claude Code instance started with no interfac
 -   **System upgrades** across my whole fleet: it connects to each machine, checks what needs updating, applies the patches, and documents what it did.
 
 It's the same agent, the same reasoning and command-execution loop as my interactive sessions — just triggered on a schedule instead of by me. I don't have to think about it anymore.
+
+A condensed excerpt from when we set this up:
+
+<ConversationExcerpt
+  turns={[
+    { speaker: "ludo", text: "I want backups and system upgrades to run entirely on their own, weekly, without me having to open a session. Propose an approach." },
+    { speaker: "claude", text: "I can start in headless mode from a scheduled task on the bastion — no interface, a single prompt as input, I execute and log the result to a tracking file. I'll need restricted access to fetch the encryption passphrase without it sitting in plaintext on disk." },
+    { speaker: "ludo", text: "Fine with restricted access, but only for that one specific command, nothing broader." },
+    { speaker: "claude", text: "Understood. I'll set up a dedicated SSH key with a forced command in authorized_keys — it can only run that one command, nothing else, even if the key leaks." },
+    { speaker: "claude", text: "Scheduled task created, ran a manual test: backup pushed successfully, system upgrades applied on the first two test machines. Leaving it on the normal schedule tonight and checking in tomorrow morning." },
+  ]}
+  caption="Condensed, reconstructed excerpt from the work session, for illustration — infrastructure names sanitized."
+/>
 
 ## Bob: when Claude Code signs its own posts
 

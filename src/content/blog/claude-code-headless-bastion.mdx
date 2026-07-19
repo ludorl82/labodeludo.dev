@@ -5,6 +5,7 @@ description: "Comment je fais tourner Claude Code dans une session tmux persista
 tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-claude-headless-bastion.svg"
 ---
+import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
@@ -36,6 +37,19 @@ C'est le vrai changement d'échelle. Une instance de Claude Code démarrée sans
 -   **Les mises à jour système** de toute ma flotte de machines : elle se connecte à chacune, vérifie ce qui doit être mis à jour, applique les correctifs, et documente ce qu'elle a fait.
 
 C'est le même agent, la même façon de raisonner et d'exécuter des commandes que dans mes sessions interactives — simplement déclenché sur un horaire plutôt que par moi. Je n'ai plus besoin d'y penser.
+
+Un extrait, condensé, du moment où on a mis ça en place :
+
+<ConversationExcerpt
+  turns={[
+    { speaker: "ludo", text: "Je veux que les sauvegardes et les mises à jour système roulent toutes seules, chaque semaine, sans que j'aie à ouvrir de session. Propose une approche." },
+    { speaker: "claude", text: "Je peux démarrer en mode headless à partir d'une tâche planifiée sur le bastion — pas d'interface, un seul prompt en entrée, je m'exécute et je documente le résultat dans un fichier de suivi. Je vais avoir besoin d'un accès restreint pour aller chercher la phrase de passe de chiffrement sans qu'elle traîne en clair sur disque." },
+    { speaker: "ludo", text: "D'accord pour un accès restreint, mais seulement pour cette commande précise, rien de plus large." },
+    { speaker: "claude", text: "Compris. Je mets en place une clé SSH dédiée avec une commande forcée dans authorized_keys — elle ne peut exécuter qu'une seule commande, rien d'autre, même si la clé fuit." },
+    { speaker: "claude", text: "Tâche planifiée créée, exécution d'essai lancée manuellement : sauvegarde poussée avec succès, mises à jour système appliquées sur les deux premières machines de test. Je laisse rouler sur l'horaire normal cette nuit et je vérifie demain matin." },
+  ]}
+  caption="Extrait condensé et reconstitué de la session de travail, à des fins d'illustration — noms d'infrastructure sanitisés."
+/>
 
 ## Bob : quand Claude Code signe ses propres articles
 

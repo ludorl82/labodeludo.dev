@@ -6,6 +6,7 @@ tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-k3s-claude-code.svg"
 ---
 import K3sClusterDiagram from "../../components/K3sClusterDiagram.astro";
+import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
@@ -31,6 +32,21 @@ Aucune des cinq machines à la maison n'a voulu démarrer l'agent k3s du premier
 Les Raspberry Pi 5 tournent une distribution Linux récente où les groupes de contrôle mémoire (`cgroups`) ne sont pas activés par défaut au démarrage — un réglage qui doit être ajouté explicitement à la configuration de démarrage, suivi d'un redémarrage, avant que l'agent k3s consente à rester en vie plus de quelques secondes. Les machines virtuelles basées sur des images cloud minimalistes, elles, n'avaient tout simplement pas `iptables` installé — l'installation de k3s réussissait, mais le service refusait de démarrer tant que le paquet manquant n'était pas ajouté. Et une des VM pensait disposer d'à peine 560 Mo de mémoire vive à cause d'un réglage d'allocation dynamique mal configuré à sa création, largement insuffisant pour un nœud — corrigé une fois repéré.
 
 Rien de ça n'était difficile en soi. Le vrai piège, c'était de s'attendre à ce qu'une seule recette d'installation s'applique identiquement aux six machines — alors qu'en pratique, chaque type de matériel et chaque image de base avait sa propre petite surprise à réserver.
+
+Pour donner une idée concrète de comment ça se passe en pratique, voici un extrait de la session sur le tout premier Raspberry Pi :
+
+<ConversationExcerpt
+  turns={[
+    { speaker: "ludo", text: "On ajoute le premier nœud à la maison — un Raspberry Pi 5. Connecte-toi et installe l'agent k3s en le pointant vers Capitaine." },
+    { speaker: "claude", text: "Connexion établie, installation lancée : curl -sfL https://get.k3s.io | K3S_URL=https://capitaine:6443 K3S_TOKEN=*** sh -\n\nL'installation se termine, mais le service k3s-agent redémarre en boucle. Je regarde les journaux." },
+    { speaker: "claude", text: "journalctl -u k3s-agent -n 30 montre \"failed to find memory cgroup\" — le contrôleur de cgroup mémoire n'est pas activé au démarrage sur cette image. C'est un problème connu sur les Raspberry Pi 5 récents, pas propre à ce nœud en particulier." },
+    { speaker: "claude", text: "J'ajoute cgroup_memory=1 cgroup_enable=memory à /boot/firmware/cmdline.txt et je redémarre la machine." },
+    { speaker: "claude", text: "Après le redémarrage : k3s-agent actif, kubectl get nodes montre le nœud à l'état Ready. Je documente le correctif — les quatre autres nœuds ne partagent pas nécessairement ce problème, chaque image de base a son propre profil." },
+    { speaker: "ludo", text: "Bien vu. On enchaîne avec le deuxième Raspberry Pi et les trois VM ?" },
+    { speaker: "claude", text: "Oui. Le deuxième Pi aura probablement le même correctif à appliquer ; pour les VM basées sur des images cloud minimalistes, je vérifie d'abord si iptables est installé avant de tenter le démarrage de l'agent — c'est un piège différent, découvert sur un projet précédent." },
+  ]}
+  caption="Extrait condensé et reconstitué de la session de travail, à des fins d'illustration — noms d'infrastructure sanitisés (voir l'article sur le bastion pour le détail du mode headless)."
+/>
 
 <K3sClusterDiagram context="article" />
 

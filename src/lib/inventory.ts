@@ -56,6 +56,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "Point d'entrée SSH du VLAN serveurs. Exécute les outils de développement et les sessions d'agent dans des conteneurs compartimentés plutôt que directement sur l'hôte. Orchestre aussi, chaque semaine et sans supervision, les sauvegardes chiffrées et les mises à jour système de tous les nœuds de la grappe conteneurs, via une instance headless de Claude Code.",
     articles: [
       "compartimentalisation-des-outils-de-console",
+      "claude-code-headless-bastion",
       "deployer-un-cluster-k3s-avec-claude-code",
     ],
   },

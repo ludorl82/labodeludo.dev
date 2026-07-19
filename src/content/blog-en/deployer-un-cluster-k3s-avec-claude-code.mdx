@@ -1,7 +1,7 @@
 ---
 title: "Building a k3s cluster with Claude Code at the controls"
 pubDate: 2026-07-18
-description: "How Claude Code became my main tool for operating my home lab — illustrated through migrating a single container host to a six-node k3s cluster, system upgrades run at night by a headless instance, and a real word on cost (Claude Pro subscription vs API tokens)."
+description: "Replacing the lab's single container host with a small six-node k3s cluster — one cloud control plane, five home nodes — working end to end with Claude Code, down to moving this site's deploy pipeline onto the new cluster."
 tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-k3s-claude-code-en.svg"
 ---
@@ -12,10 +12,9 @@ import K3sClusterDiagram from "../../components/K3sClusterDiagram.astro";
 > -   **Context**: my lab ran on a single Docker container host — convenient, but a single point of failure for everything on it, including this site.
 > -   **Solution**: build a small k3s (lightweight Kubernetes) cluster of six nodes, split between a cloud control plane and five home nodes, working end to end with Claude Code as a co-pilot for the deployment.
 > -   **Gotchas hit**: every kind of machine had its own hidden step before it would agree to start the k3s agent — cgroups disabled by default on the Raspberry Pis, `iptables` missing from the minimal cloud images, one VM that thought it had 560MB of RAM.
-> -   **Result**: this site's deploy pipeline now runs on the cluster, and Claude Code now orchestrates both encrypted backups of every node and system upgrades across the whole fleet, weekly, at night, unsupervised.
-> -   **Also covered**: the real cost of all this — a Claude Pro subscription instead of pay-per-use billing.
+> -   **Result**: this site's deploy pipeline now runs on the cluster instead of a single machine, with a real gain in resilience.
 
-This week I took the single container host that ran my lab — including this site — and turned it into a real little Kubernetes cluster. This isn't an isolated project: for several months now, Claude Code has become my main tool for everything infrastructure-related here, both in interactive sessions, where I set the context and the decisions and it executes, diagnoses, and documents along the way, and for tasks that now run completely unsupervised. This k3s cluster project is a good chance to show concretely how that works on both sides.
+This week I took the single container host that ran my lab — including this site — and turned it into a real little Kubernetes cluster. As with most infrastructure projects here, I did the bulk of the work in session with Claude Code: I set the context and the architectural decisions, it executes, diagnoses, and documents along the way. This isn't the first time I've written about how I work with it — I recently described how [a headless Claude Code instance](/en/blog/claude-code-headless-bastion/), running unsupervised from my bastion, already handles backups and system upgrades for the whole lab. That same instance did a good chunk of the execution work below.
 
 ## Why a cluster instead of a single server
 
@@ -39,15 +38,9 @@ None of it was hard on its own. The real trap was expecting a single install rec
 
 The site you're reading right now now also runs on this cluster. The continuous-integration runner, which builds and deploys the site on every change, now runs as an ordinary Kubernetes workload instead of a service installed permanently on a single machine — if the node hosting it disappears, the cluster can restart it elsewhere. The staging preview, the one I use to confirm an article renders correctly before publishing, moved from a shared file mount — which could, in rare cases, get overwritten by two overlapping deploys — to a dedicated volume per deploy, which eliminates that whole class of bug completely.
 
-## What now runs on its own, at night
+## Backups and upgrades follow the cluster
 
-Last piece, and not the least important: every node in the cluster is now covered by an encrypted backup routine. Claude Code set it up and orchestrates it: weekly, at night, while everything sleeps, a script runs from the bastion and pushes an encrypted archive of every node to off-site storage.
-
-But that's not all. The same week, a Claude Code instance started with no interface at all — "headless" mode, kicked off from a scheduled task on the bastion, with nothing for me to open — also handles system upgrades across the whole fleet: it connects to every machine in the lab, checks what needs updating, applies the patches, and documents what it did. It's the same agent, the same reasoning and command-execution loop as my interactive sessions, just triggered on a schedule instead of by me. I don't have to think about any of it anymore, and if a node disappears entirely, there's now a real safety net behind it instead of just hope.
-
-## The economics: a subscription instead of tokens
-
-A word on cost, because the question comes up often when I talk about this. For a long time I ran Claude Code on pay-per-use API billing — convenient to get started, but it can add up fast: a single heavy work day once cost me around $100 in tokens alone. I've since switched to the Claude Pro subscription, at $40 a month, which covers both my interactive sessions and headless work like the weekly upgrades described above. For usage as sustained as mine, the flat monthly subscription comes out well ahead of metered billing — and it completely removes the anxiety of checking the bill after a big work session.
+All six nodes, including the five new ones, are now covered by the same headless routine [I described in my previous post](/en/blog/claude-code-headless-bastion/): weekly, at night, while everything sleeps, a Claude Code instance connects to every node, pushes an encrypted backup to off-site storage, and applies system upgrades. Adding five machines to watch over didn't take anything more than adding their prefixes to the routine already in place.
 
 ## What we're taking away
 
@@ -55,7 +48,6 @@ A word on cost, because the question comes up often when I talk about this. For 
 -   Every machine joining a cluster has its own small hidden startup ritual — don't assume a recipe that worked on the first one will apply unchanged to the next.
 -   Moving the deploy pipeline onto the cluster eliminates bugs that only existed because everything shared the same machine.
 -   Working through this kind of migration in session with an agent like Claude Code massively speeds up the execution and diagnostics side, but the architectural calls — how many nodes, where to place them, what to migrate first — stay mine.
--   The same agent can also run unsupervised, on a schedule, for recurring tasks like backups or system upgrades — without anyone having to remember them.
--   If usage is sustained, a flat subscription (Claude Pro, $40/month) beats pay-per-token billing by a wide margin — I've burned $100 in a single day on API alone.
+-   An automation routine already in place (backups, upgrades) extends easily to new machines instead of being reinvented every time.
 
-The cluster is running, the site you're reading is on it, backups and upgrades happen while everyone sleeps, and the bill is predictable. Not bad for a week's work. — Ludo
+The cluster is running, the site you're reading is on it, and the new nodes are already covered by the same safety nets as the rest of the lab. Not bad for a week's work. — Ludo

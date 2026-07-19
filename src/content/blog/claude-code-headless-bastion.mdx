@@ -1,0 +1,51 @@
+---
+title: "Claude Code en mode headless : automatiser le labo depuis le bastion"
+pubDate: 2026-07-16
+description: "Comment je fais tourner Claude Code dans une session tmux persistante sur mon bastion conteneurisé, comment le contrôle à distance me permet d'y jeter un œil sans ouvrir de terminal, comment une instance headless du même agent exécute maintenant mes sauvegardes et mes mises à jour système sans supervision — et pourquoi l'abonnement Claude Pro me coûte 40 $/mois plutôt que des centaines en jetons API."
+tags: ["Cloud", "DevOps", "ludo"]
+heroImage: "/images/blog/banner-claude-headless-bastion.svg"
+---
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Contexte** : Claude Code tourne au quotidien dans le conteneur console de mon bastion, à l'intérieur d'une session tmux persistante.
+> -   **Objectif** : lui faire exécuter des tâches récurrentes (sauvegardes, mises à jour système) sans que j'aie à ouvrir de session interactive.
+> -   **Solution** : des tâches planifiées démarrent une instance de Claude Code en mode headless sur le bastion ; la fonctionnalité de contrôle à distance me permet, au besoin, de vérifier ou de piloter une session en cours depuis mon téléphone, sans terminal SSH.
+> -   **Coût** : passage d'une facturation à l'usage (jusqu'à 100 $ en une seule grosse journée) à l'abonnement Claude Pro, à 40 $ par mois, qui couvre autant mes sessions interactives que le travail headless.
+
+Depuis plusieurs mois, Claude Code est mon principal outil de travail pour tout ce qui touche l'infrastructure de mon labo maison. Ce qui a changé récemment, c'est que je ne suis plus le seul déclencheur : une partie de ce travail tourne maintenant toute seule, sans que j'aie à m'assoir devant un clavier.
+
+## Le bastion : un conteneur, pas la machine hôte
+
+J'ai déjà décrit ailleurs [ma console conteneurisée](/blog/compartimentalisation-des-outils-de-console/) : plutôt que d'installer mes outils de développement directement sur mon bastion (le point d'entrée SSH de mon réseau serveurs), je les fais tourner dans un conteneur défini par code, reconstructible à l'identique n'importe où. C'est dans ce conteneur — pas sur l'hôte lui-même — que Claude Code s'exécute.
+
+## Une session qui vit dans tmux
+
+À l'intérieur de ce conteneur, je garde Claude Code dans une session `tmux` qui tourne en continu. L'avantage, c'est que la session — son contexte, son historique, l'état de ce qu'elle est en train de faire — survit à une déconnexion. Je peux fermer mon terminal, revenir une heure plus tard, me rebrancher sur la session `tmux`, et retrouver exactement où j'en étais, comme si je n'étais jamais parti.
+
+## Contrôle à distance, sans terminal SSH
+
+Claude Code a une fonctionnalité de contrôle à distance qui me permet de consulter et, au besoin, de piloter une session en cours depuis mon téléphone — pas besoin d'ouvrir un client SSH ni de me rebrancher manuellement sur le `tmux` du bastion. C'est particulièrement utile pour une tâche headless qui roule sans supervision : je peux jeter un œil à ce qu'elle a fait, ou lui donner une nouvelle instruction, sans avoir à m'installer devant un ordinateur.
+
+## Le mode headless : des tâches qui tournent sans moi
+
+C'est le vrai changement d'échelle. Une instance de Claude Code démarrée sans interface — en mode « headless », depuis une tâche planifiée sur le bastion — s'occupe maintenant de deux choses chaque semaine, la nuit, pendant que tout dort :
+
+-   **Les sauvegardes chiffrées** de toutes les machines de mon labo, poussées vers un espace de stockage hors site.
+-   **Les mises à jour système** de toute ma flotte de machines : elle se connecte à chacune, vérifie ce qui doit être mis à jour, applique les correctifs, et documente ce qu'elle a fait.
+
+C'est le même agent, la même façon de raisonner et d'exécuter des commandes que dans mes sessions interactives — simplement déclenché sur un horaire plutôt que par moi. Je n'ai plus besoin d'y penser.
+
+## Le calcul économique : un abonnement plutôt que des jetons
+
+Un mot sur le coût, parce que la question revient souvent quand j'en parle. Pendant longtemps, j'utilisais Claude Code facturé à l'usage, au jeton, via l'API — pratique pour commencer, mais ça peut grimper vite : une seule grosse journée de travail m'a déjà coûté autour de 100 $ en jetons, à elle seule. Je suis passé depuis à l'abonnement Claude Pro, à 40 $ par mois, qui couvre à la fois mes sessions interactives et le travail headless décrit plus haut. Pour un usage aussi soutenu que le mien, l'abonnement mensuel revient nettement moins cher qu'une facturation à la carte — et ça retire complètement l'anxiété de regarder la facture après une grosse session de travail.
+
+## Ce qu'on retient
+
+-   Un bastion conteneurisé donne un environnement portable et reconstructible, plutôt qu'un empilement de configuration à la main sur l'hôte.
+-   Garder une session dans `tmux` permet de s'y rebrancher n'importe quand sans perdre le contexte.
+-   Le contrôle à distance retire le besoin d'un terminal SSH pour vérifier ou piloter une tâche en cours.
+-   Le même agent qui m'aide en session interactive peut tourner sans supervision, sur un horaire, pour des tâches récurrentes comme les sauvegardes ou les mises à jour système.
+-   Si l'usage est soutenu, un abonnement plat (Claude Pro, 40 $/mois) bat largement une facturation au jeton — j'ai déjà brûlé 100 $ en une seule journée avec l'API seule.
+
+C'est cette même instance headless qui a fait le gros du travail d'exécution dans mon [projet suivant](/blog/deployer-un-cluster-k3s-avec-claude-code/) : remplacer mon hôte conteneurs unique par une petite grappe k3s. — Ludo

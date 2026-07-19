@@ -1,7 +1,7 @@
 ---
-title: "Building a k3s cluster for the lab"
+title: "Building a k3s cluster with Claude Code at the controls"
 pubDate: 2026-07-18
-description: "Replacing the lab's single container host with a small six-node k3s cluster — one cloud control plane, five home nodes — down to moving this site's deploy pipeline onto the new cluster."
+description: "Replacing the lab's single container host with a small six-node k3s cluster — one cloud control plane, five home nodes — working end to end with Claude Code, down to moving this site's deploy pipeline onto the new cluster."
 tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-k3s-claude-code-en.svg"
 ---
@@ -36,9 +36,9 @@ The cluster has six nodes. The control plane runs on a cloud machine — that's 
 
 ## Building the VMs: autonomous on Linux, a helping hand on Hyper-V
 
-Of the three virtual machines, two run on Linux compute machines already in place in the lab, the third on a Windows machine with Hyper-V. It's a good chance to see Claude Code's versatility at work — same session, same agent, but a very different level of autonomy depending on the platform.
+Of the three virtual machines, two run on Ubuntu compute machines already in place in the lab, the third on a Windows machine with Hyper-V. It's a good chance to see Claude Code's versatility at work — same session, same agent, but a very different level of autonomy depending on the platform.
 
-On the two Linux machines, Claude Code handled VM creation end to end without me touching anything: defining the VM (CPU, memory, disk), attaching it to the right network, booting the base image, SSHing in, and moving straight on to installing k3s. Zero manual intervention on my part.
+On the two Ubuntu machines, the hypervisor is KVM, driven through libvirt (`virsh`) — the standard combination on that kind of box. Claude Code handled VM creation end to end without me touching anything: defining the VM (CPU, memory, disk), attaching it to the right network, booting the base image, SSHing in, and moving straight on to installing k3s. Both VMs run Debian "trixie," the same distro choice as the two Raspberry Pis, to keep a consistent base across the cluster. Zero manual intervention on my part.
 
 On the Windows machine, it was different. Claude Code could create and start the VM remotely just fine, but a problem slipped in along the way: it ended up with barely 560MB of RAM, because of a dynamic memory setting misconfigured at creation time — nowhere near enough for a k3s node. It diagnosed the problem correctly, but fixing a Hyper-V dynamic memory setting means opening Hyper-V Manager, a Windows GUI tool that isn't something you cleanly drive remotely in this case. That's the one place in this whole project where I had to get my own hands dirty.
 

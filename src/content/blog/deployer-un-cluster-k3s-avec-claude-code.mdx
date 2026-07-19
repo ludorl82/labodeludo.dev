@@ -1,7 +1,7 @@
 ---
-title: "Bâtir une grappe k3s pour le labo"
+title: "Bâtir une grappe k3s avec Claude Code aux commandes"
 pubDate: 2026-07-18
-description: "Remplacer l'hôte conteneurs unique du labo par une petite grappe k3s de six nœuds — un plan de contrôle dans le nuage, cinq nœuds à la maison — jusqu'au déménagement du pipeline de déploiement de ce site sur la nouvelle grappe."
+description: "Remplacer l'hôte conteneurs unique du labo par une petite grappe k3s de six nœuds — un plan de contrôle dans le nuage, cinq nœuds à la maison — en travaillant de bout en bout avec Claude Code, jusqu'au déménagement du pipeline de déploiement de ce site sur la nouvelle grappe."
 tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-k3s-claude-code.svg"
 ---
@@ -36,9 +36,9 @@ La grappe compte six nœuds. Le plan de contrôle tourne sur une machine dans le
 
 ## Créer les VM : autonomie sur Linux, un coup de main sur Hyper-V
 
-Des trois machines virtuelles, deux tournent sur des machines de calcul Linux déjà en place dans le labo, la troisième sur une machine Windows avec Hyper-V. C'est une bonne occasion de voir la polyvalence de Claude Code à l'œuvre — la même session, le même agent, mais un niveau d'autonomie très différent selon la plateforme.
+Des trois machines virtuelles, deux tournent sur des machines de calcul Ubuntu déjà en place dans le labo, la troisième sur une machine Windows avec Hyper-V. C'est une bonne occasion de voir la polyvalence de Claude Code à l'œuvre — la même session, le même agent, mais un niveau d'autonomie très différent selon la plateforme.
 
-Sur les deux machines Linux, Claude Code a fait la création des VM de bout en bout sans que j'aie à toucher à quoi que ce soit : définir la VM (CPU, mémoire, disque), l'attacher au bon réseau, démarrer l'image de base, s'y connecter en SSH, et enchaîner directement sur l'installation de k3s. Zéro intervention manuelle de ma part.
+Sur les deux machines Ubuntu, l'hyperviseur est KVM, piloté par libvirt (`virsh`) — la combinaison standard sur ce genre de machine. Claude Code a fait la création des VM de bout en bout sans que j'aie à toucher à quoi que ce soit : définir la VM (CPU, mémoire, disque), l'attacher au bon réseau, démarrer l'image de base, s'y connecter en SSH, et enchaîner directement sur l'installation de k3s. Les deux VM tournent Debian « trixie », le même choix de distribution que sur les deux Raspberry Pi, question de garder une base cohérente à travers la grappe. Zéro intervention manuelle de ma part.
 
 Sur la machine Windows, c'était différent. Claude Code a bien pu créer et démarrer la VM à distance, mais un problème s'est glissé au passage : elle s'est retrouvée avec à peine 560 Mo de mémoire vive, à cause d'un réglage de mémoire dynamique mal configuré à sa création — largement insuffisant pour un nœud k3s. Il a bien diagnostiqué le problème, mais corriger un réglage de mémoire dynamique Hyper-V demande d'ouvrir le gestionnaire Hyper-V, un outil graphique Windows qu'on ne pilote pas proprement à distance dans ce cas-ci. C'est le seul endroit de tout ce projet où j'ai dû mettre la main à la pâte moi-même.
 

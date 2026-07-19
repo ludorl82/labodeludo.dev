@@ -11,7 +11,7 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Contexte** : mon labo tournait sur un seul hôte conteneurs Docker — pratique, mais un point de panne unique pour tout ce qui roulait dessus, dont ce site.
-> -   **Solution** : bâtir une petite grappe k3s (Kubernetes léger) de six nœuds, répartie entre un plan de contrôle dans le nuage et cinq nœuds à la maison, en travaillant de bout en bout avec Claude Code comme copilote pour le déploiement.
+> -   **Solution** : bâtir une petite grappe **k3s** — une distribution Kubernetes allégée, plus adaptée qu'un Kubernetes « classique » à six machines dont deux sont des Raspberry Pi — de six nœuds, répartie entre un plan de contrôle dans le nuage et cinq nœuds à la maison, en travaillant de bout en bout avec Claude Code comme copilote pour le déploiement.
 > -   **Pièges rencontrés** : chaque type de machine avait sa propre étape cachée avant d'accepter de démarrer l'agent k3s — cgroups désactivés par défaut sur les Raspberry Pi, `iptables` absent des images cloud minimalistes, une VM qui pensait avoir 560 Mo de RAM.
 > -   **Résultat** : le pipeline de déploiement de ce site roule maintenant sur la grappe plutôt que sur une seule machine, avec un vrai gain de résilience.
 
@@ -20,6 +20,14 @@ Cette semaine, j'ai pris l'hôte conteneurs unique qui faisait tourner mon labo 
 ## Pourquoi une grappe plutôt qu'un seul serveur
 
 Un seul hôte conteneurs, c'est simple à comprendre et facile à administrer. C'est aussi, par définition, un point de panne unique : si cette machine tombe, tout ce qui tourne dessus tombe avec elle — le tableau de bord de surveillance, le pipeline de déploiement de ce blogue, tout. Avec une grappe k3s répartie sur plusieurs machines physiques, la charge peut être redistribuée si un nœud disparaît, et rien n'empêche d'ajouter ou de retirer des nœuds sans tout redémarrer.
+
+## Pourquoi k3s plutôt que Kubernetes « classique »
+
+Kubernetes au sens strict (ce qu'on obtient avec `kubeadm`, par exemple) est pensé pour des environnements de production à grande échelle : plusieurs binaires séparés à opérer, une base de données `etcd` externe à maintenir, et une empreinte mémoire qui part vite en flèche même avant d'y déployer la moindre charge de travail. C'est justifié dans un centre de données ; c'est franchement excessif pour six machines dont deux sont des Raspberry Pi.
+
+**k3s** (de Rancher/SUSE) est une distribution Kubernetes certifiée — même API, mêmes manifestes, même écosystème d'outils — mais compressée dans un seul binaire de moins de 100 Mo qui embarque le plan de contrôle, le kubelet et l'exécuteur de conteneurs ensemble. Par défaut, elle remplace `etcd` par une base de données embarquée plus légère (SQLite pour un plan de contrôle à un seul nœud, ou `etcd` intégré si on veut de la haute disponibilité), et retire une partie des intégrations de fournisseurs cloud et des fonctionnalités encore alpha dont je n'ai simplement pas besoin à la maison.
+
+Concrètement, ça donne une installation en une seule commande plutôt qu'un bootstrap en plusieurs étapes, et une empreinte mémoire qui laisse de la place aux charges de travail plutôt qu'au système lui-même — un détail qui compte beaucoup sur un Raspberry Pi 5. Pour un labo de cette taille, la légèreté de k3s l'emporte largement sur des fonctionnalités que seuls les très grands clusters multi-locataires exploitent vraiment.
 
 ## Les nœuds : un pied dans le nuage, un pied à la maison
 

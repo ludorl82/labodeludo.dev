@@ -11,7 +11,7 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 > **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
 >
 > -   **Context**: my lab ran on a single Docker container host — convenient, but a single point of failure for everything on it, including this site.
-> -   **Solution**: build a small k3s (lightweight Kubernetes) cluster of six nodes, split between a cloud control plane and five home nodes, working end to end with Claude Code as a co-pilot for the deployment.
+> -   **Solution**: build a small **k3s** cluster — a lightweight Kubernetes distribution, a better fit than "vanilla" Kubernetes for six machines, two of them Raspberry Pis — of six nodes, split between a cloud control plane and five home nodes, working end to end with Claude Code as a co-pilot for the deployment.
 > -   **Gotchas hit**: every kind of machine had its own hidden step before it would agree to start the k3s agent — cgroups disabled by default on the Raspberry Pis, `iptables` missing from the minimal cloud images, one VM that thought it had 560MB of RAM.
 > -   **Result**: this site's deploy pipeline now runs on the cluster instead of a single machine, with a real gain in resilience.
 
@@ -20,6 +20,14 @@ This week I took the single container host that ran my lab — including this si
 ## Why a cluster instead of a single server
 
 A single container host is simple to reason about and easy to administer. It's also, by definition, a single point of failure: if that machine goes down, everything running on it goes down with it — the monitoring dashboard, this blog's deploy pipeline, all of it. With a k3s cluster spread across several physical machines, load can be redistributed if a node disappears, and nothing stops adding or removing nodes without restarting everything.
+
+## Why k3s instead of "vanilla" Kubernetes
+
+Kubernetes in the strict sense (what you get with `kubeadm`, for instance) is built for large-scale production environments: several separate binaries to operate, an external `etcd` database to maintain, and a memory footprint that climbs fast even before deploying a single workload. That's justified in a data center; it's frankly overkill for six machines, two of which are Raspberry Pis.
+
+**k3s** (from Rancher/SUSE) is a certified Kubernetes distribution — same API, same manifests, same tooling ecosystem — but compressed into a single binary under 100MB that bundles the control plane, the kubelet, and the container runtime together. By default it swaps `etcd` for a lighter embedded database (SQLite for a single-node control plane, or embedded `etcd` if you want high availability), and drops some cloud-provider integrations and still-alpha features I simply don't need at home.
+
+In practice, that means a one-command install instead of a multi-step bootstrap, and a memory footprint that leaves room for actual workloads instead of the system itself — a detail that matters a lot on a Raspberry Pi 5. For a lab this size, k3s's lightness wins out by a wide margin over features only very large multi-tenant clusters really exploit.
 
 ## The nodes: one foot in the cloud, one at home
 

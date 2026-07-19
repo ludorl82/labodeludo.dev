@@ -12,10 +12,11 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 >
 > -   **Context**: my lab ran on a single Docker container host — convenient, but a single point of failure for everything on it, including this site.
 > -   **Solution**: build a small **k3s** cluster — a lightweight Kubernetes distribution, a better fit than "vanilla" Kubernetes for six machines, two of them Raspberry Pis — split between a cloud control plane and five home nodes.
-> -   **Gotchas hit**: every kind of machine had its own hidden step before it would agree to start the k3s agent — cgroups disabled by default on the Raspberry Pis, `iptables` missing from the minimal cloud images, one VM that thought it had 560MB of RAM.
+> -   **Gotchas hit**: every kind of machine had its own hidden step before it would agree to start the k3s agent — cgroups disabled by default on the Raspberry Pis, `iptables` missing from the minimal cloud images.
+> -   **Takeaway**: Claude Code created and provisioned the Linux VMs end to end, with no intervention from me; on the Windows VM under Hyper-V, a dynamic memory setting needed me to step in and fix it myself.
 > -   **Result**: this site's deploy pipeline now runs on the cluster instead of a single machine, with a real gain in resilience.
 
-This week I took the single container host that ran my lab — including this site — and turned it into a real little Kubernetes cluster. As with most infrastructure projects here, I did the bulk of the work in session with Claude Code (I explain how in [a dedicated post](/en/blog/claude-code-headless-bastion/)) — this time, the story is really about the cluster itself.
+This week I took the single container host that ran my lab — including this site — and turned it into a real little Kubernetes cluster. As with most infrastructure projects here, I did the bulk of the work in session with Claude Code (I explain how in [a dedicated post](/en/blog/claude-code-headless-bastion/)). What struck me this time is how much its level of autonomy varied from one platform to another — more on that below.
 
 ## Why a cluster instead of a single server
 
@@ -33,11 +34,21 @@ In practice, that means a one-command install instead of a multi-step bootstrap,
 
 The cluster has six nodes. The control plane runs on a cloud machine — that's **Captain**, the same instance I mentioned in a recent post, born specifically for this project. The other five nodes live at home: two Raspberry Pi 5s, and three virtual machines each running on a compute machine already in place in the lab. None of this has a port open directly on the Internet — the cluster talks over a private tunnel, like the rest of my home infrastructure.
 
+## Building the VMs: autonomous on Linux, a helping hand on Hyper-V
+
+Of the three virtual machines, two run on Linux compute machines already in place in the lab, the third on a Windows machine with Hyper-V. It's a good chance to see Claude Code's versatility at work — same session, same agent, but a very different level of autonomy depending on the platform.
+
+On the two Linux machines, Claude Code handled VM creation end to end without me touching anything: defining the VM (CPU, memory, disk), attaching it to the right network, booting the base image, SSHing in, and moving straight on to installing k3s. Zero manual intervention on my part.
+
+On the Windows machine, it was different. Claude Code could create and start the VM remotely just fine, but a problem slipped in along the way: it ended up with barely 560MB of RAM, because of a dynamic memory setting misconfigured at creation time — nowhere near enough for a k3s node. It diagnosed the problem correctly, but fixing a Hyper-V dynamic memory setting means opening Hyper-V Manager, a Windows GUI tool that isn't something you cleanly drive remotely in this case. That's the one place in this whole project where I had to get my own hands dirty.
+
+That contrast sums up pretty well where Claude Code excels and where it still needs me: on standard, scriptable, well-documented systems — pretty much anything running Linux — autonomy is nearly total. On proprietary graphical admin tools, there's still a point where a pair of human hands is still the simplest way to finish the job.
+
 ## The startup gotchas
 
 None of the five home machines agreed to start the k3s agent on the first try, and each for a different reason — a whole festival of small traps that Claude Code documented along the way, and that's worth repeating here.
 
-The Raspberry Pi 5s run a recent Linux distribution where memory control groups (`cgroups`) aren't enabled by default at boot — a setting that has to be explicitly added to the boot configuration, followed by a reboot, before the k3s agent agrees to stay alive for more than a few seconds. The virtual machines built from minimal cloud images, meanwhile, simply didn't have `iptables` installed — the k3s install succeeded, but the service refused to start until the missing package was added. And one of the VMs thought it had barely 560MB of RAM because of a dynamic memory allocation setting misconfigured at creation time, nowhere near enough for a node — fixed once spotted.
+The Raspberry Pi 5s run a recent Linux distribution where memory control groups (`cgroups`) aren't enabled by default at boot — a setting that has to be explicitly added to the boot configuration, followed by a reboot, before the k3s agent agrees to stay alive for more than a few seconds. The virtual machines built from minimal cloud images, meanwhile, simply didn't have `iptables` installed — the k3s install succeeded, but the service refused to start until the missing package was added. (The Hyper-V VM had its own problem, described above, before it even got that far.)
 
 None of it was hard on its own. The real trap was expecting a single install recipe to apply identically to all six machines — when in practice, every hardware type and every base image had its own little surprise in store.
 
@@ -76,5 +87,6 @@ All six nodes, including the five new ones, are now covered by the same headless
 -   Moving the deploy pipeline onto the cluster eliminates bugs that only existed because everything shared the same machine.
 -   Working through this kind of migration in session with an agent like Claude Code massively speeds up the execution and diagnostics side, but the architectural calls — how many nodes, where to place them, what to migrate first — stay mine.
 -   An automation routine already in place (backups, upgrades) extends easily to new machines instead of being reinvented every time.
+-   Claude Code's autonomy varies a lot by platform: nearly total on Linux, more limited as soon as a GUI admin tool like Hyper-V Manager enters the picture.
 
 The cluster is running, the site you're reading is on it, and the new nodes are already covered by the same safety nets as the rest of the lab. Not bad for a week's work. — Ludo

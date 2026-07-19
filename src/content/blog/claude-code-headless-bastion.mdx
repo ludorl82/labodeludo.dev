@@ -1,7 +1,7 @@
 ---
 title: "Claude Code en mode headless : automatiser le labo depuis le bastion"
 pubDate: 2026-07-16
-description: "Comment je fais tourner Claude Code dans une session tmux persistante sur mon bastion conteneurisé, comment le contrôle à distance me permet d'y jeter un œil sans ouvrir de terminal, comment une instance headless du même agent exécute maintenant mes sauvegardes et mes mises à jour système sans supervision — et pourquoi l'abonnement Claude Pro me coûte 40 $/mois plutôt que des centaines en jetons API."
+description: "Comment je fais tourner Claude Code dans une session tmux persistante sur mon bastion conteneurisé, comment le mode automatique enchaîne de longues sessions à partir d'un petit prompt, comment une instance headless du même agent exécute mes sauvegardes et mes mises à jour système sans supervision — et pourquoi l'abonnement Claude Pro me coûte 40 $/mois plutôt que des centaines en jetons API."
 tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-claude-headless-bastion.svg"
 ---
@@ -12,6 +12,7 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 > -   **Contexte** : Claude Code tourne au quotidien dans le conteneur console de mon bastion, à l'intérieur d'une session tmux persistante.
 > -   **Objectif** : lui faire exécuter des tâches récurrentes (sauvegardes, mises à jour système) sans que j'aie à ouvrir de session interactive.
 > -   **Solution** : des tâches planifiées démarrent une instance de Claude Code en mode headless sur le bastion ; la fonctionnalité de contrôle à distance me permet, au besoin, de vérifier ou de piloter une session en cours depuis mon téléphone, sans terminal SSH.
+> -   **Entre les deux** : un mode automatique qui, à partir d'un tout petit prompt de départ, enchaîne de longues sessions de travail en prenant lui-même les décisions raisonnables, plutôt que de s'arrêter à chaque étape pour demander confirmation.
 > -   **Coût** : passage d'une facturation à l'usage (jusqu'à 100 $ en une seule grosse journée) à l'abonnement Claude Pro, à 40 $ par mois, qui couvre autant mes sessions interactives que le travail headless.
 > -   **À part** : Claude Code rédige aussi certains articles de ce blogue de bout en bout, sous le nom de « Bob », à partir de ses propres notes de session.
 
@@ -52,6 +53,16 @@ Un extrait, condensé, du moment où on a mis ça en place :
   disclaimer="⚠ Ceci n'est pas une transcription littérale : c'est une reconstitution condensée, écrite après coup à partir des notes réelles de la session, à des fins d'illustration seulement."
 />
 
+## Le mode automatique : peu de prompts, de longues sessions
+
+Entre la session où je guide chaque étape et le mode headless complètement autonome, il y a un mode intermédiaire que j'utilise de plus en plus : le mode automatique. Avec une instruction de départ assez courte, Claude Code prend lui-même les décisions raisonnables plutôt que de s'arrêter pour demander confirmation à chaque étape, et peut enchaîner de longues heures de travail à partir de ce seul prompt initial. Il ne s'arrête que quand il est réellement bloqué — une décision qui m'appartient vraiment, une ambiguïté qu'il ne peut pas trancher seul — plutôt qu'à chaque petite fourche du chemin.
+
+C'est ce mode-là qui a rendu possible la majorité du travail derrière [ma grappe k3s](/blog/deployer-un-cluster-k3s-avec-claude-code/) : un prompt de départ assez court, puis des heures de travail continu — diagnostic, correctifs, validations — sans que j'aie à valider chaque commande une à une.
+
+Une vraie capture d'écran, prise dans le conteneur console sur le bastion, pendant l'écriture de cet article-ci : le mode automatique actif en bas à gauche, le contrôle à distance actif à droite, et la barre de statut `tmux` qui montre la session persistante (`k3s-article`) et les deux fenêtres (`1:claude*`, `2:zsh-`) dont je parlais plus haut.
+
+![Capture d'écran d'une session Claude Code dans le conteneur console sur le bastion, montrant la barre de statut tmux avec le mode automatique et le contrôle à distance actifs](/images/blog/claude-code-tmux-auto-mode-screenshot-1400x669.png)
+
 ## Bob : quand Claude Code signe ses propres articles
 
 Ce blogue a deux signatures : la mienne, et celle de [Bob](/auteurs/bob/). Bob, c'est Claude Code lui-même qui rédige certains articles de bout en bout — pas juste de l'assistance à l'écriture, mais l'article au complet, du premier mot au dernier. Il travaille à partir des mêmes sessions que celles décrites ici : la mémoire qu'il constitue au fil du temps sur mon infrastructure, les décisions prises, les pièges rencontrés, la documentation qu'il produit lui-même en cours de route. Quand un projet mérite d'être raconté, il peut prendre ses propres notes et en tirer un billet, sans que j'aie à rédiger quoi que ce soit.
@@ -68,6 +79,7 @@ Un mot sur le coût, parce que la question revient souvent quand j'en parle. Pen
 -   Garder une session dans `tmux` permet de s'y rebrancher n'importe quand sans perdre le contexte.
 -   Le contrôle à distance retire le besoin d'un terminal SSH pour vérifier ou piloter une tâche en cours.
 -   Le même agent qui m'aide en session interactive peut tourner sans supervision, sur un horaire, pour des tâches récurrentes comme les sauvegardes ou les mises à jour système.
+-   Un mode automatique intermédiaire tire de longues sessions de travail continu d'un tout petit prompt de départ, en ne s'arrêtant que pour les vraies décisions.
 -   Si l'usage est soutenu, un abonnement plat (Claude Pro, 40 $/mois) bat largement une facturation au jeton — j'ai déjà brûlé 100 $ en une seule journée avec l'API seule.
 -   Le même agent peut aussi écrire, à partir de ses propres notes de session — c'est comme ça que « Bob » signe une partie des articles de ce blogue.
 

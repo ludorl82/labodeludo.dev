@@ -53,7 +53,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
   bastion: {
     name: "Bastion / console",
     description:
-      "Point d'entrée SSH du VLAN serveurs. Exécute les outils de développement et les sessions d'agent dans des conteneurs compartimentés plutôt que directement sur l'hôte. Orchestre aussi les sauvegardes chiffrées hebdomadaires, la nuit, de tous les nœuds de la grappe conteneurs.",
+      "Point d'entrée SSH du VLAN serveurs. Exécute les outils de développement et les sessions d'agent dans des conteneurs compartimentés plutôt que directement sur l'hôte. Orchestre aussi, chaque semaine et sans supervision, les sauvegardes chiffrées et les mises à jour système de tous les nœuds de la grappe conteneurs, via une instance headless de Claude Code.",
     articles: [
       "compartimentalisation-des-outils-de-console",
       "deployer-un-cluster-k3s-avec-claude-code",

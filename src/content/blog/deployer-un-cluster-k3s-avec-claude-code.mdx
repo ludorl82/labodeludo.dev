@@ -1,7 +1,7 @@
 ---
 title: "Bâtir une grappe k3s avec Claude Code aux commandes"
 pubDate: 2026-07-18
-description: "Comment j'ai remplacé l'hôte conteneurs unique de mon labo par une petite grappe k3s de six nœuds — un plan de contrôle dans le nuage, cinq nœuds à la maison — en travaillant en session avec Claude Code, jusqu'aux sauvegardes chiffrées qui tournent maintenant toutes seules, la nuit."
+description: "Comment Claude Code est devenu mon principal outil pour opérer mon labo maison — illustré par la migration d'un hôte conteneurs unique vers une grappe k3s de six nœuds, des mises à jour système exécutées la nuit par une instance headless, et un mot sur le coût réel (abonnement Claude Pro plutôt que jetons API)."
 tags: ["Cloud", "DevOps", "ludo"]
 heroImage: "/images/blog/banner-k3s-claude-code.svg"
 ---
@@ -12,9 +12,10 @@ import K3sClusterDiagram from "../../components/K3sClusterDiagram.astro";
 > -   **Contexte** : mon labo tournait sur un seul hôte conteneurs Docker — pratique, mais un point de panne unique pour tout ce qui roulait dessus, dont ce site.
 > -   **Solution** : bâtir une petite grappe k3s (Kubernetes léger) de six nœuds, répartie entre un plan de contrôle dans le nuage et cinq nœuds à la maison, en travaillant de bout en bout avec Claude Code comme copilote pour le déploiement.
 > -   **Pièges rencontrés** : chaque type de machine avait sa propre étape cachée avant d'accepter de démarrer l'agent k3s — cgroups désactivés par défaut sur les Raspberry Pi, `iptables` absent des images cloud minimalistes, une VM qui pensait avoir 560 Mo de RAM.
-> -   **Résultat** : le pipeline de déploiement de ce site roule maintenant sur la grappe plutôt que sur une seule machine, et Claude Code orchestre désormais, chaque semaine, la nuit, les sauvegardes chiffrées de chaque nœud depuis le bastion.
+> -   **Résultat** : le pipeline de déploiement de ce site roule maintenant sur la grappe, et Claude Code orchestre désormais, chaque semaine, la nuit, autant les sauvegardes chiffrées de chaque nœud que les mises à jour système de toute la flotte, sans supervision.
+> -   **Aussi couvert** : le coût réel de tout ça — un abonnement Claude Pro plutôt qu'une facturation à l'usage.
 
-Cette semaine, j'ai pris l'hôte conteneurs unique qui faisait tourner mon labo — dont ce site — et je l'ai transformé en une vraie petite grappe Kubernetes. Rien de spectaculaire à l'œil nu une fois le travail terminé, mais en dessous, c'est un tout autre genre d'animal. Comme pour la plupart des projets d'infrastructure ici, j'ai fait le gros du travail en session avec Claude Code : je pose le contexte et les décisions d'architecture, il exécute, diagnostique et documente au fur et à mesure.
+Cette semaine, j'ai pris l'hôte conteneurs unique qui faisait tourner mon labo — dont ce site — et je l'ai transformé en une vraie petite grappe Kubernetes. Ce n'est pas un projet isolé : depuis plusieurs mois, Claude Code est devenu mon principal outil de travail pour tout ce qui touche l'infrastructure ici, autant en session interactive, où je pose le contexte et les décisions et où il exécute, diagnostique et documente au fur et à mesure, que pour des tâches qui roulent maintenant sans supervision du tout. Ce projet de grappe k3s est une bonne occasion de montrer concrètement comment ça se passe des deux côtés.
 
 ## Pourquoi une grappe plutôt qu'un seul serveur
 
@@ -38,16 +39,23 @@ Rien de ça n'était difficile en soi. Le vrai piège, c'était de s'attendre à
 
 Le site que vous êtes en train de lire tourne maintenant lui aussi sur cette grappe. L'exécuteur d'intégration continue, qui compile et déploie le site à chaque changement, s'exécute maintenant comme une charge de travail Kubernetes ordinaire plutôt que comme un service installé à demeure sur une seule machine — si le nœud qui l'héberge disparaît, la grappe peut le relancer ailleurs. Le site de prévisualisation, celui qui me permet de vérifier qu'un article s'affiche correctement avant publication, est passé d'un simple montage de fichiers partagé — qui pouvait, dans de rares cas, être écrasé par deux déploiements qui se chevauchaient — à un volume dédié par déploiement, ce qui élimine complètement cette classe de bogue.
 
-## Les sauvegardes tournent maintenant toutes seules, la nuit
+## Ce qui tourne maintenant tout seul, la nuit
 
-Dernier morceau, et pas le moins important : chaque nœud de la grappe est maintenant couvert par une routine de sauvegarde chiffrée. C'est Claude Code qui l'a mise en place et qui l'orchestre : chaque semaine, la nuit, pendant que tout dort, un script s'exécute depuis le bastion et pousse une archive chiffrée de chaque nœud vers un espace de stockage hors site. Je n'ai plus besoin d'y penser, et si un nœud disparaît complètement, il y a maintenant un vrai filet de sécurité derrière lui plutôt qu'un espoir.
+Dernier morceau, et pas le moins important : chaque nœud de la grappe est maintenant couvert par une routine de sauvegarde chiffrée. C'est Claude Code qui l'a mise en place et qui l'orchestre : chaque semaine, la nuit, pendant que tout dort, un script s'exécute depuis le bastion et pousse une archive chiffrée de chaque nœud vers un espace de stockage hors site.
+
+Mais ce n'est pas tout. La même semaine, une instance de Claude Code démarrée sans interface — en mode « headless », depuis une tâche planifiée sur le bastion, sans que j'aie besoin d'ouvrir quoi que ce soit — s'occupe aussi des mises à jour système de toute la flotte : elle se connecte à chaque machine du labo, vérifie ce qui doit être mis à jour, applique les correctifs, et documente ce qu'elle a fait. C'est le même agent, la même façon de raisonner et d'exécuter des commandes que dans mes sessions interactives, simplement déclenché sur un horaire plutôt que par moi. Je n'ai plus besoin d'y penser, et si un nœud disparaît complètement, il y a maintenant un vrai filet de sécurité derrière lui plutôt qu'un espoir.
+
+## Le calcul économique : un abonnement plutôt que des jetons
+
+Un mot sur le coût, parce que la question revient souvent quand j'en parle. Pendant longtemps, j'utilisais Claude Code facturé à l'usage, au jeton, via l'API — pratique pour commencer, mais ça peut grimper vite : une seule grosse journée de travail m'a déjà coûté autour de 100 $ en jetons, à elle seule. Je suis passé depuis à l'abonnement Claude Pro, à 40 $ par mois, qui couvre à la fois mes sessions interactives et le travail headless comme les mises à jour hebdomadaires décrites plus haut. Pour un usage aussi soutenu que le mien, l'abonnement mensuel revient nettement moins cher qu'une facturation à la carte — et ça retire complètement l'anxiété de regarder la facture après une grosse session de travail.
 
 ## Ce qu'on retient
 
 -   Un seul hôte conteneurs est simple, mais c'est un point de panne unique déguisé en simplicité.
 -   Chaque machine qui rejoint une grappe a son propre petit rituel de démarrage caché — ne pas supposer qu'une recette qui a marché sur la première s'appliquera telle quelle à la suivante.
 -   Déplacer le pipeline de déploiement vers la grappe élimine des bogues qui n'existaient que parce que tout partageait la même machine.
--   Une sauvegarde qui roule toute seule, chaque semaine, la nuit, sans qu'on ait à s'en souvenir, vaut largement l'effort de la mettre en place une fois pour toutes.
 -   Travailler ce genre de migration en session avec un agent comme Claude Code accélère énormément la partie exécution et diagnostic, mais les décisions d'architecture — combien de nœuds, où les placer, quoi migrer en premier — restent miennes.
+-   Le même agent peut aussi tourner sans supervision, sur un horaire, pour des tâches récurrentes comme les sauvegardes ou les mises à jour système — sans qu'on ait à s'en souvenir.
+-   Si l'usage est soutenu, un abonnement plat (Claude Pro, 40 $/mois) bat largement une facturation au jeton — j'ai déjà brûlé 100 $ en une seule journée avec l'API seule.
 
-La grappe tourne, le site que vous lisez roule dessus, et les sauvegardes se font pendant que tout le monde dort. Pas mal pour une semaine de travail. — Ludo
+La grappe tourne, le site que vous lisez roule dessus, les sauvegardes et les mises à jour se font pendant que tout le monde dort, et la facture est prévisible. Pas mal pour une semaine de travail. — Ludo

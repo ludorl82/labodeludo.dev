@@ -7,12 +7,14 @@ interface Turn {
 interface Props {
   turns: Turn[];
   caption: string;
+  disclaimer: string;
 }
 
-const { turns, caption } = Astro.props;
+const { turns, caption, disclaimer } = Astro.props;
 ---
 
 <figure class="transcript">
+  <p class="disclaimer">{disclaimer}</p>
   <div class="transcript-wrap">
     {
       turns.map((turn) => (
@@ -29,6 +31,21 @@ const { turns, caption } = Astro.props;
 <style>
   .transcript {
     margin: 2rem 0;
+  }
+
+  .disclaimer {
+    margin: 0 0 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--text-muted);
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-left: 3px solid var(--accent-live);
+    border-radius: 4px;
+    padding: 0.6rem 0.85rem;
   }
 
   .transcript-wrap {

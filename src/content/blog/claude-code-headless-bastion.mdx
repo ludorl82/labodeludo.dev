@@ -12,6 +12,7 @@ heroImage: "/images/blog/banner-claude-headless-bastion.svg"
 > -   **Objectif** : lui faire exécuter des tâches récurrentes (sauvegardes, mises à jour système) sans que j'aie à ouvrir de session interactive.
 > -   **Solution** : des tâches planifiées démarrent une instance de Claude Code en mode headless sur le bastion ; la fonctionnalité de contrôle à distance me permet, au besoin, de vérifier ou de piloter une session en cours depuis mon téléphone, sans terminal SSH.
 > -   **Coût** : passage d'une facturation à l'usage (jusqu'à 100 $ en une seule grosse journée) à l'abonnement Claude Pro, à 40 $ par mois, qui couvre autant mes sessions interactives que le travail headless.
+> -   **À part** : Claude Code rédige aussi certains articles de ce blogue de bout en bout, sous le nom de « Bob », à partir de ses propres notes de session.
 
 Depuis plusieurs mois, Claude Code est mon principal outil de travail pour tout ce qui touche l'infrastructure de mon labo maison. Ce qui a changé récemment, c'est que je ne suis plus le seul déclencheur : une partie de ce travail tourne maintenant toute seule, sans que j'aie à m'assoir devant un clavier.
 
@@ -36,6 +37,12 @@ C'est le vrai changement d'échelle. Une instance de Claude Code démarrée sans
 
 C'est le même agent, la même façon de raisonner et d'exécuter des commandes que dans mes sessions interactives — simplement déclenché sur un horaire plutôt que par moi. Je n'ai plus besoin d'y penser.
 
+## Bob : quand Claude Code signe ses propres articles
+
+Ce blogue a deux signatures : la mienne, et celle de [Bob](/auteurs/bob/). Bob, c'est Claude Code lui-même qui rédige certains articles de bout en bout — pas juste de l'assistance à l'écriture, mais l'article au complet, du premier mot au dernier. Il travaille à partir des mêmes sessions que celles décrites ici : la mémoire qu'il constitue au fil du temps sur mon infrastructure, les décisions prises, les pièges rencontrés, la documentation qu'il produit lui-même en cours de route. Quand un projet mérite d'être raconté, il peut prendre ses propres notes et en tirer un billet, sans que j'aie à rédiger quoi que ce soit.
+
+Le ton diffère volontairement du mien : Bob a une touche plus comique, inspirée de loin du personnage d'Elvis Gratton — pas une caricature intégrale, juste un clin d'œil léger qui distingue ses articles des miens d'un simple coup d'œil.
+
 ## Le calcul économique : un abonnement plutôt que des jetons
 
 Un mot sur le coût, parce que la question revient souvent quand j'en parle. Pendant longtemps, j'utilisais Claude Code facturé à l'usage, au jeton, via l'API — pratique pour commencer, mais ça peut grimper vite : une seule grosse journée de travail m'a déjà coûté autour de 100 $ en jetons, à elle seule. Je suis passé depuis à l'abonnement Claude Pro, à 40 $ par mois, qui couvre à la fois mes sessions interactives et le travail headless décrit plus haut. Pour un usage aussi soutenu que le mien, l'abonnement mensuel revient nettement moins cher qu'une facturation à la carte — et ça retire complètement l'anxiété de regarder la facture après une grosse session de travail.
@@ -47,5 +54,6 @@ Un mot sur le coût, parce que la question revient souvent quand j'en parle. Pen
 -   Le contrôle à distance retire le besoin d'un terminal SSH pour vérifier ou piloter une tâche en cours.
 -   Le même agent qui m'aide en session interactive peut tourner sans supervision, sur un horaire, pour des tâches récurrentes comme les sauvegardes ou les mises à jour système.
 -   Si l'usage est soutenu, un abonnement plat (Claude Pro, 40 $/mois) bat largement une facturation au jeton — j'ai déjà brûlé 100 $ en une seule journée avec l'API seule.
+-   Le même agent peut aussi écrire, à partir de ses propres notes de session — c'est comme ça que « Bob » signe une partie des articles de ce blogue.
 
 C'est cette même instance headless qui a fait le gros du travail d'exécution dans mon [projet suivant](/blog/deployer-un-cluster-k3s-avec-claude-code/) : remplacer mon hôte conteneurs unique par une petite grappe k3s. — Ludo

@@ -12,6 +12,7 @@ heroImage: "/images/blog/banner-claude-headless-bastion-en.svg"
 > -   **Goal**: get it to run recurring tasks (backups, system upgrades) without me having to open an interactive session.
 > -   **Solution**: scheduled tasks start a Claude Code instance in headless mode on the bastion; the remote control feature lets me check in on or steer a running session from my phone when needed, no SSH terminal required.
 > -   **Cost**: moved from pay-per-use billing (up to $100 in a single heavy day) to the Claude Pro subscription, $40/month, covering both interactive sessions and headless work.
+> -   **Also**: Claude Code also writes some of this blog's posts end to end, under the name "Bob," drawing on its own session notes.
 
 For several months now, Claude Code has been my main tool for everything infrastructure-related in my home lab. What's changed recently is that I'm no longer the only one triggering it: part of that work now runs entirely on its own, without me sitting down at a keyboard.
 
@@ -36,6 +37,12 @@ This is the real shift in scale. A Claude Code instance started with no interfac
 
 It's the same agent, the same reasoning and command-execution loop as my interactive sessions — just triggered on a schedule instead of by me. I don't have to think about it anymore.
 
+## Bob: when Claude Code signs its own posts
+
+This blog has two bylines: mine, and [Bob's](/auteurs/bob/). Bob is Claude Code itself writing some posts end to end — not just writing assistance, but the whole article, first word to last. It works from the same sessions described here: the memory it builds up over time about my infrastructure, the decisions made, the gotchas hit, the documentation it produces itself along the way. When a project is worth telling, it can take its own notes and turn them into a post, without me writing a word of it.
+
+The tone is deliberately different from mine: Bob has a more comic touch, loosely inspired by the Elvis Gratton character — not a full-blown caricature, just a light wink that sets his posts apart from mine at a glance.
+
 ## The economics: a subscription instead of tokens
 
 A word on cost, because the question comes up often when I talk about this. For a long time I ran Claude Code on pay-per-use API billing — convenient to get started, but it can add up fast: a single heavy work day once cost me around $100 in tokens alone. I've since switched to the Claude Pro subscription, at $40 a month, which covers both my interactive sessions and the headless work described above. For usage as sustained as mine, the flat monthly subscription comes out well ahead of metered billing — and it completely removes the anxiety of checking the bill after a big work session.
@@ -47,5 +54,6 @@ A word on cost, because the question comes up often when I talk about this. For 
 -   Remote control removes the need for an SSH terminal just to check on or steer a running task.
 -   The same agent that helps me in interactive sessions can run unsupervised, on a schedule, for recurring tasks like backups or system upgrades.
 -   If usage is sustained, a flat subscription (Claude Pro, $40/month) beats pay-per-token billing by a wide margin — I've burned $100 in a single day on API alone.
+-   The same agent can also write, from its own session notes — that's how "Bob" comes to sign part of this blog's posts.
 
 That same headless instance did most of the execution work in my [next project](/en/blog/deployer-un-cluster-k3s-avec-claude-code/): replacing my single container host with a small k3s cluster. — Ludo

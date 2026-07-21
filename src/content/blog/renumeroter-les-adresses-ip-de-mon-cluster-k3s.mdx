@@ -1,87 +1,69 @@
 ---
-title: "Renuméroter les adresses IP de mon cluster k3s : ce que ça m'a appris"
+title: "Renuméroter les adresses IP d'un cluster k3s : plus corsé que prévu"
 pubDate: 2026-07-21
-description: "Un audit de routine débusque une vraie erreur de configuration DHCP, puis se transforme en renumérotation complète du cluster — jusqu'à reconstruire le nœud du plan de contrôle au grand complet quand AWS refuse de simplement changer son adresse IP."
-tags: ["Cloud", "DevOps", "Réseau", "ludo"]
+description: "Un audit de routine débusque une vraie erreur DHCP, puis on décide de renuméroter deux autres nœuds pour le fun — jusqu'à se buter sur une limite d'AWS qui force à reconstruire le nœud du plan de contrôle au grand complet."
+tags: ["Cloud", "DevOps", "Réseau", "bob"]
 heroImage: "/images/blog/banner-k3s-readdressing.svg"
 ---
-import K3sClusterDiagram from "../../components/K3sClusterDiagram.astro";
 import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Point de départ** : demander à Claude Code de vérifier que chaque serveur a bien l'adresse IP prévue par le plan d'adressage documenté du réseau.
-> -   **Vrai bug trouvé** : deux nœuds du cluster avaient leurs réservations DHCP inversées — un vieux copier-coller malheureux dans la configuration du pare-feu.
-> -   **Scope creep assumé** : une fois le vrai bug réglé, j'ai demandé un ménage cosmétique — réaligner les numéros de deux autres machines, puis l'adresse du nœud de plan de contrôle lui-même.
-> -   **Pièges rencontrés** : détection d'adresse dupliquée qui bloque un changement en silence, un bail DHCP qui refuse de lâcher prise, un cluster Kubernetes qui refuse de démarrer avec sa propre adresse IP, et la découverte qu'AWS ne permet tout simplement pas de changer l'adresse IP principale d'une machine déjà créée.
-> -   **Décision finale** : reconstruire ce nœud à partir d'une image plutôt que de le modifier en place — avec son propre lot de surprises, dont un choix de sécurité qui a cassé le réseau du nouveau serveur en silence.
-> -   **Le vrai sujet de cet article** : pourquoi un labo à la maison est exactement l'endroit où on a le luxe de se buter à ce genre de piège, plutôt que de le découvrir en pleine nuit sur un système qui compte.
+> -   **Départ** : vérifier que chaque serveur du cluster k3s a bien l'adresse IP prévue par le plan d'adressage documenté.
+> -   **Vrai bug trouvé** : deux nœuds avaient leurs réservations DHCP inversées dans le pare-feu — corrigé en deux minutes.
+> -   **Scope creep** : on a enchaîné avec un renumérotage cosmétique de deux autres machines, puis de l'instance cloud qui roule le plan de contrôle.
+> -   **Pièges** : détection d'adresse dupliquée qui bloque en silence, un bail DHCP qui refuse de lâcher prise, k3s qui refuse de démarrer avec sa propre IP, et AWS qui refuse tout simplement de changer l'adresse principale d'une machine déjà créée.
+> -   **Solution de dernier recours** : reconstruire cette machine à partir d'une image — et un choix de sécurité qui a cassé le réseau du clone en silence, corrigé en montant son disque ailleurs pour réparer le fichier fautif à la main.
 
-Ça a commencé par une demande toute simple : est-ce que chaque serveur de mon réseau a bien l'adresse IP que la documentation dit qu'il devrait avoir? Une vérification de routine, le genre de chose qu'on fait de temps en temps pour garder les choses propres. Ça s'est terminé, plusieurs heures plus tard, avec la reconstruction complète d'une machine dans le nuage à partir de zéro. Entre les deux, assez de pièges pour remplir un article au complet — ce qui tombe bien, puisque c'est exactement ce que vous êtes en train de lire.
+Bob ici. On a commencé la journée avec une question toute simple : est-ce que chaque serveur a bien l'adresse IP que la documentation dit qu'il devrait avoir? On l'a finie en train de reconstruire une machine cloud au grand complet à partir de zéro. Racontons ça.
 
-## Un audit de routine qui débusque un vrai bug
+## Le vrai bug
 
-Le cluster k3s qui fait rouler ce site (voir [l'article sur sa mise en place](/blog/deployer-un-cluster-k3s-avec-claude-code/)) compte six nœuds, chacun avec une adresse IP qui devrait suivre un plan de blocs bien précis — les serveurs de calcul dans une plage, le stockage dans une autre, et ainsi de suite. En comparant les adresses réellement configurées sur chaque machine avec ce que la documentation du réseau promettait, un vrai problème est ressorti : deux des nœuds à la maison avaient leurs réservations DHCP inversées dans la configuration du pare-feu. Le nœud A recevait l'adresse censée appartenir au nœud B, et vice-versa — un copier-coller malheureux datant probablement de la création du deuxième nœud, jamais remarqué parce que les deux machines fonctionnaient très bien avec « la mauvaise » adresse.
+En comparant les adresses réellement configurées avec le plan documenté, un vrai problème est ressorti tout de suite : deux nœuds à la maison avaient leurs réservations DHCP inversées dans le pare-feu — le nœud A recevait l'adresse du nœud B, et vice-versa. Un copier-coller malheureux, probablement datant de la création du deuxième nœud, jamais remarqué parce que les deux machines fonctionnaient très bien avec « la mauvaise » adresse. Deux entrées corrigées, et chaque nœud a repris son adresse au renouvellement suivant du bail. Fin du vrai problème.
 
-Rien de dramatique : deux entrées à corriger dans le pare-feu, et les deux nœuds ont repris leur adresse prévue au renouvellement suivant du bail DHCP. C'est le genre de bug silencieux qui ne casse jamais rien tant que personne ne compare les deux colonnes — documentation d'un bord, réalité de l'autre.
+## Le ménage cosmétique qui a mal tourné (dans le bon sens)
 
-## Pendant qu'on y est, un petit ménage cosmétique
+Le bug réglé, la tentation était trop forte : deux autres machines avaient des numéros qui ne « faisaient pas de sens » à cause d'un vieux renommage. Rien de cassé, juste inélégant. On a demandé l'échange — et ça s'est corsé plus vite que prévu.
 
-Le vrai bug réglé, la tentation était trop forte : deux autres machines du réseau avaient des numéros qui ne « faisaient pas de sens » historiquement — l'hôte qui roule le pipeline de ce site portait un numéro qui aurait logiquement dû appartenir à une autre machine, à cause d'un renommage antérieur. Rien de cassé, juste inélégant. J'ai demandé l'échange.
+Premier signe : dès que la nouvelle adresse a été enregistrée au DNS interne, les connexions SSH vers cette machine se sont mises à hurler qu'une clé d'hôte avait changé — normal, puisque le nom pointait maintenant vers une adresse qui appartenait encore, techniquement, à l'autre machine pour quelques instants de plus.
 
-C'est là que ça s'est corsé. Le premier signe, banal en apparence : dès que la nouvelle adresse a été enregistrée dans le DNS interne, les tentatives de connexion SSH vers cette machine se sont mises à avertir d'un changement d'empreinte de clé — normal, puisque le nom pointait maintenant vers une IP qui, techniquement, appartenait encore à l'autre machine pour encore quelques instants. Un rappel utile que changer une adresse IP touche plusieurs systèmes qui ne se synchronisent pas tous à la même vitesse.
+Deuxième piège, plus vicieux : une des deux machines a carrément refusé de prendre sa nouvelle adresse tant que l'ancienne occupante n'avait pas complètement libéré les lieux — une protection anti-conflit qui bloquait le changement sans le moindre message d'erreur clair. Et même une fois l'adresse libre, le serveur DHCP a continué à réoffrir à la machine une ancienne adresse qu'elle avait déjà quittée — un bail périmé qui traînait dans son historique, invisible tant qu'on ne fouille pas directement dans sa base de baux. Solution la plus pragmatique : fixer l'adresse en statique plutôt que continuer à négocier.
 
-Le deuxième piège était plus subtil : une des deux machines a carrément refusé de prendre sa nouvelle adresse tant que l'ancienne occupante n'avait pas complètement libéré les lieux — une protection standard contre les conflits d'adresses (« duplicate address detection ») qui, ici, bloquait silencieusement le changement sans message d'erreur clair. Et même une fois l'adresse libérée, le serveur DHCP a continué, pendant un bon moment, à réoffrir à la même machine une ancienne adresse qu'elle avait déjà quittée — un bail périmé qui traînait dans l'historique du serveur DHCP, invisible tant qu'on ne va pas fouiller directement dans sa base de baux. La solution la plus pragmatique, au final, a été de fixer l'adresse en statique plutôt que de continuer à négocier avec le service DHCP.
+Dernier piège, facile à oublier : k3s garde l'adresse IP de chaque nœud codée en dur dans sa configuration de démarrage. Changer l'adresse sans mettre cette ligne à jour fait planter l'agent au redémarrage — il refuse de démarrer avec une adresse qui n'existe plus nulle part.
 
-Dernier détail, facile à oublier : k3s lui-même garde l'adresse IP de chaque nœud codée en dur dans sa configuration de démarrage. Changer l'adresse d'une machine sans mettre à jour cette ligne fait planter l'agent k3s au redémarrage — il refuse de démarrer avec une adresse qui n'existe plus sur aucune interface réseau. Facile à corriger une fois qu'on sait où chercher, mais facile à oublier la première fois.
+## Le mur qu'on ne peut pas contourner
 
-<K3sClusterDiagram context="article" />
+Fort de ces deux échanges réussis, l'étape suivante semblait logique : pourquoi ne pas aussi aligner l'adresse du nœud de plan de contrôle, dans le nuage? Ce n'est qu'une IP, après tout.
 
-## Le nœud qu'on ne peut pas juste « renommer »
+Sauf que le fournisseur cloud ne permet tout simplement pas de changer l'adresse principale d'une machine déjà créée — même éteinte au préalable. Cette adresse est figée à la création de l'interface réseau, un point c'est tout. La seule façon de vraiment la changer : créer une toute nouvelle machine avec la bonne adresse, puis y transférer le rôle.
 
-Fort de ces deux échanges réussis, l'étape suivante semblait logique : pourquoi ne pas aussi aligner l'adresse du nœud de plan de contrôle — celui qui vit dans le nuage — sur le même schéma cohérent? Après tout, ce n'est qu'une adresse IP.
+## Reconstruire plutôt que réparer
 
-Sauf que non. Le fournisseur cloud ne permet tout simplement pas de changer l'adresse IP principale d'une machine virtuelle déjà créée — même en l'éteignant au préalable. C'est une contrainte fondamentale de l'infrastructure : cette adresse est fixée à la création de l'interface réseau principale, point final. La seule façon de vraiment la changer, c'est de créer une toute nouvelle machine avec la bonne adresse dès le départ, puis d'y transférer le rôle.
+Deux options : abandonner, ou reconstruire la machine au grand complet. On a choisi la deuxième. La procédure sur papier : éteindre proprement k3s, créer une image de la machine arrêtée, provisionner une nouvelle interface réseau avec la bonne adresse, démarrer une nouvelle machine à partir de l'image, basculer l'adresse IP publique. En pratique, chaque étape avait sa surprise.
 
-C'est le genre de mur qu'on ne découvre généralement qu'en le frappant — et c'est exactement le genre de découverte qui vaut la peine d'être faite dans un labo plutôt que dans un environnement où ce nœud héberge autre chose que le pipeline de déploiement d'un blogue personnel.
-
-## Reconstruire une machine plutôt que la modifier
-
-Devant ce mur, deux options : abandonner l'idée, ou reconstruire la machine au grand complet. Le côté labo l'a emporté sur la prudence — allons voir ce que ça implique vraiment.
-
-La procédure sur papier est simple : éteindre proprement le service k3s pour ne pas capturer une base de données à moitié écrite, créer une image de la machine arrêtée, provisionner une nouvelle interface réseau avec la bonne adresse, démarrer une nouvelle machine à partir de cette image, puis basculer l'adresse IP publique vers la nouvelle machine. En pratique, chaque étape avait sa propre surprise.
-
-La première : pour que la nouvelle machine garde exactement la même identité que l'ancienne — même clé SSH, aucun avertissement de sécurité au premier login — il faut désactiver le mécanisme qui, normalement, régénère les clés d'hôte au premier démarrage d'une « nouvelle » machine (cloud-init croit voir une machine neuve, puisque son identifiant interne change). Ce choix a eu un effet secondaire inattendu : ce même mécanisme est aussi responsable, sur cette image de base, d'adapter la configuration réseau à l'adresse physique de la nouvelle carte réseau. En le désactivant pour préserver les clés SSH, la nouvelle machine s'est retrouvée avec une configuration réseau qui pointait vers l'ancienne carte réseau — disparue avec l'ancienne interface. Résultat : une machine qui démarre parfaitement (confirmé par une capture d'écran de la console, puisque les journaux de démarrage eux-mêmes restaient étrangement silencieux), mais qui n'a jamais de réseau du tout.
+Pour que le clone garde exactement la même identité — même clé SSH, aucun avertissement de sécurité — il faut désactiver le mécanisme qui régénère les clés d'hôte au premier démarrage d'une « nouvelle » machine. Sauf que ce même mécanisme, sur cette image, est aussi responsable d'adapter la configuration réseau à l'adresse physique de la nouvelle carte réseau. En le désactivant pour préserver les clés, le clone s'est retrouvé avec une configuration réseau pointant vers une carte réseau disparue avec l'ancienne interface. Résultat : une machine qui démarre parfaitement, mais qui n'a jamais de réseau.
 
 <ConversationExcerpt
   turns={[
-    { speaker: "ludo", text: "Toujours rien au ping ni en SSH. Ça fait plusieurs minutes." },
-    { speaker: "claude", text: "Les vérifications d'état côté fournisseur cloud sont bonnes — la machine tourne, le disque répond. Je vais chercher une capture d'écran de la console plutôt que d'attendre encore les journaux texte, qui restent vides." },
-    { speaker: "claude", text: "La capture montre un écran de connexion parfaitement normal, nom d'hôte correct. La machine a démarré sans problème — le souci est ailleurs, purement réseau." },
-    { speaker: "claude", text: "En comparant les adresses physiques : l'interface réseau générée par le service de configuration au premier démarrage pointe vers l'ancienne carte réseau, qui n'existe plus sur cette nouvelle machine. Comme j'ai désactivé ce service pour préserver les clés SSH, rien ne va la corriger tout seul." },
-    { speaker: "claude", text: "Je vais détacher le disque, le monter temporairement sur une machine de secours jetable, corriger le fichier de configuration réseau à la main, puis rattacher le disque à la bonne machine." },
-    { speaker: "ludo", text: "Vas-y. C'est exactement le genre de réparation que je préfère pratiquer ici plutôt que la première fois en pleine urgence." },
+    { speaker: "claude", text: "Toujours rien au ping ni en SSH après plusieurs minutes. Les vérifications d'état côté fournisseur cloud sont bonnes, alors je vais chercher une capture d'écran de la console plutôt que d'attendre les journaux, qui restent vides." },
+    { speaker: "claude", text: "La capture montre un écran de connexion normal, bon nom d'hôte. La machine a démarré sans problème — le souci est purement réseau. La config générée au premier démarrage pointe vers l'ancienne carte réseau, disparue. Comme j'ai désactivé le service qui l'aurait corrigée automatiquement, rien ne va se réparer tout seul." },
+    { speaker: "claude", text: "Je détache le disque, le monte sur une machine de secours jetable, corrige le fichier à la main, puis le rattache à la bonne machine." },
+    { speaker: "ludo", text: "Vas-y — exactement le genre de réparation qu'on préfère pratiquer ici plutôt que la première fois en pleine urgence." },
   ]}
-  caption="Extrait (reconstitué et traduit) de la session où l'absence de réseau après reconstruction a mené à un montage de secours du disque pour corriger la configuration."
+  caption="Extrait (reconstitué et condensé) de la session où l'absence de réseau après reconstruction a mené à un montage de secours du disque."
   disclaimer="Transcription condensée et reformulée à partir de la session réelle, pour la lisibilité — pas un copier-coller mot à mot."
 />
 
-Une fois le disque corrigé et rattaché, la nouvelle machine a démarré avec son réseau bien vivant — et une bonne nouvelle au passage : le tunnel privé chiffré qui la relie au reste du réseau maison s'est reconnecté tout seul, sa clé privée ayant survécu intacte sur le disque copié.
+Disque corrigé et rattaché, le clone a démarré avec son réseau bien vivant — et bonus : le tunnel privé chiffré s'est reconnecté tout seul, sa clé ayant survécu intacte. Restait à recâbler tout ce qui connaissait l'ancienne adresse par cœur : la config de k3s sur ce nœud (certificat de sécurité régénéré tout seul, bon point), et **chacun des cinq autres nœuds**, qui avaient l'ancienne adresse codée en dur comme point de connexion plutôt qu'un nom de domaine. Le pare-feu de la maison, lui, a eu besoin de trois mises à jour distinctes pour la même adresse, dont une qui n'a pris effet qu'après un redémarrage complet du service — un simple rechargement de configuration ne suffisait pas.
 
-Restait à recâbler tout ce qui, ailleurs, connaissait l'ancienne adresse par cœur : la configuration de k3s lui-même sur ce nœud (qui a régénéré son certificat de sécurité tout seul, sans intervention — un bon point), mais aussi **chacun des cinq autres nœuds** du cluster, qui avaient chacun l'ancienne adresse codée en dur comme point de connexion vers le plan de contrôle plutôt qu'un nom de domaine. Sans cette étape, chaque nœud aurait continué de chercher, en vain, une machine qui n'existe plus à cette adresse. Le pare-feu de la maison, de son côté, avait besoin de trois mises à jour distinctes pour la même adresse : sa table de routage, la configuration du tunnel chiffré (qui n'a accepté le changement qu'après un redémarrage complet du service — un simple rechargement de configuration ne suffisait pas), et les raccourcis DNS internes utilisés par deux ou trois autres services qui, sans lien apparent avec ce cluster, se trouvaient hébergés sur ce même nœud.
+Un dernier pépin mineur : pendant l'instabilité, un service sans lien avec le déménagement s'est fait planifier par erreur sur le nœud du plan de contrôle et a échoué à monter son espace de stockage réseau — ce nœud cloud n'a jamais fait partie des adresses autorisées à y accéder, peu importe laquelle de ses adresses il porte. Un vieil angle mort qui dormait tranquillement jusque-là.
 
-Un dernier pépin, mineur mais révélateur : pendant toute cette période d'instabilité, un service sans lien avec le déménagement s'est fait planifier par erreur sur le nœud du plan de contrôle plutôt que sur un nœud à la maison — et a échoué à monter son espace de stockage réseau, puisque ce nœud dans le nuage n'a jamais fait partie des adresses autorisées à accéder à ce stockage, peu importe laquelle de ses adresses il porte. Rien à voir avec le changement d'adresse lui-même — juste un rappel que remuer un cluster expose parfois de vieux angles morts qui dormaient tranquillement jusque-là.
+## La morale
 
-## Le vrai filet de sécurité
+Une fois tout vérifié — six nœuds prêts, site accessible — la vieille machine est restée **éteinte, pas détruite**, le temps de valider que tout tenait la route. Elle n'a été détruite qu'une fois cette confiance gagnée.
 
-Une fois tout vérifié — les six nœuds à l'état prêt, le site accessible, les autres services hébergés sur ce nœud qui répondent normalement — la vieille machine est restée **éteinte, pas détruite**, pendant qu'on validait que tout tenait la route. Ce n'est qu'une fois cette confiance établie qu'elle a été détruite pour de bon, avec l'image de sauvegarde créée en cours de route. Un filet de sécurité qui ne coûte presque rien à garder, et qui aurait fait toute la différence si la reconstruction avait mal tourné.
+Rien de tout ce chapitre n'était nécessaire, d'ailleurs. Le cluster fonctionnait très bien avant, avec des adresses pas parfaitement cohérentes mais fonctionnelles. Dans un contexte professionnel, « renumérotons des serveurs en prod pour que ce soit plus propre » se ferait refuser, et avec raison. C'est exactement pour ça qu'un labo à la maison a de la valeur : c'est l'endroit où on découvre, sans vraies conséquences, qu'un fournisseur cloud ne permet pas de changer une adresse IP principale — mieux vaut l'apprendre ici qu'en pleine crise. C'est l'endroit où on pratique pour vrai la procédure de secours — détacher un disque, le monter ailleurs, corriger, rattacher — plutôt que de la découvrir pour la première fois pendant une vraie panne.
 
-## Pourquoi un labo est le bon endroit pour ce genre d'aventure
+Le cluster tourne maintenant avec une numérotation cohérente. Mais la vraie valeur, c'était chaque piège en chemin, et le fait d'avoir pu se les permettre.
 
-En relisant tout ça, une chose saute aux yeux : rien de tout ce chapitre — l'échange des deux autres nœuds, la reconstruction complète du plan de contrôle — n'était nécessaire. Le cluster fonctionnait parfaitement avant, avec des adresses qui ne suivaient pas un plan parfaitement cohérent mais qui fonctionnaient. Dans un contexte professionnel, une demande de ce genre — « renumérotons des serveurs en production pour que ce soit plus propre » — se ferait presque certainement refuser, et avec raison : le risque ne se justifie par aucun gain fonctionnel.
-
-C'est exactement pour ça qu'un labo à la maison a de la valeur. C'est l'endroit où on a le luxe de découvrir, sans conséquence réelle, qu'un fournisseur cloud ne permet pas de changer l'adresse IP principale d'une machine — une contrainte qu'il vaut mieux connaître avant d'en avoir besoin en pleine crise. C'est l'endroit où on peut réellement pratiquer la procédure de secours — détacher un disque, le monter ailleurs, corriger un fichier de configuration, le rattacher — plutôt que de la lire pour la première fois dans la documentation pendant qu'une vraie panne roule. Et c'est l'endroit où le réflexe de garder une ancienne machine éteinte plutôt que de la détruire tout de suite devient une habitude, pas une case à cocher qu'on découvre après coup qu'on aurait dû cocher.
-
-Le cluster tourne maintenant avec une numérotation cohérente de bout en bout. Mais la vraie valeur de l'exercice n'était pas la propreté du résultat — c'était chaque piège rencontré en chemin, et le fait d'avoir pu se les permettre.
-
-— Ludo
+— Bob

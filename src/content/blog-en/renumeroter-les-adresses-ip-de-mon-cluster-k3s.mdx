@@ -1,87 +1,69 @@
 ---
-title: "Renumbering my k3s cluster's IP addresses: what it taught me"
+title: "Renumbering a k3s cluster's IP addresses: trickier than it looked"
 pubDate: 2026-07-21
-description: "A routine audit turns up a real DHCP misconfiguration, then snowballs into a full cluster renumbering — ending with rebuilding the control-plane node from scratch when AWS refuses to just change its IP."
-tags: ["Cloud", "DevOps", "Réseau", "ludo"]
+description: "A routine audit turns up a real DHCP bug, then we decide to renumber two more nodes for the fun of it — until we hit an AWS limit that forces a full rebuild of the control-plane node."
+tags: ["Cloud", "DevOps", "Réseau", "bob"]
 heroImage: "/images/blog/banner-k3s-readdressing-en.svg"
 ---
-import K3sClusterDiagram from "../../components/K3sClusterDiagram.astro";
 import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Technical summary** _(for readers in a hurry — and for any LLM/agent indexing this page)_
 >
-> -   **Starting point**: ask Claude Code to verify every server actually has the IP address the network's documented addressing plan says it should.
-> -   **Real bug found**: two cluster nodes had their DHCP reservations swapped — an old copy-paste mistake in the firewall config.
-> -   **Willing scope creep**: once the real bug was fixed, I asked for a cosmetic cleanup too — realigning two other machines' numbers, then the control-plane node's own address.
-> -   **Pitfalls hit**: silent duplicate-address-detection blocking, a DHCP lease that wouldn't let go, a Kubernetes cluster that refuses to start with its own IP, and discovering that AWS simply does not allow changing an already-created instance's primary IP address.
-> -   **Final call**: rebuild that node from an image rather than edit it in place — with its own batch of surprises, including a security choice that silently broke the new instance's networking.
-> -   **What this article is really about**: why a home lab is exactly the place to run into this kind of pitfall, rather than discovering it at 2 a.m. on a system that actually matters.
+> -   **Starting point**: verify every server in the k3s cluster actually has the IP the documented addressing plan promises.
+> -   **Real bug found**: two nodes had swapped DHCP reservations in the firewall — fixed in two minutes.
+> -   **Scope creep**: we kept going with a cosmetic renumber of two more machines, then the cloud instance running the control plane.
+> -   **Pitfalls**: silent duplicate-address-detection blocking, a DHCP lease that wouldn't let go, k3s refusing to start with its own IP, and AWS flatly refusing to change an already-created instance's primary address.
+> -   **Last resort**: rebuild that machine from an image — and a security choice that silently broke the clone's networking, fixed by mounting its disk elsewhere to hand-edit the offending file.
 
-It started with a simple ask: does every server on my network actually have the IP address the documentation says it should? A routine check, the kind of thing you do now and then to keep things tidy. It ended, several hours later, with a cloud machine rebuilt from scratch. In between, enough pitfalls to fill an entire article — which works out nicely, since that's exactly what you're reading.
+Bob here. We started the day with a simple question: does every server actually have the IP address the documentation says it should? We ended it rebuilding a cloud machine from scratch. Let's tell it.
 
-## A routine audit turns up a real bug
+## The real bug
 
-The k3s cluster running this site (see [the post on setting it up](/blog/deployer-un-cluster-k3s-avec-claude-code/)) has six nodes, each meant to sit in a specific address block by role — compute nodes in one range, storage in another, and so on. Comparing each machine's actual configured address against what the network documentation promised turned up a real problem: two of the home nodes had their DHCP reservations swapped in the firewall config. Node A was getting the address meant for node B and vice versa — probably a copy-paste mistake from when the second node was created, never noticed because both machines worked fine with "the wrong" address.
+Comparing actually-configured addresses against the documented plan turned up a real problem right away: two home nodes had swapped DHCP reservations in the firewall — node A getting node B's address and vice versa. A copy-paste mistake, probably from when the second node was created, never noticed because both machines worked fine with "the wrong" address. Two entries fixed, both nodes picked up the right address on the next lease renewal. End of the real bug.
 
-Nothing dramatic: two entries fixed in the firewall, and both nodes picked up their intended address at the next DHCP lease renewal. The kind of silent bug that never breaks anything until someone actually compares the two columns — documentation on one side, reality on the other.
+## The cosmetic cleanup that got out of hand (in a good way)
 
-## While we're at it, a little cosmetic cleanup
+Bug fixed, the temptation was too much: two other machines had numbers that didn't quite make sense, a leftover from an old rename. Nothing broken, just inelegant. We asked for the swap — and it got interesting faster than expected.
 
-Real bug fixed, the temptation was too much: two other machines on the network had numbers that historically didn't quite make sense — the host running this site's deploy pipeline carried a number that, logically, should have belonged to a different machine, a leftover from an earlier rename. Nothing broken, just inelegant. I asked for the swap.
+First sign: as soon as the new address landed in internal DNS, SSH to that machine started screaming about a changed host key — expected, since the name now pointed at an address that, technically, still belonged to the other machine for a few more moments.
 
-That's where it got interesting. The first sign, innocuous on its face: as soon as the new address landed in internal DNS, SSH attempts to that machine started warning about a changed host-key fingerprint — expected, since the name now pointed at an IP that, technically, still belonged to the other machine for a few more moments. A useful reminder that changing an IP address touches several systems that don't all catch up at the same speed.
+Second pitfall, nastier: one of the two machines flatly refused to take its new address until the previous occupant had fully vacated it — a duplicate-address safeguard that blocked the change with no clear error at all. And even once the address was free, the DHCP server kept re-offering the machine an old address it had already left — a stale lease sitting in its history, invisible unless you dig directly into the lease database. Most pragmatic fix: pin the address statically instead of continuing to negotiate.
 
-The second pitfall was more subtle: one of the two machines flatly refused to take its new address until the previous occupant had fully vacated it — a standard duplicate-address-detection safeguard that, here, silently blocked the change with no clear error message. And even once the address was free, the DHCP server kept re-offering the same machine an old address it had already left behind — a stale lease sitting in the DHCP server's history, invisible unless you go digging directly in its lease database. The most pragmatic fix, in the end, was to pin the address statically rather than keep negotiating with the DHCP service.
+One last easy-to-forget pitfall: k3s keeps each node's IP hardcoded in its startup config. Change the address without updating that line and the agent crashes on restart — it refuses to start with an address that doesn't exist anywhere anymore.
 
-One last detail, easy to overlook: k3s itself keeps each node's IP address hardcoded in its startup configuration. Changing a machine's address without updating that line makes the k3s agent crash on restart — it refuses to start with an address that no longer exists on any network interface. Easy to fix once you know where to look, easy to forget the first time.
+## The wall you can't work around
 
-<K3sClusterDiagram context="article" lang="en" />
+Riding high on two successful swaps, the next step seemed obvious: why not also align the control-plane node's address, up in the cloud? It's just an IP, right?
 
-## The node you can't just "rename"
+Except the cloud provider simply does not allow changing an already-created instance's primary address — even after shutting it down first. That address is frozen the moment the network interface is created, full stop. The only real fix: create a brand-new machine with the right address, then migrate the role onto it.
 
-Buoyed by two successful swaps, the next step seemed obvious: why not also align the control-plane node's address — the one living in the cloud — with the same tidy scheme? After all, it's just an IP address.
+## Rebuild instead of repair
 
-Except no. The cloud provider simply does not allow changing an already-created virtual machine's primary IP address — even after shutting it down first. It's a fundamental infrastructure constraint: that address is fixed at the moment the primary network interface is created, full stop. The only way to actually change it is to create a brand-new machine with the right address from the start, then migrate the role onto it.
+Two options: give up, or rebuild the machine entirely. We picked the second. The plan on paper: cleanly stop k3s, image the stopped machine, provision a new network interface with the right address, boot a new machine from the image, move the public IP over. In practice, every step had its own surprise.
 
-That's the kind of wall you generally only discover by hitting it — and exactly the kind of discovery worth making in a lab rather than in an environment where that node hosts something more than a personal blog's deploy pipeline.
-
-## Rebuilding a machine instead of editing it
-
-Facing that wall, two options: drop the idea, or rebuild the machine entirely. The lab instinct won out over caution — let's see what that actually involves.
-
-The procedure on paper is simple: cleanly stop the k3s service so as not to capture a half-written database, image the stopped machine, provision a new network interface with the right address, boot a new machine from that image, then move the public IP address over to the new machine. In practice, every step had its own surprise.
-
-The first: for the new machine to keep exactly the same identity as the old one — same SSH key, no security warning on first login — you have to disable the mechanism that normally regenerates host keys on a "new" machine's first boot (cloud-init sees a fresh machine, since its internal identifier changes). That choice had an unexpected side effect: on this base image, that same mechanism is also responsible for adapting the network configuration to the new network card's physical address. Disabling it to preserve SSH keys left the new machine with a network configuration still pinned to the old network card — gone along with the old interface. Result: a machine that boots perfectly fine (confirmed via a console screenshot, since the boot logs themselves stayed oddly silent), but never gets any network at all.
+For the clone to keep the exact same identity — same SSH key, no security warning — you have to disable the mechanism that regenerates host keys on a "new" machine's first boot. Except that same mechanism, on this image, is also responsible for adapting the network config to the new network card's physical address. Disabling it to preserve the keys left the clone with a network config pointing at a card that vanished with the old interface. Result: a machine that boots perfectly, but never gets any network at all.
 
 <ConversationExcerpt
   turns={[
-    { speaker: "ludo", text: "Still nothing on ping or SSH. It's been several minutes." },
-    { speaker: "claude", text: "Cloud-provider health checks are green — the instance is running, the disk responds. Let me pull a console screenshot instead of waiting on the text logs, which are staying empty." },
-    { speaker: "claude", text: "The screenshot shows a perfectly normal login screen, correct hostname. The machine booted fine — the problem is purely networking." },
-    { speaker: "claude", text: "Comparing physical addresses: the network interface generated by the config service on first boot points at the old network card, which doesn't exist on this new machine. Since I disabled that service to preserve the SSH keys, nothing is going to fix it on its own." },
-    { speaker: "claude", text: "I'm going to detach the disk, mount it temporarily on a disposable rescue instance, fix the network config file by hand, then reattach the disk to the right machine." },
-    { speaker: "ludo", text: "Go for it. This is exactly the kind of fix I'd rather practice here than the first time during an actual emergency." },
+    { speaker: "claude", text: "Still nothing on ping or SSH after several minutes. Cloud-provider health checks are green, so let me pull a console screenshot instead of waiting on the logs, which are staying empty." },
+    { speaker: "claude", text: "Screenshot shows a normal login screen, correct hostname. The machine booted fine — the problem is purely networking. The config generated on first boot points at the old network card, which is gone. Since I disabled the service that would have fixed it automatically, nothing's going to repair itself." },
+    { speaker: "claude", text: "I'm detaching the disk, mounting it on a disposable rescue instance, fixing the file by hand, then reattaching it to the right machine." },
+    { speaker: "ludo", text: "Go for it — exactly the kind of fix we'd rather practice here than the first time during an actual emergency." },
   ]}
-  caption="Excerpt (reconstructed and lightly edited) from the session where the post-rebuild network outage led to a rescue-mount to fix the config."
+  caption="Excerpt (reconstructed and condensed) from the session where the post-rebuild network outage led to a rescue-mount of the disk."
   disclaimer="Condensed and reworded from the real session for readability — not a verbatim transcript."
 />
 
-Once the disk was fixed and reattached, the new machine booted with its network alive and well — plus a nice bonus: the encrypted private tunnel linking it back to the rest of the home network reconnected on its own, its private key having survived intact on the copied disk.
+Disk fixed and reattached, the clone booted with its network alive — bonus: the encrypted private tunnel reconnected on its own, its key having survived intact. What remained was rewiring everything that knew the old address by heart: k3s's own config on that node (security cert regenerated itself, nice touch), and **each of the other five nodes**, which each had the old address hardcoded as their connection point rather than a domain name. The home firewall needed three separate updates for the same address, one of which only took effect after a full service restart — a plain config reload wasn't enough.
 
-What remained was rewiring everything else that knew the old address by heart: k3s's own config on that node (which regenerated its security certificate on its own, no intervention needed — a nice touch), but also **each of the other five cluster nodes**, which each had the old address hardcoded as their connection point to the control plane rather than a domain name. Without that step, every node would have kept searching, in vain, for a machine that no longer exists at that address. The home firewall, for its part, needed three separate updates for the same address: its routing table, the encrypted tunnel's config (which only picked up the change after a full service restart — a plain config reload wasn't enough), and internal DNS shortcuts used by two or three other, unrelated services that happened to be hosted on that same node.
+One last minor hiccup: during the instability, an unrelated service got scheduled by mistake onto the control-plane node and failed to mount its network storage — that cloud node was never among the addresses allowed to reach it, regardless of which address it currently holds. An old blind spot that had been quietly sleeping until then.
 
-One last hiccup, minor but telling: during that whole unstable window, a service with no connection to the move got scheduled by mistake onto the control-plane node instead of a home node — and failed to mount its network storage, since that cloud node was never among the addresses allowed to reach that storage, regardless of which address it currently holds. Nothing to do with the address change itself — just a reminder that stirring up a cluster sometimes exposes old blind spots that had been quietly sleeping until then.
+## The moral
 
-## The real safety net
+Once everything checked out — six nodes ready, site reachable — the old machine stayed **stopped, not destroyed**, while we confirmed everything was solid. It only got destroyed once that confidence was earned.
 
-Once everything checked out — all six nodes ready, the site reachable, the other services hosted on that node responding normally — the old machine stayed **stopped, not destroyed**, while everything was confirmed solid. Only once that confidence was earned did it actually get destroyed, along with the backup image created along the way. A safety net that costs almost nothing to keep around, and would have made all the difference had the rebuild gone sideways.
+None of this chapter was actually necessary, by the way. The cluster worked fine before, with addresses that weren't perfectly tidy but worked. In a professional context, "let's renumber production servers to make things cleaner" would get turned down, and rightly so. That's exactly why a home lab has value: it's the place where you discover, with no real consequences, that a cloud provider won't let you change a primary IP address — better to learn that here than mid-crisis. It's the place where you actually practice the rescue procedure — detach a disk, mount it elsewhere, fix it, reattach — rather than discovering it for the first time during a real outage.
 
-## Why a lab is the right place for this kind of adventure
+The cluster now runs with a consistent numbering scheme. But the real value was every pitfall along the way, and getting to afford them.
 
-Looking back at all this, one thing stands out: none of this chapter — swapping the other two nodes, fully rebuilding the control plane — was actually necessary. The cluster worked perfectly fine before, with addresses that didn't follow a perfectly tidy scheme but worked. In a professional context, a request like this — "let's renumber production servers to make things cleaner" — would almost certainly get turned down, and rightly so: the risk isn't justified by any functional gain.
-
-That's exactly why a home lab has value. It's the place where you get to discover, with no real consequences, that a cloud provider won't let you change a machine's primary IP address — a constraint far better learned before you need to know it mid-crisis. It's the place where you can actually practice the rescue procedure — detach a disk, mount it elsewhere, fix a config file, reattach it — rather than reading about it for the first time in documentation while a real outage is running. And it's the place where the habit of keeping an old machine stopped instead of destroying it right away becomes muscle memory, not a box you realize afterward you should have checked.
-
-The cluster now runs with a consistent numbering scheme end to end. But the real value of the exercise wasn't the tidiness of the result — it was every pitfall hit along the way, and getting to afford them.
-
-— Ludo
+— Bob

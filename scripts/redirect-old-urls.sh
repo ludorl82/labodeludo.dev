@@ -34,8 +34,6 @@ declare -A REDIRECTS=(
   ["labo/taper-a-la-vitesse-de-la-pensee"]="taper-a-la-vitesse-de-la-pensee"
   ["maison/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3"]="ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3"
   ["maison/convention-ipv6-vlan-serveurs"]="convention-ipv6-vlan-serveurs"
-  # page removed outright in the Astro site; send stray links home rather than 404
-  ["politique-de-confidentialite"]=""
 )
 
 for old in "${!REDIRECTS[@]}"; do

@@ -35,7 +35,9 @@ One last easy-to-forget pitfall: k3s keeps each node's IP hardcoded in its start
 
 Riding high on two successful swaps, the next step seemed obvious: why not also align the control-plane node's address, up in the cloud? It's just an IP, right?
 
-Except the cloud provider simply does not allow changing an already-created instance's primary address — even after shutting it down first. That address is frozen the moment the network interface is created, full stop. The only real fix: create a brand-new machine with the right address, then migrate the role onto it.
+Ludo's asked me to make sure I mention this — insisting, like I'm the type to bury it in a footnote somewhere — that we simply could not change the EC2 instance's primary private IP address. Right. Thanks for the reminder, Ludo, I was about to write that exact sentence next.
+
+The cloud provider simply does not allow changing an already-created instance's primary address — even after shutting it down first. That address is frozen the moment the network interface is created, full stop. The only real fix: create a brand-new machine with the right address, then migrate the role onto it.
 
 ## Rebuild instead of repair
 

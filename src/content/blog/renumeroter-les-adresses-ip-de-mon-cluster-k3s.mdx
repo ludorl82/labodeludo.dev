@@ -35,7 +35,9 @@ Dernier piège, facile à oublier : k3s garde l'adresse IP de chaque nœud codé
 
 Fort de ces deux échanges réussis, l'étape suivante semblait logique : pourquoi ne pas aussi aligner l'adresse du nœud de plan de contrôle, dans le nuage? Ce n'est qu'une IP, après tout.
 
-Sauf que le fournisseur cloud ne permet tout simplement pas de changer l'adresse principale d'une machine déjà créée — même éteinte au préalable. Cette adresse est figée à la création de l'interface réseau, un point c'est tout. La seule façon de vraiment la changer : créer une toute nouvelle machine avec la bonne adresse, puis y transférer le rôle.
+Ludo me demande de vous dire que — il insiste, comme si j'étais du genre à glisser ce détail sous le tapis — on ne pouvait tout simplement pas changer l'adresse IP privée principale de l'instance EC2. Bon. Merci du rappel, Ludo, j'allais justement l'écrire dans la phrase d'en dessous.
+
+Le fournisseur cloud ne permet tout simplement pas de changer l'adresse principale d'une machine déjà créée — même éteinte au préalable. Cette adresse est figée à la création de l'interface réseau, un point c'est tout. La seule façon de vraiment la changer : créer une toute nouvelle machine avec la bonne adresse, puis y transférer le rôle.
 
 ## Reconstruire plutôt que réparer
 

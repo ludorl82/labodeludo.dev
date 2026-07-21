@@ -26,7 +26,7 @@ Le remplacement : un support 1U GeeekPi pour Raspberry Pi 5, compatible rack sta
 
 Chaque emplacement a reçu son étiquette — COQUILLE, WORKER1, WORKER2 — collée directement sur le panneau avant, visible sans avoir à suivre un câble pour savoir quelle carte est laquelle.
 
-![Rack mural avec le nouveau tiroir 1U GeeekPi installé : trois Raspberry Pi 5 montés côte à côte et étiquetés (COQUILLE, WORKER1, WORKER2), sous les panneaux de brassage et les deux onduleurs CyberPower](/images/blog/rack-1u-mount-pi-nodes-1400.jpg)
+![Rack mural avec le nouveau tiroir 1U GeeekPi installé : trois Raspberry Pi 5 montés côte à côte et étiquetés (COQUILLE, WORKER1, WORKER2), sous les panneaux de brassage et les deux onduleurs CyberPower, avec le cube mural IKEA (NAS et nœud Helix Fi) juste à côté](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
 
 Le tiroir se glisse directement sous les deux onduleurs CyberPower OR700 et les panneaux de brassage cat 6 déjà en place — le rack au complet garde son organisation verticale habituelle : brassage en haut, alimentation au milieu, compute en bas.
 
@@ -38,7 +38,9 @@ Le support inclut quatre adaptateurs PCIe vers M.2 NVMe, un par emplacement Pi 5
 
 Le rack ne vit pas tout seul dans ce coin du sous-sol. Juste en dessous, sur une petite table, l'imprimante multifonction Brother — celle par laquelle je numérise mes documents. Et à gauche du rack, un cube mural IKEA qui héberge le NAS et un second nœud du maillage Wi-Fi Helix Fi.
 
-![Coin du sous-sol : le rack mural avec les trois Raspberry Pi, un cube mural IKEA à gauche contenant le NAS et un nœud Helix Fi, et l'imprimante multifonction Brother sur une table en dessous](/images/blog/rack-mural-imprimante-nas-helixfi-1000.jpg)
+![Coin du sous-sol : le rack mural avec les trois Raspberry Pi, un cube mural IKEA à gauche contenant le NAS et un nœud Helix Fi, et l'imprimante multifonction Brother sur une table en dessous](/images/blog/rack-mural-complet-imprimante-1000.jpg)
+
+_Ces deux photos, avec quelques autres, sont aussi [sur Instagram](https://www.instagram.com/p/DbEP3xCiSIk/?img_index=1)._
 
 L'imprimante n'est pas juste une imprimante : c'est le point d'entrée d'un petit pipeline qui se termine dans la grappe k3s. Un document numérisé part directement de l'appareil en SFTP — j'en avais [déjà parlé quand ce serveur SFTP vivait sur une instance AWS, exposé seulement via WireGuard](/blog/ftp-prive-wireguard/). Depuis, le service a déménagé : le point d'arrivée SFTP roule maintenant dans un namespace dédié de la grappe k3s, juste à côté de `coquille` et des `worker` dans le même rack. La numérisation atterrit sur du stockage S3, puis un hook post-dépôt nettoie les photos et pousse le résultat vers Google Drive par rclone — sans OCR local, Google Drive s'en charge lui-même sur les PDF.
 

@@ -26,7 +26,7 @@ The replacement: a GeeekPi 1U mount for Raspberry Pi 5, compatible with a standa
 
 Each slot got its own label — COQUILLE, WORKER1, WORKER2 — stuck directly on the front panel, visible without having to trace a cable to know which board is which.
 
-![Wall rack with the new GeeekPi 1U tray installed: three Raspberry Pi 5s mounted side by side and labeled (COQUILLE, WORKER1, WORKER2), below the cat 6 patch panels and the two CyberPower UPS units](/images/blog/rack-1u-mount-pi-nodes-1400.jpg)
+![Wall rack with the new GeeekPi 1U tray installed: three Raspberry Pi 5s mounted side by side and labeled (COQUILLE, WORKER1, WORKER2), below the cat 6 patch panels and the two CyberPower UPS units, with the IKEA wall cube (NAS and Helix Fi node) right next to it](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
 
 The tray slides in right below the two CyberPower OR700 UPS units and the cat 6 patch panels already in place — the whole rack keeps its usual vertical organization: patching on top, power in the middle, compute at the bottom.
 
@@ -38,7 +38,9 @@ The mount includes four PCIe-to-M.2 NVMe adapters, one per Pi 5 slot (plus a spa
 
 The rack doesn't live alone in that corner of the basement. Right below it, on a small table, sits the Brother all-in-one printer — the one I scan documents with. And to the left of the rack, an IKEA wall cube holding the NAS and a second node of the Helix Fi mesh Wi-Fi.
 
-![Basement corner: the wall rack with the three Raspberry Pis, an IKEA wall cube to the left holding the NAS and a Helix Fi node, and the Brother all-in-one printer on a table below](/images/blog/rack-mural-imprimante-nas-helixfi-1000.jpg)
+![Basement corner: the wall rack with the three Raspberry Pis, an IKEA wall cube to the left holding the NAS and a Helix Fi node, and the Brother all-in-one printer on a table below](/images/blog/rack-mural-complet-imprimante-1000.jpg)
+
+_These two photos, along with a few more, are also [on Instagram](https://www.instagram.com/p/DbEP3xCiSIk/?img_index=1)._
 
 The printer isn't just a printer: it's the entry point of a small pipeline that ends up in the k3s cluster. A scanned document leaves the device straight over SFTP — I [wrote about this before, back when that SFTP server lived on an AWS instance, exposed only through WireGuard](/en/blog/ftp-prive-wireguard/). Since then, the service has moved: the SFTP endpoint now runs in its own dedicated namespace inside the k3s cluster, right alongside `coquille` and the `worker` nodes in the same rack. Scans land on S3-backed storage, then a post-upload hook cleans up photos and pushes the result to Google Drive via rclone — no local OCR, Google Drive handles that itself on the PDFs.
 

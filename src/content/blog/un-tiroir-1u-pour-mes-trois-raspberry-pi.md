@@ -40,7 +40,7 @@ Le rack ne vit pas tout seul dans ce coin du sous-sol. Juste en dessous, sur une
 
 ![Coin du sous-sol : le rack mural avec les trois Raspberry Pi, un cube mural IKEA à gauche contenant le NAS et un nœud Helix Fi, et l'imprimante multifonction Brother sur une table en dessous](/images/blog/rack-mural-complet-imprimante-1000.jpg)
 
-_Ces deux photos, avec quelques autres, sont aussi [sur Instagram](https://www.instagram.com/p/DbEP3xCiSIk/?img_index=1)._
+_Ces deux photos, avec quelques autres, sont aussi [sur Instagram](https://www.instagram.com/p/DbER1V6CU6t/?img_index=1)._
 
 L'imprimante n'est pas juste une imprimante : c'est le point d'entrée d'un petit pipeline qui se termine dans la grappe k3s. Un document numérisé part directement de l'appareil en SFTP — j'en avais [déjà parlé quand ce serveur SFTP vivait sur une instance AWS, exposé seulement via WireGuard](/blog/ftp-prive-wireguard/). Depuis, le service a déménagé : le point d'arrivée SFTP roule maintenant dans un namespace dédié de la grappe k3s, juste à côté de `coquille` et des `worker` dans le même rack. La numérisation atterrit sur du stockage S3, puis un hook post-dépôt nettoie les photos et pousse le résultat vers Google Drive par rclone — sans OCR local, Google Drive s'en charge lui-même sur les PDF.
 

@@ -40,7 +40,7 @@ The rack doesn't live alone in that corner of the basement. Right below it, on a
 
 ![Basement corner: the wall rack with the three Raspberry Pis, an IKEA wall cube to the left holding the NAS and a Helix Fi node, and the Brother all-in-one printer on a table below](/images/blog/rack-mural-complet-imprimante-1000.jpg)
 
-_These two photos, along with a few more, are also [on Instagram](https://www.instagram.com/p/DbEP3xCiSIk/?img_index=1)._
+_These two photos, along with a few more, are also [on Instagram](https://www.instagram.com/p/DbER1V6CU6t/?img_index=1)._
 
 The printer isn't just a printer: it's the entry point of a small pipeline that ends up in the k3s cluster. A scanned document leaves the device straight over SFTP — I [wrote about this before, back when that SFTP server lived on an AWS instance, exposed only through WireGuard](/en/blog/ftp-prive-wireguard/). Since then, the service has moved: the SFTP endpoint now runs in its own dedicated namespace inside the k3s cluster, right alongside `coquille` and the `worker` nodes in the same rack. Scans land on S3-backed storage, then a post-upload hook cleans up photos and pushes the result to Google Drive via rclone — no local OCR, Google Drive handles that itself on the PDFs.
 

@@ -26,9 +26,9 @@ Le remplacement : un support 1U GeeekPi pour Raspberry Pi 5, compatible rack sta
 
 Chaque emplacement a reçu son étiquette — COQUILLE, WORKER1, WORKER2 — collée directement sur le panneau avant, visible sans avoir à suivre un câble pour savoir quelle carte est laquelle.
 
-![Rack mural avec le nouveau tiroir 1U GeeekPi installé : trois Raspberry Pi 5 montés côte à côte et étiquetés (COQUILLE, WORKER1, WORKER2), sous les panneaux de brassage et les deux onduleurs CyberPower, avec le cube mural IKEA (NAS et nœud Helix Fi) juste à côté](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
+![Rack mural avec le nouveau tiroir 1U GeeekPi installé : trois Raspberry Pi 5 montés côte à côte et étiquetés (COQUILLE, WORKER1, WORKER2), sous les panneaux de raccordement et les deux onduleurs CyberPower, avec le cube mural IKEA (NAS et nœud Helix Fi) juste à côté](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
 
-Le tiroir se glisse directement sous les deux onduleurs CyberPower OR700 et les panneaux de brassage cat 6 déjà en place — le rack au complet garde son organisation verticale habituelle : brassage en haut, alimentation au milieu, compute en bas.
+Le tiroir se glisse directement sous les deux onduleurs CyberPower OR700 et les panneaux de raccordement cat 6 déjà en place — le rack au complet garde son organisation verticale habituelle : panneaux de raccordement en haut, alimentation au milieu, compute en bas.
 
 ## Le bonus qui dort : les adaptateurs NVMe
 

@@ -75,11 +75,14 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
         >
           if (location.hostname === host) {
             window.dataLayer = window.dataLayer || [];
-            function gtag() {
-              dataLayer.push(arguments);
-            }
-            gtag("js", new Date());
-            gtag("config", id);
+            // Astro's define:vars wraps this script in an IIFE, so a bare
+            // `function gtag()` would stay local and site code could never
+            // call gtag('event', ...). Hang it off window explicitly.
+            window.gtag = function () {
+              window.dataLayer.push(arguments);
+            };
+            window.gtag("js", new Date());
+            window.gtag("config", id);
 
             var s = document.createElement("script");
             s.async = true;

@@ -6,7 +6,9 @@ Le labo de Ludo est un blogue personnel. Cette page couvre les deux seules chose
 
 ## Le blogue
 
-Ce site est statique (Astro, hébergé sur S3) et ne fait tourner aucun système de compte, de commentaire ou de tracking publicitaire. Aucune donnée personnelle des visiteurs n'est collectée.
+Ce site est statique (Astro, hébergé sur S3) et ne fait tourner aucun système de compte, de commentaire ou de tracking publicitaire.
+
+Le site utilise Google Analytics 4 pour mesurer la fréquentation (pages vues, provenance, type d'appareil, pays). Ces données sont agrégées et ne servent qu'à savoir quels articles sont lus. Aucune donnée n'est revendue ni utilisée à des fins publicitaires.
 
 ## Intégration LinkedIn
 

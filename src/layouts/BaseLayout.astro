@@ -26,6 +26,14 @@ const footerLine =
     ? "Le labo de Ludo — the journal of our experiments at home."
     : "Le labo de Ludo — le journal de nos expérimentations à la maison.";
 
+// GA4 measurement ID for the "Le labo de Ludo - GA4" property. The tag is
+// only emitted in production builds, and the snippet itself bails out on any
+// host other than the prod domain so the staging container doesn't pollute
+// the property with our own traffic.
+const GA_MEASUREMENT_ID = "G-GXTX0PX9BB";
+const GA_HOSTNAME = "labodeludo.dev";
+const enableAnalytics = import.meta.env.PROD;
+
 const navItems =
   lang === "en"
     ? [{ href: "/", label: "Français" }]
@@ -59,6 +67,29 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     <meta name="twitter:title" content={title} />
     {description && <meta name="twitter:description" content={description} />}
     <meta name="twitter:image" content={ogImageUrl} />
+    {
+      enableAnalytics && (
+        <script
+          is:inline
+          define:vars={{ id: GA_MEASUREMENT_ID, host: GA_HOSTNAME }}
+        >
+          if (location.hostname === host) {
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+              dataLayer.push(arguments);
+            }
+            gtag("js", new Date());
+            gtag("config", id);
+
+            var s = document.createElement("script");
+            s.async = true;
+            s.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+            document.head.appendChild(s);
+          }
+        </script>
+      )
+    }
+
     <script is:inline>
       // Some in-app browsers (LinkedIn, Instagram, etc.) render the first
       // paint of a freshly-opened link at a stale desktop viewport width and

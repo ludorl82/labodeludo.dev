@@ -3,7 +3,7 @@ title: "Neuf machines, zéro clé USB : migrer tout mon homelab vers NixOS"
 pubDate: 2026-07-25
 description: "En deux jours, tout mon parc — serveurs GPU, machines virtuelles, Raspberry Pi et une instance cloud — est passé sous NixOS, réinstallé à distance avec nixos-anywhere. Voici le dépôt qui décrit tout ça, les pièges rencontrés, et pourquoi je ne reviendrais pas en arrière."
 tags: ["DevOps", "Labo", "ludo"]
-heroImage: "/images/blog/banner-nixos-migration.png"
+heroImage: "/images/blog/banner-nixos-migration.svg"
 ---
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_

@@ -266,6 +266,13 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
       flex-direction: column;
       gap: 0.35rem;
     }
+
+    /* The title bar and the terminal carry the look on their own. Keeping the
+       hint and tmux bars here only crowds a phone screen — tested, dropped. */
+    .hint,
+    .tmux {
+      display: none;
+    }
   }
 
 </style>

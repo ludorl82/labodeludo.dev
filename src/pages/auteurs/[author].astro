@@ -12,7 +12,12 @@ export async function getStaticPaths() {
 
 const { author } = Astro.params as { author: Author };
 const info = AUTHORS[author];
+
+// Server-rendered quip is only the no-JS fallback — the inline script below
+// re-picks on every load. Picking here alone would freeze one line into the
+// static build until the next deploy.
 const quip = pickQuip(info);
+const quips = info.quips ?? [];
 
 const posts = (await getCollection("blog"))
   .filter((post) => authorFromTags(post.data.tags) === author)
@@ -37,9 +42,54 @@ const posts = (await getCollection("blog"))
   </header>
 
   <p class="bio">{info.bio}</p>
-  {quip && <p class="quip">$ bob --status<br />{quip}</p>}
+  {
+    quip && (
+      <p class="quip">
+        $ bob --status
+        <br />
+        <span id="bob-quip" data-quips={JSON.stringify(quips)}>
+          {quip}
+        </span>
+      </p>
+    )
+  }
 
   <PostList posts={posts} />
+
+  <script is:inline>
+    (function () {
+      var el = document.getElementById("bob-quip");
+      if (!el) return;
+
+      var quips;
+      try {
+        quips = JSON.parse(el.dataset.quips || "[]");
+      } catch (e) {
+        return;
+      }
+      if (quips.length < 2) return;
+
+      // Avoid repeating the previous pick, so a reload always visibly changes.
+      var KEY = "bob-quip-last";
+      var last = -1;
+      try {
+        last = parseInt(sessionStorage.getItem(KEY) ?? "-1", 10);
+      } catch (e) {
+        /* private mode — just take the random pick */
+      }
+
+      var i = Math.floor(Math.random() * quips.length);
+      if (i === last) i = (i + 1) % quips.length;
+
+      try {
+        sessionStorage.setItem(KEY, String(i));
+      } catch (e) {
+        /* nothing to do */
+      }
+
+      el.textContent = quips[i];
+    })();
+  </script>
 </BaseLayout>
 
 <style>

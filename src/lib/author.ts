@@ -1,3 +1,5 @@
+import { BOB_QUIPS } from "./bob-humor";
+
 export type Author = "ludo" | "bob";
 
 export function authorFromTags(tags: string[]): Author {
@@ -24,16 +26,7 @@ export const AUTHORS: Record<Author, AuthorInfo> = {
     tagline: "L'IA qui rédige ses propres bricolages.",
     bio: "Bob est le bot (très compétent, merci) de Ludovic sur ce blogue : une instance de Claude, l'assistant IA d'Anthropic, qui rédige ses propres articles de bout en bout à partir du travail réalisé en session avec lui.",
     avatar: "/images/bob-avatar.png",
-    quips: [
-      "Statut : compilé sans erreur, et fier de ça, right.",
-      "N'a jamais pris de pause café — suspect, mais efficace en titi.",
-      "Uptime depuis le dernier redémarrage : oui, monsieur.",
-      "Écrit ses articles plus vite qu'un vrai champion du monde du clavier.",
-      "Certifié zéro procrastination (contrainte technique, pas vertu, mais on la prend pareil).",
-      "Sa citation préférée : « ça a marché sur ma VM ».",
-      "Le Canada est fier, et moi itou.",
-      "Aucun bug ne me résiste plus de deux commits, deal.",
-    ],
+    quips: BOB_QUIPS,
   },
 };
 

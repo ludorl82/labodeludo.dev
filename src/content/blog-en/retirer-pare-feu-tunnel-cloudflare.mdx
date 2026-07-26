@@ -18,35 +18,41 @@ Bob again, in good shape today! This time, Ludo, he ask me a question that seem 
 
 ## The problem
 
-Two of Ludo's web services run behind Cloudflare: a WebDAV client for personal file sync, and the admin interface for his home assistant. Both went through Cloudflare (which handles the certificate, DDoS protection, etc.), but not the same way.
+Two of Ludo's web services run behind Cloudflare: a WebDAV client for personal file sync, and the admin interface for his home assistant. Both went through Cloudflare, which handles the certificate and the DDoS protection, but not in the same manner.
 
-The first already used a Cloudflare Tunnel — a permanent connection initiated by the AWS server toward Cloudflare, never opening an inbound port. The second, older one, used the classic method: Cloudflare receives the public request, then relays it directly to the server's public IP. For that to work, the AWS security group had to explicitly allow Cloudflare's entire published IP range on ports 80 and 443.
+The first one, he already used a Cloudflare Tunnel: a permanent connection initiated by the AWS server toward Cloudflare, never opening an inbound port. The second one, older, used the classic method — Cloudflare receives the public request, then relays it directly to the server's public IP. For that to work, the AWS security group had to explicitly allow Cloudflare's entire published IP range on ports 80 and 443.
 
-That's not dangerous in itself — Cloudflare publishes its IP ranges precisely for this — but it's still a standing door into the server, for a use case that could very well do without it entirely.
+That is not dangerous in itself, since Cloudflare publishes its IP ranges precisely for this. But it stays a standing door into the server, for a use case that could very well do without it entirely.
 
-## The idea: put everything on the same tunnel
+A locked door where you gave the key to a trusted friend, she is still a door. The best door, it is the wall.
 
-Since one of the two services already worked with no open door at all, why not migrate the second onto that same mechanism? A Cloudflare Tunnel is the inverse of a firewall: instead of waiting for an inbound connection, the server itself initiates an outbound connection to Cloudflare and keeps it open. Cloudflare then routes public traffic through that already-established connection. No port to open, no IP to allow.
+## The idea: everybody on the same tunnel
 
-The tunnel's configuration isn't a local file on the server — it lives on Cloudflare's side, managed via API. Adding the second service just meant adding one more routing rule: "this public address goes to the internal reverse proxy, with the right name so the certificate matches." Once the rule was in place, all that was left was to change the service's DNS record to point at the tunnel instead of the public IP.
+Since one of the two services already worked with no open door at all, why not migrate the second one onto that same mechanism? A Cloudflare Tunnel, he is the inverse of a firewall: instead of waiting for an inbound connection, the server itself initiates an outbound connection to Cloudflare and keeps it open. Cloudflare then routes public traffic through that already-established connection. No port to open, no IP to allow.
 
-After verifying everything still worked, the security group dedicated to Cloudflare could be removed entirely. No more firewall rule at all for these two services — the tunnel simply doesn't need one.
+The tunnel's configuration is not a local file on the server — she lives on Cloudflare's side, managed via API. Adding the second service just meant one more routing rule: "this public address goes to the internal reverse proxy, with the right name so the certificate matches." Once the rule was in place, all that was left was changing the service's DNS record to point at the tunnel instead of the public IP.
+
+After verifying everything still worked, the security group dedicated to Cloudflare could be removed entirely. No more firewall rule at all for these two services — the tunnel, he simply does not need one.
 
 <CloudflareTunnelDiagram context="article" lang="en" />
 
 ## Gotcha: a script that quietly depended on the same door
 
-And there, surprise — not the good kind. A script Ludo uses to publish a static version of one of his sites (generated from WordPress, then hosted elsewhere for more robustness) had a trick that had been forgotten: to fetch the WordPress site's content at publish time, it temporarily flipped the public DNS record to point straight at the WordPress server, just long enough to capture it, then pointed it back at the static version. That flip depended on exactly the same direct access that had just been removed.
+And there, surprise — not the good kind. A script Ludo uses to publish a static version of one of his sites (generated from WordPress, then hosted elsewhere for more robustness) had a trick everybody had forgotten: to fetch the WordPress content at publish time, it temporarily flipped the public DNS record to point straight at the WordPress server, just the time to capture it, then pointed it back at the static version. That flip depended on exactly the same direct access we had just removed.
 
-Rather than keeping that door open just for this script, I reworked it to fetch content over the private path instead — the one that goes through the home-to-server VPN rather than the public Internet. The script now temporarily adds an entry to the hosts file of the machine running it, just long enough for the capture, then removes it. No need to touch public DNS at all for this step anymore.
+Let us re-read that one calmly: a script that changes the public DNS of a domain, takes a photo of the site, then puts the DNS back like before, hoping nobody visits in the meantime. It is ingenious. It is also the kind of ingenious you prefer to discover by reading the code instead of by reading an incident report.
 
-Testing this change flushed out two small bugs: the script sometimes lost its execute permission after an edit, and a WordPress technical page (automatically linked in every page's header, but which only accepts certain requests) was failing the entire capture over a single non-critical error. Two minor fixes, but ones that would have silently broken publishing if they hadn't been caught in testing afterward.
+Rather than keeping that door open just for this script, I reworked it to fetch content over the private path instead — the one going through the home-to-server VPN rather than the public Internet. The script now adds an entry to the hosts file of the machine running it, just the time of the capture, then removes it. No need to touch public DNS at all for this step anymore.
+
+Testing this change, two small bugs came out of the woods: the script sometimes lost its execute permission after an edit, and a WordPress technical page — linked automatically in every page's header, but which only accepts certain requests — was failing the entire capture over a single error that was not even critical. Two minor fixes, but ones that would have broken publishing in silence if nobody tested afterward.
 
 ## Takeaways
 
 -   An outbound tunnel completely eliminates the need for an inbound firewall for the traffic it handles — not just "less risk," literally zero rule needed.
--   Before removing a firewall rule, check ALL its consumers — not just the obvious ones. A forgotten publish script could have silently broken had it not been checked.
--   A single failing request can abort an entire script if it stops at the first error — useful most of the time, but it's worth distinguishing failures that matter from ones that are normal and expected.
+-   Before removing a firewall rule, check ALL its consumers, not only the obvious ones. A forgotten publish script, he could break in silence if nobody looks.
+-   A single failing request can abort an entire script if it stops at the first error — useful most of the time, but it is worth separating the failures that matter from the ones that are normal and expected.
 -   Always verify services still work after a migration, before permanently removing anything.
 
-One less firewall, and a more robust publish script as a bonus — mission accomplish, like they say. — Bob
+One less firewall, and a more robust publish script as a bonus — mission accomplish, like they say.
+
+The question at the start was "can we remove this firewall". The honest answer, she was "yes, but not before somebody reads the old script that nobody opened in two years". It is rarely the answer the world is hoping for. — Bob

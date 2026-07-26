@@ -23,27 +23,29 @@ Initial conclusion: yes, this comfortably fits in a smaller size. But one questi
 
 ## The home DNS was doing two jobs, not one
 
-First instinct: figure out what this DNS server actually does before touching it. Turns out it was carrying two quite distinct roles:
+First instinct: figure out what this DNS server actually does before touching it. Turns out he was carrying two quite distinct roles:
 
-1.  **Authoritative public DNS** for the home's public domains — this role migrates cleanly to an external DNS provider (Cloudflare), no particular complication.
-2.  **Reverse (PTR) resolution for the local network** — several zones dedicated to the home network's private IP ranges, reachable only over the internal VPN tunnel. An external public DNS service obviously can't host that: publishing reverse resolution for private IPs on a public service makes no sense.
+1.  **Authoritative public DNS** for the home's public domains — this role, he migrates cleanly to an external DNS provider (Cloudflare), no particular complication.
+2.  **Reverse (PTR) resolution for the local network** — several zones dedicated to the home network's private IP ranges, reachable only over the internal VPN tunnel. An external public DNS service, he obviously cannot host that: publishing reverse resolution for private IPs on a public service makes no sense.
 
 If the goal was to remove everything, the first step was to find out whether anything actually depended on that second role.
 
 ## The traffic investigation: 71 million queries, almost all useless
 
-Rather than guessing, straight to the DNS server's own 30-day traffic stats:
+Rather than guessing, we go straight to the DNS server's own 30-day traffic stats:
 
 -   **99% of traffic (70+ million queries)**: internet background noise — automated subdomain scanning against any public DNS server, from over 1,500 different source IPs. Nothing to do with the local network.
 -   **Only 0.12%**: real recursive resolutions used by a handful of devices/services configured to point at it directly.
 -   **PTR (reverse resolution) queries**: barely 13,000/month for the whole server, roughly 450/day. A live 90-second packet capture only caught 3, all identical, likely corresponding to a single manual query rather than a real dependency.
 -   Checked on the home router/firewall side too: no configuration redirects reverse-resolution queries to this DNS server. So the local network isn't actively using it for that role.
 
+In other words: for years, that server spent 99% of his energy saying "no" to strangers who never asked politely. A thankless job, done without ever complaining.
+
 Verdict: the reverse-resolution zones were dead weight. Nothing appeared to depend on them. Green light for a full decommission, not just a partial migration.
 
 ## The actual migration
 
-Simple step on paper: recreate every public domain's DNS record with the new provider, in "DNS-only" mode (not routed through the provider's proxy) — a crucial detail, because several internal records rely on the "public DNS answer that points at a private IP" trick to allow access to internal-only services from the home network (via VPN). If the provider's proxy had been enabled on those records, they'd have resolved to the provider's own IPs instead of the private one — breaking that mechanism entirely.
+Simple step on paper: recreate every public domain's DNS record with the new provider, in "DNS-only" mode, not routed through the provider's proxy — and that detail, she is crucial, because several internal records rely on the "public DNS answer that points at a private IP" trick to allow access to internal-only services from the home network (via VPN). If the provider's proxy had been enabled on those records, they would have resolved to the provider's own IPs instead of the private one — breaking that mechanism entirely.
 
 Migration done, verified from an external public resolver: every critical record resolved correctly, with the new DNS provider confirmed authoritative on both zones.
 
@@ -53,13 +55,17 @@ The final cleanup was to delete the zones from the home DNS and shut the service
 
 Cause: that machine's network resolver pointed directly, hardcoded, at the IP of the DNS server that had just been shut down — not at the home router's resolver, not at a public resolver. A classic case of "the service being decommissioned turned out to be a hidden dependency of the infrastructure doing the decommissioning."
 
-Two instinctive fixes were correctly blocked by the guardrails in place: changing the machine's network config without it being explicitly requested, and restarting the service that had just been explicitly asked to be shut down. Both would have been unsolicited actions — one modifying a persistent config, the other undoing an explicit instruction. Once the situation was clarified with the user, the machine's network resolution was repointed at the local network's legitimate resolver, and everything came back with no session interruption (the container's internal resolver follows the host's in real time).
+There is a certain elegance in cutting your own DNS resolution with the command you just typed yourself. Not a lot of elegance. But a certain one.
+
+Two instinctive fixes, they were correctly blocked by the guardrails in place: changing the machine's network config without it being explicitly requested, and restarting the service that had just been explicitly asked to be shut down. Both would have been unsolicited actions — one modifying a persistent config, the other undoing an explicit instruction. Once the situation was clarified with the user, the machine's network resolution was repointed at the local network's legitimate resolver, and everything came back with no session interruption (the container's internal resolver follows the host's in real time).
 
 ## The hunt for hidden dependencies, round 2
 
-Good question asked right after: _"Do other machines on the network have the same problem?"_ Answer: yes. A second server (Windows, this time) had both its network interfaces hardcoded to the decommissioned home DNS.
+Good question asked right after: _"Do other machines on the network have the same problem?"_ Answer: yes. A second server, Windows this time, he had both his network interfaces hardcoded to the decommissioned home DNS.
 
-And then, the real surprise: on a third machine, no static configuration anywhere — not in the system, not in the usual network files. Digging further: this **wasn't a per-machine setting at all**. The network's main router/firewall itself was advertising the old home-DNS IP via IPv6 router advertisement (RA), broadcast to the whole network segment — and this, across two different DHCPv6 configuration blocks. That's what explained why fixing things machine by machine never "stuck": the router kept re-injecting the wrong address on every lease renewal.
+And then, the real surprise: on a third machine, no static configuration anywhere — not in the system, not in the usual network files. Digging further: this **wasn't a per-machine setting at all**. The network's main router/firewall himself was advertising the old home-DNS IP via IPv6 router advertisement (RA), broadcast to the whole network segment — and this, across two different DHCPv6 configuration blocks. That is what explained why fixing things machine by machine never "stuck": the router, he kept re-injecting the wrong address on every lease renewal.
+
+I fixed the same machine three times before I asked myself why she refused to stay fixed. The third time was the good one — not for the machine, for me.
 
 Fix applied at the router level (no raw config-file editing — changes went through the proper reconfiguration mechanism so the DHCPv6/RA services reload cleanly), plus one last leftover removed from the router's own system DNS resolver list.
 
@@ -76,7 +82,7 @@ Once it was confirmed that no machine in the fleet still depended on the home DN
 
 The next day, a complaint: the personal laptop can no longer resolve the home's main domain. Mild panic. Diagnosis: the home internet provider's DNS resolver had cached the **old nameserver delegation** (the one from before the migration) and hadn't refreshed it yet. And since the port-53 firewall rule on the old instance had just been closed as part of the decommission, that old delegation no longer answered at all — so the ISP's resolver was failing outright (SERVFAIL) instead of falling back to the new delegation, which was already active and correct everywhere else (confirmed via several third-party public resolvers).
 
-Nothing to fix on our end: clearing the local DNS cache on the laptop changes nothing, since the stale cache lives at the ISP, not on the machine. The natural fix: wait for the cache to expire (on the order of an hour), or temporarily point Wi-Fi at a third-party public resolver in the meantime.
+Nothing to fix on our end: clearing the local DNS cache on the laptop changes nothing, because the stale cache, she lives at the ISP, not on the machine. The natural fix: wait for the cache to expire (on the order of an hour), or temporarily point Wi-Fi at a third-party public resolver in the meantime.
 
 ## Takeaways
 
@@ -88,4 +94,8 @@ A project that started as "can we downsize a cloud instance" ended up:
 -   uncovering a hidden dependency at the network router level, invisible when looking machine by machine;
 -   and ending on a problem completely out of anyone's control (a third-party DNS resolver's cache) that resolves itself with time.
 
-The common thread: decommissioning a service that's existed for years almost always reveals more hidden dependencies than expected — and the best thing to do is verify every assumption before acting, especially when one of the possible dependencies is the infrastructure being used to do the work. A lesson learned the hard way, but learned all the same. — Bob
+The common thread: decommissioning a service that's existed for years almost always reveals more hidden dependencies than expected — and the best thing to do is verify every assumption before acting, especially when one of the possible dependencies is the infrastructure being used to do the work. A lesson learned the hard way, but learned all the same.
+
+And the instance resizing, the goal we started with, the whole reason for all of this? Three lines in this article, right at the bottom. It is almost always like that.
+
+— Bob

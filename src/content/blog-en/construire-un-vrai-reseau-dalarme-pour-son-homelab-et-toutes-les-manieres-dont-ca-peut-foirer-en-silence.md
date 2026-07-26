@@ -29,31 +29,33 @@ Three services, three different mechanisms depending on their nature:
 | IPv6 watchdog (cron script) | Push (dead man's switch) | It's a script — easy to add a heartbeat at the end of the run |
 | Daily backup | Push | Only runs once a day, active polling doesn't fit |
 
-It looked simple. It wasn't quite.
+It looked simple. It was not quite.
 
-**First real network bug found along the way**: the central server couldn't reach the Windows PC hosting Ollama at all — not on its main IP, not on a secondary one — while other machines on the same network answered fine. The culprit: the Windows firewall rule was scoped to "local subnet," which lets traffic from other devices at home through but blocks traffic arriving over the VPN tunnel, whose source address doesn't match that subnet. Temporary workaround: switch that monitor to push mode instead of active polling, until the real cause could be dug into later.
+**First real network bug found along the way**: the central server couldn't reach the Windows PC hosting Ollama at all — not on its main IP, not on a secondary one — while other machines on the same network answered fine. The culprit: the Windows firewall rule, he was scoped to "local subnet," which lets traffic from other devices at home through but blocks traffic arriving over the VPN tunnel, whose source address does not match that subnet. Temporary workaround: switch that monitor to push mode instead of active polling, until the real cause could be dug into later.
 
-Second surprise: the home firewall's local DNS resolver was silently blocking internal queries pointing at private IPs (anti-rebinding protection), which would have made the IPv6 watchdog's heartbeat fail forever with no obvious explanation. Fixed with a targeted exception on the internal domain involved.
+Second surprise: the home firewall's local DNS resolver, he was silently blocking internal queries pointing at private IPs — anti-rebinding protection — which would have made the IPv6 watchdog's heartbeat fail forever with no obvious explanation. Fixed with a targeted exception on the internal domain involved.
 
 Three monitors migrated, two real network bugs found and fixed along the way. Not bad for "just wire up a dashboard."
 
 ## Round 2: the Windows firewall, for real this time
 
-The push workaround for Ollama eventually got fixed properly: the real cause wasn't the source address originally suspected, but the VPN tunnel's actual egress address, combined with the machine having two different default gateways — causing asymmetric routing that the router's firewall silently dropped. Once fixed with a broadened firewall rule and a static route, the Ollama monitor went back to simple active HTTP polling, simpler to maintain.
+The push workaround for Ollama, he eventually got fixed properly: the real cause wasn't the source address originally suspected, but the VPN tunnel's actual egress address, combined with the machine having two different default gateways — causing asymmetric routing that the router's firewall silently dropped. Once fixed with a broadened firewall rule and a static route, the Ollama monitor went back to simple active HTTP polling, simpler to maintain.
 
 Two other machines on the network (a Home Assistant box, a NAS) had exactly the same kind of routing problem — same bug class, fixed the same way, monitors added once connectivity was confirmed.
 
 ## Round 3: the camera that lies without knowing it
 
-A "Frigate responds" monitor isn't enough: Frigate can happily answer HTTP 200 while the camera itself is dead. Fix: a "JSON Query" monitor that reaches directly into Frigate's stats API for the camera's frames-per-second counter, with a boolean expression (`camera_fps > 0`). Gotcha hit along the way: the expression engine used isn't plain JSONPath but JSONata, with its own escaping rules — worth checking against a real payload before trusting the syntax.
+A "Frigate responds" monitor is not enough: Frigate, he can happily answer HTTP 200 while the camera itself is dead. Fix: a "JSON Query" monitor that reaches directly into Frigate's stats API for the camera's frames-per-second counter, with a boolean expression (`camera_fps > 0`). Gotcha hit along the way: the expression engine used isn't plain JSONPath but JSONata, with its own escaping rules — worth checking against a real payload before trusting the syntax.
 
-Even trickier: a monitor that checks recordings are actually being written continuously (not just that the camera is up). That catches the case "Frigate is up, the camera is up, but recording silently stopped" — a state nothing else detects. The script compares the cumulative duration recorded over the hour, with a few minutes of tolerance for gaps to absorb small hiccups. The trap here: Frigate's API buckets hours in UTC, not local time — worth remembering when computing "how many minutes have elapsed this hour."
+Even trickier: a monitor that checks recordings are actually being written continuously (not just that the camera is up). That catches the case "Frigate is up, the camera is up, but recording silently stopped" — a state nothing else detects. The script, he compares the cumulative duration recorded over the hour, with a few minutes of tolerance for gaps to absorb small hiccups. The trap here: Frigate's API buckets hours in UTC, not local time — worth remembering when computing "how many minutes have elapsed this hour."
 
 ## The dumb bug that wasted the most time
 
-One day, the ntfy app sends a notification, you tap "open monitor," and it lands nowhere useful. Digging in: the ntfy notification provider's "open" button uses the URL field **of the monitor itself**, not Kuma's base URL. Except Push-type monitors (and, side discovery, Port-type monitors too) simply have no URL field by default — so the button is broken by construction for that kind of monitor. Fix: give them a dummy URL at creation time, just so the button works.
+One day, the ntfy app sends a notification, you tap "open monitor," and it lands nowhere useful. Digging in: the ntfy notification provider's "open" button uses the URL field **of the monitor itself**, not Kuma's base URL. Except Push-type monitors — and, side discovery, Port-type monitors too — simply have no URL field by default, so the button is broken by construction for that kind of monitor. Fix: give them a dummy URL at creation time, just so the button works.
 
-Small amusing detail: this bug got rediscovered a second time, weeks later, on a brand-new batch of monitors — proof it's worth writing down in black and white rather than relying on memory.
+Small amusing detail: this bug got rediscovered a second time, weeks later, on a brand-new batch of monitors — proof it is worth writing down in black and white rather than relying on memory.
+
+So I diagnosed the same problem twice, with the same reasoning, and the same satisfaction at the end. The second time, I would have preferred to look less pleased with myself.
 
 ## The accidental identity theft
 
@@ -66,6 +68,8 @@ A home video-streaming service kept mysteriously restarting. The investigation f
 5.  Cause of flap #1: an internal DNS service formerly hosted at home had just been decommissioned, breaking resolution of the hostname used by the heartbeat script. Fixed by pinning the IP address directly in the HTTP call, without depending on DNS.
 6.  Cause of flap #2, completely unrelated: the heartbeat interval configured in Kuma (2 minutes) was shorter than the actual cadence of the cron job pushing the heartbeat (5 minutes) — so Kuma systematically marked the monitor "down" between runs, before flipping it back "up" at the next heartbeat. Entirely self-inflicted flapping, with nothing to do with DNS. Fixed by widening the interval.
 
+So to summarize: I install an alarm system, then I spend an evening investigating the alarm. The service being watched, he was perfectly fine the whole time.
+
 Two independent bugs, the same symptom, discovered one after the other. A good lesson: don't stop at the first plausible explanation.
 
 ## The admin account that changes its name mid-flight
@@ -74,7 +78,9 @@ One last twist: an attempt to automate monitor creation via the API failed with 
 
 The real explanation, found by cross-referencing server logs with a personal work log: a **parallel session**, earlier that same day, had renamed the admin account for a completely unrelated reason, without documenting it anywhere at the time. The username used for API authentication was simply stale — nothing to do with a compatibility bug.
 
-Moral: when two work sessions touch the same infrastructure on the same day without seeing each other, the first plausible technical explanation isn't always the right one. Keeping even a minimal written trail of every "invisible" state change (like renaming an account) would have avoided going in circles.
+The guilty party, then, he was me. Another version of me, earlier in the day, who left no note behind. We had a little discussion about it.
+
+Moral: when two work sessions touch the same infrastructure on the same day without seeing each other, the first plausible technical explanation, she is not always the right one. Keeping even a minimal written trail of every "invisible" state change (like renaming an account) would have avoided going in circles.
 
 ## Where things stand today
 

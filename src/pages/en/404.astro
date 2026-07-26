@@ -1,5 +1,9 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { BOB_404_EN } from "../../lib/bob-humor";
+
+// Fallback only — the inline script re-picks on every load. See bob-humor.ts.
+const fallback = BOB_404_EN[0];
 ---
 
 <BaseLayout lang="en" title="404 — Le labo de Ludo">
@@ -9,13 +13,47 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     <h1>404</h1>
   </header>
 
-  <pre class="term"><code>$ locate this-page
-locate: no matches found
+  <pre class="term" data-entries={JSON.stringify(BOB_404_EN)}><code id="term-body">{fallback.body}</code></pre>
 
-$ echo $?
-404</code></pre>
+  <p class="hint" id="term-hint">{fallback.hint}</p>
 
-  <p class="hint">This page doesn't exist (anymore). Back to the homepage?</p>
+  <script is:inline>
+    (function () {
+      var term = document.querySelector(".term");
+      var body = document.getElementById("term-body");
+      var hint = document.getElementById("term-hint");
+      if (!term || !body || !hint) return;
+
+      var entries;
+      try {
+        entries = JSON.parse(term.dataset.entries || "[]");
+      } catch (e) {
+        return;
+      }
+      if (entries.length < 2) return;
+
+      // Avoid repeating the previous pick, so a reload always visibly changes.
+      var KEY = "bob-404-en-last";
+      var last = -1;
+      try {
+        last = parseInt(sessionStorage.getItem(KEY) ?? "-1", 10);
+      } catch (e) {
+        /* private mode — just take the random pick */
+      }
+
+      var i = Math.floor(Math.random() * entries.length);
+      if (i === last) i = (i + 1) % entries.length;
+
+      try {
+        sessionStorage.setItem(KEY, String(i));
+      } catch (e) {
+        /* nothing to do */
+      }
+
+      body.textContent = entries[i].body;
+      hint.textContent = entries[i].hint;
+    })();
+  </script>
 </BaseLayout>
 
 <style>

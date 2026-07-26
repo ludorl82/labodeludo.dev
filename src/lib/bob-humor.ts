@@ -185,3 +185,125 @@ export const BOB_404: Bob404[] = [
     hint: "Ça arrive aux meilleurs. Même à moi, paraît-il.",
   },
 ];
+
+/**
+ * English 404 transcripts. Same shape as BOB_404, used by /en/404.
+ *
+ * The hints carry Bob's light French-Canadian register — see the English voice
+ * rule. Keep it to sentence openings and the odd gendered pronoun; the shell
+ * output itself stays plain.
+ */
+export const BOB_404_EN: Bob404[] = [
+  {
+    body: "$ locate this-page\nlocate: no matches found\n\n$ echo $?\n404",
+    hint: "This page does not exist (anymore). Back to the homepage?",
+  },
+  {
+    body: "$ curl -I /this-page\nHTTP/2 404\n\n$ curl -I /this-page --retry 3\nHTTP/2 404\nHTTP/2 404\nHTTP/2 404",
+    hint: "I tried three times. For the peace of my conscience.",
+  },
+  {
+    body: '$ kubectl get page this-page\nError from server (NotFound): pages "this-page" not found',
+    hint: "Even the cluster cannot find her, and him, he looks everywhere.",
+  },
+  {
+    body: "$ dig this-page.labodeludo.dev\n;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN",
+    hint: "NXDOMAIN. It is the DNS. It is always the DNS.",
+  },
+  {
+    body: "$ git log --all -- this-page\n(no output)",
+    hint: "No trace in the history. This page, she never existed.",
+  },
+  {
+    body: "$ ls -la /var/www/this-page\nls: cannot access '/var/www/this-page': No such file or directory",
+    hint: "I looked. There is nothing. I looked twice.",
+  },
+  {
+    body: "$ systemctl status this-page\n\u25cf this-page.service\n     Loaded: not-found\n     Active: inactive (dead)",
+    hint: '"Inactive (dead)". It is not the most encouraging of diagnostics.',
+  },
+  {
+    body: "$ tofu plan\nNo changes. Your infrastructure matches the configuration.\n\n$ tofu state list | grep this-page\n(nothing)",
+    hint: "No drift to report: this page was never in the plan.",
+  },
+  {
+    body: "$ time find / -name 'this-page*' 2>/dev/null\n\nreal    4m12.883s",
+    hint: "Four minutes digging through the whole disk. Nothing. But at least we know.",
+  },
+  {
+    body: "$ nix-build -A this-page\nerror: attribute 'this-page' missing",
+    hint: "Not in the configuration, so not on the system. That is the whole principle.",
+  },
+  {
+    body: "$ showmount -e storage\nExport list for storage:\n/share     *\n/media     *",
+    hint: "Nothing resembling this page in the exports. I checked at the source.",
+  },
+  {
+    body: "$ ping this-page\nPING this-page: 56 data bytes\n\n--- statistics ---\n8 packets transmitted, 0 received, 100% loss",
+    hint: "One hundred percent loss. At least she is consistent.",
+  },
+  {
+    body: "$ docker ps -a | grep this-page\n\n$ docker images | grep this-page\n",
+    hint: "No container, no image. The void, but well organized.",
+  },
+  {
+    body: "$ grep -rn 'this-page' src/\n\n$ echo $?\n1",
+    hint: "Exit code 1: nothing found. Him, at least, he never lies.",
+  },
+  {
+    body: "$ aws s3 ls s3://labodeludo.dev/this-page\n\nAn error occurred (404) when calling the HeadObject operation",
+    hint: "The object is not in the bucket. And I have the rights to look.",
+  },
+  {
+    body: "$ resolvectl flush-caches\n$ dig +short this-page\n",
+    hint: "I even flushed the cache. In case it was that. It was not that.",
+  },
+  {
+    body: "$ journalctl --since '1 year ago' | grep this-page\n-- No entries --",
+    hint: "One year of logs, zero mention. We can close the file.",
+  },
+  {
+    body: "$ tofu import astro_page.this_page this-page\nError: Cannot import non-existent remote object",
+    hint: "You cannot import what does not exist. I tried anyway.",
+  },
+  {
+    body: "$ wg show\ninterface: wg0\n  (3 peers connected)",
+    hint: "Even through the tunnel, even from the inside: 404.",
+  },
+  {
+    body: "$ ssh storage 'ls /share/this-page'\nls: /share/this-page: No such file or directory",
+    hint: "I pushed the search all the way to the NAS. Still nothing.",
+  },
+  {
+    body: "$ mount | grep this-page\n\n$ dmesg | tail -1\n[    0.000000] nothing to report",
+    hint: "Nothing mounted, nothing in the kernel. Really nothing.",
+  },
+  {
+    body: "$ helm list -A | grep this-page\n\n$ helm history this-page\nError: release: not found",
+    hint: "No release deployed, so no release to roll back.",
+  },
+  {
+    body: "$ cat this-page\ncat: this-page: No such file or directory\n\n$ sudo cat this-page\ncat: this-page: No such file or directory",
+    hint: "With sudo too. So it was not a question of permissions.",
+  },
+  {
+    body: "$ ps aux | grep this-page\nbob    4021  0.0  0.0  grep this-page",
+    hint: "The only result is my own search. A classic.",
+  },
+  {
+    body: "$ traceroute this-page\n 1  router        0.412 ms\n 2  * * *\n 3  * * *\n30  * * *",
+    hint: "Thirty hops into the void. I stopped there.",
+  },
+  {
+    body: "$ restic snapshots --tag this-page\nrepository opened successfully\n(no snapshots)",
+    hint: "Not in the backups either. There, it is conclusive.",
+  },
+  {
+    body: "$ openssl s_client -connect labodeludo.dev:443 </dev/null | head -1\nCONNECTED(00000003)",
+    hint: "The certificate, her, she is valid. That is already something.",
+  },
+  {
+    body: "$ echo 'maybe a typo?'\nmaybe a typo?",
+    hint: "It happens to the best. Even to me, they say.",
+  },
+];

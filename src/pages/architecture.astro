@@ -7,6 +7,7 @@ import WireGuardFtpDiagram from "../components/WireGuardFtpDiagram.astro";
 import VoiceAssistantDiagram from "../components/VoiceAssistantDiagram.astro";
 import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
 import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
+import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
 ---
 
 <BaseLayout
@@ -215,6 +216,11 @@ import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
   <section class="detail">
     <h2>Détail : grappe conteneurs (k3s)</h2>
     <K3sClusterDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : stockage NFS de la grappe (chemin d'export)</h2>
+    <NfsShareMoveDiagram context="architecture" />
   </section>
 </BaseLayout>
 

@@ -83,10 +83,17 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
     const term = btn.closest<HTMLElement>(".term");
     if (!term?.requestFullscreen) return;
     btn.hidden = false;
-    btn.addEventListener("click", () => {
+    btn.title = "Plein écran";
+
+    const toggle = () => {
       if (document.fullscreenElement) document.exitFullscreen();
       else term.requestFullscreen().catch(() => {});
-    });
+    };
+
+    btn.addEventListener("click", toggle);
+    // Same gesture as maximising a real window — a much bigger target than
+    // the 9px square, which matters on a touch screen.
+    term.querySelector(".titlebar")?.addEventListener("dblclick", toggle);
   });
 </script>
 
@@ -168,6 +175,7 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
 
   /* Looks like the middle window button; hidden unless the script wires it. */
   .max {
+    position: relative;
     width: 9px;
     height: 9px;
     padding: 0;
@@ -175,6 +183,14 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
     border: 1px solid #6a6a6a;
     border-radius: 1px;
     cursor: pointer;
+  }
+
+  /* A 9px square is an unhittable tap target on a phone, so extend the hit
+     area well past the drawn square without changing how it looks. */
+  .max::before {
+    content: "";
+    position: absolute;
+    inset: -16px;
   }
 
   .max:hover {

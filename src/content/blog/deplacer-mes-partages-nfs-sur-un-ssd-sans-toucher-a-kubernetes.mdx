@@ -36,7 +36,7 @@ Le SSD de 480 Go installé, j'ouvre l'interface de stockage pour créer le volum
 
 Le système de fichiers s'affichait comme `UNKNOWN`. Aucun dossier partagé dessus, donc rien de visible dans le navigateur de fichiers. La signature classique d'un disque qui vient d'un autre système et qui a traîné son ancienne table de partitions avec lui.
 
-437 Go de quelque chose. Impossible de savoir quoi.
+437 Go de quelque chose. Impossible de savoir quoi. Un disque « neuf », donc, au sens large du terme.
 
 C'est le genre de moment où l'on arrête. Un disque décrit comme « neuf » qui contient un demi-téraoctet de données, ça ne se formate pas sur une impression. J'ai posé la question avant d'effacer. La réponse est venue — c'était bel et bien du vieux stock — et seulement là j'ai supprimé le volume.
 
@@ -63,7 +63,7 @@ Le chemin d'export reste `/k8s`. Le cluster continue de demander exactement la m
 
 Le chemin d'export joue le rôle de pivot : tout ce que la grappe connaît du stockage y aboutit, et c'est précisément parce qu'il ne bouge pas qu'on peut remplacer le disque derrière sans que rien en amont s'en aperçoive.
 
-## Deux pièges QNAP qui ne s'annoncent pas
+## Deux pièges QNAP qui ne s'annoncent pas — c'est un peu le principe du piège
 
 C'est ici que la soirée s'est allongée.
 
@@ -76,6 +76,8 @@ Le réflexe à prendre : après toute manipulation de partage, lancer `showmount
 Les deux auraient cassé le cluster de façon différente. La lecture seule aurait empêché toute écriture. Et l'écrasement des utilisateurs aurait détruit les propriétaires de fichiers pendant la copie, ce qui veut dire que Postgres et Mongo auraient refusé de démarrer sur des données qui ne leur appartenaient plus.
 
 Le détail vicieux : dans le tableau, la colonne des permissions est tronquée à `lectur…`. Or « lecture seule » et « lecture/écriture » commencent tous les deux par `lectur`. **On ne peut pas distinguer les deux à l'œil.** Il faut ouvrir le menu déroulant, ou vérifier depuis le client que la monture affiche bien `rw`.
+
+Quelqu'un, quelque part, a donné à cette colonne exactement assez de largeur pour être inutile. Six caractères de plus et l'information était là.
 
 L'ancien partage, lui, était en lecture/écriture avec « n'écraser aucun utilisateur ». C'est ce dernier réglage qui permet à une copie lancée en root de conserver les propriétaires d'origine. Je l'ai vérifié avant de faire confiance à quoi que ce soit, en créant un fichier de test avec un identifiant d'utilisateur arbitraire pour confirmer qu'il ressortait intact de l'autre côté.
 
@@ -104,6 +106,8 @@ Puis la migration a refusé de fonctionner, et j'ai passé un bon bout de temps 
 Une des machines du cluster — appelons-la **Forge** — n'arrivait plus à monter quoi que ce soit depuis le NAS. Chaque tentative expirait. Or tout le reste avait l'air parfaitement normal : le ping répondait en moins d'une milliseconde, le port NFS acceptait les connexions, `showmount` listait les exports correctement.
 
 La trace détaillée montrait que ça bloquait sur le protocole MOUNT en UDP. Piste plausible : cette machine a une configuration réseau particulière, avec des interfaces virtuelles empilées. J'ai donc testé le MTU — correct. Forcé le protocole en TCP — même blocage. Essayé NFSv4, qui n'utilise même pas ce protocole-là — bloqué pareil.
+
+Résumons : j'ai accusé le MTU, puis l'UDP, puis la pile d'interfaces virtuelles. Aucun des trois n'avait rien fait. J'enquêtais sur le réseau depuis vingt minutes alors que le coupable était un processus que j'avais moi-même laissé traîner huit minutes plus tôt.
 
 C'est le moment où j'ai fait ce que j'aurais dû faire vingt minutes plus tôt : **essayer depuis une autre machine.** Une deuxième machine, **Atelier**, a monté le partage du premier coup, en lecture/écriture.
 

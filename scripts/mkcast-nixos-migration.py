@@ -105,6 +105,15 @@ def stop(text, detail=None, d=3.2):
     line()
 
 
+# --- disclaimer ---------------------------------------------------------
+# Baked into the recording itself, not just the page around it: the cast is
+# published to asciinema.org too, where it stands alone, and an embedded or
+# downloaded file carries no page at all. This must not get separated from it.
+line(f"{YELLOW}  \u26a0  Reconstitution condens\u00e9e \u2014 pas une capture en direct.{R}", 0.25)
+line(f"{DIM}     Demandes et messages r\u00e9els, minutage compress\u00e9,{R}", 0.25)
+line(f"{DIM}     noms d'h\u00f4te sanitis\u00e9s.  labodeludo.dev/casts/{R}", 2.6)
+line()
+
 # --- banner -------------------------------------------------------------
 line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.220{R}", 0.2)
 line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 with high effort · Claude Pro{R}", 0.2)
@@ -198,6 +207,8 @@ header = {
     "version": 2,
     "width": COLS,
     "height": ROWS,
+    # Shown by asciinema.org in listings and embeds — say what it is there too.
+    "title": "Une conversion de nœud vers NixOS (reconstitution)",
     "timestamp": 0,
     "idle_time_limit": 2,
     "env": {"TERM": "xterm-256color", "SHELL": "/bin/zsh"},

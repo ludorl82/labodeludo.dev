@@ -19,7 +19,8 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
 <figure class="cast">
   <p class="disclaimer">{disclaimer}</p>
 
-  <div class="term">
+  <div class="term-scroll">
+    <div class="term">
     <div class="titlebar">
       <span class="app">Alacritty</span>
       <span class="btns"><i></i><i></i><i></i></span>
@@ -42,6 +43,7 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
         {windows.map((w) => <span class:list={["win", { cur: w.endsWith("*") }]}>{w}</span>)}
       </span>
       {right.map((r, i) => <span class:list={["seg", `r${i}`]}>{r}</span>)}
+    </div>
     </div>
   </div>
 
@@ -111,7 +113,18 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
     padding: 0.6rem 0.85rem;
   }
 
+  /* On a phone a 96-column terminal cannot shrink to fit and stay legible, so
+     the whole window — title bar, screen, hint, tmux bar — scrolls sideways as
+     one piece at a fixed minimum width. Nothing is hidden and nothing is cut;
+     the chrome always lines up with the screen above it. */
+  .term-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
   .term {
+    min-width: 40rem;
     border-radius: 6px;
     overflow: hidden;
     border: 1px solid var(--panel-border);
@@ -149,7 +162,6 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
 
   .screen {
     background: #181818;
-    overflow-x: auto;
   }
 
   /* --- Claude Code's pinned footer hint --- */
@@ -256,10 +268,4 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
     }
   }
 
-  @media (max-width: 600px) {
-    .hint,
-    .tmux {
-      display: none;
-    }
-  }
 </style>

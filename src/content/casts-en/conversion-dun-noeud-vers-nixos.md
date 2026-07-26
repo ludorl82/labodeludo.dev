@@ -9,9 +9,13 @@ disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, e
 article: "migrer-tout-mon-homelab-vers-nixos"
 ---
 
-One of the nine machines in the fleet, converted end to end over SSH with
-`nixos-anywhere` — no screen plugged in, no USB stick; the machine reinstalls
-itself and comes back running NixOS.
+One of the nine machines converted the same day — a virtual one.
+`nixos-anywhere` does everything over SSH: it uploads an installer, `kexec`s
+into it, partitions, installs, and the machine comes back exactly as git
+describes it. No screen plugged in, no USB stick.
 
-The two walls in this session are the ones you don't see coming: Secure Boot
-blocking `kexec`, and an initrd that refuses to unpack for lack of memory.
+In practice it stalls. Twice over here: Secure Boot blocking the `kexec`,
+then an initrd that refuses to unpack for lack of memory.
+
+Claude Code — the Fable 5 and Opus 5 models — drove it. My part: validate,
+ask questions, and unblock what an agent isn't allowed to do on its own.

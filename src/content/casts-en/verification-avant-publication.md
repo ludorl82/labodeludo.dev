@@ -9,11 +9,14 @@ disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, e
 article: "quatre-depots-pour-un-labo-au-complet"
 ---
 
-The infrastructure repositories are published publicly after passing through a
-sanitisation script. What you see here is the final check running afterwards:
-it re-reads the result, finds a domain name the replacement rule had missed,
-and refuses to go any further.
+I published the four repositories that describe my lab. Before anything goes
+public, a script replaces the real names with fictional ones, and a check
+re-reads the result.
 
-The interesting move is the fix: the offending name is added both to the
-replacement rule and to the check itself, so the next omission gets caught in
-the same place.
+That check is what runs here. It found a real domain name that had survived
+inside a sentence in a documentation file — my rules covered the code, nobody
+had thought about the prose — and it refused to go any further. Fifteen
+minutes before publication.
+
+The offending name got added in both places: to the replacement rule, and to
+the check itself.

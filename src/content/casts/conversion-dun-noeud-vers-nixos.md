@@ -9,10 +9,16 @@ disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution
 article: "migrer-tout-mon-homelab-vers-nixos"
 ---
 
-Une des neuf machines du parc, convertie de bout en bout par SSH avec
-`nixos-anywhere` — pas d'écran branché, pas de clé USB, la machine se réinstalle
-toute seule et revient sous NixOS.
+Une des neuf machines converties dans la même journée — une machine
+virtuelle. `nixos-anywhere` fait tout par SSH : il téléverse un installateur,
+fait un `kexec` dedans, partitionne, installe, et la machine revient
+exactement telle qu'elle est décrite dans git. Pas d'écran branché, pas de
+clé USB.
 
-Les deux murs de la session sont ceux qu'on ne voit pas venir : le Secure Boot
-qui bloque le `kexec`, et un initrd qui refuse de se décompresser faute de
+En pratique, ça bloque. Deux fois plutôt qu'une ici : le Secure Boot qui
+empêche le `kexec`, puis un initrd qui refuse de se décompresser faute de
 mémoire.
+
+C'est Claude Code — les modèles Fable 5 et Opus 5 — qui pilotait. Mon rôle :
+valider, questionner, et débloquer ce qu'un agent n'a pas le droit de faire
+tout seul.

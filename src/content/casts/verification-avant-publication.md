@@ -9,11 +9,14 @@ disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution
 article: "quatre-depots-pour-un-labo-au-complet"
 ---
 
-Les dépôts d'infrastructure sont publiés en public après passage dans un script
-de sanitisation. Ce qu'on voit ici, c'est la vérification finale qui tourne
-après coup : elle relit le résultat, trouve un nom de domaine que la règle de
-remplacement avait manqué, et refuse d'aller plus loin.
+J'ai publié les quatre dépôts qui décrivent mon labo. Avant que quoi que ce
+soit devienne public, un script remplace les vrais noms par des noms fictifs,
+et une vérification relit le résultat.
 
-Le geste intéressant est la correction : le nom fautif est ajouté à la fois à la
-règle de remplacement et à la vérification elle-même, pour que le prochain
-oubli soit attrapé au même endroit.
+C'est cette vérification-là qui tourne ici. Elle a trouvé un vrai nom de
+domaine qui avait survécu dans une phrase d'un fichier d'explications — mes
+règles couvraient le code, personne n'avait pensé à la prose — et elle a
+refusé d'aller plus loin. Quinze minutes avant la publication.
+
+Le nom fautif s'est fait ajouter aux deux endroits : à la règle de
+remplacement, et à la vérification elle-même.

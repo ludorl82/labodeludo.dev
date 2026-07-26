@@ -45,7 +45,16 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
     </div>
   </div>
 
-  <figcaption>{caption}</figcaption>
+  <figcaption>
+    <span>{caption}</span>
+    <a
+      class="credit"
+      href="https://asciinema.org/"
+      target="_blank"
+      rel="noopener noreferrer"
+      >asciinema-player ↗</a
+    >
+  </figcaption>
 </figure>
 
 <script>
@@ -219,10 +228,32 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
 
   figcaption {
     margin-top: 0.65rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1.5rem;
     font-family: var(--font-mono);
     font-size: 0.8125rem;
     line-height: 1.6;
     color: var(--text-faint);
+  }
+
+  /* Apache-2.0; the bundler strips the upstream banner, so credit it here. */
+  .credit {
+    flex: none;
+    color: var(--text-faint);
+    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  }
+
+  .credit:hover {
+    color: var(--accent-live);
+  }
+
+  @media (max-width: 600px) {
+    figcaption {
+      flex-direction: column;
+      gap: 0.35rem;
+    }
   }
 
   @media (max-width: 600px) {

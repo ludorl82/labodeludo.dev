@@ -83,7 +83,7 @@ La solution, c'est un script d'assainissement par dépôt, qui produit un **inst
 
 **Copier seulement ce que git suit.** Pas de liste d'exclusions. L'outil laisse traîner de vrais fichiers d'état sur le disque, et une liste d'exclusions est à une faute de frappe près de tout publier. Ce que git ne suit pas n'existe pas pour le script.
 
-## La règle qui compte : échouer fort
+## La règle qui compte : mieux vaut planter que publier
 
 Admettons que je me trompe en écrivant une de mes règles de remplacement. Une faute de frappe dans le nom de domaine à chercher, mettons. Qu'est-ce qui arrive ?
 

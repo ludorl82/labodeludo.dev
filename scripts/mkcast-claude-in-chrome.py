@@ -103,51 +103,6 @@ def stop(text, detail=None, d=3.2):
     line()
 
 
-
-# --- pinned status rows -------------------------------------------------
-# The hint and tmux lines are part of the recording, not CSS around it, so
-# they survive anywhere the cast is played — asciinema.org included. Same
-# trick tmux uses: a scroll region over the top rows leaves the bottom ones
-# untouched while everything above them scrolls.
-STATUS_ROWS = 2
-BODY = ROWS - STATUS_ROWS
-
-
-def seg(text, bg, fg):
-    return f"\x1b[48;5;{bg}m\x1b[38;5;{fg}m {text} "
-
-
-def status_rows():
-    hint = (
-        f"{YELLOW}\u25b6\u25b6 auto mode on{R}{DIM} (shift+tab to cycle) "
-        f"\u00b7 esc to interrupt{R}"
-    )
-    rc = f"{GREEN}/rc{R}"
-    plain = "\u25b6\u25b6 auto mode on (shift+tab to cycle) \u00b7 esc to interrupt"
-    hint_line = " " + hint + " " * max(1, COLS - len(plain) - 6) + rc
-
-    left = seg("console", 250, 233) + seg("ludorl82", 245, 233) + seg("1:1", 240, 250)
-    right = seg("10:05:47", 235, 240) + seg("26-Jul-26", 240, 250) + seg("24afb1f6d1d5", 245, 233)
-    wins = f"\x1b[48;5;233m\x1b[38;5;240m  1:claude*  2:claude-  3:zsh"
-    used = len("  console   ludorl82   1:1 ") + len("  1:claude*  2:claude-  3:zsh") \
-        + len(" 10:05:47   26-Jul-26   24afb1f6d1d5 ")
-    pad = f"\x1b[48;5;233m" + " " * max(0, COLS - used)
-    tmux_line = left + wins + pad + right + R
-    return hint_line, tmux_line
-
-
-def paint_status():
-    """Draw the two pinned rows and confine scrolling to the rows above."""
-    hint_line, tmux_line = status_rows()
-    out(f"\x1b[2J\x1b[H")                       # clear, home
-    out(f"\x1b[{ROWS - 1};1H\x1b[2K" + hint_line)
-    out(f"\x1b[{ROWS};1H\x1b[2K" + tmux_line)
-    out(f"\x1b[1;{BODY}r")                       # scroll region = body only
-    out(f"\x1b[1;1H")                            # back to the top of it
-
-
-paint_status()
-
 # --- disclaimer ---------------------------------------------------------
 # Baked into the recording itself, not just the page around it: the cast is
 # published to asciinema.org too, where it stands alone, and an embedded or

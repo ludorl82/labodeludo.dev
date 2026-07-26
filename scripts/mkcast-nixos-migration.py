@@ -105,6 +105,72 @@ def stop(text, detail=None, d=3.2):
     line()
 
 
+
+# --- pinned status rows -------------------------------------------------
+# The hint and tmux lines belong to the recording, not to CSS around it, so
+# they survive wherever the cast is played — asciinema.org, embeds, a raw
+# download. Same mechanism tmux uses: a scroll region over the upper rows
+# leaves the bottom ones untouched while everything above them scrolls.
+# Because they are terminal cells, they scale with the terminal instead of
+# competing with it for width, which is what made the CSS version unusable
+# on a phone.
+STATUS_ROWS = 2
+BODY = ROWS - STATUS_ROWS
+
+CLOCK = "11:47:33"
+STAMP = "25-Jul-26"
+CONTAINER = "e5a2d76c318b"
+
+HINT_PLAIN = "\u25b6\u25b6 auto mode on (shift+tab to cycle) \u00b7 esc to interrupt"
+WINS_PLAIN = "1:claude*  2:claude-  3:zsh"
+
+
+def _seg(text, bg, fg):
+    return f"\x1b[48;5;{bg}m\x1b[38;5;{fg}m {text} ", len(text) + 2
+
+
+def _hint_row():
+    left = (
+        f" {YELLOW}\u25b6\u25b6 auto mode on{R}"
+        f"{DIM} (shift+tab to cycle) \u00b7 esc to interrupt{R}"
+    )
+    pad = max(1, COLS - 1 - len(HINT_PLAIN) - 4)
+    return left + " " * pad + f"{GREEN}/rc{R} "
+
+
+def _tmux_row():
+    left, wl = "", 0
+    for t, bg, fg in (("console", 250, 233), ("ludorl82", 245, 233), ("1:1", 240, 250)):
+        s, w = _seg(t, bg, fg)
+        left += s
+        wl += w
+    right, wr = "", 0
+    for t, bg, fg in ((CLOCK, 235, 240), (STAMP, 240, 250), (CONTAINER, 245, 233)):
+        s, w = _seg(t, bg, fg)
+        right += s
+        wr += w
+    mid = max(len(WINS_PLAIN), COLS - wl - wr)
+    gap = (mid - len(WINS_PLAIN)) // 2
+    wins = (
+        f"\x1b[48;5;233m" + " " * gap
+        + f"\x1b[1m\x1b[38;5;253m1:claude*{R}\x1b[48;5;233m"
+        + f"\x1b[38;5;240m  2:claude-  3:zsh"
+        + " " * (mid - len(WINS_PLAIN) - gap)
+    )
+    return left + wins + right + R
+
+
+def paint_status():
+    """Draw the pinned rows, then confine scrolling to the rows above them."""
+    out("\x1b[2J\x1b[H")
+    out(f"\x1b[{ROWS - 1};1H\x1b[2K" + _hint_row())
+    out(f"\x1b[{ROWS};1H\x1b[2K" + _tmux_row())
+    out(f"\x1b[1;{BODY}r")
+    out("\x1b[1;1H")
+
+
+paint_status()
+
 # --- disclaimer ---------------------------------------------------------
 # Baked into the recording itself, not just the page around it: the cast is
 # published to asciinema.org too, where it stands alone, and an embedded or

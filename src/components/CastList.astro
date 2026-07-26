@@ -1,0 +1,89 @@
+---
+interface Props {
+  casts: {
+    id: string;
+    data: { title: string; description?: string; pubDate: Date };
+  }[];
+  basePath?: string;
+  lang?: "fr" | "en";
+}
+
+const { casts, basePath = "/casts", lang = "fr" } = Astro.props;
+const dateLocale = lang === "en" ? "en-CA" : "fr-CA";
+const empty =
+  lang === "en"
+    ? `$ ls ${basePath}/\nls: no matches found`
+    : `$ ls ${basePath}/\nls: aucune correspondance trouvée`;
+---
+
+{
+  casts.length === 0 ? (
+    <pre class="empty"><code>{empty}</code></pre>
+  ) : (
+    <ul class="list">
+      {casts.map((cast) => (
+        <li class="row">
+          <a class="row-link" href={`${basePath}/${cast.id}/`}>
+            <time datetime={cast.data.pubDate.toISOString()}>
+              {cast.data.pubDate.toLocaleDateString(dateLocale, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </time>
+            <span class="row-title">{cast.data.title}</span>
+            {cast.data.description && <span class="row-desc">{cast.data.description}</span>}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+<style>
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .row + .row {
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .row-link {
+    display: grid;
+    gap: 0.3rem;
+    padding: 1.1rem 0;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .row-link:hover .row-title {
+    color: var(--accent-live);
+  }
+
+  time {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+
+  .row-title {
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .row-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    max-width: var(--measure);
+  }
+
+  .empty {
+    font-family: var(--font-mono);
+    color: var(--text-faint);
+    white-space: pre-wrap;
+  }
+</style>

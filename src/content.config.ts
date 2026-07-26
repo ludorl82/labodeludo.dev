@@ -23,6 +23,31 @@ const blogEn = defineCollection({
   }),
 });
 
+/* Terminal recordings. The .cast file is the artifact; this collection holds
+   the framing around it — including the disclaimer, which is mandatory because
+   every cast is a condensed reconstruction rather than a live capture. */
+const castSchema = z.object({
+  title: z.string(),
+  pubDate: z.coerce.date(),
+  description: z.string().optional().default(""),
+  cast: z.string(),
+  poster: z.string().optional(),
+  disclaimer: z.string(),
+  caption: z.string(),
+  /** Slug of the article this recording came from, if any. */
+  article: z.string().optional(),
+});
+
+const casts = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/casts" }),
+  schema: castSchema,
+});
+
+const castsEn = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/casts-en" }),
+  schema: castSchema,
+});
+
 const pages = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/pages" }),
   schema: z.object({
@@ -30,4 +55,4 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { blog, blogEn, pages };
+export const collections = { blog, blogEn, casts, castsEn, pages };

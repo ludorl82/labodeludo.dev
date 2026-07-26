@@ -1,0 +1,52 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CastList from "../../components/CastList.astro";
+
+const casts = (await getCollection("casts")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<BaseLayout
+  title="Enregistrements de terminal — Le labo de Ludo"
+  description="Des sessions de travail réelles, condensées et rejouables dans le navigateur : ce que ça donne quand un agent pilote mon infrastructure."
+>
+  <a class="back" href="/">&larr; tous les articles</a>
+
+  <header class="page-header">
+    <h1>Enregistrements de terminal</h1>
+    <p class="lede">
+      Des sessions de travail rejouables, tirées des transcriptions réelles.
+      Chacune est une reconstitution condensée — jamais une capture en direct —
+      et le dit en toutes lettres au-dessus du lecteur.
+    </p>
+  </header>
+
+  <CastList casts={casts} lang="fr" />
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    margin: 0 0 0.6rem;
+  }
+
+  .lede {
+    margin: 0;
+    max-width: var(--measure);
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+</style>

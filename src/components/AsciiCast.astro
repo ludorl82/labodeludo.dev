@@ -5,15 +5,35 @@ interface Props {
   disclaimer: string;
   /** Frame shown before playback starts, as an asciinema NPT offset. */
   poster?: string;
+  /** Overrides the container id shown in the tmux status line. */
+  containerId?: string;
 }
 
-const { src, caption, disclaimer, poster = "npt:0:06" } = Astro.props;
+const { src, caption, disclaimer, poster = "npt:0:06", containerId } = Astro.props;
+
+/* Each recording ran in its own throwaway container, so the id in the status
+   line has to differ from one cast to the next — a single id repeated across
+   the site would be a fabricated detail pretending to be a real one. It is
+   derived from the cast's path (FNV-1a) rather than randomised, so a given
+   cast keeps the same id across builds. */
+function fakeContainerId(seed: string): string {
+  let id = "";
+  let h = 0x811c9dc5;
+  for (let i = 0; i < 12; i++) {
+    for (const ch of `${seed}#${i}`) {
+      h ^= ch.charCodeAt(0);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    id += (h % 16).toString(16);
+  }
+  return id;
+}
 
 /* The tmux status line, reproduced from the terminal screenshots in the
    article. Purely decorative — it is chrome, not part of the recording. */
 const left = ["console", "ludorl82", "1:1"];
 const windows = ["1:claude*", "2:claude-", "3:zsh"];
-const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
+const right = ["10:05:47", "26-Jul-26", containerId ?? fakeContainerId(src)];
 ---
 
 <figure class="cast">

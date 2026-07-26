@@ -157,6 +157,15 @@ spec:
 
 Entre les deux dépôts, la frontière est nette : `nixos-iac` décrit ce que *sont* les machines, `k3s-iac` décrit ce qui *roule* dessus.
 
+### Voir par vous-même
+
+Les deux dépôts sont privés — ils contiennent les vraies adresses, clés et certificats du labo. Mais un article sur « tout vit dans git » sonne un peu creux sans le git, alors j'ai publié un instantané assaini de chacun :
+
+-   **[nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/tree/article/nixos-migration)** — les neuf machines
+-   **[k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/tree/article/nixos-migration)** — les charges de travail qui roulent dessus
+
+Les noms d'hôtes, adresses, clés et certificats qu'on y trouve sont fictifs. Les commentaires, eux, sont les vrais — dont les trois lignes sur `nfs-utils` plus haut, exactement là où elles vivent dans mon propre dépôt. Les deux liens pointent sur l'étiquette correspondant à cet article : ils continueront d'afficher cette version même quand les dépôts évolueront au fil des prochains articles.
+
 ## Apprendre en pilotant
 
 Je veux revenir sur la méthode de travail, parce que c'est peut-être la vraie leçon de cette journée. Le déroulement typique d'une conversion : Claude Code propose la configuration du prochain hôte, je la lis, je pose mes questions — « pourquoi cette option? », « qu'est-ce qui arrive si le disque est différent? » — on ajuste, puis il lance la réinstallation et surveille le retour de la machine. Quand quelque chose casse (et sur neuf machines hétéroclites, quelque chose casse *toujours*), le diagnostic se fait sous mes yeux, expliqué.

@@ -219,11 +219,20 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
   .term:fullscreen {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     width: 100%;
     height: 100%;
     border: 0;
     border-radius: 0;
     background: #181818;
+    /* The terminal is 96x22, i.e. roughly 2.6 times wider than tall once the
+       character cell is accounted for. Left to fill the screen, it fits by
+       width and leaves a tall empty gap, so the chrome ends up stuck to the
+       phone's edges with the text floating in the middle. Capping the window
+       width to the height it can actually use keeps the bars against the
+       terminal; the leftover space becomes a letterbox at the sides. */
+    max-width: calc((100vh - 7rem) * 2.6);
+    margin-inline: auto;
   }
 
   .term:fullscreen .screen {

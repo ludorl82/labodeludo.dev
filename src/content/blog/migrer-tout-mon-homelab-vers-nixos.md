@@ -1,7 +1,7 @@
 ---
 title: "Neuf machines, zéro clé USB : migrer tout mon homelab vers NixOS"
 pubDate: 2026-07-25
-description: "En une seule journée, avec Claude aux commandes, tout mon parc — serveurs GPU, machines virtuelles, Raspberry Pi et une instance cloud — est passé sous NixOS, réinstallé à distance avec nixos-anywhere. Voici le dépôt qui décrit tout ça, les pièges rencontrés, et pourquoi je ne reviendrais pas en arrière."
+description: "Claude Code aux commandes, moi en mode apprentissage : tout mon parc — serveurs GPU, machines virtuelles, Raspberry Pi et une instance cloud — est passé sous NixOS en une journée. C'est quoi Nix au juste, ce que ça change par rapport à Ubuntu, et pourquoi je n'aurais pas pu faire ça tout seul."
 tags: ["DevOps", "Labo", "ludo"]
 heroImage: "/images/blog/banner-nixos-migration.svg"
 ---
@@ -9,22 +9,46 @@ heroImage: "/images/blog/banner-nixos-migration.svg"
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Objectif** : convertir les neuf nœuds de mon cluster k3s — deux serveurs GPU, trois machines virtuelles, deux Raspberry Pi 5 et une instance EC2 — vers NixOS, décrits dans un seul dépôt git.
-> -   **Méthode** : `nixos-anywhere` réinstalle chaque machine par SSH (kexec vers l'installateur, partitionnement déclaratif avec disko), sans écran, sans clé USB — l'instance cloud incluse, convertie sur place. Le tout piloté en une seule journée, en sessions avec Claude.
-> -   **Structure** : un flake, un dossier par hôte, des modules partagés pour ce qui est commun (agent k3s, autorité de certification privée).
-> -   **Pièges** : l'installateur qui a besoin d'une IP statique sur un VLAN sans DHCP, le `hardware-configuration.nix` obligatoire sous peine de machine non amorçable, les utilitaires NFS absents du PATH de k3s, le pilote NVIDIA dans les conteneurs, et un micrologiciel de Raspberry Pi qui désactive un cgroup en douce.
-> -   **Gain** : la configuration en git *est* la machine. Réinstaller un nœud redonne exactement le même système, et ajouter un rôle complet se fait en quelques lignes versionnées.
+> -   **Réalité assumée** : la migration a été pilotée par Claude Code (les modèles Fable 5 et Opus 5), en une seule journée. Je n'avais pas l'expertise NixOS pour faire ça en solo — c'était autant un apprentissage qu'une migration.
+> -   **Contexte** : Nix (le gestionnaire de paquets et son langage) et NixOS (la distribution bâtie dessus) sont deux choses distinctes — et la majorité des gens utilisent Nix *sans* NixOS.
+> -   **Méthode** : `nixos-anywhere` réinstalle chaque machine par SSH (kexec vers l'installateur, partitionnement déclaratif avec disko), sans écran, sans clé USB — l'instance cloud incluse, convertie sur place.
+> -   **Analyse** : ce que NixOS règle vraiment par rapport à un parc Ubuntu (la dérive de configuration, la restauration, la documentation), et ce que ça coûte (courbe d'apprentissage, binaires précompilés, messages d'erreur).
 
 Ça faisait un moment que l'idée me trottait dans la tête : chaque machine de mon labo était un petit flocon unique — un Ubuntu installé en 2023 ici, un Debian ajusté à la main là, des notes éparpillées pour se rappeler pourquoi tel paramètre existe. Le jour où une machine meurt, on ne restaure pas un système : on part en archéologie.
 
-En une seule journée, tout ça est devenu du passé. Les neuf nœuds de mon cluster k3s roulent maintenant NixOS — l'instance cloud comprise — et chacun est entièrement décrit dans un dépôt git que j'appelle `nixos-iac`. Pas d'image dorée, pas de scripts d'installation : des fichiers de configuration déclaratifs, et un outil qui transforme n'importe quelle machine Linux accessible en SSH en installation NixOS toute fraîche.
+En une seule journée, tout ça est devenu du passé. Les neuf nœuds de mon cluster k3s roulent maintenant NixOS — l'instance cloud comprise — et chacun est entièrement décrit dans un dépôt git que j'appelle `nixos-iac`.
 
-Je dois être transparent sur un point : je n'ai pas tapé ces neuf conversions à la main. C'est Claude, en sessions de travail continues, qui a piloté la migration — écrire les configurations, lancer les `nixos-anywhere`, diagnostiquer chaque piège au fur et à mesure — pendant que je validais les décisions et gardais la main sur les moments critiques. Neuf machines en une journée, ça aurait été une couple de fins de semaine en solo.
+Mise au point importante avant d'aller plus loin, parce que je ne veux pas m'attribuer un mérite que je n'ai pas : **je ne connaissais pas NixOS en profondeur avant cette journée-là, et je ne prétends toujours pas être un expert.** C'est Claude Code — avec les modèles Fable 5 et Opus 5 selon les moments — qui a piloté la migration de bout en bout : écrire les configurations, lancer les réinstallations, diagnostiquer chaque piège au fur et à mesure. Mon rôle, c'était de valider les décisions, de garder la main sur les moments critiques, et surtout de poser des questions. Beaucoup de questions. Chaque fichier du dépôt est passé devant mes yeux, et c'est probablement la journée où j'ai le plus appris sur Linux depuis des années. Sans cet outil, cette migration n'aurait pas eu lieu — pas en une journée, et honnêtement, peut-être pas du tout.
 
-_Cet article a lui aussi été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
+_Cet article aussi a été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
 
-## Un flake, neuf machines
+## Nix, NixOS : deux affaires différentes
 
-Le dépôt est structuré simplement : un `flake.nix` qui déclare une configuration par hôte, un dossier par machine, et des modules partagés pour ce qui est commun à toute la flotte.
+Avant cette aventure, je mélangeais les deux. Clarifions.
+
+**Nix**, c'est d'abord un gestionnaire de paquets et un langage, nés en 2003 d'une thèse de doctorat. Son idée fondatrice : chaque paquet est construit de façon isolée, à partir d'une recette pure, et installé dans un chemin unique qui encode toutes ses dépendances (le fameux `/nix/store`). Deux versions d'une même bibliothèque peuvent coexister sans conflit, et une construction donne le même résultat d'une machine à l'autre.
+
+Et voici le point qui m'a surpris quand j'ai commencé à lire : **une grande partie des utilisateurs de Nix — probablement la majorité — ne roulent pas NixOS.** Nix s'installe sur n'importe quel Linux ou sur macOS, et c'est comme ça qu'il est le plus souvent utilisé : des environnements de développement reproductibles par projet (`nix develop` remplace le trio README-virtualenv-« ça marche sur ma machine »), des pipelines CI qui construisent exactement la même chose que le poste du développeur, de la gestion de dotfiles avec home-manager. Bien des développeurs sur macOS vivent dans Nix sans jamais avoir démarré un NixOS de leur vie.
+
+**NixOS**, c'est la suite logique poussée au bout : une distribution Linux où ce n'est plus juste les paquets qui sont déclaratifs, mais *le système au complet* — services systemd, utilisateurs, pare-feu, réseau, tout. Le `/etc` n'est plus un dossier qu'on édite : il est *généré* à partir de la configuration. C'est ce cas d'usage-là, le plus radical et le moins répandu, qui m'intéressait pour le labo.
+
+## Ce que ça change par rapport à Ubuntu, pour vrai
+
+Mes machines roulaient Ubuntu et Debian depuis des années, et je veux être juste envers elles : ça fonctionnait. Le problème n'est pas qu'Ubuntu est mauvais — c'est que son modèle d'administration accumule de l'état invisible.
+
+**La dérive de configuration.** Sur Ubuntu, l'état d'une machine est la somme de tous les `apt install`, éditions de fichiers dans `/etc` et `systemctl enable` exécutés depuis l'installation, notés ou pas. Deux machines « identiques » ne le sont jamais après six mois. Des outils comme Ansible aident — mais ils décrivent des *changements à appliquer*, pas *l'état final* : rien n'empêche une modification manuelle de vivre en douce à côté du playbook pendant des années. Sur NixOS, la configuration décrit le système au complet, et ce qui n'y est pas déclaré n'existe tout simplement pas au prochain déploiement. La dérive n'est pas découragée : elle est structurellement impossible pour tout ce que NixOS gère.
+
+**La restauration.** Restaurer un serveur Ubuntu, c'est restaurer une *image* — avec toute la sédimentation dedans, le bon comme le mauvais. Restaurer un nœud NixOS, c'est réexécuter sa description : la machine qui revient est propre, et identique à celle décrite dans git. Pendant la migration, on a d'ailleurs reformaté certaines machines plusieurs fois de suite pour corriger un détail, avec la désinvolture qu'on réserve d'habitude à un conteneur Docker.
+
+**Le retour en arrière.** Chaque `nixos-rebuild switch` crée une *génération* : une entrée de démarrage vers l'état précédent du système. Une mise à jour qui tourne mal s'annule en redémarrant sur la génération d'avant. Sur Ubuntu, l'équivalent honnête, c'est « j'espère que le snapshot date d'hier ».
+
+**La documentation.** C'est le gain que je n'avais pas anticipé : la configuration *est* la documentation, et elle ne peut pas mentir, parce que c'est elle qui roule. Mes vieilles notes Markdown décrivaient ce que je *pensais* avoir configuré; le dépôt décrit ce qui *est* configuré.
+
+**Et les coûts, parce qu'il y en a.** Le langage Nix est particulier et ses messages d'erreur peuvent être franchement hostiles. Les binaires précompilés téléchargés d'Internet ne roulent pas tels quels — NixOS ne suit pas la hiérarchie de fichiers standard, pas de `/usr/lib` où trouver les bibliothèques — ce qui demande des contournements quand un logiciel n'est pas déjà empaqueté. Les options se cachent parfois dans des recoins mal documentés, et la réponse Stack Overflow moyenne suppose Ubuntu. C'est exactement là que l'assistance a fait la différence : ces frictions-là, subies en solo, auraient transformé chaque piège en soirée de recherche.
+
+## Le dépôt : un flake, neuf machines
+
+Concrètement, le dépôt est structuré simplement : un `flake.nix` qui déclare une configuration par hôte, un dossier par machine, et des modules partagés pour ce qui est commun à toute la flotte.
 
 ```nix
 outputs = { self, nixpkgs, disko, ... }@inputs: {
@@ -36,20 +60,11 @@ outputs = { self, nixpkgs, disko, ... }@inputs: {
       ./hosts/gpu-01/configuration.nix
     ];
   };
-
-  nixosConfigurations.vm-01 = nixpkgs.lib.nixosSystem {
-    system = "x86_64-linux";
-    modules = [
-      disko.nixosModules.disko
-      ./hosts/vm-01/disko-config.nix
-      ./hosts/vm-01/configuration.nix
-    ];
-  };
   # ... et ainsi de suite pour les neuf nœuds
 };
 ```
 
-Le `disko-config.nix` décrit le partitionnement (table GPT, partition EFI, racine ext4 ou LVM selon la machine) de façon déclarative — c'est lui qui permet à l'installation de se faire sans intervention. Le `configuration.nix` de chaque hôte contient ce qui est propre à la machine : son adressage réseau statique, ses rôles, ses particularités matérielles.
+Le `disko-config.nix` décrit le partitionnement de façon déclarative — c'est lui qui permet à l'installation de se faire sans intervention. Le `configuration.nix` de chaque hôte contient ce qui est propre à la machine : adressage réseau statique, rôles, particularités matérielles.
 
 Tout ce qui est commun vit dans `modules/`. L'exemple le plus payant : chaque nœud du cluster importe le même module d'agent k3s.
 
@@ -82,7 +97,7 @@ Tout ce qui est commun vit dans `modules/`. L'exemple le plus payant : chaque n�
 }
 ```
 
-Remarquez les commentaires. C'est une habitude que je défends : le dépôt n'est pas juste la configuration, c'est aussi le journal des leçons apprises. Les trois dernières lignes de ce module m'ont coûté une soirée — le jour où un futur moi se demandera pourquoi elles sont là, la réponse est écrite juste au-dessus.
+Remarquez les commentaires : le dépôt n'est pas juste la configuration, c'est le journal des leçons apprises. Ces trois dernières lignes nous ont coûté une soirée de diagnostic — et c'est Claude qui a rédigé l'explication au-dessus, après qu'on ait mangé la claque ensemble. Le jour où un futur moi (ou une future session) se demandera pourquoi elles sont là, la réponse est écrite au bon endroit.
 
 ## nixos-anywhere : réinstaller sans se lever du bureau
 
@@ -110,7 +125,7 @@ Voir son unique nœud de plan de contrôle se faire reformater à distance, c'es
 
 **Le `hardware-configuration.nix` n'est pas optionnel.** C'est lui qui déclare les modules noyau nécessaires au démarrage (le contrôleur NVMe, par exemple). L'omettre donne une installation qui se termine avec succès… et une machine qui ne démarre plus. L'option `--generate-hardware-config` le produit sur l'installateur au bon moment.
 
-**Le GPU dans les conteneurs.** Sur NixOS, exposer une carte NVIDIA aux pods k3s passe par CDI (Container Device Interface) : la classe d'exécution `nvidia` classique injecte les périphériques mais *pas* les bibliothèques du pilote, et l'échec est silencieux jusqu'à ce qu'un pod cherche `libcuda`. Et k3s n'enregistre son runtime NVIDIA que s'il trouve les binaires sur son PATH au démarrage — encore une fois, `systemd.services.k3s.path` à la rescousse.
+**Le GPU dans les conteneurs.** Sur NixOS, exposer une carte NVIDIA aux pods k3s passe par CDI (Container Device Interface) : la classe d'exécution `nvidia` classique injecte les périphériques mais *pas* les bibliothèques du pilote, et l'échec est silencieux jusqu'à ce qu'un pod cherche `libcuda`. Et k3s n'enregistre son runtime NVIDIA que s'il trouve les binaires sur son PATH au démarrage.
 
 **Le micrologiciel des Pi.** Le firmware des Raspberry Pi ajoute `cgroup_disable=memory` à la ligne de commande du noyau. k3s a besoin de ce cgroup. Une ligne dans `boot.kernelParams` et un redémarrage plus tard, tout était réglé — mais le message d'erreur initial ne pointait vraiment pas dans cette direction.
 
@@ -140,7 +155,13 @@ spec:
           effect: NoSchedule
 ```
 
-Entre les deux dépôts, la frontière est nette : `nixos-iac` décrit ce que *sont* les machines, `k3s-iac` décrit ce qui *roule* dessus. Quand une question se pose — « pourquoi ce port est ouvert? », « pourquoi ce pod est épinglé là? » — la réponse est dans git, avec son historique et ses commentaires.
+Entre les deux dépôts, la frontière est nette : `nixos-iac` décrit ce que *sont* les machines, `k3s-iac` décrit ce qui *roule* dessus.
+
+## Apprendre en pilotant
+
+Je veux revenir sur la méthode de travail, parce que c'est peut-être la vraie leçon de cette journée. Le déroulement typique d'une conversion : Claude Code propose la configuration du prochain hôte, je la lis, je pose mes questions — « pourquoi cette option? », « qu'est-ce qui arrive si le disque est différent? » — on ajuste, puis il lance la réinstallation et surveille le retour de la machine. Quand quelque chose casse (et sur neuf machines hétéroclites, quelque chose casse *toujours*), le diagnostic se fait sous mes yeux, expliqué.
+
+Le résultat paradoxal : je comprends mieux ce parc-ci, que je n'ai pas configuré moi-même, que l'ancien, que j'avais monté de mes propres mains. Parce que l'ancien vivait dans ma mémoire et mes notes approximatives, et que celui-ci vit dans un dépôt commenté que j'ai lu ligne par ligne. L'outil ne m'a pas remplacé : il a comprimé des semaines de courbe d'apprentissage en une journée, et il m'a laissé le texte annoté à la fin.
 
 ## Ce que ça change concrètement
 
@@ -148,6 +169,6 @@ Entre les deux dépôts, la frontière est nette : `nixos-iac` décrit ce que *s
 
 La migration a aussi eu un effet de bord inattendu : elle a *débusqué* la configuration artisanale. Tout ce qui avait été installé à la main au fil des ans et jamais noté — un lien symbolique par-ci, un script dans un coin par-là — s'est manifesté en cassant après conversion. Chaque casse était une occasion de rapatrier le morceau manquant dans le dépôt. C'est le grand ménage du printemps, mais avec un compilateur qui vérifie qu'on n'a rien oublié.
 
-Est-ce que NixOS est parfait? Non. La courbe d'apprentissage est réelle, les messages d'erreur du langage Nix peuvent être hostiles, et certains réglages se cachent dans des recoins mal documentés. Mais le contrat fondamental — *ce qui est dans git est ce qui roule* — vaut largement le prix d'entrée. Mon homelab n'est plus une collection de flocons uniques. C'est un dépôt git avec neuf sorties de compilation.
+Est-ce que NixOS est parfait? Non — les coûts décrits plus haut sont réels, et je ne le recommanderais pas à quelqu'un qui veut juste un poste de travail qui marche. Mais pour un parc de serveurs, le contrat fondamental — *ce qui est dans git est ce qui roule* — vaut largement le prix d'entrée. Mon homelab n'est plus une collection de flocons uniques. C'est un dépôt git avec neuf sorties de compilation. Et moi, j'ai enfin l'impression de savoir exactement ce qui roule chez nous.
 
 — Ludo

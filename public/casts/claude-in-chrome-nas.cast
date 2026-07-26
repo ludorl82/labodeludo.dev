@@ -1,4 +1,9 @@
 {"version": 2, "width": 96, "height": 22, "title": "Claude in Chrome \u2014 migration NFS vers SSD (reconstitution)", "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"}}
+[0.0, "o", "\u001b[2J\u001b[H"]
+[0.0, "o", "\u001b[21;1H\u001b[2K \u001b[38;5;220m▶▶ auto mode on\u001b[0m\u001b[38;5;246m (shift+tab to cycle) · esc to interrupt\u001b[0m                                   \u001b[38;5;114m/rc\u001b[0m"]
+[0.0, "o", "\u001b[22;1H\u001b[2K\u001b[48;5;250m\u001b[38;5;233m console \u001b[48;5;245m\u001b[38;5;233m ludorl82 \u001b[48;5;240m\u001b[38;5;250m 1:1 \u001b[48;5;233m\u001b[38;5;240m  1:claude*  2:claude-  3:zsh\u001b[48;5;233m   \u001b[48;5;235m\u001b[38;5;240m 10:05:47 \u001b[48;5;240m\u001b[38;5;250m 26-Jul-26 \u001b[48;5;245m\u001b[38;5;233m 24afb1f6d1d5 \u001b[0m"]
+[0.0, "o", "\u001b[1;20r"]
+[0.0, "o", "\u001b[1;1H"]
 [0.0, "o", "\u001b[38;5;220m  ⚠  Reconstitution condensée — pas une capture en direct.\u001b[0m\r\n"]
 [0.25, "o", "\u001b[38;5;246m     Demandes et messages réels, minutage compressé,\u001b[0m\r\n"]
 [0.5, "o", "\u001b[38;5;246m     noms d'hôte sanitisés.  labodeludo.dev/casts/\u001b[0m\r\n"]

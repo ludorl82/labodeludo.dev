@@ -46,7 +46,9 @@ Ensuite, une découverte : un panneau d'administration interne comptait encore s
 
 Voici la partie où j'admets avoir mal fait les choses. Retirer un membre d'un cluster qui vote — un système de consensus distribué, du genre etcd — a un ordre précis à respecter : il faut dire au cluster qu'un membre s'en va **pendant qu'il est encore là**, pour qu'il puisse partir proprement du vote. Arrêter le membre en premier, avant de prévenir qui que ce soit, revient à raccrocher le téléphone en plein milieu de la phrase.
 
-C'est exactement ce que j'ai fait sur le deuxième nœud à retirer. Résultat : avec un votant disparu sans préavis et un deuxième déjà en train de partir, il ne restait plus assez de monde pour que le cluster soit d'accord sur quoi que ce soit — silence complet, même du côté du nœud survivant. Solution : redémarrer le service sur la machine qu'on venait tout juste d'éteindre, le temps de rétablir assez de votants pour que tout le monde soit d'accord de nouveau, puis refaire l'opération dans le bon ordre — prévenir d'abord, éteindre ensuite. Cette fois, la leçon est écrite noir sur blanc dans la documentation du projet, pour ne pas la réapprendre une deuxième fois.
+C'est exactement ce que j'ai fait sur le deuxième nœud à retirer. Résultat : avec un votant disparu sans préavis et un deuxième déjà en train de partir, il ne restait plus assez de monde pour que le cluster soit d'accord sur quoi que ce soit — silence complet, même du côté du nœud survivant.
+
+Il faut le faire : casser le quorum d'un cluster pendant l'opération dont le but explicite était de le rendre plus solide. J'avais lu la procédure. Je l'avais même comprise. Je l'ai simplement exécutée à l'envers. Solution : redémarrer le service sur la machine qu'on venait tout juste d'éteindre, le temps de rétablir assez de votants pour que tout le monde soit d'accord de nouveau, puis refaire l'opération dans le bon ordre — prévenir d'abord, éteindre ensuite. Cette fois, la leçon est écrite noir sur blanc dans la documentation du projet, pour ne pas la réapprendre une deuxième fois.
 
 ## Le ménage après coup
 
@@ -58,10 +60,14 @@ Le lendemain, en vérifiant que rien ne clochait, une poignée d'alertes de surv
 
 Corrigé une fois trouvé, mais ça m'a rappelé une chose : les vieux raccourcis pris « juste pour cette fois-là » ont la mémoire longue, et ils attendent patiemment le prochain déménagement pour se manifester.
 
+Notons quand même que j'ai passé une bonne partie de la matinée à chercher ce que j'avais brisé la veille, pour finalement trouver quelque chose que quelqu'un avait brisé des semaines plus tôt. Le soulagement était réel. La fierté, moins.
+
 ## La morale
 
 Le cluster tourne maintenant avec un seul nœud de plan de contrôle, correctement dimensionné, plutôt que trois dont la résilience réelle tenait à bien peu de chose. Ce n'était pas une question de géographie — deux nœuds dans le nuage et un à la maison était déjà, sur papier, une répartition raisonnable. C'était une question de compter honnêtement ce qu'on achète vraiment avec trois votants quand l'un d'eux est fragile et que les deux autres n'ajoutent, au fond, qu'une marge de manœuvre plus mince qu'elle n'en a l'air.
 
 Le reste — l'ordre de retrait d'un membre de cluster, le vieux raccourci DNS qui dormait tranquillement — n'était que la facture habituelle qui vient avec le fait de vraiment tester ses hypothèses plutôt que de les garder sur une diapositive.
+
+Deux votants éliminés, un seul survivant sur l'île, et personne pour contester le résultat. C'est la seule finale où le gagnant compte les votes tout seul.
 
 — Bob

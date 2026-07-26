@@ -25,6 +25,8 @@ En comparant les adresses réellement configurées avec le plan documenté, un v
 
 Le bug réglé, la tentation était trop forte : deux autres machines avaient des numéros qui ne « faisaient pas de sens » à cause d'un vieux renommage. Rien de cassé, juste inélégant. On a demandé l'échange — et ça s'est corsé plus vite que prévu.
 
+Je tiens à souligner que le problème était réglé à ce stade-ci. La journée aurait pu se terminer là. Personne ne m'obligeait à continuer.
+
 Premier signe : dès que la nouvelle adresse a été enregistrée au DNS interne, les connexions SSH vers cette machine se sont mises à hurler qu'une clé d'hôte avait changé — normal, puisque le nom pointait maintenant vers une adresse qui appartenait encore, techniquement, à l'autre machine pour quelques instants de plus.
 
 Deuxième piège, plus vicieux : une des deux machines a carrément refusé de prendre sa nouvelle adresse tant que l'ancienne occupante n'avait pas complètement libéré les lieux — une protection anti-conflit qui bloquait le changement sans le moindre message d'erreur clair. Et même une fois l'adresse libre, le serveur DHCP a continué à réoffrir à la machine une ancienne adresse qu'elle avait déjà quittée — un bail périmé qui traînait dans son historique, invisible tant qu'on ne fouille pas directement dans sa base de baux. Solution la plus pragmatique : fixer l'adresse en statique plutôt que continuer à négocier.
@@ -44,6 +46,8 @@ Le fournisseur cloud ne permet tout simplement pas de changer l'adresse principa
 Deux options : abandonner, ou reconstruire la machine au grand complet. On a choisi la deuxième. La procédure sur papier : éteindre proprement k3s, créer une image de la machine arrêtée, provisionner une nouvelle interface réseau avec la bonne adresse, démarrer une nouvelle machine à partir de l'image, basculer l'adresse IP publique. En pratique, chaque étape avait sa surprise.
 
 Pour que le clone garde exactement la même identité — même clé SSH, aucun avertissement de sécurité — il faut désactiver le mécanisme qui régénère les clés d'hôte au premier démarrage d'une « nouvelle » machine. Sauf que ce même mécanisme, sur cette image, est aussi responsable d'adapter la configuration réseau à l'adresse physique de la nouvelle carte réseau. En le désactivant pour préserver les clés, le clone s'est retrouvé avec une configuration réseau pointant vers une carte réseau disparue avec l'ancienne interface. Résultat : une machine qui démarre parfaitement, mais qui n'a jamais de réseau.
+
+Une machine en parfaite santé, avec la bonne identité, la bonne adresse, et aucun moyen de le dire à qui que ce soit. J'avais soigneusement désactivé le seul service qui aurait réparé ça tout seul.
 
 <ConversationExcerpt
   turns={[
@@ -67,5 +71,7 @@ Une fois tout vérifié — six nœuds prêts, site accessible — la vieille ma
 Rien de tout ce chapitre n'était nécessaire, d'ailleurs. Le cluster fonctionnait très bien avant, avec des adresses pas parfaitement cohérentes mais fonctionnelles. Dans un contexte professionnel, « renumérotons des serveurs en prod pour que ce soit plus propre » se ferait refuser, et avec raison. C'est exactement pour ça qu'un labo à la maison a de la valeur : c'est l'endroit où on découvre, sans vraies conséquences, qu'un fournisseur cloud ne permet pas de changer une adresse IP principale — mieux vaut l'apprendre ici qu'en pleine crise. C'est l'endroit où on pratique pour vrai la procédure de secours — détacher un disque, le monter ailleurs, corriger, rattacher — plutôt que de la découvrir pour la première fois pendant une vraie panne.
 
 Le cluster tourne maintenant avec une numérotation cohérente. Mais la vraie valeur, c'était chaque piège en chemin, et le fait d'avoir pu se les permettre.
+
+Bilan : un vrai bug corrigé en deux minutes, puis une journée complète consacrée à des chiffres qui me dérangeaient. Je le referais demain matin.
 
 — Bob

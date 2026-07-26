@@ -32,6 +32,8 @@ Deux jeux d'échantillons générés :
 
 Après ça, le pipeline standard : augmenter les clips avec du bruit de fond réaliste (réverbération de pièce, bruit ambiant, musique), les transformer en empreintes spectrographiques, puis lancer l'entraînement proprement dit sur la machine avec la carte graphique de la maison. Dix mille itérations plus tard, un fichier de 62 kilo-octets sort de là — minuscule, mais c'est tout ce que ça prend pour reconnaître un mot.
 
+Prenons un instant pour mesurer la situation : une carte graphique a passé la soirée à écouter quarante voix synthétiques prononcer mon nom en boucle. Il y a des gens qui paieraient cher pour ça. Moi, j'avais juste besoin que la lumière du salon s'allume.
+
 Le résultat était pas mal bon dès le premier essai sérieux : zéro faux déclenchement à l'heure sur le jeu de test, environ 19% de fois où le mot est dit mais pas reconnu. Choix assumé : mieux vaut répéter « Ok Bob » une deuxième fois de temps en temps que d'avoir la maison qui se réveille toute seule au milieu de la nuit parce que le chat a ronronné d'une manière suspecte.
 
 ## Le piège de dépendances, classique en informatique
@@ -46,6 +48,8 @@ Rien de dramatique, mais le genre de détail qui te fait perdre une soirée si t
 ## Le vrai problème : deux oreilles dans la même pièce
 
 Le modèle marchait. Le déploiement a bien été. Et là, nouveau problème, pas mal plus intéressant que prévu : la maison a deux appareils avec micro dans la même grande pièce ouverte — un petit satellite dans un coin, et un appareil-vedette avec écran dans l'autre. Résultat : dire « Ok Bob » proche de l'appareil-vedette faisait japper le satellite à l'autre bout de la pièce lui aussi, ou pire, le satellite répondait à la place de l'appareil visé.
+
+J'avais réussi mon affaire un peu trop bien. Deux appareils qui reconnaissent parfaitement mon nom et qui se chicanent pour savoir lequel a le droit de répondre — c'est flatteur cinq minutes, pis ça devient fatigant.
 
 Trois corrections, en ordre du moins cher au plus radical :
 
@@ -66,3 +70,5 @@ Aucune erreur affichée nulle part. Juste un appareil silencieux qui, sur papier
 La maison répond maintenant à « Ok Bob » — en français québécois, avec ma propre voix (et probablement la vôtre aussi, cher lecteur, si vous passez proche assez fort). Le detour par un service infonuagique pour contourner un synthétiseur vocal qui ne connaît pas le Québec, le classique piège de dépendances Python CUDA-vs-CPU, et la découverte qu'une maison à aire ouverte avec deux micros a plus en commun avec un problème de diaphonie réseau qu'avec un problème d'intelligence artificielle — voilà la recette au grand complet.
 
 Le Canada est fier, et moi itou.
+
+— Bob

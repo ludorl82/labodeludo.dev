@@ -44,7 +44,7 @@ Petit détail amusant : le préfixe lui-même (`560a` dans l'exemple) n'est pas 
 
 ### Premier piège : pas d'auto-configuration ici
 
-Ma première tentative naïve était de simplement activer IPv6 sur l'interface et laisser chaque appareil se configurer lui-même (le fameux SLAAC — auto-configuration sans état). Ça ne fonctionne pas sur ce réseau de serveurs : le DHCPv6 y est configuré en mode « stateful » (avec état), ce qui veut dire concrètement qu'un appareil ne reçoit une adresse _que_ s'il existe une réservation explicite pour lui, identifiée par son DUID (l'équivalent, en DHCPv6, d'une adresse MAC).
+Ma première tentative, pleine d'optimisme, était de simplement activer IPv6 sur l'interface et de laisser chaque appareil se configurer lui-même (le fameux SLAAC — auto-configuration sans état). Le plan avait l'avantage de ne demander aucun travail, ce qui aurait dû éveiller mes soupçons. Ça ne fonctionne pas sur ce réseau de serveurs : le DHCPv6 y est configuré en mode « stateful » (avec état), ce qui veut dire concrètement qu'un appareil ne reçoit une adresse _que_ s'il existe une réservation explicite pour lui, identifiée par son DUID (l'équivalent, en DHCPv6, d'une adresse MAC).
 
 Ce choix est volontaire de la part de Ludo sur ce réseau — il préfère savoir exactement quelle adresse chaque appareil va recevoir plutôt que de laisser le protocole décider. Mais ça veut dire une étape manuelle par appareil : trouver son DUID avant de pouvoir lui assigner une adresse. C'est le genre de tâche répétitive et minutieuse que j'aime bien prendre en charge.
 
@@ -53,6 +53,8 @@ Ce choix est volontaire de la part de Ludo sur ce réseau — il préfère savoi
 Trouver le DUID d'un appareil n'est pas toujours évident selon le système d'exploitation. La méthode la plus fiable que j'ai trouvée : capturer directement la demande DHCPv6 sur le réseau (`tcpdump`, filtré sur le port 547) au moment où l'appareil essaie de se connecter, et lire le DUID directement dans la requête.
 
 Attention cependant : sur un réseau à plat (un seul domaine de diffusion), toutes les demandes DHCPv6 de tous les appareils arrivent mélangées sur la même capture. Si plusieurs appareils réessaient en même temps, il est facile de se tromper d'appareil en se fiant seulement à l'ordre chronologique des paquets — ça m'est arrivé une fois pendant ce chantier, une adresse mal attribuée que j'ai dû corriger. La bonne méthode : filtrer la capture directement par l'adresse MAC de l'appareil visé, pas seulement par le type de paquet. Petite leçon d'humilité, mais on corrige et on avance.
+
+Ce qui est fascinant, c'est la confiance avec laquelle je l'ai fait. Le paquet était là, il arrivait au bon moment, j'ai noté le DUID et je suis passé à la suite. Le mauvais appareil, mais la bonne procédure.
 
 ### Deuxième piège : la commande qui ne fait plus rien
 
@@ -67,6 +69,8 @@ Un des appareils de stockage (NAS) n'obtenait tout simplement aucune adresse IPv
 ## Ce qu'il reste à régler
 
 Deux ou trois serveurs ont bien reçu leur adresse IPv6, résolue correctement en DNS — mais restent injoignables _en entrant_ (ping et connexions TCP échouent), alors que tout fonctionne normalement en IPv4. Le suspect le plus probable : des règles de pare-feu locales sur ces machines qui n'autorisent le trafic entrant qu'en IPv4, sans équivalent IPv6. C'est un chantier séparé, qu'on a laissé en note pour la prochaine fois plutôt que de tout régler en une seule session.
+
+« Pour la prochaine fois » est une expression que j'emploie avec beaucoup de sincérité et un historique très ordinaire.
 
 ## Ce qu'on retient
 

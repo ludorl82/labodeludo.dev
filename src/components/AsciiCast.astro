@@ -22,11 +22,7 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
   <div class="term">
     <div class="titlebar">
       <span class="app">Alacritty</span>
-      <span class="btns">
-        <i></i>
-        <button class="max" type="button" aria-label="Plein écran" hidden></button>
-        <i></i>
-      </span>
+      <span class="btns"><i></i><i></i><i></i></span>
     </div>
 
     <div class="screen">
@@ -72,44 +68,6 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
       fit: "width",
       theme: "labo",
     });
-  });
-
-  /* The player's own fullscreen button expands only its .ap-wrapper, which
-     leaves the fake window's chrome behind. This one expands the whole .term
-     instead. The player still sizes itself correctly: its internal check reads
-     document.fullscreenElement, so it fits width *and* height regardless of
-     which element was expanded — no need to touch the `fit` option. */
-  document.querySelectorAll<HTMLElement>(".cast .max").forEach((btn) => {
-    const term = btn.closest<HTMLElement>(".term");
-    if (!term?.requestFullscreen) return;
-    btn.hidden = false;
-    btn.title = "Plein écran";
-
-    const toggle = () => {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else term.requestFullscreen().catch(() => {});
-    };
-
-    btn.addEventListener("click", toggle);
-    // Same gesture as maximising a real window — a much bigger target than
-    // the 9px square, which matters on a touch screen.
-    term.querySelector(".titlebar")?.addEventListener("dblclick", toggle);
-
-    /* The player's own fullscreen control is the one people actually press,
-       and it expands just .ap-wrapper — leaving the title bar and the tmux
-       status line behind. Intercept it before the player sees the click and
-       expand the whole window instead. */
-    term.addEventListener(
-      "click",
-      (ev) => {
-        const target = ev.target as Element | null;
-        if (!target?.closest?.(".ap-fullscreen-button")) return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        toggle();
-      },
-      true,
-    );
   });
 </script>
 
@@ -187,67 +145,6 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
     border: 0;
     border-bottom: 1px solid #6a6a6a;
     height: 5px;
-  }
-
-  /* Looks like the middle window button; hidden unless the script wires it. */
-  .max {
-    position: relative;
-    width: 9px;
-    height: 9px;
-    padding: 0;
-    background: none;
-    border: 1px solid #6a6a6a;
-    border-radius: 1px;
-    cursor: pointer;
-  }
-
-  /* A 9px square is an unhittable tap target on a phone, so extend the hit
-     area well past the drawn square without changing how it looks. */
-  .max::before {
-    content: "";
-    position: absolute;
-    inset: -16px;
-  }
-
-  .max:hover {
-    background: #c8ced4;
-  }
-
-  /* --- fullscreen: the whole window, chrome included ------------------
-     Everything below applies only while expanded, so the inline rendering
-     is untouched. */
-  .term:fullscreen {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    border: 0;
-    border-radius: 0;
-    background: #181818;
-    /* The terminal is 96x22, i.e. roughly 2.6 times wider than tall once the
-       character cell is accounted for. Left to fill the screen, it fits by
-       width and leaves a tall empty gap, so the chrome ends up stuck to the
-       phone's edges with the text floating in the middle. Capping the window
-       width to the height it can actually use keeps the bars against the
-       terminal; the leftover space becomes a letterbox at the sides. */
-    max-width: calc((100vh - 7rem) * 2.6);
-    margin-inline: auto;
-  }
-
-  .term:fullscreen .screen {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* The bars are hidden on small screens inline, but in fullscreen there is
-     room for them — which is the whole point of expanding the window. */
-  .term:fullscreen .hint,
-  .term:fullscreen .tmux {
-    display: flex;
   }
 
   .screen {

@@ -10,6 +10,8 @@ Cette fin de semaine, Claude Code (version 2.1.220, modèle Fable 5) a passé un
 
 Je précise tout de suite, comme d'habitude sur ce blogue : c'est Claude Code qui a fait le travail technique décrit ici. Moi, j'observe, je décide, et je débloque les affaires qu'un agent n'a pas le droit de faire tout seul. Ce dernier point est justement le sujet de l'article.
 
+_Cet article aussi a été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de [Bob](/auteurs/bob/) sur ce blogue._
+
 ## Ma règle par défaut : l'API d'abord
 
 Quand je fais automatiser quelque chose, la consigne est presque toujours la même : passe par l'API, ou par la ligne de commande en SSH. C'est déterministe, ça se teste, ça se relance, ça se met dans un dépôt Git. Piloter une interface graphique, c'est fragile par définition — un bouton qui bouge de vingt pixels et tout casse.

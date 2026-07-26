@@ -45,21 +45,23 @@ The difference from a headless browser is that this runs in **my** session, in *
 
 ## The use case that justified the tool
 
-After the NAS firmware update, two cluster services refused to restart. The diagnosis itself was done on the command line: NFS version 4 mounts kept hanging, while version 3 worked instantly on the same path.
+The weekend's real job wasn't a setting to correct: it was [moving the cluster's NFS shares off a hard drive and onto an SSD](/en/blog/deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes/), without Kubernetes noticing. A genuine migration, with database data on it.
 
-The interesting detail is that the setting **looked correct**. In the NAS interface, NFSv4 and NFSv4.1 were both checked. The `rpcinfo` command still advertised version 4. The configuration was fine; it was the daemon that had stopped serving that version after the reboot.
+And that operation splits cleanly into two halves. Everything touching the NAS exists only in the web interface: delete the legacy volume, create the static volume on the new disk, rename the existing share, create a new one under the original name, then fix its NFS permissions. That half is the one Claude in Chrome did, end to end.
 
-The fix exists only in the graphical interface: uncheck NFSv4, apply, re-check, apply. That forces a real service restart. Clicking "Apply" without changing anything wasn't enough.
+This is where the tool becomes genuinely useful, and why the example is worth telling: it isn't one isolated click, it's a sequence of dozens of operations spread across several panels, where the order matters. Renaming the share **before** creating the new one, for instance, is what keeps the export path identical — and therefore leaves every Kubernetes object untouched, neither the persistent volumes nor the storage class.
 
-![The NAS NFS configuration panel in the browser driven by Claude, with the NFSv4 and NFSv4.1 boxes checked and the cursor on the Apply button](/images/blog/claude-in-chrome-panneau-nfs.png)
+Then there are the traps that are only visible on screen. A freshly created share arrives read-only with all users squashed, and the column showing that setting is truncated just enough that you cannot tell "read-only" from "read/write" by eye. That kind of detail has to be read carefully in the panel, not guessed.
 
-That's the screen in question: three checkboxes and an "Apply" button, in a window that exists nowhere else but in this web interface. The little orange cursor is the agent clicking.
+![The NAS NFS services panel, displayed in the browser driven by the agent, with Chrome's debugging banner at the top of the window](/images/blog/claude-in-chrome-panneau-nfs.png)
 
-On the terminal side it looks like nothing special — browser calls scroll by like any other tool:
+The other half of the work — copying the data, verifying it, restarting the cluster services — was done over SSH, on the command line, as usual. Each tool in its own jurisdiction.
 
-![The Claude Code terminal showing "NFSv4 now unchecked. Applying to force the service down." followed by "Calling claude-in-chrome 2 times…"](/images/blog/claude-in-chrome-appel-outil.png)
+On the terminal side, the graphical part looks like nothing special: browser calls scroll by like any other tool.
 
-There's no way to do this over SSH on that device. Without Claude in Chrome, my only option was to do it myself with the steps dictated to me.
+![The Claude Code terminal showing "Calling claude-in-chrome 2 times…" during an operation in the NAS interface](/images/blog/claude-in-chrome-appel-outil.png)
+
+There's no way to do that half over SSH on this device. Without Claude in Chrome, my only option was to click through it myself for an hour with the steps dictated to me.
 
 ## The limits, learned pretty fast
 
@@ -93,7 +95,7 @@ What reassured me, though, is that it stopped instead of carrying on clicking bl
 2. **Split the two halves of the work.** In this weekend's operation, the graphical part was limited to the NAS configuration. Copying the data, verifying it, and restarting the services were done over SSH, deterministically and repeatably. Each tool in its own jurisdiction.
 3. **Stay in front of the screen.** Plan to be available for the duration. Interruptions happen, and they happen at the worst moment.
 4. **Anticipate login screens.** Open the session yourself before launching the agent, and know that expiry will pull you back into the loop.
-5. **Verify the result somewhere other than the interface.** That's the lesson worth the most. After every change on the NAS, validation was done from a Linux machine — mount the share, check the actual options. The web interface tells you what it believes; the client tells you what is. The two didn't agree, and that's precisely what led to the real problem.
+5. **Verify the result somewhere other than the interface.** That's the lesson worth the most. After every change on the NAS, validation was done from a Linux machine — mount the share, check the actual options. The web interface tells you what it believes; the client tells you what is. The two didn't agree — and that's precisely how we caught the share still being read-only before copying anything onto it.
 6. **Don't let it guess.** When the display becomes doubtful, stopping is the right answer. In an administration console, the "delete" button lives in the same menus as everything else.
 
 ## The verdict

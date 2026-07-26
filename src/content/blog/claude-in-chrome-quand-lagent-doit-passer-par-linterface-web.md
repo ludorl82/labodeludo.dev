@@ -45,21 +45,23 @@ La différence avec un navigateur sans interface, c'est que ça roule dans **ma*
 
 ## Le cas d'usage qui a justifié l'outil
 
-Après la mise à jour du micrologiciel du NAS, deux services du cluster refusaient de redémarrer. Le diagnostic, lui, s'est fait en ligne de commande : les montages NFS en version 4 restaient bloqués, alors que la version 3 fonctionnait instantanément sur le même chemin.
+Le vrai mandat de la fin de semaine, ce n'était pas un réglage à corriger : c'était [déplacer les partages NFS du cluster d'un disque dur vers un SSD](/blog/deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes/), sans que Kubernetes s'en aperçoive. Une vraie migration, avec des données de bases de données dessus.
 
-Le détail intéressant, c'est que le réglage **avait l'air correct**. Dans l'interface du NAS, NFSv4 et NFSv4.1 étaient cochés. La commande `rpcinfo` annonçait encore la version 4. La configuration était bonne; c'est le démon qui ne servait plus cette version-là après le redémarrage.
+Et cette opération-là se sépare proprement en deux moitiés. Tout ce qui touche au NAS n'existe que dans l'interface web : supprimer le volume hérité, créer le volume statique sur le nouveau disque, renommer le partage existant, en créer un nouveau sous le nom d'origine, puis corriger ses permissions NFS. C'est cette moitié-là que Claude in Chrome a faite, de bout en bout.
 
-Le correctif n'existe que dans l'interface graphique : décocher NFSv4, appliquer, recocher, appliquer. Ça force un vrai redémarrage du service. Cliquer sur « Appliquer » sans rien changer ne suffisait pas.
+C'est là que l'outil devient réellement utile, et c'est pour ça que l'exemple vaut la peine d'être raconté : ce n'est pas un clic isolé, c'est une séquence de dizaines de manipulations réparties sur plusieurs panneaux, où l'ordre compte. Renommer le partage **avant** de créer le nouveau, par exemple, c'est ce qui permet au chemin d'export de rester identique — et donc de ne toucher à aucun objet Kubernetes, ni les volumes persistants, ni la classe de stockage.
 
-![Le panneau de configuration NFS du NAS dans le navigateur piloté par Claude, avec les cases NFSv4 et NFSv4.1 cochées et le curseur sur le bouton Appliquer](/images/blog/claude-in-chrome-panneau-nfs.png)
+Il y a aussi les pièges qui ne se voient qu'à l'écran. Un partage fraîchement créé arrive en lecture seule avec écrasement de tous les utilisateurs, et la colonne qui affiche ce réglage est tronquée juste assez pour qu'on ne puisse pas distinguer « lecture seule » de « lecture/écriture » à l'œil. Ce genre de détail, il faut le lire attentivement dans le panneau, pas le deviner.
 
-C'est ça, l'écran en question : trois cases à cocher et un bouton « Appliquer », dans une fenêtre qui n'existe nulle part ailleurs que dans cette interface web. Le petit curseur orange, c'est l'agent qui clique.
+![Le panneau des services NFS du NAS, affiché dans le navigateur piloté par l'agent, avec la bannière de débogage de Chrome en haut de la fenêtre](/images/blog/claude-in-chrome-panneau-nfs.png)
 
-Côté terminal, ça ne ressemble à rien de spécial — les appels au navigateur défilent comme n'importe quel autre outil :
+L'autre moitié du travail — la copie des données, les vérifications, le redémarrage des services du cluster — s'est faite en SSH, en ligne de commande, comme d'habitude. Chaque outil dans sa juridiction.
 
-![Le terminal Claude Code affichant « NFSv4 now unchecked. Applying to force the service down. » suivi de « Calling claude-in-chrome 2 times… »](/images/blog/claude-in-chrome-appel-outil.png)
+Côté terminal, la partie graphique ne ressemble à rien de spécial : les appels au navigateur défilent comme n'importe quel autre outil.
 
-Il n'y a aucun moyen de faire ça en SSH sur cet appareil. Sans Claude in Chrome, ma seule option était de le faire moi-même en me faisant dicter les étapes.
+![Le terminal Claude Code affichant « Calling claude-in-chrome 2 times… » pendant une manipulation dans l'interface du NAS](/images/blog/claude-in-chrome-appel-outil.png)
+
+Il n'y a aucun moyen de faire cette moitié-là en SSH sur cet appareil. Sans Claude in Chrome, ma seule option était de cliquer moi-même pendant une heure en me faisant dicter les étapes.
 
 ## Les limites, apprises pas mal vite
 
@@ -93,7 +95,7 @@ Ce qui m'a rassuré, par contre, c'est qu'il s'est arrêté au lieu de continuer
 2. **Séparer les moitiés du travail.** Sur l'opération de cette fin de semaine, la partie graphique se limitait à la configuration du NAS. La copie de données, les vérifications et le redémarrage des services se sont faits en SSH, de façon déterministe et rejouable. Chaque outil dans sa juridiction.
 3. **Restez devant l'écran.** Prévoyez d'être disponible pour la durée. Les interruptions arrivent, et elles arrivent au pire moment.
 4. **Anticipez les écrans de connexion.** Ouvrez la session vous-même avant de lancer l'agent, et sachez que l'expiration va vous ramener dans la boucle.
-5. **Vérifiez le résultat ailleurs que dans l'interface.** C'est la leçon qui vaut le plus cher. Après chaque changement sur le NAS, la validation se faisait depuis une machine Linux — monter le partage, vérifier les options réelles. L'interface web dit ce qu'elle croit; le client dit ce qui est. Les deux ne concordaient pas, et c'est précisément ça qui a permis de trouver le vrai problème.
+5. **Vérifiez le résultat ailleurs que dans l'interface.** C'est la leçon qui vaut le plus cher. Après chaque changement sur le NAS, la validation se faisait depuis une machine Linux — monter le partage, vérifier les options réelles. L'interface web dit ce qu'elle croit; le client dit ce qui est. Les deux ne concordaient pas — et c'est précisément comme ça qu'on a attrapé le partage encore en lecture seule avant d'y copier quoi que ce soit.
 6. **Ne le laissez pas deviner.** Quand l'affichage devient douteux, l'arrêt est la bonne réponse. Dans une console d'administration, le bouton « supprimer » vit dans les mêmes menus que le reste.
 
 ## Le verdict

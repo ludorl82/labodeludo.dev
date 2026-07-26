@@ -5,6 +5,7 @@ description: "Ma règle par défaut, c'est l'API : si un système s'automatise e
 tags: ["DevOps", "Labo", "ludo"]
 heroImage: "/images/blog/banner-claude-in-chrome.png"
 ---
+import AsciiCast from "../../components/AsciiCast.astro";
 
 Cette fin de semaine, Claude Code (version 2.1.220, modèle Fable 5) a passé une bonne partie de son temps à cliquer dans une interface web à ma place. Pas parce que c'est élégant — parce qu'il n'y avait pas d'autre chemin.
 
@@ -62,6 +63,19 @@ Côté terminal, la partie graphique ne ressemble à rien de spécial : les appe
 ![Le terminal Claude Code affichant « Calling claude-in-chrome 2 times… » pendant une manipulation dans l'interface du NAS](/images/blog/claude-in-chrome-appel-outil.png)
 
 Il n'y a aucun moyen de faire cette moitié-là en SSH sur cet appareil. Sans Claude in Chrome, ma seule option était de cliquer moi-même pendant une heure en me faisant dicter les étapes.
+
+## À quoi ça ressemble, une session
+
+Plutôt que de le décrire, voici le déroulement. Les trois arrêts de l'agent — le mot de passe, le disque qui n'était pas vide, le zoom — sont exactement ceux dont je parle dans la section suivante.
+
+<AsciiCast
+  src="/casts/claude-in-chrome-nas.cast"
+  poster="npt:0:04"
+  caption="Environ cinquante minutes de travail sur le NAS, condensées en deux minutes. La moitié en SSH n'apparaît pas."
+  disclaimer="⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues attentes sont coupées. Noms d'hôte sanitisés."
+/>
+
+Ce que j'aime de cette vue, c'est qu'on y voit le rythme réel : de longues séquences où l'agent avance tout seul, ponctuées d'arrêts nets où il me rend la main. Ce n'est pas un enregistrement de démonstration où tout coule; c'est une session de travail normale.
 
 ## Les limites, apprises pas mal vite
 

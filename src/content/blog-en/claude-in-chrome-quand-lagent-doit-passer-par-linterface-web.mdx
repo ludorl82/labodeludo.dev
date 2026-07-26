@@ -5,6 +5,7 @@ description: "My default rule is the API: if a system can be automated from the 
 tags: ["DevOps", "Labo", "ludo"]
 heroImage: "/images/blog/banner-claude-in-chrome.png"
 ---
+import AsciiCast from "../../components/AsciiCast.astro";
 
 This weekend, Claude Code (version 2.1.220, Fable 5 model) spent a good part of its time clicking through a web interface on my behalf. Not because it's elegant — because there was no other path.
 
@@ -62,6 +63,19 @@ On the terminal side, the graphical part looks like nothing special: browser cal
 ![The Claude Code terminal showing "Calling claude-in-chrome 2 times…" during an operation in the NAS interface](/images/blog/claude-in-chrome-appel-outil.png)
 
 There's no way to do that half over SSH on this device. Without Claude in Chrome, my only option was to click through it myself for an hour with the steps dictated to me.
+
+## What a session actually looks like
+
+Rather than describe it, here's the run. The agent's three stops — the password, the disk that wasn't empty, the zoom — are exactly the ones I cover in the next section.
+
+<AsciiCast
+  src="/casts/claude-in-chrome-nas.cast"
+  poster="npt:0:04"
+  caption="Roughly fifty minutes of NAS work, condensed into two. The SSH half isn't shown."
+  disclaimer="⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real session transcript. The prompts and the stop messages are the ones from the actual session; the timing is compressed and the long waits are cut. Hostnames sanitized."
+/>
+
+What I like about this view is that you see the real rhythm: long stretches where the agent moves on its own, punctuated by hard stops where it hands control back. It isn't a demo recording where everything flows; it's an ordinary working session.
 
 ## The limits, learned pretty fast
 

@@ -94,6 +94,22 @@ const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
     // Same gesture as maximising a real window — a much bigger target than
     // the 9px square, which matters on a touch screen.
     term.querySelector(".titlebar")?.addEventListener("dblclick", toggle);
+
+    /* The player's own fullscreen control is the one people actually press,
+       and it expands just .ap-wrapper — leaving the title bar and the tmux
+       status line behind. Intercept it before the player sees the click and
+       expand the whole window instead. */
+    term.addEventListener(
+      "click",
+      (ev) => {
+        const target = ev.target as Element | null;
+        if (!target?.closest?.(".ap-fullscreen-button")) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        toggle();
+      },
+      true,
+    );
   });
 </script>
 

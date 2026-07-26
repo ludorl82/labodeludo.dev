@@ -7,15 +7,44 @@ interface Props {
   poster?: string;
 }
 
-const { src, caption, disclaimer, poster = "npt:0:04" } = Astro.props;
-const id = `cast-${src.split("/").pop()?.replace(/\W/g, "-")}`;
+const { src, caption, disclaimer, poster = "npt:0:06" } = Astro.props;
+
+/* The tmux status line, reproduced from the terminal screenshots in the
+   article. Purely decorative — it is chrome, not part of the recording. */
+const left = ["console", "ludorl82", "1:1"];
+const windows = ["1:claude*", "2:claude-", "3:zsh"];
+const right = ["10:05:47", "26-Jul-26", "24afb1f6d1d5"];
 ---
 
 <figure class="cast">
   <p class="disclaimer">{disclaimer}</p>
-  <div class="cast-wrap">
-    <div id={id} data-cast-src={src} data-cast-poster={poster}></div>
+
+  <div class="term">
+    <div class="titlebar">
+      <span class="app">Alacritty</span>
+      <span class="btns"><i></i><i></i><i></i></span>
+    </div>
+
+    <div class="screen">
+      <div data-cast-src={src} data-cast-poster={poster}></div>
+    </div>
+
+    <div class="hint">
+      <span><b>▶▶ auto mode on</b> (shift+tab to cycle) · esc to interrupt</span>
+      <span class="rc">/rc</span>
+    </div>
+
+    <div class="tmux">
+      <span class="seg s0">{left[0]}</span>
+      <span class="seg s1">{left[1]}</span>
+      <span class="seg s2">{left[2]}</span>
+      <span class="wins">
+        {windows.map((w) => <span class:list={["win", { cur: w.endsWith("*") }]}>{w}</span>)}
+      </span>
+      {right.map((r, i) => <span class:list={["seg", `r${i}`]}>{r}</span>)}
+    </div>
   </div>
+
   <figcaption>{caption}</figcaption>
 </figure>
 
@@ -26,23 +55,30 @@ const id = `cast-${src.split("/").pop()?.replace(/\W/g, "-")}`;
   document.querySelectorAll<HTMLElement>("[data-cast-src]").forEach((el) => {
     AsciinemaPlayer.create(el.dataset.castSrc!, el, {
       poster: el.dataset.castPoster,
-      idleTimeLimit: 1.5,
+      idleTimeLimit: 2,
       fit: "width",
-      terminalFontFamily: 'var(--font-mono)',
       theme: "labo",
     });
   });
 </script>
 
 <style is:global>
-  /* The player renders its own DOM, so these have to be global. */
+  /* The player builds its own DOM, so the theme has to be declared globally.
+     Colours sampled from the article's terminal screenshots. */
   .asciinema-player-theme-labo {
-    --term-color-background: #000000;
+    --term-color-background: #181818;
     --term-color-foreground: #d8d8d8;
   }
 
   .cast .ap-player {
-    font-size: 0.95em;
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+  }
+
+  /* Keep the control bar inside the fake window instead of floating over it. */
+  .cast .ap-control-bar {
+    background: #121212;
+    border-top: 1px solid #262626;
   }
 </style>
 
@@ -66,12 +102,119 @@ const id = `cast-${src.split("/").pop()?.replace(/\W/g, "-")}`;
     padding: 0.6rem 0.85rem;
   }
 
-  .cast-wrap {
-    overflow-x: auto;
+  .term {
+    border-radius: 6px;
+    overflow: hidden;
     border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    background: var(--bg);
-    padding: 0.75rem;
+    font-family: var(--font-mono);
+  }
+
+  /* --- Windows title bar, light like in the screenshots --- */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #eff4f9;
+    color: #1f1f1f;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.55rem;
+  }
+
+  .btns {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .btns i {
+    width: 9px;
+    height: 9px;
+    border: 1px solid #6a6a6a;
+    border-radius: 1px;
+  }
+
+  .btns i:first-child {
+    border: 0;
+    border-bottom: 1px solid #6a6a6a;
+    height: 5px;
+  }
+
+  .screen {
+    background: #181818;
+    overflow-x: auto;
+  }
+
+  /* --- Claude Code's pinned footer hint --- */
+  .hint {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    background: #181818;
+    color: #949494;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.75rem 0.45rem;
+  }
+
+  .hint b {
+    color: #ffd700;
+    font-weight: 400;
+  }
+
+  .rc {
+    color: #87d787;
+  }
+
+  /* --- tmux status line --- */
+  .tmux {
+    display: flex;
+    align-items: stretch;
+    background: #121212;
+    font-size: 0.68rem;
+    line-height: 1.9;
+    white-space: nowrap;
+  }
+
+  .seg {
+    padding: 0 0.7rem;
+    color: #121212;
+  }
+
+  .s0 {
+    background: #bcbcbc;
+    font-weight: 700;
+  }
+  .s1 {
+    background: #8a8a8a;
+  }
+  .s2 {
+    background: #585858;
+    color: #bcbcbc;
+  }
+
+  .wins {
+    flex: 1;
+    display: flex;
+    gap: 1.1rem;
+    justify-content: center;
+    color: #585858;
+    background: #121212;
+  }
+
+  .win.cur {
+    color: #d8d8d8;
+    font-weight: 700;
+  }
+
+  .r0 {
+    background: #262626;
+    color: #585858;
+  }
+  .r1 {
+    background: #585858;
+    color: #bcbcbc;
+  }
+  .r2 {
+    background: #8a8a8a;
+    color: #121212;
   }
 
   figcaption {
@@ -80,5 +223,12 @@ const id = `cast-${src.split("/").pop()?.replace(/\W/g, "-")}`;
     font-size: 0.8125rem;
     line-height: 1.6;
     color: var(--text-faint);
+  }
+
+  @media (max-width: 600px) {
+    .hint,
+    .tmux {
+      display: none;
+    }
   }
 </style>

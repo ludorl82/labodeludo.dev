@@ -85,17 +85,27 @@ La solution, c'est un script d'assainissement par dépôt, qui produit un **inst
 
 ## La règle qui compte : échouer fort
 
-Tout ce qui précède, c'est du meilleur effort. Une substitution qui ne trouve rien ne dit rien — et c'est exactement le mode de défaillance qu'on ne peut pas voir. On lit sa sortie, ça a l'air correct, tout est beau.
+Admettons que je me trompe en écrivant une de mes règles de remplacement. Une faute de frappe dans le nom de domaine à chercher, mettons. Qu'est-ce qui arrive ?
 
-Donc chaque script se termine par une **barrière de vérification** qui refuse de déclarer l'arbre publiable. Elle cherche ce qui n'aurait pas dû survivre : numéros de comptes, identifiants de ressources, vrais domaines, plages d'adresses privées, formes de secrets, marqueurs de fichiers d'état, et les noms de fichiers eux-mêmes. Une seule trouvaille, et le script sort en erreur en imprimant quoi et où. Il n'y a pas de publication à corriger après coup : il n'y a pas eu de publication.
+Rien. Le script cherche ce nom-là, ne le trouve nulle part, ne remplace donc rien, et se termine normalement. Aucun message d'erreur — parce qu'il n'y a pas eu d'erreur : je lui ai demandé de chercher quelque chose qui n'existe pas, et il ne l'a pas trouvé. J'ouvre le résultat, ça a l'air propre, je publie. Le vrai nom de domaine est encore dedans.
 
-Pour le dépôt du edge, qui est essentiellement un inventaire de mes zones DNS, la barrière va plus loin : une liste blanche de toutes les valeurs d'enregistrements permises. N'importe quelle valeur que le script n'a pas délibérément produite bloque la génération. C'est plus strict que nécessaire, et c'est voulu — le jour où j'ajoute une zone, je veux que ça pète.
+C'est ça, le mode de défaillance dangereux : **ce n'est pas un plantage, c'est un silence.** N'importe quel script de nettoyage a ce problème, et le relire ne règle rien, parce que ce qu'on relit, c'est justement la copie qui a l'air correcte.
 
-Trois bogues valent d'être nommés, parce qu'ils illustrent bien pourquoi la barrière existe :
+La solution tient en une phrase : **le script doit être capable de refuser de finir.**
 
--   Une aiguille de recherche traitée **littéralement** par l'outil de recherche mais comme une **expression régulière** par l'outil de remplacement. Le point dans un nom de domaine devient un joker, et le remplacement va frapper des choses qui n'ont rien à voir. Résultat : du code invalide, découvert par hasard.
--   Une règle fourre-tout qui remplaçait tout identifiant restant par un identifiant bidon... y compris les identifiants bidons qu'elle venait elle-même de produire, puisqu'ils avaient exactement la même forme. Mon script de nettoyage a mangé sa propre sortie. Un serpent qui se mord la queue, mais en bash.
--   Et le meilleur pour la fin : un nom de domaine qui a survécu **en prose**, dans une phrase d'un fichier d'explications, longtemps après que chaque occurrence dans le code eut été remplacée. La barrière l'a attrapé quinze minutes avant la publication. Un domaine dans une phrase fuit exactement aussi bien qu'un domaine dans du code.
+Chaque script se termine donc par une dernière étape qui relit sa propre sortie et cherche ce qui n'aurait jamais dû s'y trouver — mon numéro de compte, un identifiant de ressource, un vrai nom de domaine, une adresse de mon réseau interne, quelque chose qui a la forme d'une clé, ou un nom de fichier qui contient encore un vrai domaine. Une seule trouvaille et le script s'arrête net, en affichant quoi et à quelle ligne.
+
+La nuance qui compte : cette étape ne corrige rien. Elle bloque. C'est voulu — une correction automatique serait à son tour quelque chose qui peut échouer en silence, et on serait revenu au point de départ. Et comme elle tourne avant toute publication, il n'y a jamais de fuite à réparer après coup : il n'y a tout simplement pas eu de publication.
+
+Pour le dépôt du edge, qui est essentiellement la liste de tous les noms de domaine que je possède, j'ai retourné le principe. Au lieu de chercher ce qui est interdit, la vérification part de la liste de ce qui est **permis** : les valeurs que le script fabrique lui-même, et rien d'autre. Si un enregistrement DNS contient autre chose, la génération bloque. C'est plus strict que nécessaire aujourd'hui, et c'est exactement le but — le jour où j'ajoute une zone que le script ne connaît pas, je veux que ça pète tout de suite, pas que je découvre six mois plus tard ce qui est passé tout droit.
+
+Trois bogues méritent d'être nommés, parce que chacun serait passé inaperçu sans cette étape.
+
+**Le point qui n'en était pas un.** Mes règles cherchent un texte exact, mais l'outil qui fait le remplacement, lui, interprète le point comme « n'importe quel caractère ». En cherchant `exemple.com`, je remplaçais donc aussi `exemple_com` — un nom de variable qui n'avait rien à voir avec un domaine. Le fichier produit ne compilait plus. Découvert par accident.
+
+**Le serpent qui se mord la queue.** Une règle de dernier recours remplaçait tout identifiant oublié par un identifiant bidon. Sauf que mes identifiants bidons avaient exactement la même forme que les vrais. La règle les a donc trouvés à leur tour, et les a remplacés par... eux-mêmes, tous rendus identiques. Mon script de nettoyage a mangé sa propre sortie.
+
+**Le domaine dans la phrase.** Le meilleur pour la fin. Un vrai nom de domaine a survécu dans une phrase d'un fichier d'explications, bien après que toutes les occurrences dans le code avaient été remplacées. Mes règles couvraient le code ; personne n'avait pensé à la prose. La vérification l'a attrapé quinze minutes avant la publication. **Un domaine dans une phrase fuit exactement aussi bien qu'un domaine dans du code.**
 
 Cet article-là, soit dit en passant, suit les mêmes règles. Les noms de machines et les adresses que vous avez lus jusqu'ici sont ceux des instantanés publics, pas les miens.
 

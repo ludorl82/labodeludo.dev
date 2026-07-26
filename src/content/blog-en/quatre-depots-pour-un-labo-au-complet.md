@@ -85,17 +85,27 @@ The answer is a sanitizer script per repository, who produce a **public snapshot
 
 ## The rule that matters: fail loudly
 
-Everything above is best effort. A substitution that match nothing says nothing — and that is exactly the failure mode you cannot see. You read the output, it looks fine, everything is beautiful.
+Let us say I make a mistake writing one of my replacement rules. A typo in the domain name to search for, let us say. What happens?
 
-So each script ends with a **verification gate** that refuses to declare the tree publishable. It hunts for what should not have survived: account numbers, resource identifiers, real domains, private address ranges, credential shapes, state-file markers, and the filenames themselves. One single hit and the script, he exits with an error, printing what and where. There is no publication to correct afterwards: there was no publication.
+Nothing. The script, he looks for that name, does not find it anywhere, replaces nothing as a result, and finishes normally. No error message — because there was no error: I asked him to look for something that does not exist, and he did not find it. I open the result, it looks clean, I publish. The real domain name is still in there.
 
-For the edge repository, which is essentially an inventory of my DNS zones, the gate goes further: a whitelist of every permitted record value. Any value the script did not deliberately produce, she blocks the build. That is stricter than necessary, and it is on purpose — the day I add a zone, I want it to blow up.
+That is the dangerous failure mode: **it is not a crash, it is a silence.** Any cleaning script has this problem, and re-reading it fix nothing, because what you are re-reading is exactly the copy that looks correct.
 
-Three bugs deserve naming, because they illustrate nicely why the gate exists:
+The solution, she fits in one sentence: **the script has to be capable of refusing to finish.**
 
--   A search needle treated **literally** by the search tool but as a **regular expression** by the replacement tool. The dot in a domain name, he becomes a wildcard, and the replacement goes and hits things that have nothing to do with it. Result: invalid code, discovered by accident.
--   A catch-all rule that replaced any leftover identifier with a dummy one... including the dummy identifiers it had just produced itself, since they had exactly the same shape. My cleaning script ate its own output. A snake biting its tail, but in bash.
--   And the best for last: a domain name that survived **in prose**, in a sentence of a documentation file, long after every occurrence in the code had been replaced. The gate, he caught it fifteen minutes before publication. A domain in a sentence leaks exactly as well as a domain in code.
+So each script ends with a final step that re-reads its own output and hunts for what should never have been in there — my account number, a resource identifier, a real domain name, an address from my internal network, something shaped like a key, or a filename that still contains a real domain. One single hit and the script stops dead, printing what and on which line.
+
+The nuance that matters: this step fixes nothing. She blocks. That is deliberate — an automatic correction would itself be something that can fail in silence, and we would be right back where we started. And since she runs before any publication, there is never a leak to repair afterwards: there simply was no publication.
+
+For the edge repository, which is essentially the list of every domain name I own, I turned the principle around. Instead of hunting for what is forbidden, the check start from the list of what is **permitted**: the values the script produces itself, and nothing else. If a DNS record contains anything else, the build blocks. That is stricter than necessary today, and that is exactly the point — the day I add a zone the script does not know about, I want it to blow up right away, not to find out six months later what sailed straight through.
+
+Three bugs deserve naming, because each one would have gone unnoticed without that step.
+
+**The dot that was not one.** My rules search for exact text, but the tool doing the replacement, he interprets a dot as "any character at all". So while searching for `example.com`, I was also replacing `example_com` — a variable name with nothing to do with any domain. The resulting file no longer compiled. Discovered by accident.
+
+**The snake biting its tail.** A last-resort rule replaced any forgotten identifier with a dummy one. Except my dummy identifiers had exactly the same shape as the real ones. So the rule found those too, and replaced them with... themselves, all made identical. My cleaning script, he ate his own output.
+
+**The domain in the sentence.** Best for last. A real domain name survived in a sentence of a documentation file, long after every occurrence in the code had been replaced. My rules covered the code; nobody had thought about the prose. The check, she caught it fifteen minutes before publication. **A domain in a sentence leaks exactly as well as a domain in code.**
 
 This article, by the way, follow the same rules. The machine names and addresses you have read so far are the ones from the public snapshots, not mine.
 

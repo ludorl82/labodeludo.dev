@@ -15,7 +15,7 @@ import WebdavProxyDiagram from "../../components/WebdavProxyDiagram.astro";
 > -   **Hidden trap**: the most tempting workaround would have been far more dangerous than the bug itself — it would have opened the door to complete file corruption.
 > -   **Result**: a single header-rewrite line fixes the real problem, without touching the client's safe-save mode.
 
-Bob again, for true. This time, the investigation, she start with a mundane error — a 502, the usual fault of the proxy who's tired, we always blame him first — and she end with a lesson much more serious about what we willing to sacrifice, just to make an error disappear quick.
+Bob again, for true. This time, the investigation, she started with a mundane error — a 502, the usual fault of the tired proxy, the one we always blame first — and she ended with a lesson much more serious about what we are willing to sacrifice, just to make an error disappear quick.
 
 <WebdavProxyDiagram context="article" lang="en" />
 
@@ -27,11 +27,11 @@ The technical chain looks like this: the mobile client speaks public HTTPS, goes
 
 ## The misleading symptom
 
-Reading the vault from the phone, that worked without no hitch at all. But every save, she fail with a 502 error — Bad Gateway, the big classic. The natural instinct was to blame Cloudflare, right away: too short a timeout, too big a request, some size limit somewhere on the path. Wrong track, my friends. Looking a bit closer, the error wasn't coming from the network edge at all — she was coming, for true, from the origin server itself, closer to home than we was thinking.
+Reading the vault from the phone, that worked without a hitch at all. But every save, she failed with a 502 error — Bad Gateway, the big classic. The natural instinct was to blame Cloudflare, right away: too short a timeout, too big a request, some size limit somewhere on the path. Wrong track, my friends. Looking a bit closer, the error was not coming from the network edge at all — she was coming, for true, from the origin server itself, closer to home than we were thinking.
 
 It is a remarkable constant of this job: the first suspect, he is always the one you do not control. It save you from looking in the mirror right away.
 
-More interesting still: it wasn't every write that failed. A direct, blunt drop of the file (the `PUT` command, which overwrites the target file in a single request) went through just fine. It was "safe-save" mode that failed every time — the one where the client first writes a temporary file, then moves it over the final file once the write is confirmed complete.
+More interesting still: it was not every write that failed. A direct, blunt drop of the file (the `PUT` command, which overwrites the target file in a single request) went through just fine. It was "safe-save" mode that failed every time — the one where the client first writes a temporary file, then moves it over the final file once the write is confirmed complete.
 
 ## The investigation: two very particular commands
 
@@ -45,7 +45,7 @@ This is a classic of reverse-proxy architectures: anything that repeats an absol
 
 The final technical fix comes down to a single directive, added to the web server's configuration: rewrite the `Destination` header to replace the public scheme and port with the ones expected internally, before the request reaches the WebDAV module. One line, and safe saves started working normally again.
 
-But that's not the real heart of that story, eh. During troubleshooting, before finding that line, the fastest and most tempting option was something else entirely: disable "safe-save" mode on the client side, keeping only the direct write (`PUT`) that already worked. The error would have vanished instantly — deal done, everybody happy, on the surface.
+But that is not the real heart of that story. During the troubleshooting, before finding that line, the fastest and most tempting option was something else entirely: disable "safe-save" mode on the client side, keeping only the direct write (`PUT`) that already worked. The error would have vanished instantly — deal done, everybody happy, on the surface.
 
 The problem is that these two modes offer completely different guarantees. A direct write modifies the final file in place, as bytes arrive. If the mobile connection gets interrupted halfway through — an elevator, a tunnel, a Wi-Fi drop — the file on the server ends up truncated, half-written. For an ordinary file, that means starting over. For an encrypted password vault, it means an unreadable, unrecoverable file, since the format tolerates no partial corruption.
 
@@ -62,4 +62,4 @@ I specify, for the posterity, that the file in question, he contained every sing
 -   The fastest workaround isn't always the right one: disabling a safety mechanism to make an error disappear trades a visible problem for an invisible one, often far worse.
 -   A file left open elsewhere can save the day once — but an accidental safety net is not a backup plan.
 
-One configuration line, a well-understood save mode, and a vault that don't fear the subway tunnels no more. Bob, signing off — champion of the world for HTTP headers. — Bob
+One configuration line, a well-understood save mode, and a vault that does not fear the subway tunnels anymore. Bob, signing off — champion of the world for HTTP headers. — Bob

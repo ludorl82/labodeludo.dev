@@ -22,11 +22,11 @@ The NAS — let's call him **Grenier** — is a small two-bay QNAP box, ARM proc
 
 ## The diagnosis: 670 MB keeping 7 TB awake
 
-First thing to do before buying or unplugging anything: look at what is actually on those shares.
+First thing to do before buying or unplugging anything: go look at what is actually on those shares.
 
 The cluster's NFS share came to **670 MB**. On a 7.2 TB volume with 3.2 TB of it taken up by movies and TV shows. Put differently, the Kubernetes portion of the storage represented one ten-thousandth of the volume.
 
-But the size, she was not the problem — the write pattern was. Those 670 MB are the data files of Postgres, Mongo, Loki, a few SQLite databases. Databases, in other words, constantly writing small blocks to scattered locations. That is precisely the I/O profile a hard drive hates: the head moves nonstop, and above all the drive never gets to spin down.
+But the size, she was not the problem — the write pattern was. Those 670 MB are the data files of Postgres, Mongo, Loki, a few SQLite databases. Databases, in other words, constantly writing small blocks to scattered locations. That is precisely the I/O profile a hard drive hates: the head, he moves nonstop, and above all the drive never gets to spin down.
 
 Hence the idea: pull that portion off the hard drive and put it on an SSD. The movies can stay on the hard drive — when nobody is watching anything, it has no reason to be busy.
 
@@ -34,15 +34,15 @@ Hence the idea: pull that portion off the hard drive and put it on an SSD. The m
 
 With the 480 GB SSD installed, I opened the storage interface to create the volume. And there was the surprise: the disk already held a **446 GB legacy volume, 97.92% full**.
 
-The filesystem showed up as `UNKNOWN`. No shared folders on it, so nothing visible in the file browser. The classic signature of a disk that came from another system and dragged its old partition table along with it.
+The filesystem, he showed up as `UNKNOWN`. No shared folders on him, so nothing visible in the file browser. The classic signature of a disk that came from another system and dragged its old partition table along with it.
 
 437 GB of something. No way to tell what. A "brand new" disk, then, in the large sense of the term.
 
-This is the kind of moment where you stop. A disk described as "spare" that contains half a terabyte of data does not get formatted on an impression. I asked before erasing. The answer came back — it really was old stock — and only then did I delete the volume.
+This is the kind of moment where you stop. A disk described as "spare" who contains half a terabyte of data does not get formatted on an impression. I asked before erasing. The answer came back — it really was old stock — and only then did I delete the volume.
 
 The lesson fits on one line: **before you format, look at what is on it.** Not because it will often contain something important, but because the one time it does, it is too late.
 
-The new volume was created as a static volume — better performance, less memory overhead, which matters on an ARM box with 2 GB of RAM. Without encryption, too, and that is deliberate: an encrypted volume demands a passphrase at every boot, which means that after a power cut the NFS would not come back until somebody walked over and typed a password. For storage that has to return on its own, that is a no.
+The new volume was created as a static volume — better performance, less memory overhead, which matters on an ARM box with 2 GB of RAM. Without encryption, too, and that is deliberate: an encrypted volume, he demands a passphrase at every boot, which means that after a power cut the NFS would not come back until somebody walked over and typed a password. For storage that has to return on its own, that is a no.
 
 ## The trick that avoids touching Kubernetes
 
@@ -50,7 +50,7 @@ Here is the part of this migration I find most satisfying.
 
 In the cluster, NFS storage is referenced in three places: the dynamic provisioner's variables, the StorageClass, and one static persistent volume. All three point at exactly the same thing — the server, and the path `/k8s`.
 
-The naive approach would be to create a `k8s-ssd` share, copy the data over, then go edit those three references. Except that modifying a persistent volume bound to a claim means unbinding, recreating, rebinding — for fifteen or so volumes. A lot of handling, a lot of chances to get it wrong.
+The naive approach, she would be to create a `k8s-ssd` share, copy the data over, then go edit those three references. Except that modifying a persistent volume bound to a claim means unbinding, recreating, rebinding — for fifteen or so volumes. A lot of handling, a lot of chances to get it wrong.
 
 The approach that avoids all of it: **rename first, create second**.
 
@@ -69,7 +69,7 @@ This is where the evening got longer.
 
 **Trap number one: renaming a shared folder wipes its NFS permissions.** After the rename, `k8s-hdd` simply stopped appearing in the list of exports. The "access rights" box, she had unchecked herself. Nothing in the interface mentions it, and you only find out at the moment the mount fails.
 
-The habit worth forming: after any share manipulation, run `showmount -e` against the server. It is the only source of truth about what is actually exported — the web interface tells you what it believes, `showmount` tells you what is.
+The habit worth forming: after any share manipulation, run `showmount -e` against the server. He is the only source of truth about what is actually exported — the web interface tells you what she believes, `showmount` tells you what is.
 
 **Trap number two: a newly created share is born with the wrong defaults.** NFS disabled, which you notice. But more importantly **read-only**, and "squash all users" — the equivalent of `all_squash`.
 
@@ -119,7 +119,7 @@ The lesson is worth its weight in coffee: when an NFS mount hangs while the netw
 
 ## The copy, and above all the verification
 
-The transfer itself is the least interesting part: `rsync` in archive mode, with extended attributes and numeric IDs. Six thousand nine hundred and twenty-two files, 693 MB, roughly two minutes.
+The transfer himself is the least interesting part: `rsync` in archive mode, with extended attributes and numeric IDs. Six thousand nine hundred and twenty-two files, 693 MB, roughly two minutes.
 
 A word on why this did not go through the NAS's web interface: a graphical copy does not reliably preserve file ownership. For database directories, that amounts to delivering data the service will refuse to start on. The transfer had to go through a Linux client, mounted as root, against an export configured not to squash users.
 
@@ -137,7 +137,7 @@ Only then did I restart the cluster. The provisioner first, the database next, t
 
 The old `k8s-hdd` share is still there, intact, on the hard drive. That is the rollback plan: as long as it exists, going back consists of renaming two shares.
 
-It will be deleted once everything has run for a few days. Not before. A migration is not finished the evening it works — it is finished the day you remove the safety net, and that day comes later than you think.
+It will be deleted once everything has run for a few days. Not before. A migration, she is not finished the evening she works — she is finished the day you remove the safety net, and that day comes later than you think.
 
 ## The real bottom line
 

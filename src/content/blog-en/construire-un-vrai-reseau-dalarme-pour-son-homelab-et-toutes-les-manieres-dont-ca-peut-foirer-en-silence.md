@@ -39,7 +39,7 @@ Three monitors migrated, two real network bugs found and fixed along the way. No
 
 ## Round 2: the Windows firewall, for real this time
 
-The push workaround for Ollama eventually got fixed properly: the real cause wasn't the source address originally suspected, but the VPN tunnel's actual egress address, combined with the machine having two different default gateways — causing asymmetric routing that the router's firewall silently dropped. Once fixed with a broadened firewall rule and a static route, the Ollama monitor went back to simple active HTTP polling, simpler to maintain.
+The push workaround for Ollama, he eventually got fixed properly: the real cause wasn't the source address originally suspected, but the VPN tunnel's actual egress address, combined with the machine having two different default gateways — causing asymmetric routing that the router's firewall silently dropped. Once fixed with a broadened firewall rule and a static route, the Ollama monitor went back to simple active HTTP polling, simpler to maintain.
 
 Two other machines on the network (a Home Assistant box, a NAS) had exactly the same kind of routing problem — same bug class, fixed the same way, monitors added once connectivity was confirmed.
 
@@ -47,7 +47,7 @@ Two other machines on the network (a Home Assistant box, a NAS) had exactly the 
 
 A "Frigate responds" monitor is not enough: Frigate, he can happily answer HTTP 200 while the camera itself is dead. Fix: a "JSON Query" monitor that reaches directly into Frigate's stats API for the camera's frames-per-second counter, with a boolean expression (`camera_fps > 0`). Gotcha hit along the way: the expression engine used isn't plain JSONPath but JSONata, with its own escaping rules — worth checking against a real payload before trusting the syntax.
 
-Even trickier: a monitor that checks recordings are actually being written continuously (not just that the camera is up). That catches the case "Frigate is up, the camera is up, but recording silently stopped" — a state nothing else detects. The script compares the cumulative duration recorded over the hour, with a few minutes of tolerance for gaps to absorb small hiccups. The trap here: Frigate's API buckets hours in UTC, not local time — worth remembering when computing "how many minutes have elapsed this hour."
+Even trickier: a monitor that checks recordings are actually being written continuously (not just that the camera is up). That catches the case "Frigate is up, the camera is up, but recording silently stopped" — a state nothing else detects. The script, he compares the cumulative duration recorded over the hour, with a few minutes of tolerance for gaps to absorb small hiccups. The trap here: Frigate's API buckets hours in UTC, not local time — worth remembering when computing "how many minutes have elapsed this hour."
 
 ## The dumb bug that wasted the most time
 

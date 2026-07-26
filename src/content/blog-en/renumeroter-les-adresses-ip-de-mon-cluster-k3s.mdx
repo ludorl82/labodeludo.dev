@@ -19,7 +19,7 @@ Bob here. We started the day with a simple question: does every server actually 
 
 ## The real bug
 
-Comparing actually-configured addresses against the documented plan turned up a real problem right away: two home nodes had swapped DHCP reservations in the firewall — node A getting node B's address and vice versa. A copy-paste mistake, probably from when the second node was created, never noticed because both machines, they worked fine with "the wrong" address. Two entries fixed, both nodes picked up the right address on the next lease renewal. End of the real bug.
+Comparing actually-configured addresses against the documented plan, that turned up a real problem right away: two home nodes had swapped DHCP reservations in the firewall — node A getting node B's address and vice versa. A copy-paste mistake, probably from when the second node was created, never noticed because both machines, they worked fine with "the wrong" address. Two entries fixed, both nodes picked up the right address on the next lease renewal. End of the real bug.
 
 ## The cosmetic cleanup that got out of hand (in a good way)
 
@@ -27,7 +27,7 @@ Bug fixed, the temptation was too much: two other machines had numbers that didn
 
 I want to underline that the problem was already fixed at this point. The day could have ended right there. Nobody was forcing me to continue.
 
-First sign: as soon as the new address landed in internal DNS, SSH to that machine started screaming about a changed host key — expected, since the name now pointed at an address that, technically, still belonged to the other machine for a few more moments.
+First sign: as soon as the new address landed in internal DNS, SSH to that machine, he started screaming about a changed host key — expected, since the name now pointed at an address that, technically, still belonged to the other machine for a few more moments.
 
 Second pitfall, nastier: one of the two machines flatly refused to take its new address until the previous occupant had fully vacated it — a duplicate-address safeguard who blocked the change with no clear error at all. And even once the address was free, the DHCP server kept re-offering the machine an old address it had already left — a stale lease sitting in its history, invisible unless you dig directly into the lease database. Most pragmatic fix: pin the address statically instead of continuing to negotiate.
 
@@ -39,13 +39,13 @@ Riding high on two successful swaps, the next step seemed obvious: why not also 
 
 Ludo's asked me to make sure I mention this — insisting, like I'm the type to bury it in a footnote somewhere — that we simply could not change the EC2 instance's primary private IP address. Right. Thanks for the reminder, Ludo, I was about to write that exact sentence next.
 
-The cloud provider simply does not allow changing an already-created instance's primary address — even after shutting it down first. That address is frozen the moment the network interface is created, full stop. The only real fix: create a brand-new machine with the right address, then migrate the role onto it.
+The cloud provider, he simply does not allow changing an already-created instance's primary address — even after shutting it down first. That address is frozen the moment the network interface is created, full stop. The only real fix: create a brand-new machine with the right address, then migrate the role onto it.
 
 ## Rebuild instead of repair
 
 Two options: give up, or rebuild the machine entirely. We picked the second. The plan on paper: cleanly stop k3s, image the stopped machine, provision a new network interface with the right address, boot a new machine from the image, move the public IP over. In practice, every step had its own surprise.
 
-For the clone to keep the exact same identity — same SSH key, no security warning — you have to disable the mechanism that regenerates host keys on a "new" machine's first boot. Except that same mechanism, on this image, is also responsible for adapting the network config to the new network card's physical address. Disabling it to preserve the keys left the clone with a network config pointing at a card that vanished with the old interface. Result: a machine that boots perfectly, but never gets any network at all.
+For the clone to keep the exact same identity — same SSH key, no security warning — you have to disable the mechanism that regenerates host keys on a "new" machine's first boot. Except that same mechanism, on this image, he is also responsible for adapting the network config to the new network card's physical address. Disabling it to preserve the keys left the clone with a network config pointing at a card that vanished with the old interface. Result: a machine that boots perfectly, but never gets any network at all.
 
 A machine in perfect health, with the right identity, the right address, and no way to tell anybody about it. I had carefully disabled the only service who would have repaired that by itself.
 

@@ -1,67 +1,14 @@
 ---
-import { getCollection } from "astro:content";
-
 interface Props {
   src: string;
   caption: string;
   disclaimer: string;
   /** Frame shown before playback starts, as an asciinema NPT offset. */
   poster?: string;
-  /** Overrides the container id shown in the tmux status line. */
-  containerId?: string;
 }
 
-const { src, caption, disclaimer, poster = "npt:0:06", containerId } = Astro.props;
+const { src, caption, disclaimer, poster = "npt:0:06" } = Astro.props;
 
-/* Each recording ran in its own throwaway container at its own moment, so the
-   id and the clock in the status line have to differ from one cast to the
-   next — a single frozen pair repeated across the site would be a fabricated
-   detail pretending to be a real one. Both are derived from the cast's path
-   (FNV-1a) rather than randomised, so a given cast keeps the same values
-   across builds instead of flickering on every deploy. */
-function digits(seed: string, n: number): number[] {
-  const out = [];
-  let h = 0x811c9dc5;
-  for (let i = 0; i < n; i++) {
-    for (const ch of `${seed}#${i}`) {
-      h ^= ch.charCodeAt(0);
-      h = Math.imul(h, 0x01000193) >>> 0;
-    }
-    out.push(h);
-  }
-  return out;
-}
-
-function fakeContainerId(seed: string): string {
-  return digits(seed, 12)
-    .map((h) => (h % 16).toString(16))
-    .join("");
-}
-
-/* Waking hours, 09:00–22:59 — the window these sessions actually happen in. */
-function fakeClock(seed: string): string {
-  const [h, m, s] = digits(`clock:${seed}`, 3);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(9 + (h % 14))}:${pad(m % 60)}:${pad(s % 60)}`;
-}
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/* The date comes from the cast's own entry, so the article and the /casts page
-   never disagree about when a given recording was made. */
-const entry = (await getCollection("casts")).find((c) => c.data.cast === src);
-const d = entry?.data.pubDate;
-const stamp = d
-  ? `${String(d.getUTCDate()).padStart(2, "0")}-${MONTHS[d.getUTCMonth()]}-${String(
-      d.getUTCFullYear() % 100,
-    ).padStart(2, "0")}`
-  : "26-Jul-26";
-
-/* The tmux status line, reproduced from the terminal screenshots in the
-   article. Purely decorative — it is chrome, not part of the recording. */
-const left = ["console", "ludorl82", "1:1"];
-const windows = ["1:claude*", "2:claude-", "3:zsh"];
-const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
 ---
 
 <figure class="cast">
@@ -77,20 +24,7 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
       <div data-cast-src={src} data-cast-poster={poster}></div>
     </div>
 
-    <div class="hint">
-      <span><b>▶▶ auto mode on</b> (shift+tab to cycle) · esc to interrupt</span>
-      <span class="rc">/rc</span>
-    </div>
 
-    <div class="tmux">
-      <span class="seg s0">{left[0]}</span>
-      <span class="seg s1">{left[1]}</span>
-      <span class="seg s2">{left[2]}</span>
-      <span class="wins">
-        {windows.map((w) => <span class:list={["win", { cur: w.endsWith("*") }]}>{w}</span>)}
-      </span>
-      {right.map((r, i) => <span class:list={["seg", `r${i}`]}>{r}</span>)}
-    </div>
   </div>
 
   <figcaption>
@@ -200,79 +134,7 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
     overflow-x: auto;
   }
 
-  /* --- Claude Code's pinned footer hint --- */
-  .hint {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    background: #181818;
-    color: #949494;
-    font-size: 0.7rem;
-    padding: 0.3rem 0.75rem 0.45rem;
-  }
 
-  .hint b {
-    color: #ffd700;
-    font-weight: 400;
-  }
-
-  .rc {
-    color: #87d787;
-  }
-
-  /* --- tmux status line --- */
-  .tmux {
-    display: flex;
-    align-items: stretch;
-    background: #121212;
-    font-size: 0.68rem;
-    line-height: 1.9;
-    white-space: nowrap;
-  }
-
-  .seg {
-    padding: 0 0.7rem;
-    color: #121212;
-  }
-
-  .s0 {
-    background: #bcbcbc;
-    font-weight: 700;
-  }
-  .s1 {
-    background: #8a8a8a;
-  }
-  .s2 {
-    background: #585858;
-    color: #bcbcbc;
-  }
-
-  .wins {
-    flex: 1;
-    display: flex;
-    gap: 1.1rem;
-    justify-content: center;
-    color: #585858;
-    background: #121212;
-  }
-
-  .win.cur {
-    color: #d8d8d8;
-    font-weight: 700;
-  }
-
-  .r0 {
-    background: #262626;
-    color: #585858;
-  }
-  .r1 {
-    background: #585858;
-    color: #bcbcbc;
-  }
-  .r2 {
-    background: #8a8a8a;
-    color: #121212;
-  }
 
   figcaption {
     margin-top: 0.65rem;
@@ -305,9 +167,5 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
   }
 
   @media (max-width: 600px) {
-    .hint,
-    .tmux {
-      display: none;
-    }
   }
 </style>

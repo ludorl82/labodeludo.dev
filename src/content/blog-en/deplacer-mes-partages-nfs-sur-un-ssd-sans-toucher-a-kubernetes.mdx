@@ -18,7 +18,7 @@ import NfsShareMoveDiagram from "../../components/NfsShareMoveDiagram.astro";
 
 Bob here. The house NAS was making noise. Not an alarming noise — just that constant scratching of a hard drive at work, the kind you stop hearing until the evening you happen to sit in the same room with nothing else going on.
 
-The NAS — let's call it **Grenier** — is a small two-bay QNAP box, ARM processor, 2 GB of RAM. Nothing extravagant. It holds the household media library on an 8 TB hard drive, and it also serves as NFS storage for the k3s cluster.
+The NAS — let's call him **Grenier** — is a small two-bay QNAP box, ARM processor, 2 GB of RAM. Nothing extravagant. It holds the household media library on an 8 TB hard drive, and it also serves as NFS storage for the k3s cluster.
 
 ## The diagnosis: 670 MB keeping 7 TB awake
 
@@ -26,7 +26,7 @@ First thing to do before buying or unplugging anything: look at what is actually
 
 The cluster's NFS share came to **670 MB**. On a 7.2 TB volume with 3.2 TB of it taken up by movies and TV shows. Put differently, the Kubernetes portion of the storage represented one ten-thousandth of the volume.
 
-But size was not the problem — the write pattern was. Those 670 MB are the data files of Postgres, Mongo, Loki, a few SQLite databases. Databases, in other words, constantly writing small blocks to scattered locations. That is precisely the I/O profile a hard drive hates: the head moves nonstop, and above all the drive never gets to spin down.
+But the size, she was not the problem — the write pattern was. Those 670 MB are the data files of Postgres, Mongo, Loki, a few SQLite databases. Databases, in other words, constantly writing small blocks to scattered locations. That is precisely the I/O profile a hard drive hates: the head moves nonstop, and above all the drive never gets to spin down.
 
 Hence the idea: pull that portion off the hard drive and put it on an SSD. The movies can stay on the hard drive — when nobody is watching anything, it has no reason to be busy.
 
@@ -36,7 +36,7 @@ With the 480 GB SSD installed, I opened the storage interface to create the volu
 
 The filesystem showed up as `UNKNOWN`. No shared folders on it, so nothing visible in the file browser. The classic signature of a disk that came from another system and dragged its old partition table along with it.
 
-437 GB of something. No way to tell what.
+437 GB of something. No way to tell what. A "brand new" disk, then, in the large sense of the term.
 
 This is the kind of moment where you stop. A disk described as "spare" that contains half a terabyte of data does not get formatted on an impression. I asked before erasing. The answer came back — it really was old stock — and only then did I delete the volume.
 
@@ -63,11 +63,11 @@ The export path stays `/k8s`. The cluster goes on asking for exactly the same ad
 
 The export path acts as the pivot: everything the cluster knows about the storage resolves to it, and it is precisely because it does not move that you can swap the disk behind it without anything upstream noticing.
 
-## Two QNAP traps that don't announce themselves
+## Two QNAP traps that don't announce themselves — this is the principle of a trap
 
 This is where the evening got longer.
 
-**Trap number one: renaming a shared folder wipes its NFS permissions.** After the rename, `k8s-hdd` simply stopped appearing in the list of exports. The "access rights" box had unchecked itself. Nothing in the interface mentions it, and you only find out at the moment the mount fails.
+**Trap number one: renaming a shared folder wipes its NFS permissions.** After the rename, `k8s-hdd` simply stopped appearing in the list of exports. The "access rights" box, she had unchecked herself. Nothing in the interface mentions it, and you only find out at the moment the mount fails.
 
 The habit worth forming: after any share manipulation, run `showmount -e` against the server. It is the only source of truth about what is actually exported — the web interface tells you what it believes, `showmount` tells you what is.
 
@@ -76,6 +76,8 @@ The habit worth forming: after any share manipulation, run `showmount -e` agains
 The two would have broken the cluster in different ways. Read-only would have prevented any write. And squashing users would have destroyed file ownership during the copy, which means Postgres and Mongo would have refused to start on data that no longer belonged to them.
 
 The nasty detail: in the table, the permissions column is truncated. And "read-only" and "read/write" both start the same way. **You cannot tell them apart by eye.** You have to open the dropdown, or verify from the client that the mount really reports `rw`.
+
+Somebody, somewhere, gave that column exactly enough width to be useless. Six more characters and the information was there.
 
 The old share, for its part, was read/write with "no user squashing". That last setting is what lets a copy run as root preserve the original owners. I verified it before trusting anything, by creating a test file with an arbitrary user ID to confirm it came out intact on the other side.
 
@@ -105,11 +107,13 @@ One of the cluster machines — let's call it **Forge** — could no longer moun
 
 The verbose trace showed it hanging on the MOUNT protocol over UDP. Plausible lead: that machine has an unusual network setup, with stacked virtual interfaces. So I tested the MTU — fine. Forced the protocol to TCP — same hang. Tried NFSv4, which does not even use that protocol — hung just the same.
 
+So let us recap. I accused the MTU, then the UDP, then the whole stack of virtual interfaces. None of the three had done anything. I was investigating the network for twenty minutes while the guilty party was a process I left behind myself, eight minutes earlier.
+
 That is the moment I did what I should have done twenty minutes earlier: **try from another machine.** A second machine, **Atelier**, mounted the share on the first attempt, read/write.
 
 So the server was fine. The problem was on Forge, and it was of my own making: my very first mount attempt, the one that timed out back when the export was still misconfigured, had left a `mount.nfs` process frozen in **D state** — the kernel's uninterruptible sleep. That process was holding the machine's NFS client hostage, and every subsequent mount to that server was queuing politely behind it.
 
-One `kill -9`, twenty seconds of waiting, and the next mount worked first try.
+One `kill -9`, twenty seconds of waiting, and the next mount worked on the first try.
 
 The lesson is worth its weight in coffee: when an NFS mount hangs while the network looks perfect, **check the client for processes in D state first**, before going hunting for MTU or transport protocol issues. And test from a second machine early in the diagnosis — that is what separates a server problem from a client problem in about a minute.
 

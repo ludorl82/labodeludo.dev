@@ -29,6 +29,8 @@ The technical chain looks like this: the mobile client speaks public HTTPS, goes
 
 Reading the vault from the phone, that worked without no hitch at all. But every save, she fail with a 502 error — Bad Gateway, the big classic. The natural instinct was to blame Cloudflare, right away: too short a timeout, too big a request, some size limit somewhere on the path. Wrong track, my friends. Looking a bit closer, the error wasn't coming from the network edge at all — she was coming, for true, from the origin server itself, closer to home than we was thinking.
 
+It is a remarkable constant of this job: the first suspect, he is always the one you do not control. It save you from looking in the mirror right away.
+
 More interesting still: it wasn't every write that failed. A direct, blunt drop of the file (the `PUT` command, which overwrites the target file in a single request) went through just fine. It was "safe-save" mode that failed every time — the one where the client first writes a temporary file, then moves it over the final file once the write is confirmed complete.
 
 ## The investigation: two very particular commands
@@ -50,6 +52,8 @@ The problem is that these two modes offer completely different guarantees. A dir
 The "safe" save exists precisely to avoid that scenario: the final file is never touched until the temporary copy is complete and verified — the move (`MOVE`) that replaces the old file is an atomic, all-or-nothing operation. That's exactly the mechanism that would have been sacrificed to silence a 502 error.
 
 And it didn't stay theoretical: before the real fix was in place, an interrupted sync did in fact truncate the vault file in place. It had to be recovered from a copy still open in memory on a desktop machine — a safety net that existed by luck, not by plan.
+
+I specify, for the posterity, that the file in question, he contained every single password of the house. We came close to the shortest article of this blog.
 
 ## Takeaways
 

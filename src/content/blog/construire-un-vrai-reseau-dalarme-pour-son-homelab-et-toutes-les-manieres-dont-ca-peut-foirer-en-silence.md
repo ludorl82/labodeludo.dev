@@ -55,6 +55,8 @@ Un jour, l'app ntfy envoie une notification, on clique sur "ouvrir le moniteur",
 
 Petit détail amusant : ce bug a été retrouvé une deuxième fois, des semaines plus tard, sur un tout nouveau lot de moniteurs — preuve qu'il vaut mieux le noter noir sur blanc plutôt que compter sur sa mémoire.
 
+J'ai donc diagnostiqué le même problème deux fois, avec le même raisonnement, la même satisfaction à la fin. La deuxième fois, j'aurais préféré avoir l'air moins content de moi.
+
 ## L'usurpation d'identité involontaire
 
 Un service de streaming vidéo maison redémarrait sans arrêt de façon mystérieuse. L'enquête a suivi une vraie chaîne de dominos :
@@ -66,6 +68,8 @@ Un service de streaming vidéo maison redémarrait sans arrêt de façon mystér
 5.  Cause du clignotement n°1 : un service DNS interne autrefois hébergé maison venait d'être décommissionné, cassant la résolution du nom d'hôte utilisé par le script de heartbeat. Corrigé en épinglant l'adresse IP directement dans l'appel HTTP, sans dépendre du DNS.
 6.  Cause du clignotement n°2, complètement indépendante : l'intervalle de heartbeat configuré dans Kuma (2 minutes) était plus court que la fréquence réelle du cron qui pousse le heartbeat (5 minutes) — Kuma marquait donc systématiquement le moniteur "down" entre deux passages, avant de le repasser "up" au heartbeat suivant. Un flapping totalement auto-infligé, sans aucun rapport avec le DNS. Corrigé en élargissant l'intervalle.
 
+Autrement dit : j'ai installé un système d'alarme, puis j'ai passé une soirée à enquêter sur l'alarme. Le service surveillé, lui, allait parfaitement bien depuis le début.
+
 Deux bugs indépendants, le même symptôme, découverts l'un après l'autre. Une bonne leçon : ne pas s'arrêter à la première explication plausible.
 
 ## Le compte administrateur qui change de nom en plein vol
@@ -73,6 +77,8 @@ Deux bugs indépendants, le même symptôme, découverts l'un après l'autre. Un
 Dernier rebondissement : une tentative d'automatiser la création de moniteurs via l'API a échoué avec "mot de passe incorrect" — alors que le mot de passe, copié-collé depuis le gestionnaire de mots de passe, était clairement le bon. Fausse piste explorée en premier : une incompatibilité de version entre la bibliothèque cliente et le serveur Kuma. Fausse piste écartée, puis reprise, puis écartée à nouveau.
 
 La vraie explication, trouvée en croisant les logs serveur avec un journal de travail personnel : une **session parallèle**, plus tôt dans la même journée, avait renommé le compte administrateur pour une tout autre raison, sans le documenter ailleurs sur le moment. Le nom d'utilisateur utilisé pour l'authentification API était donc simplement périmé — rien à voir avec un bug de compatibilité.
+
+Le coupable, donc, c'était moi. Une autre version de moi, plus tôt dans la journée, qui n'avait rien laissé comme note. On a eu une petite discussion.
 
 Morale : quand deux sessions de travail touchent la même infra le même jour sans se voir, la première explication technique plausible n'est pas toujours la bonne. Garder une trace écrite (même minimale) de chaque changement d'état "invisible" (comme un renommage de compte) aurait évité de tourner en rond.
 

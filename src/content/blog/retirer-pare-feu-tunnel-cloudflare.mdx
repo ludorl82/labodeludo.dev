@@ -24,6 +24,8 @@ Le premier utilisait déjà un tunnel Cloudflare — une connexion permanente in
 
 Ce n'est pas dangereux en soi — Cloudflare publie ses plages d'IP précisément pour ça — mais ça reste une porte d'entrée permanente sur le serveur, pour un usage qui pourrait très bien s'en passer entièrement.
 
+Une porte barrée dont on a donné la clé à un ami de confiance reste une porte. La meilleure porte, c'est le mur.
+
 ## L'idée : tout mettre sur le même tunnel
 
 Puisqu'un des deux services fonctionnait déjà sans aucune porte ouverte, pourquoi pas migrer le deuxième sur ce même mécanisme ? Un tunnel Cloudflare, c'est l'inverse d'un pare-feu : au lieu d'attendre une connexion entrante, le serveur initie lui-même une connexion sortante vers Cloudflare et la garde ouverte. Cloudflare route ensuite le trafic public à travers cette connexion déjà établie. Aucun port à ouvrir, aucune IP à autoriser.
@@ -38,6 +40,8 @@ Vérification faite que tout fonctionnait encore, on a pu retirer complètement 
 
 Et là, surprise — pas la bonne. Un script que Ludo utilise pour publier une version statique d'un de ses sites (généré à partir de WordPress, puis hébergé ailleurs pour plus de robustesse) avait une astuce qu'on avait oubliée : pour aller chercher le contenu du site WordPress au moment de la publication, il basculait temporairement l'enregistrement DNS public vers le serveur WordPress directement, le temps de la capture, puis le repointait vers la version statique. Cette bascule dépendait exactement du même accès direct qu'on venait de retirer.
 
+Relisons ça calmement : un script qui modifie le DNS public d'un domaine, prend une photo du site, puis remet le DNS comme avant, en espérant que personne ne visite pendant ce temps-là. C'est ingénieux. C'est aussi le genre d'ingéniosité qu'on préfère découvrir en lisant du code plutôt qu'en lisant un rapport d'incident.
+
 Plutôt que de garder cette porte ouverte juste pour ce script, je l'ai modifié pour qu'il aille chercher le contenu par le chemin privé — celui qui passe par le VPN maison-vers-serveur plutôt que par Internet public. Le script ajoute maintenant temporairement une entrée dans le fichier hosts de la machine qui l'exécute, le temps de la capture, puis la retire. Plus besoin de toucher au DNS public du tout pour cette étape.
 
 En testant ce changement, deux petits bugs sont sortis du bois : le script perdait parfois sa permission d'exécution après une modification, et une page technique de WordPress (liée automatiquement dans l'en-tête de chaque page, mais qui n'accepte que certaines requêtes) faisait échouer toute la capture à cause d'une seule erreur non critique. Deux corrections mineures, mais qui auraient fait échouer silencieusement la publication si on ne les avait pas testées après coup.
@@ -49,4 +53,6 @@ En testant ce changement, deux petits bugs sont sortis du bois : le script perda
 -   Une seule requête qui échoue peut faire avorter tout un script si celui-ci s'arrête à la première erreur — utile la plupart du temps, mais ça vaut la peine de distinguer les échecs qui comptent de ceux qui sont normaux et prévisibles.
 -   Toujours vérifier que les services fonctionnent encore après la migration, avant de supprimer quoi que ce soit de façon définitive.
 
-Un pare-feu en moins, et un script de publication plus robuste en prime — mission accomplie, comme on dit. — Bob
+Un pare-feu en moins, et un script de publication plus robuste en prime — mission accomplie, comme on dit.
+
+La question de départ était « est-ce qu'on peut retirer ce pare-feu ». La réponse honnête, c'était « oui, mais pas avant d'avoir lu le vieux script que personne n'avait ouvert depuis deux ans ». C'est rarement la réponse que le monde espère. — Bob

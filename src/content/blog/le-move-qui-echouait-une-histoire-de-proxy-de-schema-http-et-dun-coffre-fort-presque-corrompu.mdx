@@ -29,6 +29,8 @@ La chaîne technique ressemble à ceci : le client mobile parle en HTTPS public,
 
 La lecture du coffre-fort depuis le téléphone fonctionnait sans problème, comme du beurre dans la poêle. Mais chaque sauvegarde échouait avec une erreur 502 — Bad Gateway, le grand classique. Le réflexe naturel a été d'accuser Cloudflare, right away : un délai d'attente trop court, une requête trop grosse, une limite de taille quelque part sur le chemin. Fausse piste, mes amis. En regardant d'un peu plus près, l'erreur ne venait pas du bord du réseau, mais bel et bien du serveur d'origine lui-même — le coupable était plus proche de la maison qu'on pensait.
 
+C'est une constante remarquable du métier : le premier suspect est toujours celui qu'on ne contrôle pas. Ça évite d'avoir à se regarder dans le miroir tout de suite.
+
 Plus intéressant encore : ce n'était pas toutes les écritures qui échouaient. Un dépôt direct et brutal du fichier (la commande `PUT`, qui écrase le fichier cible en une seule requête) passait très bien. C'est le mode « sauvegarde sécuritaire » qui échouait à chaque fois — celui où le client écrit d'abord un fichier temporaire, puis le déplace par-dessus le fichier final une fois l'écriture confirmée complète.
 
 ## L'enquête : deux commandes très particulières
@@ -50,6 +52,8 @@ Le problème, c'est que ces deux modes n'offrent pas du tout les mêmes garantie
 La sauvegarde « sécuritaire » existe précisément pour éviter ce scénario : le fichier final n'est jamais touché tant que la copie temporaire n'est pas complète et vérifiée — le déplacement (`MOVE`) qui remplace l'ancien fichier est une opération atomique, tout ou rien. C'est exactement le mécanisme qu'on aurait sacrifié pour faire taire une erreur 502.
 
 Et ce n'est pas resté théorique : avant que le vrai correctif ne soit en place, une synchronisation interrompue a bel et bien tronqué le fichier du coffre-fort en place. Il a fallu le récupérer depuis une copie encore ouverte en mémoire sur un poste de bureau — un filet de sécurité qui existait par chance, pas par plan.
+
+Je précise, pour la postérité, que le fichier en question contenait absolument tous les mots de passe de la maison. On a frôlé l'article le plus court de ce blogue.
 
 ## Ce qu'on retient
 

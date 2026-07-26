@@ -157,6 +157,15 @@ spec:
 
 Between the two repositories, the boundary is clean: `nixos-iac` describes what the machines *are*, `k3s-iac` describes what *runs* on them.
 
+### See for yourself
+
+Both repositories are private — they hold the real addresses, keys and certificates of the lab. But an article about "everything lives in git" rings a little hollow without the git, so I've published a sanitized snapshot of each:
+
+-   **[nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/tree/article/nixos-migration)** — the nine machines
+-   **[k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/tree/article/nixos-migration)** — the workloads running on them
+
+Hostnames, addresses, keys and certificates in there are fictional. The comments are the real ones — including the three lines about `nfs-utils` above, exactly where they live in my own tree. Both links point at the tag matching this article, so they'll keep showing this version even as the repositories evolve with future articles.
+
 ## Learning by piloting
 
 I want to come back to the working method, because it might be the real lesson of that day. The typical flow of a conversion: Claude Code proposes the next host's configuration, I read it, I ask my questions — "why this option?", "what happens if the disk is different?" — we adjust, then it launches the reinstall and watches the machine come back. When something breaks (and across nine heterogeneous machines, something *always* breaks), the diagnosis happens in front of my eyes, explained.

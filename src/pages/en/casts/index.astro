@@ -1,0 +1,52 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import CastList from "../../../components/CastList.astro";
+
+const casts = (await getCollection("castsEn")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<BaseLayout
+  title="Terminal recordings — Le labo de Ludo"
+  description="Real working sessions, condensed and replayable in the browser: what it looks like when an agent drives my infrastructure."
+>
+  <a class="back" href="/en/">&larr; all articles</a>
+
+  <header class="page-header">
+    <h1>Terminal recordings</h1>
+    <p class="lede">
+      Replayable working sessions, taken from the real transcripts. Each one is
+      a condensed reconstruction — never a live capture — and says so plainly
+      above the player.
+    </p>
+  </header>
+
+  <CastList casts={casts} basePath="/en/casts" lang="en" />
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    margin: 0 0 0.6rem;
+  }
+
+  .lede {
+    margin: 0;
+    max-width: var(--measure);
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+</style>

@@ -1,0 +1,97 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import AsciiCast from "../../../components/AsciiCast.astro";
+
+export async function getStaticPaths() {
+  const casts = await getCollection("castsEn");
+  return casts.map((cast) => ({ params: { slug: cast.id }, props: { cast } }));
+}
+
+const { cast } = Astro.props;
+const { Content } = await render(cast);
+
+const articles = await getCollection("blogEn");
+const article = cast.data.article
+  ? articles.find((a) => a.id === cast.data.article)
+  : undefined;
+---
+
+<BaseLayout
+  title={`${cast.data.title} — Le labo de Ludo`}
+  description={cast.data.description}
+>
+  <a class="back" href="/en/casts/">&larr; all recordings</a>
+
+  <article>
+    <header class="cast-header">
+      <h1>{cast.data.title}</h1>
+      <time datetime={cast.data.pubDate.toISOString()}>
+        {
+          cast.data.pubDate.toLocaleDateString("en-CA", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        }
+      </time>
+    </header>
+
+    <AsciiCast
+      src={cast.data.cast}
+      poster={cast.data.poster}
+      caption={cast.data.caption}
+      disclaimer={cast.data.disclaimer}
+    />
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    {
+      article && (
+        <p class="related">
+          The article that tells this story:{" "}
+          <a href={`/en/blog/${article.id}/`}>{article.data.title}</a>
+        </p>
+      )
+    }
+  </article>
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .cast-header {
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    margin: 0 0 0.5rem;
+  }
+
+  time {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-faint);
+  }
+
+  .prose {
+    max-width: var(--measure);
+    line-height: 1.7;
+  }
+
+  .related {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--panel-border);
+    max-width: var(--measure);
+    color: var(--text-muted);
+  }
+</style>

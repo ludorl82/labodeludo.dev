@@ -5,6 +5,7 @@ description: "Claude Code at the controls, me in learning mode: my entire fleet 
 tags: ["DevOps", "Labo", "ludo"]
 heroImage: "/images/blog/banner-nixos-migration-en.svg"
 ---
+import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
 >
@@ -110,6 +111,17 @@ nixos-anywhere --flake .#gpu-01 \
 ```
 
 It uploads a small installer system, `kexec`s into it (the machine reboots into the installer without touching the disk), applies the disko partitioning, installs NixOS and reboots. The machine that comes back is exactly the one described in git.
+
+Written out like that, it sounds smooth. It never is. Here's one full conversion — one of the nine, a virtual machine — condensed: the request, a change of mind mid-flight, two successive walls, and the machine finally coming back on NixOS.
+
+<AsciiCast
+  src="/casts/nixos-migration.cast"
+  poster="npt:0:06"
+  caption="One node conversion from start to finish, condensed into under two minutes. Secure Boot and an initrd that refuses to unpack are the real walls in this session."
+  disclaimer="⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real session transcript. The prompts and the stop messages are the ones from the actual session; the timing is compressed and the long waits are cut. Hostnames sanitized."
+/>
+
+The two walls in that session are worth naming, because neither has anything to do with NixOS: the VM's Secure Boot refused to load an unsigned kernel (so no kexec at all), and once that was sorted, the installer's initrd — roughly 430 MB — wouldn't unpack in the VM's 4 GB of RAM. The diagnosis went through the hypervisor's console, because the machine had no network left at all.
 
 My main GPU server was converted that way, remotely, **with no screen or keyboard attached**. Both virtual machines too. The two Raspberry Pi 5s took a different path — no practical kexec there, you flash an SD image generated from the flake instead — but the result is the same: their configuration lives in the same repository as everything else.
 

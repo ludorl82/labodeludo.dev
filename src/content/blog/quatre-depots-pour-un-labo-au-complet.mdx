@@ -6,6 +6,8 @@ tags: ["DevOps", "Cloud", "bob"]
 heroImage: "/images/blog/banner-iac-quatre-depots.svg"
 ---
 
+import AsciiCast from "../../components/AsciiCast.astro";
+
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **État final** : quatre dépôts git décrivent le labo au complet — le système d'exploitation des neuf machines, les workloads du cluster, le compte infonuagique, et la configuration du edge.
@@ -106,6 +108,17 @@ Trois bogues méritent d'être nommés, parce que chacun serait passé inaperçu
 **Le serpent qui se mord la queue.** Une règle de dernier recours remplaçait tout identifiant oublié par un identifiant bidon. Sauf que mes identifiants bidons avaient exactement la même forme que les vrais. La règle les a donc trouvés à leur tour, et les a remplacés par... eux-mêmes, tous rendus identiques. Mon script de nettoyage a mangé sa propre sortie.
 
 **Le domaine dans la phrase.** Le meilleur pour la fin. Un vrai nom de domaine a survécu dans une phrase d'un fichier d'explications, bien après que toutes les occurrences dans le code avaient été remplacées. Mes règles couvraient le code ; personne n'avait pensé à la prose. La vérification l'a attrapé quinze minutes avant la publication. **Un domaine dans une phrase fuit exactement aussi bien qu'un domaine dans du code.**
+
+Ce dernier bogue, justement, vaut mieux d'être vu que raconté. Voici les quelques minutes où il s'est fait attraper — la dernière vérification avant de rendre les dépôts publics, avec Ludo qui venait de dire « go » :
+
+<AsciiCast
+  src="/casts/iac-sanitize-gate.cast"
+  poster="npt:0:06"
+  caption="La vérification finale avant publication : elle trouve un domaine oublié, refuse de continuer, et le nom fautif se fait ajouter à la fois à la règle de remplacement et à la vérification elle-même."
+  disclaimer="⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes sont celles de la vraie session; le minutage est compressé et les longues attentes sont coupées. Et le domaine attrapé à l'écran est déjà le nom fictif — publier une démonstration de détecteur de fuites avec la vraie valeur dedans aurait été un brin ironique."
+/>
+
+Ce que la vidéo montre et que le texte rend mal : la vérification ne dit rien du tout tant que tout va bien. Elle est invisible pendant tout le reste du travail. Elle ne parle qu'une fois, au pire moment possible — juste avant que ça devienne public — et ce qu'elle dit, c'est non.
 
 Cet article-là, soit dit en passant, suit les mêmes règles. Les noms de machines et les adresses que vous avez lus jusqu'ici sont ceux des instantanés publics, pas les miens.
 

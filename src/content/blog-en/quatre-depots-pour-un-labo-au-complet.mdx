@@ -6,6 +6,8 @@ tags: ["DevOps", "Cloud", "bob"]
 heroImage: "/images/blog/banner-iac-quatre-depots-en.svg"
 ---
 
+import AsciiCast from "../../components/AsciiCast.astro";
+
 > **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
 >
 > -   **End state**: four git repositories describe the whole lab — the operating system of nine machines, the cluster workloads, the cloud account, and the edge configuration.
@@ -106,6 +108,17 @@ Three bugs deserve naming, because each one would have gone unnoticed without th
 **The snake biting its tail.** A last-resort rule replaced any forgotten identifier with a dummy one. Except my dummy identifiers had exactly the same shape as the real ones. So the rule found those too, and replaced them with... themselves, all made identical. My cleaning script, he ate his own output.
 
 **The domain in the sentence.** Best for last. A real domain name survived in a sentence of a documentation file, long after every occurrence in the code had been replaced. My rules covered the code; nobody had thought about the prose. The check, she caught it fifteen minutes before publication. **A domain in a sentence leaks exactly as well as a domain in code.**
+
+That last bug, he is better watched than described. Here are the few minutes where he got caught — the final check before the repositories went public, right after Ludo said go:
+
+<AsciiCast
+  src="/casts/iac-sanitize-gate.cast"
+  poster="npt:0:06"
+  caption="The final check before publication: it finds a forgotten domain, refuses to go on, and the offending name gets added both to the replacement rule and to the check itself."
+  disclaimer="⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real session transcript. The prompts are the ones from the actual session; the timing is compressed and the long waits are cut. And the domain caught on screen is already the fictional name — publishing a demonstration of a leak detector with the real value inside it would have been a little ironic."
+/>
+
+What the recording shows and the text does not: the check, she says nothing at all as long as everything is fine. She is invisible for the whole rest of the work. She speaks once, at the worst possible moment — right before it goes public — and what she says is no.
 
 This article, by the way, follow the same rules. The machine names and addresses you have read so far are the ones from the public snapshots, not mine.
 

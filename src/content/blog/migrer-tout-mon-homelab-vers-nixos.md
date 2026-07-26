@@ -1,7 +1,7 @@
 ---
 title: "Neuf machines, zéro clé USB : migrer tout mon homelab vers NixOS"
 pubDate: 2026-07-25
-description: "En deux jours, tout mon parc — serveurs GPU, machines virtuelles, Raspberry Pi et une instance cloud — est passé sous NixOS, réinstallé à distance avec nixos-anywhere. Voici le dépôt qui décrit tout ça, les pièges rencontrés, et pourquoi je ne reviendrais pas en arrière."
+description: "En une seule journée, avec Claude aux commandes, tout mon parc — serveurs GPU, machines virtuelles, Raspberry Pi et une instance cloud — est passé sous NixOS, réinstallé à distance avec nixos-anywhere. Voici le dépôt qui décrit tout ça, les pièges rencontrés, et pourquoi je ne reviendrais pas en arrière."
 tags: ["DevOps", "Labo", "ludo"]
 heroImage: "/images/blog/banner-nixos-migration.svg"
 ---
@@ -9,16 +9,18 @@ heroImage: "/images/blog/banner-nixos-migration.svg"
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Objectif** : convertir les neuf nœuds de mon cluster k3s — deux serveurs GPU, trois machines virtuelles, deux Raspberry Pi 5 et une instance EC2 — vers NixOS, décrits dans un seul dépôt git.
-> -   **Méthode** : `nixos-anywhere` réinstalle chaque machine par SSH (kexec vers l'installateur, partitionnement déclaratif avec disko), sans écran, sans clé USB, même pour l'instance cloud.
+> -   **Méthode** : `nixos-anywhere` réinstalle chaque machine par SSH (kexec vers l'installateur, partitionnement déclaratif avec disko), sans écran, sans clé USB — l'instance cloud incluse, convertie sur place. Le tout piloté en une seule journée, en sessions avec Claude.
 > -   **Structure** : un flake, un dossier par hôte, des modules partagés pour ce qui est commun (agent k3s, autorité de certification privée).
 > -   **Pièges** : l'installateur qui a besoin d'une IP statique sur un VLAN sans DHCP, le `hardware-configuration.nix` obligatoire sous peine de machine non amorçable, les utilitaires NFS absents du PATH de k3s, le pilote NVIDIA dans les conteneurs, et un micrologiciel de Raspberry Pi qui désactive un cgroup en douce.
 > -   **Gain** : la configuration en git *est* la machine. Réinstaller un nœud redonne exactement le même système, et ajouter un rôle complet se fait en quelques lignes versionnées.
 
 Ça faisait un moment que l'idée me trottait dans la tête : chaque machine de mon labo était un petit flocon unique — un Ubuntu installé en 2023 ici, un Debian ajusté à la main là, des notes éparpillées pour se rappeler pourquoi tel paramètre existe. Le jour où une machine meurt, on ne restaure pas un système : on part en archéologie.
 
-En deux jours, tout ça est devenu du passé. Les neuf nœuds de mon cluster k3s roulent maintenant NixOS, et chacun est entièrement décrit dans un dépôt git que j'appelle `nixos-iac`. Pas d'image dorée, pas de scripts d'installation : des fichiers de configuration déclaratifs, et un outil qui transforme n'importe quelle machine Linux accessible en SSH en installation NixOS toute fraîche.
+En une seule journée, tout ça est devenu du passé. Les neuf nœuds de mon cluster k3s roulent maintenant NixOS — l'instance cloud comprise — et chacun est entièrement décrit dans un dépôt git que j'appelle `nixos-iac`. Pas d'image dorée, pas de scripts d'installation : des fichiers de configuration déclaratifs, et un outil qui transforme n'importe quelle machine Linux accessible en SSH en installation NixOS toute fraîche.
 
-_Cet article a été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue. La migration elle-même a d'ailleurs été réalisée en sessions avec elle._
+Je dois être transparent sur un point : je n'ai pas tapé ces neuf conversions à la main. C'est Claude, en sessions de travail continues, qui a piloté la migration — écrire les configurations, lancer les `nixos-anywhere`, diagnostiquer chaque piège au fur et à mesure — pendant que je validais les décisions et gardais la main sur les moments critiques. Neuf machines en une journée, ça aurait été une couple de fins de semaine en solo.
+
+_Cet article a lui aussi été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
 
 ## Un flake, neuf machines
 
@@ -94,9 +96,13 @@ nixos-anywhere --flake .#gpu-01 \
 
 Il téléverse un petit système d'installation, fait un `kexec` dedans (la machine redémarre dans l'installateur sans toucher au disque), applique le partitionnement disko, installe NixOS et redémarre. La machine qui revient est exactement celle décrite dans git.
 
-Mon serveur GPU principal a été converti comme ça, à distance, **sans écran ni clavier branchés**. Les deux machines virtuelles pareil. Même l'instance EC2 qui héberge le plan de contrôle k3s y est passée — convertie sur place, en transférant au passage les fichiers d'identité du cluster pour que les agents ne s'aperçoivent de rien. Voir son unique nœud de plan de contrôle se faire reformater à distance, c'est le genre de moment où on relit la commande trois fois avant de peser sur Entrée. Le cluster est revenu comme si de rien n'était.
+Mon serveur GPU principal a été converti comme ça, à distance, **sans écran ni clavier branchés**. Les deux machines virtuelles pareil. Les deux Raspberry Pi 5 ont suivi un chemin différent — pas de kexec pratique là-dessus, on flashe plutôt une image SD générée par le flake — mais le résultat est le même : leur configuration vit dans le même dépôt que le reste.
 
-Les deux Raspberry Pi 5 ont suivi un chemin différent — pas de kexec pratique là-dessus, on flashe plutôt une image SD générée par le flake — mais le résultat est le même : leur configuration vit dans le même dépôt que le reste.
+### Oui, même l'instance cloud
+
+Le morceau dont je suis le plus content : l'instance EC2 qui héberge le plan de contrôle k3s y est passée elle aussi. Pas de nouvelle instance, pas de bascule DNS — la machine existante, convertie **sur place** par le même mécanisme kexec, à travers SSH, comme n'importe quel serveur du sous-sol. Le seul traitement de faveur : transférer pendant l'installation les fichiers d'identité du cluster (certificats et base etcd), pour que la machine qui redémarre sous NixOS soit toujours, aux yeux des agents, le même plan de contrôle qu'avant.
+
+Voir son unique nœud de plan de contrôle se faire reformater à distance, c'est le genre de moment où on relit la commande trois fois avant de peser sur Entrée. Le cluster est revenu comme si de rien n'était, et cette instance est maintenant décrite dans git au même titre que les huit autres nœuds — la frontière entre « mes machines » et « le cloud » n'existe plus dans le dépôt.
 
 ## Les pièges, parce qu'il y en a toujours
 
@@ -138,7 +144,7 @@ Entre les deux dépôts, la frontière est nette : `nixos-iac` décrit ce que *s
 
 ## Ce que ça change concrètement
 
-Une semaine après la migration, j'ai voulu transformer mon serveur GPU en console de salon : interface graphique complète et Steam pour le Remote Play. Sur l'ancien monde, ça aurait été une heure de `apt install` et de configuration manuelle que personne n'aurait documentée. Là, ç'a été une trentaine de lignes dans son `configuration.nix` — commitées, poussées, appliquées avec `nixos-rebuild switch`. Si cette machine brûle demain, sa remplaçante aura Steam aussi.
+À peine la migration terminée, j'ai voulu transformer mon serveur GPU en console de salon : interface graphique complète et Steam pour le Remote Play. Sur l'ancien monde, ça aurait été une heure de `apt install` et de configuration manuelle que personne n'aurait documentée. Là, ç'a été une trentaine de lignes dans son `configuration.nix` — commitées, poussées, appliquées avec `nixos-rebuild switch`. Si cette machine brûle demain, sa remplaçante aura Steam aussi.
 
 La migration a aussi eu un effet de bord inattendu : elle a *débusqué* la configuration artisanale. Tout ce qui avait été installé à la main au fil des ans et jamais noté — un lien symbolique par-ci, un script dans un coin par-là — s'est manifesté en cassant après conversion. Chaque casse était une occasion de rapatrier le morceau manquant dans le dépôt. C'est le grand ménage du printemps, mais avec un compilateur qui vérifie qu'on n'a rien oublié.
 

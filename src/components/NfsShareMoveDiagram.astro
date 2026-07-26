@@ -1,0 +1,201 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+  lang?: "fr" | "en";
+}
+
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma : les trois références du cluster au stockage NFS — le provisionneur dynamique, la StorageClass et un volume persistant statique — pointent toutes vers un seul chemin d'export. Ce chemin reste identique avant et après la migration. Avant, il menait au partage sur le disque dur, renommé depuis en k8s-hdd et conservé comme retour arrière ; après, il mène au nouveau partage créé sous le même nom sur le SSD. Comme le chemin ne change pas, aucun objet Kubernetes n'a été modifié.",
+    cluster: "grappe k3s",
+    provisionneur: "provisionneur",
+    provisionneurSub: "NFS_SERVER / NFS_PATH",
+    storageClass: "StorageClass",
+    storageClassSub: "nfs-client",
+    pvStatique: "PV statique",
+    pvStatiqueSub: "volume persistant",
+    cheminExport: "chemin d'export",
+    inchange: "inchangé",
+    aucunObjet: "aucun objet Kubernetes modifié",
+    avant: "avant",
+    apres: "après",
+    disqueDur: "disque dur 8 To",
+    disqueDurSub: "renommé k8s-hdd",
+    disqueDurSub2: "conservé — retour arrière",
+    ssd: "SSD 480 Go",
+    ssdSub: "nouveau partage k8s",
+    ssdSub2: "volume statique",
+  },
+  en: {
+    ariaLabel:
+      "Diagram: the cluster's three references to NFS storage — the dynamic provisioner, the StorageClass and a static persistent volume — all point at a single export path. That path stays identical before and after the migration. Before, it led to the share on the hard drive, since renamed to k8s-hdd and kept as a rollback; after, it leads to the new share created under the same name on the SSD. Because the path never changes, no Kubernetes object was modified.",
+    cluster: "k3s cluster",
+    provisionneur: "provisioner",
+    provisionneurSub: "NFS_SERVER / NFS_PATH",
+    storageClass: "StorageClass",
+    storageClassSub: "nfs-client",
+    pvStatique: "static PV",
+    pvStatiqueSub: "persistent volume",
+    cheminExport: "export path",
+    inchange: "unchanged",
+    aucunObjet: "no Kubernetes object modified",
+    avant: "before",
+    apres: "after",
+    disqueDur: "8 TB hard drive",
+    disqueDurSub: "renamed k8s-hdd",
+    disqueDurSub2: "kept — rollback",
+    ssd: "480 GB SSD",
+    ssdSub: "new k8s share",
+    ssdSub2: "static volume",
+  },
+} as const;
+
+const t = copy[lang];
+---
+
+<figure class="nfs-move-diagram">
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 340" role="img" aria-label={t.ariaLabel}>
+      <defs>
+        <marker id="nfs-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="nfs-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- grappe k3s -->
+      <rect x="20" y="60" width="230" height="220" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="38" y="82" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.cluster}</text>
+
+      <rect x="40" y="95" width="190" height="50" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="135" y="115" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">{t.provisionneur}</text>
+      <text x="135" y="131" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.provisionneurSub}</text>
+
+      <rect x="40" y="155" width="190" height="50" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="135" y="175" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">{t.storageClass}</text>
+      <text x="135" y="191" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.storageClassSub}</text>
+
+      <rect x="40" y="215" width="190" height="50" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="135" y="235" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">{t.pvStatique}</text>
+      <text x="135" y="251" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.pvStatiqueSub}</text>
+
+      <!-- convergence des trois références vers le chemin d'export -->
+      <path d="M230,120 L280,120 L280,170" fill="none" stroke="var(--text-faint)" stroke-width="1.5" />
+      <path d="M230,240 L280,240 L280,190" fill="none" stroke="var(--text-faint)" stroke-width="1.5" />
+      <path d="M230,180 L328,180" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#nfs-arrow)" />
+
+      <!-- chemin d'export : le pivot invariant -->
+      <rect x="330" y="148" width="180" height="66" rx="6" fill="var(--panel)" stroke="var(--accent-live)" stroke-width="2" />
+      <text x="420" y="169" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.cheminExport}</text>
+      <text x="420" y="191" text-anchor="middle" font-family="var(--font-mono)" font-size="16" font-weight="600" fill="var(--accent-live)">/k8s</text>
+      <text x="420" y="206" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.inchange}</text>
+
+      <text x="420" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.aucunObjet}</text>
+
+      <!-- avant : disque dur -->
+      <rect x="620" y="55" width="255" height="90" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="747" y="82" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text-faint)">{t.disqueDur}</text>
+      <text x="747" y="104" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{t.disqueDurSub}</text>
+      <text x="747" y="122" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.disqueDurSub2}</text>
+
+      <path d="M510,168 L560,168 L560,100 L618,100" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#nfs-arrow)" />
+      <text x="566" y="72" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.avant}</text>
+
+      <!-- après : SSD -->
+      <rect x="620" y="215" width="255" height="90" rx="6" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" />
+      <text x="747" y="242" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent-live)">{t.ssd}</text>
+      <text x="747" y="264" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">{t.ssdSub}</text>
+      <text x="747" y="282" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.ssdSub2}</text>
+
+      <path d="M510,194 L560,194 L560,260 L618,260" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#nfs-arrow-live)" />
+      <text x="566" y="296" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{t.apres}</text>
+    </svg>
+  </div>
+  <figcaption>
+    {
+      context === "architecture" ? (
+        lang === "en" ? (
+          <>
+            Detail of how the <a href="/inventaire/hote-conteneurs/">k3s cluster</a> reaches the{" "}
+            <a href="/inventaire/stockage/">NAS</a>: all three references to NFS storage resolve to one export
+            path. Renaming the old share <em>before</em> creating the new one under the original name keeps that
+            path fixed, so the storage moved from the hard drive to the SSD without a single Kubernetes object
+            being edited. See the article:{" "}
+            <a href="/blog/deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes/">
+              moving my NFS shares to an SSD
+            </a>.
+          </>
+        ) : (
+          <>
+            Détail du lien entre la <a href="/inventaire/hote-conteneurs/">grappe k3s</a> et le{" "}
+            <a href="/inventaire/stockage/">NAS</a> : les trois références au stockage NFS aboutissent toutes à un
+            seul chemin d'export. Renommer l'ancien partage <em>avant</em> de créer le nouveau sous le nom
+            d'origine garde ce chemin fixe — le stockage est donc passé du disque dur au SSD sans qu'un seul objet
+            Kubernetes soit modifié. Voir l'article :{" "}
+            <a href="/blog/deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes/">
+              déplacer mes partages NFS sur un SSD
+            </a>.
+          </>
+        )
+      ) : lang === "en" ? (
+        <>
+          The export path is the pivot: everything the cluster knows about NFS storage resolves to it, so swapping
+          what sits behind it changes the disk without changing the cluster. See the{" "}
+          <a href="/architecture/">architecture overview</a>.
+        </>
+      ) : (
+        <>
+          Le chemin d'export est le pivot : tout ce que la grappe connaît du stockage NFS y aboutit, donc
+          remplacer ce qu'il y a derrière change le disque sans rien changer à la grappe. Voir la{" "}
+          <a href="/architecture/">vue d'ensemble de l'architecture</a>.
+        </>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .nfs-move-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 620px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+
+  figcaption code {
+    font-family: var(--font-mono);
+    background: var(--panel);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+</style>

@@ -63,7 +63,10 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
   stockage: {
     name: "Stockage (NAS)",
     description: "Stockage de fichiers centralisé pour le réseau serveurs.",
-    articles: ["convention-ipv6-vlan-serveurs"],
+    articles: [
+      "convention-ipv6-vlan-serveurs",
+      "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
+    ],
   },
   "pipeline-media": {
     name: "Pipeline média",
@@ -93,6 +96,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "deployer-un-site-web-statique-avec-wordpress-et-s3",
       "convention-ipv6-vlan-serveurs",
       "deployer-un-cluster-k3s-avec-claude-code",
+      "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
     ],
   },
   domotique: {

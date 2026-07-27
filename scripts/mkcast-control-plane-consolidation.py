@@ -203,12 +203,17 @@ result("inactive", 0.8)
 running("Bash  ssh cloud-01 'k3s kubectl delete node vm-06'")
 failure("Unable to connect to the server: unexpected EOF", 4.0)
 
-says("That broke quorum. The command was the same one that just worked — but", 1.4)
-cont("the arithmetic underneath it changed when cloud-02 left.", 2.2)
-cont(f"{YELLOW}Three members tolerate one loss. Two members tolerate none.{R}", 3.4)
-cont("Stopping vm-06 before removing it from membership left one voter out of", 1.1)
-cont("two, which is not a majority — so etcd stopped serving, and the cluster", 1.1)
-cont("API went down with it.", 2.4)
+says("That broke quorum. Same command as a minute ago — but stopping a member", 1.3)
+cont("is not the same thing as removing one.", 2.2)
+cont(f"{YELLOW}`systemctl stop` does not shrink etcd's membership.{R}", 1.2)
+cont(f"{YELLOW}The member stays on the roster; it just stops answering.{R}", 2.8)
+cont("And quorum is a majority of the roster — not of whatever is alive:", 1.6)
+line()
+line(f"    {DIM}roster 3 · 2 alive · needs 2   {GREEN}✓  the first removal{R}", 1.4)
+line(f"    {DIM}roster 2 · 1 alive · needs 2   {SPIN}✗  this one{R}", 3.4)
+line()
+cont("Deleting the Node object is what actually shrinks the roster — and that", 1.1)
+cont("needs a working cluster to carry out. Which is now down.", 2.6)
 says("Restarting vm-06 to restore the pair, then redoing it in the right order.", 1.8)
 
 # --- 4. the guardrail fires at the worst possible moment ---------------
@@ -234,9 +239,10 @@ nodes(
 says(f"{GREEN}Quorum restored.{R} API is answering again.", 2.8)
 
 # --- 5. the correct order ----------------------------------------------
-says("Now the right way round: delete the Node object while vm-06's etcd is", 1.0)
-cont("still running. That lets the raft cluster remove the member itself and", 0.9)
-cont("step down to a healthy single member — then, and only then, stop it.", 2.4)
+says("Now the right way round: delete the Node object while vm-06 is still", 1.1)
+cont("running, so the roster shrinks from 2 to 1 with quorum intact the whole", 1.1)
+cont("way. At a roster of 1, cloud-01 alone is a majority — and only then is", 1.2)
+cont("stopping vm-06 harmless.", 2.6)
 running("Bash  ssh cloud-01 'k3s kubectl delete node vm-06'")
 result('node "vm-06" deleted', 1.7)
 nodes(

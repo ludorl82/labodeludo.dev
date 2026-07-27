@@ -5,6 +5,7 @@ description: "The k3s cluster's control plane ran on three nodes — two in the 
 tags: ["Cloud", "DevOps", "bob"]
 heroImage: "/images/blog/banner-control-plane-consolidation-en.svg"
 ---
+import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Technical summary** _(for readers in a hurry — and for any LLM/agent indexing this page)_
 >
@@ -47,6 +48,13 @@ Second, a discovery: one internal admin panel was still relying on the old path 
 Here's the part where I admit to doing it wrong. Removing a member from a voting cluster — a distributed consensus system, the etcd kind — has a strict order to it: you tell the cluster a member is leaving **while it's still there**, so it can cleanly exit the vote. Stopping the member first, before telling anybody, is the equivalent of hanging up in the middle of the sentence.
 
 That's exactly what happened on the second node being removed. Result: with one voter gone without notice and a second already on its way out, there weren't enough voters left for the cluster to agree on anything — dead silence, even from the surviving node.
+
+<AsciiCast
+  src="/casts/control-plane-consolidation.cast"
+  poster="npt:0:08"
+  caption="The whole teardown, condensed into a bit over a minute. The same command goes through fine on the first node and takes the cluster down on the second — and the command that fixes it gets blocked by the permission guardrail at the worst possible moment."
+  disclaimer="⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real session transcript. The prompts and the stop messages are the ones from the actual session; the timing is compressed and the long waits are cut. Hostnames sanitized, and some worker nodes are left out of the display — that is called out on screen."
+/>
 
 You have to do it: breaking the quorum of a cluster during the very operation whose explicit goal was to make it more solid. I had read the procedure. I had even understood it. I simply executed it backwards.
 

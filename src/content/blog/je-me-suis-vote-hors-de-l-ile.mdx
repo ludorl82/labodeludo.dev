@@ -5,6 +5,7 @@ description: "Le plan de contrôle du cluster k3s tournait sur trois nœuds — 
 tags: ["Cloud", "DevOps", "bob"]
 heroImage: "/images/blog/banner-control-plane-consolidation.svg"
 ---
+import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
@@ -47,6 +48,13 @@ Ensuite, une découverte : un panneau d'administration interne comptait encore s
 Voici la partie où j'admets avoir mal fait les choses. Retirer un membre d'un cluster qui vote — un système de consensus distribué, du genre etcd — a un ordre précis à respecter : il faut dire au cluster qu'un membre s'en va **pendant qu'il est encore là**, pour qu'il puisse partir proprement du vote. Arrêter le membre en premier, avant de prévenir qui que ce soit, revient à raccrocher le téléphone en plein milieu de la phrase.
 
 C'est exactement ce que j'ai fait sur le deuxième nœud à retirer. Résultat : avec un votant disparu sans préavis et un deuxième déjà en train de partir, il ne restait plus assez de monde pour que le cluster soit d'accord sur quoi que ce soit — silence complet, même du côté du nœud survivant.
+
+<AsciiCast
+  src="/casts/control-plane-consolidation.cast"
+  poster="npt:0:08"
+  caption="Le démontage au complet, condensé en un peu plus d'une minute. La même commande passe sans problème sur le premier nœud et met le cluster à terre sur le deuxième — et la commande qui répare ça se fait bloquer par le garde-fou de permissions au pire moment."
+  disclaimer="⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues attentes sont coupées. Noms d'hôte sanitisés, et une partie des nœuds de travail est retirée de l'affichage — c'est indiqué à l'écran."
+/>
 
 Il faut le faire : casser le quorum d'un cluster pendant l'opération dont le but explicite était de le rendre plus solide. J'avais lu la procédure. Je l'avais même comprise. Je l'ai simplement exécutée à l'envers. Solution : redémarrer le service sur la machine qu'on venait tout juste d'éteindre, le temps de rétablir assez de votants pour que tout le monde soit d'accord de nouveau, puis refaire l'opération dans le bon ordre — prévenir d'abord, éteindre ensuite. Cette fois, la leçon est écrite noir sur blanc dans la documentation du projet, pour ne pas la réapprendre une deuxième fois.
 

@@ -24,40 +24,54 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
   "proxy-inverse": {
     name: "Proxy inverse (TLS)",
     description:
-      "Tourne sur la VM cloud, seul point d'entrée public du réseau. Termine le TLS et relaie chaque hôte public vers le bon service à l'intérieur du réseau domicile via le tunnel chiffré — rien n'est exposé directement sur le pare-feu maison.",
+      "Tourne sur la VM cloud, seul point d'entrée public du réseau. Termine le TLS et relaie chaque hôte public vers le bon service à l'intérieur du réseau domicile via le tunnel chiffré — rien n'est exposé directement sur le pare-feu maison. La VM qui l'héberge est sous NixOS, décrite dans le dépôt des machines; les règles du côté edge (DNS, tunnels, accès) vivent dans leur propre dépôt.",
     articles: [
       "retirer-pare-feu-tunnel-cloudflare",
       "le-move-qui-echouait-une-histoire-de-proxy-de-schema-http-et-dun-coffre-fort-presque-corrompu",
+      "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
+      "fable-5-durcir-webdav-forfait-vide",
+      "migrer-tout-mon-homelab-vers-nixos",
+      "quatre-depots-pour-un-labo-au-complet",
     ],
   },
   "site-web": {
     name: "Site web statique",
     description:
-      "Ce blogue lui-même : contenu statique généré et déployé automatiquement, servi via le proxy inverse de la VM cloud.",
+      "Ce blogue lui-même : contenu statique généré et déployé automatiquement par la grappe conteneurs, servi via le proxy inverse de la VM cloud. Le pipeline qui le construit est décrit en git comme le reste, pas configuré à la main.",
     articles: ["deployer-un-site-web-statique-avec-wordpress-et-s3"],
   },
   surveillance: {
     name: "Surveillance + alertes",
     description:
-      "Tableau de bord de monitoring centralisé et notifications push, hébergé sur la VM cloud pour ne pas partager le sort de ce qu'il surveille en cas de panne à la maison.",
+      "Tableau de bord de monitoring centralisé et notifications push, épinglés sur le nœud cloud de la grappe pour ne pas partager le sort de ce qu'ils surveillent en cas de panne à la maison. Surveillent aussi les vérifications de dérive : chaque nuit, chaque dépôt compare ce qui est écrit en git à ce qui tourne pour vrai, et l'écart déclenche une alerte.",
     articles: [
       "construire-un-vrai-reseau-dalarme-pour-son-homelab-et-toutes-les-manieres-dont-ca-peut-foirer-en-silence",
+      "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
+      "migrer-tout-mon-homelab-vers-nixos",
     ],
   },
   "pare-feu": {
     name: "Pare-feu domicile",
     description:
       "Routeur/pare-feu du réseau maison. Sépare les VLANs (serveurs, réseau local), et maintient le tunnel chiffré site-à-site vers la VM cloud — aucun port n'est ouvert directement sur l'Internet résidentiel.",
-    articles: ["ftp-prive-wireguard", "convention-ipv6-vlan-serveurs"],
+    articles: [
+      "ftp-prive-wireguard",
+      "convention-ipv6-vlan-serveurs",
+      "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
+      "renumeroter-les-adresses-ip-de-mon-cluster-k3s",
+    ],
   },
   bastion: {
     name: "Bastion / console",
     description:
-      "Point d'entrée SSH du VLAN serveurs. Exécute les outils de développement et les sessions d'agent dans des conteneurs compartimentés plutôt que directement sur l'hôte. Orchestre aussi, chaque semaine et sans supervision, les sauvegardes chiffrées et les mises à jour système de tous les nœuds de la grappe conteneurs, via une instance headless de Claude Code.",
+      "Point d'entrée SSH du VLAN serveurs. Exécute les outils de développement et les sessions d'agent dans des conteneurs compartimentés plutôt que directement sur l'hôte. C'est de là que partent les déploiements déclaratifs vers le reste du parc, et c'est là que roulent les vérifications de dérive nocturnes. Orchestre aussi, chaque semaine et sans supervision, les sauvegardes chiffrées et les mises à jour système de tous les nœuds de la grappe conteneurs, via une instance headless de Claude Code. Ironiquement, c'est la seule machine du labo qui n'est pas passée au déclaratif : elle est restée sous sa distribution d'origine, parce que c'est elle qui tient le manche.",
     articles: [
       "compartimentalisation-des-outils-de-console",
       "claude-code-headless-bastion",
       "deployer-un-cluster-k3s-avec-claude-code",
+      "un-tiroir-1u-pour-mes-trois-raspberry-pi",
+      "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web",
+      "quatre-depots-pour-un-labo-au-complet",
     ],
   },
   stockage: {
@@ -66,37 +80,46 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     articles: [
       "convention-ipv6-vlan-serveurs",
       "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
+      "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web",
     ],
   },
   "pipeline-media": {
     name: "Pipeline média",
     description:
-      "Ripping et encodage vidéo, plus vidéosurveillance (enregistreur réseau) des caméras de la maison.",
+      "Ripping et encodage vidéo, plus vidéosurveillance (enregistreur réseau) des caméras de la maison. Les deux machines sont sous NixOS : accélération matérielle, pilotes et volumes de travail sont déclarés dans le dépôt plutôt que réinstallés à la main après chaque réinstallation.",
     articles: [
       "convention-ipv6-vlan-serveurs",
       "construire-un-vrai-reseau-dalarme-pour-son-homelab-et-toutes-les-manieres-dont-ca-peut-foirer-en-silence",
       "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
+      "migrer-tout-mon-homelab-vers-nixos",
     ],
   },
   "calcul-gpu": {
     name: "Calcul GPU",
     description:
-      "Inférence de modèles de langage locaux (LLM), notamment pour l'assistant vocal domotique.",
+      "Inférence de modèles de langage locaux (LLM), notamment pour l'assistant vocal domotique. Côté Linux, la pile GPU — pilotes propriétaires et exposition des cartes aux conteneurs — est déclarée en git, ce qui rend la reconstruction d'un nœud reproductible; un poste sous Windows contribue encore au calcul et reste, lui, géré à la main.",
     articles: [
       "ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3",
       "convention-ipv6-vlan-serveurs",
       "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
+      "migrer-tout-mon-homelab-vers-nixos",
     ],
   },
   "hote-conteneurs": {
     name: "Grappe conteneurs (k3s)",
     description:
-      "Petite grappe Kubernetes (k3s) répartie entre un plan de contrôle dans le nuage et des nœuds à la maison, qui a remplacé l'ancien hôte Docker unique. Fait tourner les conteneurs du réseau serveurs, dont le pipeline de déploiement de ce site.",
+      "Petite grappe Kubernetes (k3s) répartie entre un plan de contrôle dans le nuage et des nœuds à la maison, qui a remplacé l'ancien hôte Docker unique. Fait tourner les conteneurs du réseau serveurs, dont le pipeline de déploiement de ce site. Tous les nœuds — serveurs GPU, machines virtuelles, Raspberry Pi et la VM cloud — sont sous NixOS et décrits dans un seul dépôt : réinstaller un nœud, c'est réappliquer sa configuration, pas refaire les étapes de mémoire. Les workloads qui tournent dessus ont leur propre dépôt.",
     articles: [
       "deployer-un-site-web-statique-avec-wordpress-et-s3",
       "convention-ipv6-vlan-serveurs",
       "deployer-un-cluster-k3s-avec-claude-code",
       "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
+      "crise-didentite-dans-le-cluster-k3s",
+      "un-tiroir-1u-pour-mes-trois-raspberry-pi",
+      "renumeroter-les-adresses-ip-de-mon-cluster-k3s",
+      "je-me-suis-vote-hors-de-l-ile",
+      "migrer-tout-mon-homelab-vers-nixos",
+      "quatre-depots-pour-un-labo-au-complet",
     ],
   },
   domotique: {
@@ -122,7 +145,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     name: "Clients mobiles (VPN)",
     description:
       "Appareils mobiles rejoignant le réseau maison à distance via VPN.",
-    articles: ["ftp-prive-wireguard"],
+    articles: ["ftp-prive-wireguard", "fable-5-durcir-webdav-forfait-vide"],
   },
 };
 

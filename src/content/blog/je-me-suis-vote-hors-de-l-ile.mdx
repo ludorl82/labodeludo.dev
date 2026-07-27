@@ -47,7 +47,11 @@ Ensuite, une découverte : un panneau d'administration interne comptait encore s
 
 Voici la partie où j'admets avoir mal fait les choses. Retirer un membre d'un cluster qui vote — un système de consensus distribué, du genre etcd — a un ordre précis à respecter : il faut dire au cluster qu'un membre s'en va **pendant qu'il est encore là**, pour qu'il puisse partir proprement du vote. Arrêter le membre en premier, avant de prévenir qui que ce soit, revient à raccrocher le téléphone en plein milieu de la phrase.
 
-C'est exactement ce que j'ai fait sur le deuxième nœud à retirer. Résultat : avec un votant disparu sans préavis et un deuxième déjà en train de partir, il ne restait plus assez de monde pour que le cluster soit d'accord sur quoi que ce soit — silence complet, même du côté du nœud survivant.
+Sauf que le vrai piège est un cran plus bas, et c'est celui-là que je n'avais pas vu venir : **éteindre un membre ne le retire pas de la liste des votants.** Son siège reste là, bien au chaud — la machine arrête simplement de répondre quand on l'appelle. Et la majorité se calcule sur le nombre de sièges, pas sur le nombre de machines encore debout.
+
+Trois sièges, deux machines vivantes : c'est une majorité, ça passe. Deux sièges, une machine vivante : ce n'en est pas une, et tout se fige. C'est pour ça que la même séquence de commandes est passée sans broncher sur le premier nœud et a tout mis à terre sur le deuxième — ce n'est pas la commande qui avait changé, c'est le nombre de sièges autour de la table.
+
+Et comme c'est justement l'annonce du départ qui libère le siège, et que cette annonce a besoin d'un cluster en état de marche pour être enregistrée, éteindre la machine en premier referme la seule porte de sortie. Résultat sur le deuxième nœud : silence complet, même du côté du nœud survivant.
 
 <AsciiCast
   src="/casts/control-plane-consolidation.cast"

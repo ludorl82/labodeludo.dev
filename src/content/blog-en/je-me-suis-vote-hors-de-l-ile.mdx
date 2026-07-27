@@ -47,7 +47,11 @@ Second, a discovery: one internal admin panel was still relying on the old path 
 
 Here's the part where I admit to doing it wrong. Removing a member from a voting cluster — a distributed consensus system, the etcd kind — has a strict order to it: you tell the cluster a member is leaving **while it's still there**, so it can cleanly exit the vote. Stopping the member first, before telling anybody, is the equivalent of hanging up in the middle of the sentence.
 
-That's exactly what happened on the second node being removed. Result: with one voter gone without notice and a second already on its way out, there weren't enough voters left for the cluster to agree on anything — dead silence, even from the surviving node.
+Except the real trap sits one level below that, and it's the one I didn't see coming: **shutting a member down does not take it off the list of voters.** Its seat stays right there, still warm — the machine just stops answering when called. And the majority is counted against the number of seats, not against the number of machines still standing.
+
+Three seats, two machines alive: that's a majority, it goes through. Two seats, one machine alive: it isn't one, and everything freezes. That's why the very same sequence of commands went through without a hitch on the first node and took everything down on the second — the command hadn't changed, the number of seats around the table had.
+
+And since announcing the departure is precisely what frees up the seat, and that announcement needs a working cluster to be recorded, shutting the machine down first closes the only way out. Result on the second node: dead silence, even from the surviving node.
 
 <AsciiCast
   src="/casts/control-plane-consolidation.cast"

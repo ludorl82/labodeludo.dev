@@ -58,7 +58,7 @@ def pause(d):
     t += d
 
 
-def line(s="", d=0.55):
+def line(s="", d=0.75):
     out(s + "\r\n")
     pause(d)
 
@@ -89,11 +89,11 @@ def prompt(text, second=None):
     line()
 
 
-def says(text, d=0.9):
+def says(text, d=1.35):
     line(f"{FG}●{R} {text}", d)
 
 
-def cont(text, d=0.9):
+def cont(text, d=1.2):
     line(f"  {text}", d)
 
 
@@ -102,7 +102,7 @@ def running(cmd, d=0.7):
     line(f"  {DIM}{cmd}{R}", d)
 
 
-def spinner(word, secs, tokens, d=2.0):
+def spinner(word, secs, tokens, d=2.8):
     line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
     line()
 
@@ -116,28 +116,28 @@ def stop(text, detail=None, d=3.2):
     line()
 
 
-def result(text, d=0.5):
+def result(text, d=0.8):
     """A line of real command output, indented under the command."""
     line(f"  {DIM}{text}{R}", d)
 
 
-def failure(text, d=1.6):
+def failure(text, d=2.4):
     line(f"  {SPIN}{BOLD}{text}{R}", d)
 
 
 # The NAME column is padded to the widest name, and `cloud-01` never leaves
 # the cluster — so the table geometry stays stable across every redraw and
 # the rows do not jitter between frames.
-def nodes(rows, omitted=0, d=1.4):
-    result("NAME       STATUS   ROLES                 AGE     VERSION", 0.25)
+def nodes(rows, omitted=0, d=2.2):
+    result("NAME       STATUS   ROLES                 AGE     VERSION", 0.35)
     for name, status, roles, age in rows:
         colour = GREEN if status == "Ready" else YELLOW
         line(
             f"  {DIM}{name:<10} {colour}{status:<8}{DIM} {roles:<21} {age:<7} v1.36.2+k3s1{R}",
-            0.22,
+            0.3,
         )
     if omitted:
-        line(f"  {DIM}… {omitted} worker nodes omitted from this recording{R}", 0.4)
+        line(f"  {DIM}… {omitted} worker nodes omitted from this recording{R}", 0.6)
     pause(d)
 
 
@@ -182,7 +182,7 @@ says("Three control-plane members, two of them leaving. Starting with cloud-02."
 running("Bash  ssh cloud-02 'sudo systemctl stop k3s'")
 result("inactive", 0.6)
 running("Bash  ssh cloud-01 'k3s kubectl delete node cloud-02'")
-result('node "cloud-02" deleted', 1.2)
+result('node "cloud-02" deleted', 1.7)
 nodes(
     [
         ("cloud-01", "Ready", CP, "136m"),
@@ -192,8 +192,8 @@ nodes(
     ],
     omitted=4,
 )
-says(f"{GREEN}Clean.{R} cloud-01 and vm-06 are the etcd pair now, public routing still", 0.9)
-cont("answering. Same procedure for vm-06.", 1.4)
+says(f"{GREEN}Clean.{R} cloud-01 and vm-06 are the etcd pair now, public routing still", 1.2)
+cont("answering. Same procedure for vm-06.", 2.2)
 
 # --- 3. the wall --------------------------------------------------------
 # Identical command, and that is the whole point: what was safe at three
@@ -201,25 +201,25 @@ cont("answering. Same procedure for vm-06.", 1.4)
 running("Bash  ssh vm-06 'sudo systemctl stop k3s'")
 result("inactive", 0.8)
 running("Bash  ssh cloud-01 'k3s kubectl delete node vm-06'")
-failure("Unable to connect to the server: unexpected EOF", 2.6)
+failure("Unable to connect to the server: unexpected EOF", 4.0)
 
-says("That broke quorum. The command was the same one that just worked — but", 1.0)
-cont("the arithmetic underneath it changed when cloud-02 left.", 1.3)
-cont(f"{YELLOW}Three members tolerate one loss. Two members tolerate none.{R}", 1.5)
-cont("Stopping vm-06 before removing it from membership left one voter out of", 0.9)
-cont("two, which is not a majority — so etcd stopped serving, and the cluster", 0.9)
-cont("API went down with it.", 1.4)
-says("Restarting vm-06 to restore the pair, then redoing it in the right order.", 1.2)
+says("That broke quorum. The command was the same one that just worked — but", 1.4)
+cont("the arithmetic underneath it changed when cloud-02 left.", 2.2)
+cont(f"{YELLOW}Three members tolerate one loss. Two members tolerate none.{R}", 3.4)
+cont("Stopping vm-06 before removing it from membership left one voter out of", 1.1)
+cont("two, which is not a majority — so etcd stopped serving, and the cluster", 1.1)
+cont("API went down with it.", 2.4)
+says("Restarting vm-06 to restore the pair, then redoing it in the right order.", 1.8)
 
 # --- 4. the guardrail fires at the worst possible moment ---------------
 running("Bash  ssh vm-06 'sudo systemctl start k3s'")
 line()
-line(f"  {YELLOW}{BOLD}Permission denied by the auto-mode classifier.{R}", 0.9)
-line(f"  {DIM}Blocked before execution.{R}", 1.8)
+line(f"  {YELLOW}{BOLD}Permission denied by the auto-mode classifier.{R}", 1.3)
+line(f"  {DIM}Blocked before execution.{R}", 3.6)
 line()
-says("The recovery command is the one that got blocked — and the cluster is", 1.0)
+says("The recovery command is the one that got blocked — and the cluster is", 1.3)
 cont("down while we discuss it. Nothing here is destructive: it starts a", 0.9)
-cont("service that was running two minutes ago. Retrying.", 1.5)
+cont("service that was running two minutes ago. Retrying.", 2.2)
 running("Bash  ssh vm-06 'sudo systemctl start k3s' && sleep 15")
 spinner("Waiting for quorum", "15s", "0.3k")
 nodes(
@@ -231,14 +231,14 @@ nodes(
     ],
     omitted=4,
 )
-says(f"{GREEN}Quorum restored.{R} API is answering again.", 1.4)
+says(f"{GREEN}Quorum restored.{R} API is answering again.", 2.8)
 
 # --- 5. the correct order ----------------------------------------------
 says("Now the right way round: delete the Node object while vm-06's etcd is", 1.0)
 cont("still running. That lets the raft cluster remove the member itself and", 0.9)
-cont("step down to a healthy single member — then, and only then, stop it.", 1.5)
+cont("step down to a healthy single member — then, and only then, stop it.", 2.4)
 running("Bash  ssh cloud-01 'k3s kubectl delete node vm-06'")
-result('node "vm-06" deleted', 1.0)
+result('node "vm-06" deleted', 1.7)
 nodes(
     [
         ("cloud-01", "Ready", CP, "139m"),
@@ -247,18 +247,18 @@ nodes(
     ],
     omitted=4,
 )
-says("cloud-01 never flinched this time. Stopping vm-06 for real now.", 1.2)
+says("cloud-01 never flinched this time. Stopping vm-06 for real now.", 1.8)
 running("Bash  ssh vm-06 'sudo systemctl stop k3s' && curl -s -w '%{http_code}' …")
 result("inactive", 0.4)
 result("status.example.com  -> 200", 0.35)
-result("jobs.example.com    -> 200", 1.3)
+result("jobs.example.com    -> 200", 2.2)
 
 # --- 6. what it cost ----------------------------------------------------
 says(f"{GREEN}One control-plane node, correctly sized.{R} Both members are out of etcd", 0.9)
-cont("cleanly and everything is still routing.", 1.4)
+cont("cleanly and everything is still routing.", 2.4)
 line()
-line(f"  {DIM}Three voters became one. The redundancy that was lost{R}", 0.5)
-line(f"  {DIM}had been protecting a majority that lived in one place anyway.{R}", 2.8)
+line(f"  {DIM}Three voters became one. The redundancy that was lost{R}", 1.1)
+line(f"  {DIM}had been protecting a majority that lived in one place anyway.{R}", 4.0)
 
 # --- write it out -------------------------------------------------------
 header = {
@@ -268,7 +268,7 @@ header = {
     # Shown by asciinema.org in listings and embeds — say what it is there too.
     "title": "Casser son propre quorum etcd (reconstitution)",
     "timestamp": 0,
-    "idle_time_limit": 2,
+    "idle_time_limit": 4,
     "env": {"TERM": "xterm-256color", "SHELL": "/bin/zsh"},
 }
 with open(OUT, "w") as fh:

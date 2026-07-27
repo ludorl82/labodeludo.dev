@@ -28,6 +28,10 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     articles: [
       "retirer-pare-feu-tunnel-cloudflare",
       "le-move-qui-echouait-une-histoire-de-proxy-de-schema-http-et-dun-coffre-fort-presque-corrompu",
+      "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
+      "fable-5-durcir-webdav-forfait-vide",
+      "migrer-tout-mon-homelab-vers-nixos",
+      "quatre-depots-pour-un-labo-au-complet",
     ],
   },
   "site-web": {
@@ -42,13 +46,20 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "Tableau de bord de monitoring centralisé et notifications push, hébergé sur la VM cloud pour ne pas partager le sort de ce qu'il surveille en cas de panne à la maison.",
     articles: [
       "construire-un-vrai-reseau-dalarme-pour-son-homelab-et-toutes-les-manieres-dont-ca-peut-foirer-en-silence",
+      "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
+      "migrer-tout-mon-homelab-vers-nixos",
     ],
   },
   "pare-feu": {
     name: "Pare-feu domicile",
     description:
       "Routeur/pare-feu du réseau maison. Sépare les VLANs (serveurs, réseau local), et maintient le tunnel chiffré site-à-site vers la VM cloud — aucun port n'est ouvert directement sur l'Internet résidentiel.",
-    articles: ["ftp-prive-wireguard", "convention-ipv6-vlan-serveurs"],
+    articles: [
+      "ftp-prive-wireguard",
+      "convention-ipv6-vlan-serveurs",
+      "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
+      "renumeroter-les-adresses-ip-de-mon-cluster-k3s",
+    ],
   },
   bastion: {
     name: "Bastion / console",
@@ -58,6 +69,9 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "compartimentalisation-des-outils-de-console",
       "claude-code-headless-bastion",
       "deployer-un-cluster-k3s-avec-claude-code",
+      "un-tiroir-1u-pour-mes-trois-raspberry-pi",
+      "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web",
+      "quatre-depots-pour-un-labo-au-complet",
     ],
   },
   stockage: {
@@ -66,6 +80,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     articles: [
       "convention-ipv6-vlan-serveurs",
       "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
+      "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web",
     ],
   },
   "pipeline-media": {
@@ -76,6 +91,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "convention-ipv6-vlan-serveurs",
       "construire-un-vrai-reseau-dalarme-pour-son-homelab-et-toutes-les-manieres-dont-ca-peut-foirer-en-silence",
       "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
+      "migrer-tout-mon-homelab-vers-nixos",
     ],
   },
   "calcul-gpu": {
@@ -86,6 +102,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3",
       "convention-ipv6-vlan-serveurs",
       "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
+      "migrer-tout-mon-homelab-vers-nixos",
     ],
   },
   "hote-conteneurs": {
@@ -97,6 +114,12 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "convention-ipv6-vlan-serveurs",
       "deployer-un-cluster-k3s-avec-claude-code",
       "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
+      "crise-didentite-dans-le-cluster-k3s",
+      "un-tiroir-1u-pour-mes-trois-raspberry-pi",
+      "renumeroter-les-adresses-ip-de-mon-cluster-k3s",
+      "je-me-suis-vote-hors-de-l-ile",
+      "migrer-tout-mon-homelab-vers-nixos",
+      "quatre-depots-pour-un-labo-au-complet",
     ],
   },
   domotique: {
@@ -122,7 +145,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     name: "Clients mobiles (VPN)",
     description:
       "Appareils mobiles rejoignant le réseau maison à distance via VPN.",
-    articles: ["ftp-prive-wireguard"],
+    articles: ["ftp-prive-wireguard", "fable-5-durcir-webdav-forfait-vide"],
   },
 };
 

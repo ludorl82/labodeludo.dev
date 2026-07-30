@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : un serveur de stockage à la prise débranchée, relié à trois pods sur un moniteur cardiaque — deux affichent honnêtement un tracé à plat, un pod zombie affiche un faux crochet vert, et un écran de surveillance montre le pouls qui reprend">
+  <defs>
+    <linearGradient id="bgnas" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2333"/>
+      <stop offset="100%" stop-color="#2e3f5c"/>
+    </linearGradient>
+    <linearGradient id="nasbox" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9aa8c0"/>
+      <stop offset="100%" stop-color="#6d7f9e"/>
+    </linearGradient>
+    <linearGradient id="podok" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8fb8ff"/>
+      <stop offset="100%" stop-color="#5ec2ff"/>
+    </linearGradient>
+    <linearGradient id="podzombie" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a6478"/>
+      <stop offset="100%" stop-color="#454e60"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10281e"/>
+      <stop offset="100%" stop-color="#0b1d16"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1024" height="320" fill="url(#bgnas)"/>
+  <g fill="#ffffff" opacity="0.05">
+    <ellipse cx="170" cy="48" rx="140" ry="42"/>
+    <ellipse cx="870" cy="272" rx="150" ry="44"/>
+  </g>
+
+  <!-- the NAS, power cord yanked -->
+  <g transform="translate(58,92)">
+    <rect x="0" y="0" width="150" height="128" rx="10" fill="url(#nasbox)"/>
+    <rect x="14" y="16" width="122" height="20" rx="4" fill="#1c2333" opacity="0.6"/>
+    <rect x="14" y="44" width="122" height="20" rx="4" fill="#1c2333" opacity="0.6"/>
+    <rect x="14" y="72" width="122" height="20" rx="4" fill="#1c2333" opacity="0.6"/>
+    <!-- dead status LEDs -->
+    <circle cx="24" cy="108" r="5" fill="#39445a"/>
+    <circle cx="42" cy="108" r="5" fill="#39445a"/>
+    <!-- cord, unplugged with a gap and spark -->
+    <path d="M75,128 C75,170 60,186 30,196" stroke="#d9deea" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <g transform="translate(6,196) rotate(-18)">
+      <rect x="0" y="0" width="26" height="16" rx="4" fill="#d9deea"/>
+      <rect x="26" y="3" width="8" height="3" rx="1.5" fill="#d9deea"/>
+      <rect x="26" y="10" width="8" height="3" rx="1.5" fill="#d9deea"/>
+    </g>
+    <!-- wall socket, out of reach -->
+    <rect x="-34" y="176" width="22" height="30" rx="5" fill="#39445a"/>
+    <circle cx="-25" cy="186" r="2.4" fill="#1c2333"/>
+    <circle cx="-25" cy="196" r="2.4" fill="#1c2333"/>
+    <!-- spark of the yank -->
+    <g fill="#ffd76e">
+      <path d="M46,178 l7,-12 -3,10 8,-4 -10,14 3,-9 z"/>
+    </g>
+  </g>
+
+  <!-- link from NAS toward the pods, severed -->
+  <g stroke="#8fa2c2" stroke-width="4" stroke-dasharray="10 9" opacity="0.6" fill="none">
+    <path d="M228,150 C280,140 300,140 344,142"/>
+  </g>
+  <g stroke="#e8746a" stroke-width="5" stroke-linecap="round">
+    <line x1="292" y1="128" x2="316" y2="164"/>
+    <line x1="316" y1="128" x2="292" y2="164"/>
+  </g>
+
+  <!-- three pods on the monitor -->
+  <!-- honest pod 1: flatline then restart arrow -->
+  <g transform="translate(360,52)">
+    <rect x="0" y="0" width="196" height="62" rx="10" fill="url(#podok)"/>
+    <circle cx="26" cy="31" r="10" fill="#1c2333" opacity="0.55"/>
+    <path d="M48,31 h36 l8,-16 10,32 8,-16 h60" stroke="#123" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+  </g>
+  <!-- honest pod 2: flatline -->
+  <g transform="translate(360,128)">
+    <rect x="0" y="0" width="196" height="62" rx="10" fill="url(#podok)" opacity="0.92"/>
+    <circle cx="26" cy="31" r="10" fill="#1c2333" opacity="0.55"/>
+    <path d="M48,31 h122" stroke="#123" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.75"/>
+    <!-- restart arrow: circular -->
+    <path d="M182,22 a12,12 0 1 1 -12,-4" stroke="#123" stroke-width="4.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <path d="M182,12 l2,11 -11,-2 z" fill="#123" opacity="0.8"/>
+  </g>
+  <!-- zombie pod: grey, but a false green check -->
+  <g transform="translate(360,204)">
+    <rect x="0" y="0" width="196" height="62" rx="10" fill="url(#podzombie)"/>
+    <circle cx="26" cy="31" r="10" fill="#141a26" opacity="0.7"/>
+    <path d="M48,31 h122" stroke="#141a26" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <!-- the lie: green check on a dead pod -->
+    <circle cx="172" cy="20" r="14" fill="#4fb98a"/>
+    <path d="M165,20 l5,6 10,-12" stroke="#10281e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- monitor screen: the pulse coming back -->
+  <g transform="translate(650,58)">
+    <rect x="0" y="0" width="300" height="190" rx="14" fill="#39445a"/>
+    <rect x="12" y="12" width="276" height="150" rx="8" fill="url(#screen)"/>
+    <path d="M28,90 h56 l10,-34 14,64 12,-46 10,16 h40 l10,-30 14,56 12,-42 8,16 h50"
+          stroke="#6ee7a0" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="272" cy="90" r="6" fill="#6ee7a0"/>
+    <rect x="120" y="170" width="60" height="10" rx="5" fill="#1c2333"/>
+  </g>
+</svg>

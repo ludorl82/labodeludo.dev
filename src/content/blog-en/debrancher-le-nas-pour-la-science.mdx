@@ -94,6 +94,55 @@ The fix: `/loki` became an `emptyDir` with a size limit. Local disk, which unlin
 
 The final irony: Loki was the one workload in the cluster whose durable storage was **already** in the right place. The data/scratch split had been right from the start — it was the medium under the scratch half that wasn't.
 
+### What it looks like, in the end
+
+Here is Loki's final state — the one service that condenses every lesson of the day into a single manifest. The three probes deliberately do **not** use the same signal:
+
+```yaml
+# Excerpt from logging/loki.yaml — full version (and its comments)
+# in k3s-iac-public, tag article/liveness-probes.
+
+# Liveness deliberately does NOT use /ready: measured during the test,
+# /ready returned "200 ready" with the storage dead — it reports
+# ingester state from memory and never touches /loki.
+# It stays as the *readiness* signal ("can Alloy push to me?");
+# liveness writes to disk. `touch`, not `ls`: a write is the only
+# honest storage check.
+startupProbe:
+  httpGet: { path: /ready, port: 3100 }
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30     # wide startup window — see the UniFi story…
+livenessProbe:
+  exec:
+    command: ["sh", "-c", "touch /loki/.k8s-probe"]
+  periodSeconds: 30
+  timeoutSeconds: 10       # THIS timeout is what converts an NFS hang
+  failureThreshold: 3      # into a probe failure
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 3100
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 2
+```
+
+And the volume that closed the case — no more PVC, bounded local scratch:
+
+```yaml
+volumes:
+  # sizeLimit, not unbounded: an emptyDir with no cap can fill the
+  # node's disk. The kubelet evicts the pod at the limit, which is the
+  # right failure — loki restarts with empty scratch and refills from
+  # S3, instead of taking the node down with it.
+  - name: data
+    emptyDir:
+      sizeLimit: 5Gi
+```
+
+Three details are worth a second look. The exec probe's `timeoutSeconds` is what makes the whole thing work: a `touch` on a dead NFS mount doesn't return an error, it **hangs** — and it's the kubelet that turns that hang into a failure. Readiness keeps `/ready` because "can I accept logs?" is exactly the question a Service should be asking. And the comment above each block explains *why* — six months from now, that's the only thing standing between someone (me) and "simplifying" the probe into brokenness.
+
 ### Third cut: boredom, at last
 
 Unplugged, replugged, and this time: detection six out of six, Loki unbothered — `ready=true`, zero restarts, *correctly* this time, because nothing it needs had gone anywhere — and full recovery, unattended, about three minutes after NFS started answering again.

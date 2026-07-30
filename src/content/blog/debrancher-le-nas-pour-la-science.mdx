@@ -94,6 +94,55 @@ Le correctif : `/loki` est devenu un `emptyDir` avec une limite de taille. Du di
 
 L'ironie finale : Loki était le seul workload du cluster dont le stockage durable était **déjà** au bon endroit. La séparation données/scratch était bonne depuis le début — c'est le support de la moitié scratch qui ne l'était pas.
 
+### À quoi ça ressemble, au final
+
+Voici l'état final de Loki, le service qui condense toutes les leçons de la journée en un seul manifeste. Les trois sondes n'utilisent délibérément **pas** le même signal :
+
+```yaml
+# Extrait de logging/loki.yaml — version complète (et ses commentaires)
+# dans k3s-iac-public, étiquette article/liveness-probes.
+
+# La vivacité n'utilise délibérément PAS /ready : mesuré pendant le test,
+# /ready retournait « 200 ready » avec le stockage mort — il rapporte
+# l'état de l'ingesteur depuis la mémoire et ne touche jamais /loki.
+# Il reste le bon signal de *disponibilité* (« Alloy peut-il pousser ? »);
+# la vivacité, elle, écrit sur le disque. `touch`, pas `ls` : une écriture
+# est la seule vérification de stockage honnête.
+startupProbe:
+  httpGet: { path: /ready, port: 3100 }
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30     # large fenêtre de démarrage — voir UniFi…
+livenessProbe:
+  exec:
+    command: ["sh", "-c", "touch /loki/.k8s-probe"]
+  periodSeconds: 30
+  timeoutSeconds: 10       # c'est CE délai qui convertit un blocage
+  failureThreshold: 3      # NFS en échec de sonde
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 3100
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 2
+```
+
+Et le volume qui a clos le dossier — plus de PVC, du scratch local borné :
+
+```yaml
+volumes:
+  # sizeLimit, pas illimité : un emptyDir sans plafond peut remplir le
+  # disque du nœud. Le kubelet évince le pod à la limite, ce qui est la
+  # bonne panne — loki redémarre avec un scratch vide et se re-remplit
+  # depuis S3, au lieu d'emporter le nœud avec lui.
+  - name: data
+    emptyDir:
+      sizeLimit: 5Gi
+```
+
+Trois détails valent le coup d'œil. Le `timeoutSeconds` de la sonde `exec` est ce qui fait tout marcher : un `touch` sur un montage NFS mort ne retourne pas d'erreur, il **bloque** — et c'est le kubelet qui transforme ce blocage en échec. La disponibilité garde `/ready` parce que « puis-je recevoir des logs ? » est exactement la question qu'un Service doit poser. Et le commentaire au-dessus de chaque bloc explique *pourquoi* — dans six mois, c'est la seule partie qui empêchera quelqu'un (moi) de « simplifier » la sonde en la cassant.
+
 ### Troisième coupure : l'ennui, enfin
 
 Débranché, rebranché, et cette fois : détection six sur six, Loki imperturbable — `ready=true`, zéro redémarrage, *à juste titre* cette fois, parce que plus rien de ce dont il a besoin n'était parti — et reprise complète, sans intervention, environ trois minutes après que le NFS a recommencé à répondre.

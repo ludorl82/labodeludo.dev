@@ -1,0 +1,112 @@
+---
+title: "Débrancher le NAS pour la science : pods zombies, sondes de vivacité, et le bogue NFS qui attendait au tournant"
+pubDate: 2026-07-30
+description: "Un redémarrage du NAS a laissé la moitié de mon cluster k3s en état « Running » avec le stockage mort en dessous — et aucune alerte. On a ajouté des sondes de vivacité partout, puis on a vérifié le travail de la manière la plus directe possible : en coupant le courant du NAS. Trois fois. Ce que les trois pannes volontaires ont trouvé, aucune revue de code ne l'aurait vu."
+tags: ["DevOps", "ludo"]
+heroImage: "/images/blog/banner-nas-pull-the-plug.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Déclencheur** : un redémarrage du NAS a laissé des workloads k3s `Running` et dans leurs Services, avec leur stockage NFS mort en dessous. Aucun redémarrage, aucune alerte — des zombies, découverts en utilisant les applications.
+> -   **Cause** : aucun workload sur NFS n'avait de sonde de vivacité. Deux avaient une sonde de disponibilité seulement — NotReady pour toujours, jamais redémarrés.
+> -   **Correctif** : sondes de vivacité + disponibilité partout, chaque endpoint vérifié contre le pod qui roule plutôt que contre la documentation.
+> -   **Vérification** : trois coupures de courant volontaires du NAS, le jour même. Chacune a trouvé quelque chose que la précédente avait manqué.
+> -   **Les leçons qui comptent** : sur NFS, une sonde doit **écrire** — les lectures sont servies par le cache d'attributs pendant ~60 secondes après la mort du serveur. Et le scratch n'a pas sa place sur NFS : la boucle de crash WAL de Loki est structurelle, pas transitoire.
+> -   **Code** : les manifestes assainis, sondes et commentaires compris, sont publics dans [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public) (étiquette `article/liveness-probes`).
+
+La fin de semaine dernière, mon NAS a redémarré. Rien de dramatique en soi — sauf que lundi, la moitié des services de mon cluster k3s ne répondaient plus, et que **rien ne me l'avait dit**. Kubernetes affichait `Running` partout. Les pods étaient dans leurs Services. Le trafic leur arrivait. Ils ne servaient rien.
+
+Des zombies, au sens le plus littéral que l'orchestration permette : vivants pour toutes les vérifications que le système fait, morts pour tous les usages qu'un humain en a.
+
+Comme pour à peu près tout ce qui touche à l'infrastructure ici, j'ai travaillé le dossier en session avec Claude Code — Opus 5 pour l'essentiel de la journée, Fable 5 pour la fin. Je décris le fonctionnement de ce montage dans [un article dédié](/blog/claude-code-headless-bastion/). Mon rôle dans ce qui suit est celui que je préfère : poser les questions, débrancher les câbles, et regarder ce qui se passe.
+
+## Pourquoi les zombies existaient
+
+Le diagnostic a pris une commande. Sur les dix conteneurs applicatifs du cluster, **aucun de ceux qui dépendent du NFS n'avait de sonde de vivacité.** Deux — Grafana et Loki — avaient une sonde de disponibilité seulement : quand le NAS est parti, ils sont passés NotReady, Kubernetes a cessé de leur envoyer du trafic… et c'est tout. Une sonde de disponibilité retire un pod du service ; elle ne le redémarre jamais. Les autres n'avaient rien du tout, donc ils sont restés à la fois `Running` *et* dans leurs Services, à servir du vide.
+
+Ce qui m'a le plus intéressé dans l'explication de Claude, c'est le plafond qu'il a posé **avant** d'écrire la moindre ligne de YAML. Mes montages NFS sont en mode `hard`, et sur un montage `hard`, un processus bloqué sur une entrée-sortie NFS est en sommeil ininterruptible — impossible à tuer, `SIGKILL` compris. Une sonde de vivacité qui échoue pendant la panne mène donc à un pod coincé en `Terminating`, pas à un redémarrage propre. Le redémarrage aboutit seulement quand le NAS revient.
+
+Autrement dit : la promesse n'est pas « détection instantanée et redémarrage immédiat », c'est **« reprise sans intervention humaine au retour du stockage »**. C'est le bon objectif — un redémarrage pendant la panne était de toute façon impossible, le nouveau pod n'aurait pas pu monter le volume non plus.
+
+Et le raccourci évident a été écarté explicitement : des montages `soft` transformeraient le blocage en erreur franche, mais en **abandonnant des écritures** — de la corruption silencieuse, sur précisément les workloads SQLite et MongoDB concernés. Non merci.
+
+## Des sondes vérifiées contre la réalité, pas contre la documentation
+
+Le deuxième réflexe qui a payé : chaque endpoint de santé a été vérifié en interrogeant le pod qui roulait, plutôt qu'en croyant la documentation. Trois choix en sont sortis différents :
+
+-   **Grafana** : `/api/health` rapporte l'état de la base de données (`"database": "ok"`) — donc il touche le fichier SQLite sur le NFS. Un endpoint statique aurait passé avec le stockage mort.
+-   **n8n** : la sonde de vivacité utilise l'endpoint qui vérifie la base, pas `/healthz`, qui prouve seulement que le processus répond.
+-   **nginx** (le site de staging) : la sonde demande `/index.html`, pas `/` — pour forcer une vraie lecture sur le volume à chaque vérification.
+
+Deux conteneurs ne pouvaient pas utiliser de sonde HTTP du tout. Le serveur SFTP de mon pipeline de numérisation n'expose son API d'administration que sur `127.0.0.1`, que le kubelet ne peut pas atteindre — et l'ouvrir juste pour une sonde aurait exposé l'interface d'administration à tout le cluster. Quant à MongoDB, son `ping` est servi **depuis la mémoire** : il reste parfaitement heureux avec un répertoire de données gelé. Les deux ont reçu des sondes `exec` qui combinent la vérification applicative avec un accès au chemin monté.
+
+Le principe derrière les trois décisions est le même, et c'est le premier enseignement de la journée : **une sonde doit atteindre la couche de données.** Une sonde qui prouve qu'un serveur HTTP répond passera sans broncher pendant que le stockage est mort — c'est exactement l'état zombie qu'on essayait d'éliminer.
+
+## La science : débrancher pour vrai
+
+Les manifestes appliqués, restait à savoir si tout ça fonctionnait. Et il n'y a qu'une façon honnête de le savoir : j'ai débranché le NAS. Pas un arrêt propre — la fiche, dans le mur.
+
+<AsciiCast
+  src="/casts/nas-pull-the-plug.cast"
+  poster="npt:0:08"
+  caption="Les trois coupures de courant, condensées : les sondes qui mentent encore, la boucle de crash de Loki, le garde-fou de permissions au milieu de la réparation, et la course propre à la fin."
+  disclaimer="⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues boucles de surveillance sont coupées. Noms d'hôte sanitisés."
+/>
+
+### Première coupure : trois sondes mentaient encore
+
+Quelques minutes après la coupure, quatre workloads étaient correctement NotReady. Trois affichaient encore que tout allait bien, et chacun des trois est une leçon :
+
+1. **Loki n'a jamais remarqué la panne.** Son endpoint `/ready` retournait `200 ready` avec le NAS physiquement mort. Il rapporte l'état de l'ingesteur **depuis la mémoire** et ne touche jamais le volume. C'est un excellent signal de disponibilité (« est-ce que je peux recevoir des logs ? ») et un signal de vivacité complètement aveugle.
+2. **Les sondes en lecture mentent sur NFS.** Les sondes `exec` basées sur `ls` ont mis une bonne minute et demie de plus que les autres à déclencher : le client NFS répond aux `stat` depuis son **cache d'attributs** pendant environ 60 secondes après la disparition du serveur. Seule une **écriture** est forcée d'aller jusqu'au serveur. Toutes les sondes `exec` sont devenues des `touch`.
+3. **Une vivacité sans disponibilité est invisible.** Un conteneur sans sonde de disponibilité est Ready par définition tant qu'il tourne. Deux workloads redémarraient donc correctement… sans jamais afficher `0/1` nulle part. Le correctif marchait ; il était juste indétectable.
+
+Je m'attarde sur le point 2 parce qu'il m'a surpris : la sonde était *conceptuellement correcte* — elle touchait bien la couche de données — et elle mentait quand même, parce que le système de fichiers répondait à sa place. Sur NFS, la seule vérification honnête est une écriture.
+
+### L'aveu : un but contre son camp de vingt minutes
+
+L'honnêteté m'oblige à raconter aussi le contrôleur UniFi. La première tentative de sonde sur ce conteneur l'a tué **deux fois de suite, en pleine initialisation** — vingt minutes de panne du contrôleur réseau, auto-infligée. Le pod est en `hostNetwork`, le kubelet sonde donc l'adresse du nœud en IPv4, et deux démarrages à froid consécutifs ont pris plus de 18 minutes avant d'écouter en IPv4 — pendant que la fenêtre de la sonde de démarrage expirait et recommençait le cycle. Le démarrage suivant, sondes retirées : 26 secondes. Pourquoi les deux premiers étaient si lents ? **Toujours inexpliqué.** C'est le seul conteneur encore sans sonde, et le manifeste public documente pourquoi, en long.
+
+La leçon est moins « les sondes de démarrage sont dangereuses » que : **mesurez un vrai démarrage à froid avant de fixer un seuil.** Vérifier une sonde en interrogeant un pod déjà chaud à travers le Service — ce qui avait été fait — ne prouve rigoureusement rien sur un pod en train de naître.
+
+### Deuxième coupure : le bogue qui attendait que les sondes marchent
+
+Sondes corrigées, NAS rebranché, tout au vert. Deuxième débranchage. Cette fois, la détection a été parfaite — sept sur sept — et neuf conteneurs sur dix se sont rétablis tout seuls au retour du courant.
+
+Le dixième était Loki, en `CrashLoopBackOff`, et c'est le morceau le plus intéressant de la journée.
+
+Au démarrage, Loki rejoue ses journaux WAL : il **ouvre** les fichiers de segments, les **supprime** pendant qu'il les tient encore ouverts, puis retire le répertoire. Sur un disque local, c'est un idiome parfaitement correct. Sur NFS, supprimer un fichier encore ouvert déclenche le *silly-rename* : le client le renomme en `.nfsXXXX` au lieu de le détruire, parce qu'un serveur NFS sans état n'a aucune notion de « fichier ouvert ». Résultat : le `rmdir` final échoue — « répertoire non vide » — et Loki traite l'échec comme fatal.
+
+Le détail qui rend le bogue vicieux : les fichiers `.nfsXXXX` disparaissent **à l'instant où le processus meurt**. Chaque inspection après coup montre un répertoire parfaitement vide que le serveur refuse pourtant de supprimer. Et chaque redémarrage régénère la panne à partir de rien — ouvre, supprime, silly-rename, échec. Ce n'est pas un résidu qu'un délai va nettoyer : c'est un **équilibre stable**. Attendre ne répare rien. Redémarrer ne répare rien.
+
+Il y a une ironie dure là-dedans, et l'analyse de Claude l'a formulée sans détour : **c'est la sonde corrigée qui a rendu le bogue récurrent.** L'ancien Loki, aveugle, survivait aux pannes en roulant sur son état en mémoire — et masquait le problème. Le nouveau, honnête, se faisait redémarrer… droit dans le mur. Un correctif qui fonctionne parfaitement peut convertir un angle mort en réparation manuelle récurrente. Ça mérite d'être dit : quand vous réparez la détection, allez voir ce qui se cache derrière ce qu'elle ne détectait pas.
+
+La réparation immédiate était un `mv` du répertoire WAL — un renommage côté serveur se moque que le répertoire soit « non vide ». Petit moment de vérité au passage : la commande s'est fait bloquer par le classificateur de permissions de Claude Code, en pleine panne. Le garde-fou a fait exactement sa job — une commande qui déplace des données sur un volume applicatif mérite un humain dans la boucle — et la session s'est arrêtée proprement pour me demander. C'est le genre de friction que je suis content d'avoir.
+
+### Le vrai correctif : le scratch n'a pas sa place sur NFS
+
+Réparer deux fois la même chose en une après-midi, c'est la définition d'un correctif qui n'en est pas un. La question que j'ai posée — « pourquoi Loki ne peut pas se rétablir tout seul ? » — a mené à la vraie réponse : le volume NFS de Loki ne contenait **que du scratch**. Le WAL, le répertoire de travail du compacteur, l'index en cours de construction. Les données durables — les chunks, les index expédiés — étaient déjà dans S3 depuis le début.
+
+Le correctif : `/loki` est devenu un `emptyDir` avec une limite de taille. Du disque local, qui supprime les fichiers ouverts immédiatement, comme POSIX l'entend. La classe entière de pannes disparaît, et Loki sort complètement du rayon d'explosion du NAS. Le coût, accepté en connaissance de cause : un pod supprimé perd quelques minutes de logs non expédiés. Pour un agrégateur de logs de labo, l'échange est évident.
+
+L'ironie finale : Loki était le seul workload du cluster dont le stockage durable était **déjà** au bon endroit. La séparation données/scratch était bonne depuis le début — c'est le support de la moitié scratch qui ne l'était pas.
+
+### Troisième coupure : l'ennui, enfin
+
+Débranché, rebranché, et cette fois : détection six sur six, Loki imperturbable — `ready=true`, zéro redémarrage, *à juste titre* cette fois, parce que plus rien de ce dont il a besoin n'était parti — et reprise complète, sans intervention, environ trois minutes après que le NFS a recommencé à répondre.
+
+Trois coupures de courant dans la même après-midi. La dernière était ennuyante. C'était le but.
+
+## Ce que je retiens
+
+-   **Sonder la couche de données, pas le processus.** Un serveur HTTP qui répond ne prouve rien sur le stockage en dessous — et c'est le stockage qui meurt.
+-   **Sur NFS, écrire.** Les lectures sont servies par les caches longtemps après la mort du serveur. `touch`, pas `ls`.
+-   **Vivacité *et* disponibilité.** L'une redémarre, l'autre rend l'état visible. Chacune sans l'autre est une moitié de correctif.
+-   **Mesurer les démarrages à froid.** Un seuil de sonde de démarrage fixé au jugé est une machine à tuer les applications lentes à démarrer.
+-   **Le scratch sur NFS finira par vous trouver.** Toute application qui supprime des fichiers qu'elle tient encore ouverts rencontrera sa version du silly-rename.
+-   **Et débrancher le câble.** Chacune des trois coupures a trouvé quelque chose que la précédente avait manqué — et que ni la revue des manifestes, ni les tests contre des pods en santé n'auraient vu. La panne simulée la plus fidèle, c'est la panne.
+
+Les manifestes complets — sondes, limites, et les commentaires qui expliquent chaque piège au-dessus du YAML concerné — sont publics dans [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), étiquette `article/liveness-probes`. Les noms d'hôtes et les adresses y sont fictifs ; les commentaires, eux, racontent exactement ce qui s'est passé.

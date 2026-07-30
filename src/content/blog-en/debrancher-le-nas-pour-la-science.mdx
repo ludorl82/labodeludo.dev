@@ -1,0 +1,112 @@
+---
+title: "Unplugging the NAS for science: zombie pods, liveness probes, and the NFS bug that was waiting around the corner"
+pubDate: 2026-07-30
+description: "A NAS reboot left half my k3s cluster in a Running state with its storage dead underneath — and no alert. We added liveness probes everywhere, then verified the work the most direct way possible: by cutting power to the NAS. Three times. What the three deliberate outages found, no code review would have caught."
+tags: ["DevOps", "ludo"]
+heroImage: "/images/blog/banner-nas-pull-the-plug-en.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
+>
+> -   **Trigger**: a NAS reboot left k3s workloads `Running` and in their Services with their NFS storage dead underneath. No restarts, no alerts — zombies, discovered by actually using the applications.
+> -   **Cause**: no NFS-backed workload had a liveness probe. Two had a readiness probe only — NotReady forever, never restarted.
+> -   **Fix**: liveness + readiness probes everywhere, every endpoint verified against the running pod rather than against the documentation.
+> -   **Verification**: three deliberate power cuts to the NAS, same day. Each one found something the previous one had missed.
+> -   **The lessons that matter**: on NFS, a probe must **write** — reads are served from the attribute cache for ~60 seconds after the server dies. And scratch data does not belong on NFS: Loki's WAL crash-loop is structural, not transient.
+> -   **Code**: the sanitized manifests, probes and comments included, are public in [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public) (tag `article/liveness-probes`).
+
+Last weekend, my NAS rebooted. Nothing dramatic in itself — except that on Monday, half the services in my k3s cluster had stopped responding, and **nothing had told me**. Kubernetes showed `Running` everywhere. The pods were in their Services. Traffic was reaching them. They were serving nothing.
+
+Zombies, in the most literal sense orchestration allows: alive for every check the system runs, dead for every use a human has for them.
+
+As with most infrastructure work here, I worked the problem in a session with Claude Code — Opus 5 for most of the day, Fable 5 for the tail end. I describe how that setup works in [a dedicated article](/en/blog/claude-code-headless-bastion/). My role in what follows is the one I like best: asking the questions, pulling the cables, and watching what happens.
+
+## Why the zombies existed
+
+The diagnosis took one command. Of the ten application containers in the cluster, **not one of the NFS-backed ones had a liveness probe.** Two — Grafana and Loki — had a readiness probe only: when the NAS went away, they went NotReady, Kubernetes stopped sending them traffic… and that's it. A readiness probe pulls a pod out of the Service; it never restarts it. The others had nothing at all, so they stayed both `Running` *and* in their Services, serving emptiness.
+
+What interested me most in Claude's explanation was the ceiling it set **before** writing a single line of YAML. My NFS mounts are `hard`, and on a `hard` mount a process blocked on NFS I/O sits in uninterruptible sleep — unkillable, `SIGKILL` included. A liveness probe failing during the outage therefore gets you a pod stuck in `Terminating`, not a clean restart. The restart only lands once the NAS comes back.
+
+In other words: the promise is not "instant detection and immediate restart", it's **"unattended recovery when the storage returns"**. Which is the right goal — a restart during the outage was impossible anyway, since a fresh pod couldn't have mounted the volume either.
+
+And the obvious shortcut was ruled out explicitly: `soft` mounts would turn the hang into a clean error, but they do it by **abandoning writes** — silent corruption, on precisely the SQLite and MongoDB workloads involved. No thanks.
+
+## Probes verified against reality, not documentation
+
+The second reflex that paid off: every health endpoint was verified by querying the running pod, rather than trusting the docs. Three choices came out different:
+
+-   **Grafana**: `/api/health` reports database status (`"database": "ok"`) — so it reaches the SQLite file on NFS. A static endpoint would have passed with the storage dead.
+-   **n8n**: the liveness probe uses the endpoint that checks the database, not `/healthz`, which only proves the process answers.
+-   **nginx** (the staging site): the probe requests `/index.html`, not `/` — to force an actual read off the volume on every check.
+
+Two containers couldn't use an HTTP probe at all. The SFTP server in my document-scanning pipeline only exposes its admin API on `127.0.0.1`, which the kubelet cannot reach — and opening that binding just for a probe would have exposed the admin UI to the whole cluster. As for MongoDB, its `ping` is served **from memory**: it stays perfectly happy with a frozen data directory. Both got `exec` probes that combine the application check with an access to the mounted path.
+
+The principle behind all three decisions is the same, and it's the first lesson of the day: **a probe must reach the data layer.** A probe that proves an HTTP server answers will sail right through while the storage is dead — which is exactly the zombie state we were trying to eliminate.
+
+## The science: actually pulling the plug
+
+With the manifests applied, the question was whether any of it worked. And there's only one honest way to find out: I unplugged the NAS. Not a clean shutdown — the plug, out of the wall.
+
+<AsciiCast
+  src="/casts/nas-pull-the-plug.cast"
+  poster="npt:0:08"
+  caption="The three power cuts, condensed: the probes that still lied, Loki's crash loop, the permission guard-rail in the middle of the repair, and the clean run at the end."
+  disclaimer="⚠ This is not a live capture: it is a condensed reconstruction, assembled after the fact from the session's real transcript. The prompts and stop messages are those of the actual session; timing is compressed and the long monitoring loops are cut. Hostnames sanitized."
+/>
+
+### First cut: three probes were still lying
+
+A few minutes after the cut, four workloads were correctly NotReady. Three still claimed everything was fine, and each of the three is a lesson:
+
+1.  **Loki never noticed the outage.** Its `/ready` endpoint returned `200 ready` with the NAS physically dead. It reports ingester state **from memory** and never touches the volume. That makes it an excellent readiness signal ("can I accept logs?") and a completely blind liveness one.
+2.  **Read-only probes lie on NFS.** The `ls`-based exec probes took a good minute and a half longer than the others to trip: the NFS client answers `stat` from its **attribute cache** for about 60 seconds after the server disappears. Only a **write** is forced all the way to the server. Every exec probe became a `touch`.
+3.  **Liveness without readiness is invisible.** A container with no readiness probe is Ready by definition as long as it runs. Two workloads were therefore restarting correctly… without ever showing `0/1` anywhere. The fix worked; it was just undetectable.
+
+I dwell on point 2 because it surprised me: the probe was *conceptually correct* — it did touch the data layer — and it lied anyway, because the filesystem answered on the server's behalf. On NFS, the only honest check is a write.
+
+### The confession: a twenty-minute own goal
+
+Honesty compels me to also tell the UniFi controller story. The first probe attempt on that container killed it **twice in a row, mid-initialization** — twenty minutes of self-inflicted network-controller outage. The pod runs on `hostNetwork`, so the kubelet probes the node address over IPv4, and two consecutive cold starts took more than 18 minutes before listening on IPv4 — while the startup probe's window kept expiring and restarting the cycle. The next start, probes removed: 26 seconds. Why the first two were that slow? **Still unexplained.** It's the one container still without probes, and the public manifest documents why, at length.
+
+The lesson is less "startup probes are dangerous" than: **measure a real cold start before setting a threshold.** Verifying a probe by querying an already-warm pod through the Service — which is what had been done — proves strictly nothing about a pod being born.
+
+### Second cut: the bug that was waiting for the probes to work
+
+Probes fixed, NAS plugged back in, everything green. Second unplugging. This time detection was perfect — seven out of seven — and nine out of ten containers recovered on their own when the power came back.
+
+The tenth was Loki, in `CrashLoopBackOff`, and it's the most interesting piece of the day.
+
+On startup, Loki replays its WAL: it **opens** the segment files, **deletes** them while still holding them open, then removes the directory. On a local disk, that's a perfectly correct idiom. On NFS, deleting a file that's still open triggers the *silly-rename*: the client renames it to `.nfsXXXX` instead of destroying it, because a stateless NFS server has no concept of an "open file". Result: the final `rmdir` fails — "directory not empty" — and Loki treats the failure as fatal.
+
+The detail that makes the bug vicious: the `.nfsXXXX` files vanish **the instant the process dies**. Every after-the-fact inspection shows a perfectly empty directory that the server nonetheless refuses to remove. And every restart regenerates the failure from scratch — open, delete, silly-rename, fail. This is not residue that a delay will clean up: it's a **stable equilibrium**. Waiting fixes nothing. Restarting fixes nothing.
+
+There's a hard irony in there, and Claude's analysis stated it plainly: **it's the corrected probe that made the bug recurring.** The old, blind Loki survived outages by running on in-memory state — and masked the problem. The new, honest one got restarted… straight into the wall. A fix that works perfectly can convert a blind spot into a recurring manual repair. Worth saying out loud: when you fix detection, go look at what was hiding behind the things it didn't detect.
+
+The immediate repair was a `mv` of the WAL directory — a server-side rename doesn't care that the directory is "not empty". A small moment of truth along the way: the command got blocked by Claude Code's permission classifier, mid-outage. The guard-rail did exactly its job — a command that moves data on an application volume deserves a human in the loop — and the session stopped cleanly to ask me. That's the kind of friction I'm glad to have.
+
+### The real fix: scratch does not belong on NFS
+
+Repairing the same thing twice in one afternoon is the definition of a fix that isn't one. The question I asked — "why can't Loki recover on its own?" — led to the real answer: Loki's NFS volume held **nothing but scratch**. The WAL, the compactor's working directory, the index being built. The durable data — chunks, shipped indices — had been in S3 all along.
+
+The fix: `/loki` became an `emptyDir` with a size limit. Local disk, which unlinks open files immediately, the way POSIX intends. The entire failure class disappears, and Loki leaves the NAS blast radius completely. The cost, accepted with eyes open: a deleted pod loses a few minutes of unshipped logs. For a homelab log aggregator, that trade is obvious.
+
+The final irony: Loki was the one workload in the cluster whose durable storage was **already** in the right place. The data/scratch split had been right from the start — it was the medium under the scratch half that wasn't.
+
+### Third cut: boredom, at last
+
+Unplugged, replugged, and this time: detection six out of six, Loki unbothered — `ready=true`, zero restarts, *correctly* this time, because nothing it needs had gone anywhere — and full recovery, unattended, about three minutes after NFS started answering again.
+
+Three power cuts in the same afternoon. The last one was boring. That was the goal.
+
+## What I take away
+
+-   **Probe the data layer, not the process.** An HTTP server that answers proves nothing about the storage underneath — and the storage is what dies.
+-   **On NFS, write.** Reads are served from caches long after the server is gone. `touch`, not `ls`.
+-   **Liveness *and* readiness.** One restarts, the other makes the state visible. Each without the other is half a fix.
+-   **Measure cold starts.** A startup-probe threshold set by feel is a machine for killing slow-starting applications.
+-   **Scratch on NFS will find you eventually.** Any application that deletes files it still holds open will meet its own version of the silly-rename.
+-   **And pull the cable.** Each of the three cuts found something the previous one had missed — and that neither reviewing the manifests nor testing against healthy pods would have caught. The highest-fidelity simulated outage is an outage.
+
+The full manifests — probes, limits, and the comments explaining each trap right above the YAML it applies to — are public in [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), tag `article/liveness-probes`. The hostnames and addresses there are fictional; the comments tell exactly what happened.

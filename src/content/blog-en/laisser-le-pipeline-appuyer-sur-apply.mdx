@@ -8,6 +8,7 @@ heroImage: "/images/blog/banner-pipeline-apply-en.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 import IacPipelinesDiagram from "../../components/IacPipelinesDiagram.astro";
+import OidcExchangeDiagram from "../../components/OidcExchangeDiagram.astro";
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
@@ -34,9 +35,13 @@ The answer eventually sorted itself by layer, and the sorting criterion is simpl
   Four repos, two directions. Toward the public APIs, we push; toward the lab, the lab pulls.
 </IacPipelinesDiagram>
 
-For Cloudflare and AWS, the APIs are public and a disposable hosted runner is exactly right. AWS authenticates via OIDC: the workflow trades its GitHub-signed token for minutes-long credentials, and the trust policy accepts only this repo, this branch. No key stored anywhere. Cloudflare has no equivalent, so a dedicated, scoped token lives in the repo's secrets — the asymmetry is annoying but honest.
+For Cloudflare and AWS, the APIs are public and a disposable hosted runner is exactly right. And counter to intuition, it costs nothing: GitHub's free tier gives private repos 2,000 minutes a month, and a plan-plus-apply cycle burns about five — even an unusually busy month dents a tenth of the quota. AWS authenticates via OIDC: the workflow trades its GitHub-signed token for minutes-long credentials, and the trust policy accepts only this repo, this branch. No key stored anywhere. Cloudflare has no equivalent, so a dedicated, scoped token lives in the repo's secrets — the asymmetry is annoying but honest.
 
 The OIDC mechanism deserves two sentences, because it replaces the worst piece of the classic setup. Before: an AWS key in the repo's secrets — stealable around the clock, valid from anywhere, rotated by hand. Now: when the job starts, GitHub issues a signed token asserting *"this job is running in this repo, on this branch"*; AWS, having declared once that it trusts GitHub's signatures, verifies the token, matches its claims against the role's trust policy, and hands back credentials that die with the job. The only permanent artifact is a public-key trust relationship — nothing stored, nothing to rotate, and the scope is *written in the policy*: the PR context gets a read-only role, and only a merge to the default branch can write. The limit is just as crisp: OIDC authenticates the *context*, not the *intent* — any commit that reaches the default branch gets the role. PR review and the destroy gate guard what reaches the branch; OIDC never could.
+
+<OidcExchangeDiagram lang="en">
+  The OIDC exchange, step by step: GitHub attests the job's context, AWS verifies and scopes, the credentials die with the job.
+</OidcExchangeDiagram>
 
 For the cluster and the NixOS hosts, it's the reverse: the k3s API and the fleet are not on the internet, deliberately. Rather than drilling a path so CI can push, **the lab pulls**: Argo CD runs inside the cluster and watches the repo; [comin](https://github.com/nlewo/comin) runs on every NixOS host, which builds and switches itself. A compromise of my GitHub account can propose commits — visible, revertable — but cannot touch a kubeconfig, because there is none outside to steal.
 

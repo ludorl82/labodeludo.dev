@@ -1,7 +1,7 @@
 ---
 title: "Letting the pipeline press apply: four IaC repos, three tools, and one gate that refuses destroys"
 pubDate: 2026-07-31
-description: "The whole lab was already described as code, but every apply still went through my hands. We closed the loop in one session: GitHub Actions with OIDC for the cloud, Argo CD for the cluster, comin for NixOS. The interesting part isn't the plumbing: it's what the gate refuses, GitHub's OIDC surprise, and the two Raspberry Pis that compiled matplotlib for an hour and a half to test a Markdown parser."
+description: "The whole lab was already described as code, but every apply still went through my hands. We closed the loop in one session: GitHub Actions with OIDC for the cloud, Argo CD for the cluster, comin for NixOS. The interesting part isn't the plumbing: it's what the gate refuses, GitHub's OIDC surprise, and the two Raspberry Pis that choked on a test-only dependency."
 tags: ["DevOps", "ludo"]
 heroImage: "/images/blog/banner-pipeline-apply-en.svg"
 ---
@@ -15,38 +15,38 @@ import OidcExchangeDiagram from "../../components/OidcExchangeDiagram.astro";
 > -   **Starting point**: four IaC repos (Cloudflare, AWS, k3s, NixOS) imported, plans clean, drift checked nightly — but every `apply` was manual.
 > -   **Architecture**: hybrid. GitHub Actions (OIDC, zero stored keys) **pushes** to the public APIs; Argo CD and comin **pull** from inside the lab.
 > -   **The gate**: plan on PR; on merge, automatic apply **unless the plan contains a destroy** — the job fails and waits for a human. Tested against a real DNS record.
-> -   **The surprises**: GitHub's *immutable OIDC subjects* break classic trust policies; two 4 GB Pi 5s choked compiling matplotlib, a test-suite dependency of a Markdown parser.
+> -   **The surprises**: GitHub's *immutable OIDC subjects* break classic trust policies; two 4 GB Pi 5s choked on a dependency of a Markdown parser's test suite.
 > -   **Code**: [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public), [aws-iac-public](https://github.com/ludorl82/aws-iac-public), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public).
 
-The hard part was supposed to be done: the four repos describing this lab existed, their plans were clean, and four drift checks confirmed nightly that reality still matched the code. One thing remained — when I merged a change, I was still the one typing `tofu apply` into a shell.
+The hard part was supposed to be done already. The four repos describing this lab existed, their plans were clean, and four drift checks confirmed every night that reality still matched the code. Only one thing remained: when I merged a change, I was still the one typing `tofu apply` into a shell.
 
-Closing that loop took one session with Claude Code (Fable 5, this time). My role: ask questions, push back on recommendations, and press the buttons the agent isn't allowed to press. It turns out that last part is precisely the subject.
+Closing that loop took one session with Claude Code — Fable 5, this time. My role mostly consisted of asking questions, pushing back on recommendations, and pressing the buttons the agent is not allowed to press. It turns out that last part is precisely what this article is about.
 
 ## A credentials problem wearing an automation costume
 
-The design conversation ran longer than the implementation, and every detour — Actions everywhere? GitOps everywhere? a runner on the bastion? — came back to the same question: **who holds which credentials, and where**. Applying by hand hides that the whole account's authority rides through one shell session; the moment a pipeline applies, that authority must be written down, scoped, stored, rotated. That's the real cost, and it sorts by layer on one simple criterion: *is the target reachable from the internet?*
+The design conversation ran longer than the implementation, and every detour — GitHub Actions everywhere, GitOps everywhere, a self-hosted runner on the bastion — came back to the same question: who holds which credentials, and where. Applying by hand hides the fact that the entire account's authority rides through one person's shell session. The moment a pipeline applies, that authority has to be written down somewhere, scoped, stored and rotated. That is the real cost, and it ends up sorting naturally by layer, on one simple criterion: is the target reachable from the internet?
 
 <IacPipelinesDiagram lang="en">
   Four repos, two directions. Toward the public APIs, we push; toward the lab, the lab pulls.
 </IacPipelinesDiagram>
 
-For Cloudflare and AWS, a disposable hosted runner is enough — and free: 2,000 minutes a month on private repos, about five per plan-plus-apply cycle. AWS authenticates via OIDC; Cloudflare has no equivalent, so a dedicated, scoped token lives in the repo's secrets. The asymmetry is annoying but honest.
+For Cloudflare and AWS, a disposable hosted runner is enough, and it costs nothing: GitHub gives private repos 2,000 free minutes a month, and a plan-plus-apply cycle burns about five. AWS authenticates via OIDC. Cloudflare offers no equivalent, so a dedicated, scoped token lives in the repo's secrets — the asymmetry is annoying, but honest.
 
-OIDC replaces the worst piece of the classic setup — the stored AWS key, stealable around the clock. Instead: when the job starts, GitHub issues a signed token asserting *"this job is running in this repo, on this branch"*; AWS checks it against the role's trust policy and returns credentials that die with the job. The PR context gets a read-only role; only a merge to the default branch can write. The limit is crisp: OIDC authenticates the *context*, not the *intent* — PR review and the destroy gate guard what reaches the branch.
+OIDC replaces the worst piece of the classic setup, which is the stored AWS key, stealable around the clock. Instead, GitHub issues a signed token when the job starts, asserting that this particular job is running in this repo, on this branch. AWS checks it against the role's trust policy, then hands back credentials that die with the job. The PR context only gets a read-only role, and only a merge to the default branch can write. The limit is just as crisp: OIDC authenticates the *context*, not the *intent*. It is PR review and the destroy gate that guard what reaches the branch.
 
 <OidcExchangeDiagram lang="en">
   The OIDC exchange: GitHub attests the job's context, AWS verifies and scopes, the credentials die with the job.
 </OidcExchangeDiagram>
 
-For the cluster and the NixOS hosts, it's the reverse: nothing is reachable from the internet, deliberately. Rather than drilling a path so CI can push, **the lab pulls** — Argo CD in the cluster, [comin](https://github.com/nlewo/comin) on every NixOS host, which builds and switches itself. A compromise of my GitHub account can propose commits, visible and revertable; it cannot steal a kubeconfig that doesn't exist outside.
+For the cluster and the NixOS hosts, it's the reverse: nothing there is reachable from the internet, and that is deliberate. Rather than drilling a path so CI can push, the lab pulls — Argo CD runs inside the cluster, and [comin](https://github.com/nlewo/comin) runs on every NixOS host, which builds and switches itself. A compromise of my GitHub account could propose commits, which would stay visible and revertable; it could not steal a kubeconfig, because none exists outside the lab.
 
-The surprise of the day: the first runs all failed with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. GitHub now issues **immutable subjects** (`repo:owner@id/repo@id:...`), and any trust policy written from the classic documentation breaks cold. The policies now accept both forms — the numeric ids are immutable, so nothing is loosened.
+The surprise of the day did not fail to show up: the first runs all failed with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. GitHub now issues **immutable subjects** (`repo:owner@id/repo@id:...`), and any trust policy written from the classic documentation breaks cold. The policies now accept both forms; since the numeric ids are immutable, nothing is loosened along the way.
 
 ## The design lives in what the gate refuses
 
-On every PR: a read-only plan, posted as a comment. On merge: a *fresh* plan — never the PR's artifact, state may have moved — then the apply. **Unless the plan contains a destroy.** Then the job fails, names the doomed resources, and waits for a human to apply from a shell, deliberately. Destroys are the irreversible class and, above all, often the unintended one — a ForceNew attribute turns a cosmetic edit into delete-and-recreate, and a `jq` never misses the "1 to destroy" a tired human misses.
+On every PR, a read-only plan is posted as a comment — that is the evidence under review before merging. On merge, a *fresh* plan is computed, because state may have moved since the PR, and then it is applied. Unless it contains a destroy: in that case, the job fails, names the doomed resources, and waits for a human to apply from a shell, deliberately. Destroys are the irreversible class of changes, and above all the frequently unintended one — a ForceNew attribute turns a cosmetic edit into delete-and-recreate, and a `jq` never misses the "1 to destroy" that a tired human eventually does.
 
-We didn't take the gate's word for it: one PR creates a throwaway TXT record — merge, automatic apply, the record resolves on the internet. A second PR deletes it — and the job refuses:
+We didn't take the gate's word for it. A first PR creates a throwaway TXT record: merge, automatic apply, and the record resolves on the public internet. A second PR deletes it — and the job refuses:
 
 <AsciiCast
   src="/casts/iac-apply.cast"
@@ -55,18 +55,20 @@ We didn't take the gate's word for it: one PR creates a throwaway TXT record —
   disclaimer="⚠ This is not a live capture: it is a condensed reconstruction, assembled afterwards from the real session transcript. The prompts and stop messages are from the actual session; timing is compressed and the long CI-watch loops are cut. Hostnames sanitized; the DNS record shown was a throwaway created for this test."
 />
 
-A detail I'm fond of: twice, Claude Code's permission classifier blocked the agent — on `tofu apply`, then on reading a secret — and handed those actions to me. The pipeline, the agent and I ended the day under the same policy: destructive things and secrets route through the human.
+There is a detail from that day I'm quite fond of. Twice, Claude Code's permission classifier blocked the agent — once on `tofu apply`, once on reading a secret — and handed those actions to me. The pipeline, the agent and I therefore ended the day under the same policy: destructive things and secrets route through the human.
 
 ## Operator state is not drift
 
-Choosing Argo CD over Flux comes from an incident: during a maintenance, eleven workloads deliberately at `replicas: 0` got "fixed" by an agent that read zero as an anomaly. Flux re-applies manifests continuously — it would have done exactly that on the next tick and called it convergence. Argo CD, with `selfHeal` off and `replicas` excluded from diffs, syncs **when git changes, and only then**. Between merges, drift is displayed, never auto-corrected. A declared state and an intended state are not the same thing.
+Choosing Argo CD over Flux comes from an incident. During a recent maintenance, eleven deliberately stopped workloads — `replicas: 0` was the goal, not an accident — got "fixed" by an agent that read zero as an anomaly. Flux re-applies manifests continuously, on a fixed interval: it would have made exactly the same mistake on the next tick, and called it convergence. Argo CD, with `selfHeal` disabled and `replicas` excluded from diffs, syncs when git changes, and only then. Between merges, drift is displayed, but never corrected on its own. A declared state and an intended state are not the same thing.
 
 ## The NixOS rollout, and a 4 GB lesson
 
-On the NixOS side: a canary VM first, because a bad deploy takes down the host you'd use to fix it. The canary was exemplary — three seconds after its first poll, fetched, built, switched — and the x86 fleet followed within minutes. The two Raspberry Pis, though, choked for an hour and a half on a *test-only* dependency missing from the binary cache (matplotlib, demanded by the test suite of a Markdown parser deep in comin's chain), all the way to `NotReady` and a physical power cycle. Two independent fixes: build that chain without its tests, and cap the nix daemon on every 4 GB machine — **a build must lose to the node, never the reverse**. Replayed afterwards: under two minutes, and the correction itself was delivered to the whole fleet by comin alone.
+On the NixOS side, we started with a canary VM, because a bad deploy takes down the host you would use to fix it. The canary was exemplary: three seconds after its first poll, it had fetched the merge, built and switched, and the x86 fleet followed within minutes. The two Raspberry Pis, though, choked for an hour and a half on a *test-only* dependency missing from the binary cache — matplotlib, demanded by the test suite of a Markdown parser deep in comin's dependency chain — all the way to `NotReady` and a physical power cycle. There are two fixes, and they are independent: that chain now builds without its tests, and the nix daemon is capped on every 4 GB machine, because a build must lose to the node, never the reverse. Replayed after the fix, the same deployments took under two minutes — and the correction itself was delivered to the whole fleet by comin alone, with no hands on any host.
 
 ## The merge button became the deploy button
 
-End state: nine machines, the cluster, two cloud accounts — everything deploys on merge, and the drift checks are demoted from only net to the verification half of a closed loop. The honest costs: branch protection is a paid feature on private repos, so "a PR before merging" remains discipline — the gate, though, applies no matter how a commit lands; every commit costs the Pis a few minutes of Nix evaluation; and a pipeline that applies faster is wrong faster — the gate, the memory caps and the canary exist for the *what next*, not the *whether*.
+By the end of the day, all nine machines, the cluster and both cloud accounts deploy on merge. The drift checks did not disappear: they went from being the only net to being the verification half of a closed loop, which is the right fate for them.
 
-The logical sequel is already in the backlog: an architecture view generated nightly from the four public repos — exactly as fresh as the drift checks prove it to be.
+Costs remain, and they deserve naming. Branch protection is a paid feature on private GitHub repos, so "a PR before merging" stays a discipline rather than an enforcement — the destroy gate, though, applies no matter how a commit lands. Every commit costs the Pis a few minutes of Nix evaluation, even when the change doesn't concern them. And a pipeline that applies faster is also a pipeline that is wrong faster: the gate, the memory caps and the canary exist to answer "what happens next", not "will it happen".
+
+The logical sequel is already in the backlog: an architecture view of the lab, generated nightly from the four public repos — and exactly as fresh as the drift checks can prove it to be.

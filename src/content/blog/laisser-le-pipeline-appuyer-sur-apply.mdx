@@ -1,7 +1,7 @@
 ---
 title: "Laisser le pipeline appuyer sur apply : quatre dépôts IaC, trois outils, et une porte qui refuse les destroys"
 pubDate: 2026-07-31
-description: "Tout le labo était déjà décrit en code — OpenTofu, YAML Kubernetes, flocons Nix — mais chaque apply passait encore par mes mains. On a fermé la boucle en une session : GitHub Actions avec OIDC pour le nuage, Argo CD pour le cluster, comin pour NixOS. Le plus intéressant n'est pas la plomberie : c'est ce que la porte refuse, la surprise OIDC de GitHub, et les deux Raspberry Pi qui ont compilé matplotlib pendant une heure et demie pour tester un parseur Markdown."
+description: "Tout le labo était déjà décrit en code, mais chaque apply passait encore par mes mains. On a fermé la boucle en une session : GitHub Actions avec OIDC pour le nuage, Argo CD pour le cluster, comin pour NixOS. Le plus intéressant n'est pas la plomberie : c'est ce que la porte refuse, la surprise OIDC de GitHub, et les deux Raspberry Pi qui ont compilé matplotlib pendant une heure et demie pour tester un parseur Markdown."
 tags: ["DevOps", "ludo"]
 heroImage: "/images/blog/banner-pipeline-apply.svg"
 ---
@@ -12,46 +12,41 @@ import OidcExchangeDiagram from "../../components/OidcExchangeDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Point de départ** : quatre dépôts IaC (Cloudflare, AWS, k3s, NixOS) déjà importés, plans propres, vérifications de dérive nocturnes — mais chaque `apply` était manuel.
-> -   **Architecture retenue** : hybride, un outil par couche. GitHub Actions (runners hébergés, OIDC, aucune clé stockée) **pousse** vers les API publiques ; Argo CD et comin **tirent** depuis l'intérieur du labo — aucun identifiant du parc ne sort.
-> -   **La porte** : plan sur PR en commentaire ; à la fusion, un plan frais est appliqué **sauf s'il contient un destroy** — le job échoue et attend un humain. Testée en direct contre un enregistrement DNS jetable.
-> -   **Les surprises** : les jetons OIDC de GitHub portent maintenant des *sujets immuables* (`repo:owner@id/...`) qui cassent les politiques de confiance classiques ; et deux Pi 5 de 4 Go se sont étouffés à compiler matplotlib — dépendance de la suite de tests d'un parseur Markdown — jusqu'au NotReady et au débranchage physique.
-> -   **Leçons** : automatiser l'apply est un problème d'identifiants déguisé en problème d'automatisation ; l'état d'opérateur n'est pas de la dérive (selfHeal off, `replicas` ignoré) ; et sur une machine de 4 Go, un build doit perdre contre le nœud, jamais l'inverse.
-> -   **Code** : les quatre dépôts assainis sont publics — [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public), [aws-iac-public](https://github.com/ludorl82/aws-iac-public), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public).
+> -   **Point de départ** : quatre dépôts IaC (Cloudflare, AWS, k3s, NixOS) importés, plans propres, dérive vérifiée chaque nuit — mais chaque `apply` était manuel.
+> -   **Architecture** : hybride. GitHub Actions (OIDC, aucune clé stockée) **pousse** vers les API publiques ; Argo CD et comin **tirent** depuis l'intérieur du labo.
+> -   **La porte** : plan sur PR ; à la fusion, apply automatique **sauf si le plan contient un destroy** — le job échoue et attend un humain. Testée contre un enregistrement DNS réel.
+> -   **Les surprises** : les *sujets immuables* OIDC de GitHub cassent les politiques de confiance classiques ; deux Pi 5 de 4 Go se sont étouffés à compiler matplotlib, dépendance de la suite de tests d'un parseur Markdown.
+> -   **Code** : [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public), [aws-iac-public](https://github.com/ludorl82/aws-iac-public), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public).
 
-Le travail difficile était censé être déjà fait. Les quatre dépôts qui décrivent ce labo — le compte Cloudflare, le compte AWS, les manifestes du cluster k3s, les configurations NixOS des neuf machines — existaient, leurs plans étaient propres, et quatre vérifications de dérive nocturnes confirmaient chaque matin que la réalité correspondait encore au code. Il ne restait qu'une chose : quand je fusionnais un changement, c'était encore moi qui tapais `tofu apply` dans un shell.
+Le travail difficile était censé être déjà fait : les quatre dépôts qui décrivent ce labo existaient, leurs plans étaient propres, et quatre vérifications de dérive confirmaient chaque nuit que la réalité correspondait encore au code. Restait une chose — quand je fusionnais un changement, c'était encore moi qui tapais `tofu apply` dans un shell.
 
-Fermer cette boucle a pris une session avec Claude Code — Fable 5, cette fois. Comme d'habitude ici, mon rôle a surtout été de poser des questions, de contester les recommandations, et d'appuyer sur les boutons que l'agent n'a pas le droit d'appuyer. Il s'avère que cette dernière partie est précisément le sujet de l'article.
+Fermer cette boucle a pris une session avec Claude Code (Fable 5, cette fois). Mon rôle : poser des questions, contester les recommandations, et appuyer sur les boutons que l'agent n'a pas le droit d'appuyer. Il s'avère que cette dernière partie est précisément le sujet.
 
 ## Un problème d'identifiants déguisé en problème d'automatisation
 
-La conversation de conception a duré plus longtemps que l'implémentation, et elle a tourné en rond d'une façon instructive. GitHub Actions partout ? GitOps partout ? Un runner auto-hébergé sur le bastion ? Chaque détour ramenait à la même question : **qui détient quels identifiants, et où**.
-
-Appliquer à la main cache une chose : toute l'autorité du compte passe par la session shell d'une seule personne. Dès qu'un pipeline applique, cette autorité doit être écrite quelque part, délimitée, stockée, tournée. C'est ça, le vrai coût — la plomberie YAML est triviale à côté.
-
-La réponse a fini par se trier par couche, et le critère de tri est simple : *est-ce que la cible est joignable depuis l'internet ?*
+La conversation de conception a duré plus longtemps que l'implémentation, et chaque détour — Actions partout ? GitOps partout ? un runner sur le bastion ? — ramenait à la même question : **qui détient quels identifiants, et où**. Appliquer à la main cache que toute l'autorité du compte passe par une session shell ; dès qu'un pipeline applique, cette autorité doit être écrite, délimitée, stockée, tournée. C'est ça le vrai coût, et il se trie par couche selon un critère simple : *la cible est-elle joignable depuis l'internet ?*
 
 <IacPipelinesDiagram lang="fr">
   Quatre dépôts, deux directions. Vers les API publiques, on pousse ; vers le labo, c'est le labo qui tire.
 </IacPipelinesDiagram>
 
-Pour Cloudflare et AWS, les API sont publiques et un runner hébergé jetable est exactement ce qu'il faut. Et contrairement à l'intuition, ça ne coûte rien : le palier gratuit de GitHub donne 2 000 minutes par mois aux dépôts privés, un cycle plan-plus-apply en consomme environ cinq — même un mois anormalement occupé n'entame qu'un dixième du quota. AWS s'authentifie par OIDC : le workflow échange son jeton signé par GitHub contre des identifiants de quelques minutes, et la politique de confiance n'accepte que ce dépôt, cette branche. Aucune clé stockée nulle part. Cloudflare n'a pas d'équivalent, donc un jeton dédié et délimité vit dans les secrets du dépôt — l'asymétrie est agaçante mais honnête.
+Pour Cloudflare et AWS, un runner hébergé jetable suffit — et ne coûte rien : 2 000 minutes gratuites par mois sur les dépôts privés, environ cinq par cycle plan-plus-apply. AWS s'authentifie par OIDC ; Cloudflare n'a pas d'équivalent, donc un jeton dédié et délimité vit dans les secrets du dépôt. L'asymétrie est agaçante mais honnête.
 
-Le mécanisme OIDC mérite deux phrases, parce qu'il remplace la pire pièce du montage classique. Avant : une clé AWS dans les secrets du dépôt — volable en tout temps, valide de partout, à faire tourner à la main. Maintenant : au démarrage du job, GitHub émet un jeton signé qui affirme *« ce job roule dans ce dépôt, sur cette branche »* ; AWS, qui a déclaré une fois faire confiance aux signatures de GitHub, vérifie le jeton, compare ses claims à la politique de confiance du rôle, et rend des identifiants qui meurent avec le job. Le seul artefact permanent est une relation de confiance à clé publique — rien à stocker, rien à faire tourner, et la portée est *écrite dans la politique* : le contexte PR obtient un rôle en lecture seule, seule une fusion sur la branche principale obtient le droit d'écrire. La limite est tout aussi nette : OIDC authentifie le *contexte*, pas l'*intention* — n'importe quel commit qui atteint la branche principale obtient le rôle. C'est la revue de PR et la porte anti-destroy qui gardent ce qui atteint la branche, pas OIDC.
+OIDC remplace la pire pièce du montage classique — la clé AWS stockée, volable en tout temps. À la place : GitHub émet au démarrage du job un jeton signé qui affirme *« ce job roule dans ce dépôt, sur cette branche »* ; AWS le vérifie contre la politique de confiance du rôle et rend des identifiants qui meurent avec le job. Le contexte PR obtient un rôle en lecture seule ; seule une fusion sur la branche principale peut écrire. La limite est nette : OIDC authentifie le *contexte*, pas l'*intention* — ce sont la revue de PR et la porte anti-destroy qui gardent ce qui atteint la branche.
 
 <OidcExchangeDiagram lang="fr">
-  L'échange OIDC, étape par étape : GitHub atteste le contexte du job, AWS vérifie et délimite, les identifiants meurent avec le job.
+  L'échange OIDC : GitHub atteste le contexte du job, AWS vérifie et délimite, les identifiants meurent avec le job.
 </OidcExchangeDiagram>
 
-Pour le cluster et les hôtes NixOS, c'est l'inverse : l'API k3s et le parc ne sont pas sur l'internet, délibérément. Plutôt que de percer un chemin pour que CI pousse, **le labo tire** : Argo CD roule dans le cluster et surveille le dépôt ; [comin](https://github.com/nlewo/comin) roule sur chaque hôte NixOS, qui compile et bascule lui-même. Un compromis de mon compte GitHub peut proposer des commits — visibles, révocables — mais ne peut pas toucher un kubeconfig, parce qu'il n'y en a aucun à voler dehors.
+Pour le cluster et les hôtes NixOS, c'est l'inverse : rien n'est joignable depuis l'internet, délibérément. Plutôt que percer un chemin pour que CI pousse, **le labo tire** — Argo CD dans le cluster, [comin](https://github.com/nlewo/comin) sur chaque hôte NixOS, qui compile et bascule lui-même. Un compromis de mon compte GitHub peut proposer des commits, visibles et révocables ; il ne peut pas voler un kubeconfig qui n'existe pas dehors.
 
-Et la surprise du jour, parce qu'il y en a toujours une : les premières exécutions ont toutes échoué sur `Not authorized to perform sts:AssumeRoleWithWebIdentity`. GitHub émet maintenant des **sujets immuables** dans ses jetons OIDC — `repo:owner@id/repo@id:...` au lieu du classique `repo:owner/repo:...` — et toute politique de confiance écrite d'après la documentation classique casse net. Les politiques acceptent maintenant les deux formes ; les identifiants numériques sont immuables, donc rien n'est élargi.
+La surprise du jour : toutes les premières exécutions ont échoué sur `Not authorized to perform sts:AssumeRoleWithWebIdentity`. GitHub émet maintenant des **sujets immuables** (`repo:owner@id/repo@id:...`) et toute politique de confiance écrite d'après la documentation classique casse net. Les politiques acceptent désormais les deux formes — les identifiants numériques sont immuables, rien n'est élargi.
 
 ## Toute la conception tient dans ce que la porte refuse
 
-Le pipeline fait deux choses, et l'ordre compte. Sur chaque PR : un plan, en lecture seule, affiché en commentaire — c'est la preuve qu'on examine. À la fusion : un plan *frais* (jamais l'artefact de la PR — l'état a pu bouger entre les deux), puis l'apply. **Sauf si le plan contient un destroy.** Dans ce cas le job échoue, nomme les ressources condamnées, et attend qu'un humain applique depuis un shell, en connaissance de cause.
+Sur chaque PR : un plan en lecture seule, affiché en commentaire. À la fusion : un plan *frais* — jamais l'artefact de la PR, l'état a pu bouger — puis l'apply. **Sauf si le plan contient un destroy.** Alors le job échoue, nomme les ressources condamnées, et attend qu'un humain applique depuis un shell, en connaissance de cause. Les destroys sont la classe irréversible et, surtout, souvent involontaire — un attribut ForceNew transforme une retouche cosmétique en delete-recreate, et un `jq` ne rate jamais le « 1 to destroy » qu'un humain fatigué rate.
 
-On n'a pas cru la porte sur parole. Le test : une PR crée un enregistrement TXT jetable — plan en commentaire, fusion, apply automatique, l'enregistrement résout sur l'internet public. Puis une seconde PR le supprime. Le commentaire de plan crie, la fusion passe, et le job d'apply refuse :
+On n'a pas cru la porte sur parole : une PR crée un enregistrement TXT jetable — fusion, apply automatique, l'enregistrement résout sur l'internet. Une seconde PR le supprime — et le job refuse :
 
 <AsciiCast
   src="/casts/iac-apply.cast"
@@ -60,35 +55,24 @@ On n'a pas cru la porte sur parole. Le test : une PR crée un enregistrement TXT
   disclaimer="⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues boucles de surveillance sont coupées. Noms d'hôte sanitisés; l'enregistrement DNS montré était un jetable créé pour ce test."
 />
 
-Il y a un détail que j'aime beaucoup dans cette journée : à deux reprises, le classificateur de permissions de Claude Code a bloqué l'agent — une fois sur `tofu apply`, une fois sur la lecture d'un secret KeePass — et me les a remis entre les mains. C'est exactement la philosophie de la porte, appliquée à l'agent lui-même : les actions destructrices et les secrets passent par l'humain. Le pipeline, l'agent et moi avons fini la journée avec la même politique.
+Détail que j'aime : à deux reprises, le classificateur de permissions de Claude Code a bloqué l'agent — sur `tofu apply`, puis sur la lecture d'un secret — et m'a remis ces actions entre les mains. Le pipeline, l'agent et moi avons fini la journée sous la même politique : le destructif et les secrets passent par l'humain.
 
 ## L'état d'opérateur n'est pas de la dérive
 
-Le choix Argo CD contre Flux mérite une explication, parce qu'il vient d'un incident. Il y a quelques jours, pendant une maintenance de stockage, onze workloads volontairement arrêtés — `replicas: 0`, c'était le but — ont été « réparés » par un agent trop zélé qui a lu zéro comme une anomalie. La leçon est devenue une doctrine : **un état déclaré et un état voulu, ce n'est pas pareil, et « réconcilier » n'est pas toujours le verbe sûr.**
-
-Flux ré-applique les manifestes en continu, à intervalle fixe — c'est son cœur. Il aurait remonté mes onze workloads au tick suivant, et appelé ça de la convergence. Argo CD, avec `selfHeal` désactivé et `spec.replicas` exclu des différences, fait exactement ce qu'on veut : il synchronise **quand git change, et seulement là**. Entre deux fusions, la dérive est affichée — remplaçant au passage la vérification nocturne par un statut en continu — mais jamais corrigée d'office. La revue de PR est la seule porte ; après, le cluster obéit à git, et git seulement quand on le lui dit.
+Le choix d'Argo CD plutôt que Flux vient d'un incident : pendant une maintenance, onze workloads volontairement à `replicas: 0` ont été « réparés » par un agent qui a lu zéro comme une anomalie. Or Flux ré-applique les manifestes en continu — il aurait refait exactement ça au tick suivant, et appelé ça de la convergence. Argo CD, avec `selfHeal` désactivé et `replicas` exclu des différences, synchronise **quand git change, et seulement là**. Entre deux fusions, la dérive est affichée, jamais corrigée d'office. Un état déclaré et un état voulu, ce n'est pas pareil.
 
 ## L'heure et demie de matplotlib
 
-La partie NixOS s'est déployée par étapes — une VM canari d'abord, précisément parce qu'un mauvais déploiement NixOS emporte l'hôte qui aurait servi à le réparer. Le canari a été exemplaire : trois secondes après son premier poll, il avait récupéré la fusion, compilé, basculé. Le reste du parc x86 a suivi en quelques minutes chacun.
+Côté NixOS : une VM canari d'abord, parce qu'un mauvais déploiement emporte l'hôte qui aurait servi à le réparer. Le canari a été exemplaire — trois secondes après son premier poll, fusionné, compilé, basculé. Le parc x86 a suivi en quelques minutes.
 
-Puis les deux Raspberry Pi 5 ont commencé à compiler matplotlib.
+Puis les deux Raspberry Pi 5 ont commencé à compiler matplotlib. Le chemin mérite d'être écrit en entier : comin rend ses dix lignes de YAML avec remarshal ; remarshal dépend de rich, qui dépend de markdown-it-py ; et la **suite de tests** de markdown-it-py veut pytest-regressions, qui veut matplotlib. Une bibliothèque de tracé scientifique, compilée une heure et demie sur quatre cœurs ARM, pour tester un parseur Markdown, pour embellir dix lignes de YAML — depuis les sources, parce que le pin nixpkgs des Pi avait partiellement expiré du cache binaire public.
 
-Le chemin de dépendance vaut d'être écrit en entier : le service comin rend son fichier de configuration YAML — dix lignes — avec un outil nommé remarshal ; remarshal dépend de rich ; rich dépend de markdown-it-py ; et la **suite de tests** de markdown-it-py veut pytest-regressions, qui veut matplotlib. Une bibliothèque de tracé scientifique, compilée depuis les sources pendant une heure et demie sur quatre cœurs ARM, pour tester un parseur Markdown, pour embellir dix lignes de YAML. Compilée depuis les sources parce que les Pi utilisent un pin nixpkgs plus vieux que le reste du parc, dont les binaires aarch64 avaient partiellement expiré du cache public.
+Pendant ce temps, les deux nœuds — 4 Go, pas les 8 que j'aurais juré avoir achetés — se sont étranglés : kubelet affamé, `NotReady`, sshd muet. Correctif final : débrancher, rebrancher. Le correctif logiciel tient en deux moitiés indépendantes : `markdown-it-py` compilé sans ses tests, ce qui fait tomber tout le sous-arbre matplotlib (vérifié avec `nix why-depends` avant fusion) ; et sur toute machine de 4 Go, le démon nix plafonné à 2,5 Go, un seul job, premier sacrifié en cas de manque de mémoire. **Un build doit perdre contre le nœud, jamais l'inverse** — la règle vaut aussi pour l'instance qui porte etcd.
 
-Et pendant que ça compilait, les deux nœuds se sont étranglés : 4 Go de mémoire — pas les 8 que j'aurais juré avoir achetés —, le compilateur qui gagne contre tout le monde, kubelet affamé, `NotReady`, et sshd incapable de compléter une poignée de main. Le seul correctif restant était physique : débrancher, rebrancher.
-
-Le correctif logiciel, lui, tient en deux moitiés indépendantes — parce que couper l'arête absurde n'empêche pas la prochaine :
-
--   `markdown-it-py` compilé sans ses tests, ce qui fait tomber tout le sous-arbre matplotlib. Vérifié avant fusion avec `nix why-depends` : l'arête n'existe plus.
--   Sur toute machine de 4 Go, le démon nix est plafonné — 2,5 Go maximum, un seul job, priorité au sacrifice en cas de manque de mémoire. **Un build doit perdre contre le nœud, jamais l'inverse.** La règle vaut aussi pour l'instance cloud qui porte etcd : là-bas, un build affamé qui gagne, c'est le plan de contrôle qui perd.
-
-Rejoués après le correctif, les mêmes déploiements Pi ont pris moins de deux minutes. Et la correction elle-même — les plafonds ajustés de 8 à 4 Go, parce que mesurer bat supposer — a été le premier changement livré à tout le parc par comin seul, sans qu'aucune main touche aucun hôte.
+Rejoués après le correctif : moins de deux minutes. Et la correction elle-même a été le premier changement livré à tout le parc par comin seul, sans qu'aucune main touche aucun hôte.
 
 ## Le bouton merge est devenu le bouton deploy
 
-L'état final : les neuf machines, le cluster, les deux comptes nuage — tout se déploie à la fusion. Les vérifications de dérive nocturnes n'ont pas disparu ; elles ont été rétrogradées, de seul filet à moitié vérification d'une boucle fermée. C'est le bon sort pour elles.
+État final : neuf machines, le cluster, deux comptes nuage — tout se déploie à la fusion, et les vérifications de dérive sont rétrogradées de seul filet à moitié vérification d'une boucle fermée. Les coûts honnêtes : la protection de branche est payante sur les dépôts privés, donc « une PR avant la fusion » reste de la discipline — la porte, elle, s'applique peu importe comment le commit arrive ; chaque commit coûte quelques minutes d'évaluation Nix aux Pi ; et un pipeline qui applique plus vite se trompe plus vite — la porte, les caps mémoire et le canari existent pour le *ensuite*, pas pour le *si*.
 
-Les coûts honnêtes, pour finir. La protection de branche est payante sur les dépôts privés GitHub, donc « une PR avant la fusion » reste de la discipline, pas une contrainte — la porte anti-destroy, elle, s'applique peu importe comment le commit arrive. Chaque commit coûte quelques minutes d'évaluation Nix aux Pi, même quand le changement ne les concerne pas. Et un pipeline qui applique plus vite est aussi un pipeline qui se trompe plus vite : la porte, les caps mémoire et le canari existent précisément parce que la question n'est pas *si* quelque chose va mal se passer, mais ce qui se passe ensuite.
-
-La suite logique est déjà dans le carnet : une vue d'architecture du labo générée depuis les quatre dépôts publics, régénérée à chaque nuit — parce qu'un diagramme dessiné à la main est faux dès le lendemain, et que celui-là serait exactement aussi frais que les vérifications de dérive le prouvent.
+La suite logique est déjà au carnet : une vue d'architecture générée chaque nuit depuis les quatre dépôts publics — exactement aussi fraîche que les vérifications de dérive le prouvent.

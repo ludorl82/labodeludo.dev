@@ -1,7 +1,7 @@
 ---
 title: "Laisser le pipeline appuyer sur apply : quatre dépôts IaC, trois outils, et une porte qui refuse les destroys"
 pubDate: 2026-07-31
-description: "Tout le labo était déjà décrit en code, mais chaque apply passait encore par mes mains. On a fermé la boucle en une session : GitHub Actions avec OIDC pour le nuage, Argo CD pour le cluster, comin pour NixOS. Le plus intéressant n'est pas la plomberie : c'est ce que la porte refuse, la surprise OIDC de GitHub, et les deux Raspberry Pi qui se sont étouffés sur une dépendance de tests."
+description: "Tout le labo était déjà décrit en code, mais chaque apply passait encore par mes mains. On a fermé la boucle en une session : GitHub Actions avec OIDC pour le nuage, Argo CD pour le cluster, comin pour NixOS. Le plus intéressant n'est pas la plomberie : c'est ce que la porte refuse, et les deux Raspberry Pi qui se sont étouffés sur une dépendance de tests."
 tags: ["DevOps", "ludo"]
 heroImage: "/images/blog/banner-pipeline-apply.svg"
 ---
@@ -15,7 +15,7 @@ import OidcExchangeDiagram from "../../components/OidcExchangeDiagram.astro";
 > -   **Point de départ** : quatre dépôts IaC (Cloudflare, AWS, k3s, NixOS) importés, plans propres, dérive vérifiée chaque nuit — mais chaque `apply` était manuel.
 > -   **Architecture** : hybride. GitHub Actions (OIDC, aucune clé stockée) **pousse** vers les API publiques ; Argo CD et comin **tirent** depuis l'intérieur du labo.
 > -   **La porte** : plan sur PR ; à la fusion, apply automatique **sauf si le plan contient un destroy** — le job échoue et attend un humain. Testée contre un enregistrement DNS réel.
-> -   **Les surprises** : les *sujets immuables* OIDC de GitHub cassent les politiques de confiance classiques ; deux Pi 5 de 4 Go se sont étouffés sur une dépendance de la suite de tests d'un parseur Markdown.
+> -   **La surprise** : deux Pi 5 de 4 Go se sont étouffés sur une dépendance de la suite de tests d'un parseur Markdown, jusqu'au débranchage physique.
 > -   **Code** : [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public), [aws-iac-public](https://github.com/ludorl82/aws-iac-public), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public).
 
 Le travail difficile était censé être déjà fait. Les quatre dépôts qui décrivent ce labo existaient, leurs plans étaient propres, et quatre vérifications de dérive confirmaient chaque nuit que la réalité correspondait encore au code. Il ne restait qu'une chose : quand je fusionnais un changement, c'était encore moi qui tapais `tofu apply` dans un shell.
@@ -39,8 +39,6 @@ OIDC remplace la pire pièce du montage classique, c'est-à-dire la clé AWS sto
 </OidcExchangeDiagram>
 
 Pour le cluster et les hôtes NixOS, c'est l'inverse : rien n'y est joignable depuis l'internet, et c'est voulu. Plutôt que de percer un chemin pour que CI puisse pousser, c'est le labo qui tire — Argo CD roule dans le cluster, et [comin](https://github.com/nlewo/comin) roule sur chaque hôte NixOS, qui compile et bascule lui-même. Si mon compte GitHub se faisait compromettre, l'attaquant pourrait proposer des commits — qui resteraient visibles et révocables — mais il ne pourrait pas voler de kubeconfig, parce qu'il n'en existe aucun à l'extérieur du labo.
-
-La surprise du jour n'a pas manqué : les premières exécutions ont toutes échoué sur `Not authorized to perform sts:AssumeRoleWithWebIdentity`. GitHub émet maintenant des **sujets immuables** (`repo:owner@id/repo@id:...`), et toute politique de confiance écrite d'après la documentation classique casse net. Les politiques acceptent désormais les deux formes ; comme les identifiants numériques sont immuables, rien n'est élargi au passage.
 
 ## Toute la conception tient dans ce que la porte refuse
 

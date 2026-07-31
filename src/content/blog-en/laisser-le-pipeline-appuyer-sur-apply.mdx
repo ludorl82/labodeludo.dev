@@ -1,7 +1,7 @@
 ---
 title: "Letting the pipeline press apply: four IaC repos, three tools, and one gate that refuses destroys"
 pubDate: 2026-07-31
-description: "The whole lab was already described as code, but every apply still went through my hands. We closed the loop in one session: GitHub Actions with OIDC for the cloud, Argo CD for the cluster, comin for NixOS. The interesting part isn't the plumbing: it's what the gate refuses, GitHub's OIDC surprise, and the two Raspberry Pis that choked on a test-only dependency."
+description: "The whole lab was already described as code, but every apply still went through my hands. We closed the loop in one session: GitHub Actions with OIDC for the cloud, Argo CD for the cluster, comin for NixOS. The interesting part isn't the plumbing: it's what the gate refuses, and the two Raspberry Pis that choked on a test-only dependency."
 tags: ["DevOps", "ludo"]
 heroImage: "/images/blog/banner-pipeline-apply-en.svg"
 ---
@@ -15,7 +15,7 @@ import OidcExchangeDiagram from "../../components/OidcExchangeDiagram.astro";
 > -   **Starting point**: four IaC repos (Cloudflare, AWS, k3s, NixOS) imported, plans clean, drift checked nightly — but every `apply` was manual.
 > -   **Architecture**: hybrid. GitHub Actions (OIDC, zero stored keys) **pushes** to the public APIs; Argo CD and comin **pull** from inside the lab.
 > -   **The gate**: plan on PR; on merge, automatic apply **unless the plan contains a destroy** — the job fails and waits for a human. Tested against a real DNS record.
-> -   **The surprises**: GitHub's *immutable OIDC subjects* break classic trust policies; two 4 GB Pi 5s choked on a dependency of a Markdown parser's test suite.
+> -   **The surprise**: two 4 GB Pi 5s choked on a dependency of a Markdown parser's test suite, all the way to a physical power cycle.
 > -   **Code**: [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public), [aws-iac-public](https://github.com/ludorl82/aws-iac-public), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public).
 
 The hard part was supposed to be done already. The four repos describing this lab existed, their plans were clean, and four drift checks confirmed every night that reality still matched the code. Only one thing remained: when I merged a change, I was still the one typing `tofu apply` into a shell.
@@ -39,8 +39,6 @@ OIDC replaces the worst piece of the classic setup, which is the stored AWS key,
 </OidcExchangeDiagram>
 
 For the cluster and the NixOS hosts, it's the reverse: nothing there is reachable from the internet, and that is deliberate. Rather than drilling a path so CI can push, the lab pulls — Argo CD runs inside the cluster, and [comin](https://github.com/nlewo/comin) runs on every NixOS host, which builds and switches itself. A compromise of my GitHub account could propose commits, which would stay visible and revertable; it could not steal a kubeconfig, because none exists outside the lab.
-
-The surprise of the day did not fail to show up: the first runs all failed with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. GitHub now issues **immutable subjects** (`repo:owner@id/repo@id:...`), and any trust policy written from the classic documentation breaks cold. The policies now accept both forms; since the numeric ids are immutable, nothing is loosened along the way.
 
 ## The design lives in what the gate refuses
 

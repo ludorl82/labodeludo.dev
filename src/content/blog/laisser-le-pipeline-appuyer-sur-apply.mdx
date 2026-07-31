@@ -57,6 +57,14 @@ Il y a un détail de cette journée que j'aime beaucoup. À deux reprises, le cl
 
 ## L'état d'opérateur n'est pas de la dérive
 
+Voici à quoi ressemble la moitié GitOps au quotidien : la grille des applications, une vignette par répertoire du dépôt, chacune avec son état de synchronisation et de santé. C'est le remplaçant en continu de l'ancienne vérification de dérive nocturne — la même question, « est-ce que le cluster correspond encore à git ? », mais posée en permanence plutôt qu'à 7 h 20.
+
+![La grille d'applications d'Argo CD : seize vignettes, quatorze Synced et deux OutOfSync, chacune avec sa santé, son dépôt source et sa date de dernière synchronisation](/images/blog/argocd-grille.png)
+
+Et quand quelque chose dérive, la vue de différence montre exactement quoi, au caractère près — ici, l'horaire d'une tâche de sauvegarde modifié en direct sur le cluster (à gauche, en rouge) pendant que git déclare toujours l'original (à droite, en vert) :
+
+![La vue de différence d'Argo CD sur une CronJob : la ligne schedule vit à « 45 2 * * * » sur le cluster alors que git déclare « 40 2 * * * », seul changement surligné](/images/blog/argocd-diff-derive.png)
+
 Le choix d'Argo CD plutôt que Flux vient d'un incident. Pendant une maintenance récente, onze workloads volontairement arrêtés — `replicas: 0` était le but, pas un accident — ont été « réparés » par un agent qui a lu zéro comme une anomalie. Or Flux ré-applique les manifestes en continu, à intervalle fixe : il aurait refait exactement la même erreur au tick suivant, et l'aurait appelée de la convergence. Argo CD, avec `selfHeal` désactivé et `replicas` exclu des différences, synchronise quand git change, et seulement à ce moment-là. Entre deux fusions, la dérive est affichée, mais jamais corrigée d'office. Un état déclaré et un état voulu, ce n'est pas la même chose.
 
 ## Le déploiement NixOS, et une leçon de 4 Go

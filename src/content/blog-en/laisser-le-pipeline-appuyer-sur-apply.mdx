@@ -57,6 +57,14 @@ There is a detail from that day I'm quite fond of. Twice, Claude Code's permissi
 
 ## Operator state is not drift
 
+Here is what the GitOps half looks like day to day: the application grid, one tile per repo directory, each with its sync and health state. It's the continuous replacement for the old nightly drift check — the same question, "does the cluster still match git?", asked permanently instead of at 7:20 a.m.
+
+![Argo CD's application grid: sixteen tiles, fourteen Synced and two OutOfSync, each with its health, source repo and last-sync time](/images/blog/argocd-grille.png)
+
+And when something drifts, the diff view shows exactly what, down to the character — here, a backup job's schedule modified live on the cluster (left, in red) while git still declares the original (right, in green):
+
+![Argo CD's diff view on a CronJob: the schedule line lives at "45 2 * * *" on the cluster while git declares "40 2 * * *", the only change highlighted](/images/blog/argocd-diff-derive.png)
+
 Choosing Argo CD over Flux comes from an incident. During a recent maintenance, eleven deliberately stopped workloads — `replicas: 0` was the goal, not an accident — got "fixed" by an agent that read zero as an anomaly. Flux re-applies manifests continuously, on a fixed interval: it would have made exactly the same mistake on the next tick, and called it convergence. Argo CD, with `selfHeal` disabled and `replicas` excluded from diffs, syncs when git changes, and only then. Between merges, drift is displayed, but never corrected on its own. A declared state and an intended state are not the same thing.
 
 ## The NixOS rollout, and a 4 GB lesson

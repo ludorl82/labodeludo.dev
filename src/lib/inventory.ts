@@ -48,6 +48,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "construire-un-vrai-reseau-dalarme-pour-son-homelab-et-toutes-les-manieres-dont-ca-peut-foirer-en-silence",
       "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
       "migrer-tout-mon-homelab-vers-nixos",
+      "trois-majeures-un-jeudi-soir",
     ],
   },
   "pare-feu": {
@@ -72,6 +73,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "un-tiroir-1u-pour-mes-trois-raspberry-pi",
       "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web",
       "quatre-depots-pour-un-labo-au-complet",
+      "laisser-le-pipeline-appuyer-sur-apply",
     ],
   },
   stockage: {
@@ -120,6 +122,8 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "je-me-suis-vote-hors-de-l-ile",
       "migrer-tout-mon-homelab-vers-nixos",
       "quatre-depots-pour-un-labo-au-complet",
+      "laisser-le-pipeline-appuyer-sur-apply",
+      "trois-majeures-un-jeudi-soir",
     ],
   },
   domotique: {

@@ -114,5 +114,5 @@
 
   <!-- title -->
   <text x="50" y="50" font-size="30" font-weight="bold" fill="#ffffff">Laisser le pipeline appuyer sur apply</text>
-  <text x="50" y="76" font-size="16" fill="#c8d4e6">quatre dépôts, trois outils, une porte qui dit non</text>
+  <text x="50" y="76" font-size="16" fill="#c8d4e6">quatre dépôts, trois outils, une porte qui refuse les destroys</text>
 </svg>

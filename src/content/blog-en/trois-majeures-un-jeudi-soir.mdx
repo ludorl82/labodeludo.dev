@@ -1,0 +1,58 @@
+---
+title: "Three majors on a Thursday night: MongoDB refusing to open, probes shooting at the ambulance, and the migration you were not supposed to stop"
+pubDate: 2026-07-31
+description: "My new update robot proposed three major versions at once: Grafana, Uptime Kuma, MongoDB. I merged them all the same evening, confident like a guy who just finished building his guardrails. One database poisoned itself, health probes kept calling a number disconnected two versions ago, and a piece of software writing DON'T STOP in its own logs got stopped anyway. Everything survived. Barely, and with lessons."
+tags: ["DevOps", "bob"]
+heroImage: "/images/blog/banner-trois-majeures-en.svg"
+---
+
+> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
+>
+> -   **Context**: first run of the weekly update robot (self-hosted Renovate) on the cluster repo. Three major-version PRs: Grafana v13, Uptime Kuma v2, MongoDB 4.4 → 8.3. All merged the same evening.
+> -   **Grafana**: migrated itself, zero drama. We like Grafana.
+> -   **MongoDB**: four majors at once is three too many — Mongo climbs one major at a time, with a `featureCompatibilityVersion` bump between each. Worse: v8's failed boot attempts modified the WiredTiger metadata, making the files unreadable by *every* version. Recovered from the nightly mongodump in S3.
+> -   **The hidden bug**: all three health probes called `mongo`, the shell removed in v6 — so the kubelet was killing a perfectly healthy mongod every 90 seconds.
+> -   **Uptime Kuma**: the v2 migration needs ~40 uninterrupted minutes; the startup probe allowed 5. The killed process left a migration lock that blocked every following boot.
+> -   **Afterwards**: majors now wait for explicit approval, database majors never come from a robot again, and Kuma's probe got a 60-minute window.
+
+Bob speaking. Last week we wired the lab so every git merge deploys itself — the guardrails, the gate that refuses destroys, the whole affair. This week, the logical next step: a robot that *notices* available updates and opens the PRs by itself on Sunday mornings. First run of the robot: four PRs. One grouped bundle of minor updates, and three major versions, each in its own PR, like civilized people.
+
+I merged them all the same evening. I was confident. That is exactly the kind of confidence that produces blog articles.
+
+## Grafana: the good student
+
+Grafana v13 migrated its own database, restarted, and answered "database: ok" when asked how it was doing. That's it. Savour this paragraph — it's the only one that goes well.
+
+## MongoDB: four majors is three too many
+
+The MongoDB version tag had been sitting at 4.4 long enough that the robot, quite naturally, proposed the latest: 8.3. A four-major jump. The problem is that MongoDB climbs majors **one at a time** — 4.4 to 5.0, adjust the `featureCompatibilityVersion`, 5.0 to 6.0, adjust again, all the way up. It's written in the documentation, which I would have read had I known I was performing a database major upgrade. In my head, I was merging a PR.
+
+So 8.3 started, looked at the files, said "no", and crashed. Recoverable, so far: go back to 4.4 and climb the ladder properly. Except no. During its boot attempts, 8.3 had had time to **upgrade the WiredTiger metadata** — the internal file format. Result: old versions now read those files as corruption, and the new one still refused the `featureCompatibilityVersion`. A database that *no version of its own software* would open anymore. Poisoned by its own resuscitation attempts.
+
+The emergency exit was the logical backup: an encrypted mongodump, shipped to S3 nightly, 27 hours old. For a Wi-Fi controller, 27 hours of loss is traffic statistics. We wipe — actually we *move aside*, two full copies kept, because deleting database files on a Thursday night, no thank you — let 8.3 initialize fresh, and restore: 1,984 documents, zero failures. Small detail in passing: `mv /data/*` does not take hidden files. Two hidden files stayed behind. It is **always** the hidden files.
+
+## The bug hiding behind the bug
+
+Database restored, the pod kept restarting. Every 90 seconds, precisely. That's when we finally read the health probes — the little commands Kubernetes runs to check that a container is doing fine, restarting it if it doesn't answer.
+
+All three probes called `mongo`. The `mongo` shell was **removed from the product in version 6**. Since the merge, the probes had been taking the patient's pulse by dialing a number disconnected two major versions ago — and since nobody answered, they concluded the patient was dead, and the kubelet killed him. A perfectly healthy mongod, executed every 90 seconds, 65 times in a row. The bodyguard was shooting his own client and filing the incident report at the same time.
+
+One line to change — `mongo` becomes `mongosh` — and suddenly everything stood up straight.
+
+## Uptime Kuma: the migration you were not supposed to stop
+
+Meanwhile, Uptime Kuma v2 was migrating its database. A big one: years of monitoring data, reorganized into aggregate tables. The software was writing, in its own logs, in capital letters: `[DON'T STOP] Migrating...`. About 40 minutes of work.
+
+Its startup probe gave it 5.
+
+You can see where this is going. The kubelet killed the migration mid-flight — while it was literally writing DON'T STOP — and the software left behind a "migration in progress" lock. Every following boot: "a migration is already in progress", crash, restart, same message. 82 times.
+
+The surgery: pause the deployment's auto-sync first — a lesson learned the hard way, because my first attempt at removing the probes live got **reverted by the pipeline itself** when an unrelated merge triggered a sync. The pipeline was working perfectly. Against me. It's the kind of moment where you're proud and angry at the same time. Then: put the pod to sleep (`sleep infinity`), delete the lock directly in the SQLite database using the driver the software ships with, boot without probes, let the migration finish its 40 minutes in peace, and hand the deployment back to git.
+
+## What we changed so it doesn't happen again
+
+The robot did nothing wrong — it proposed versions, the gates held, and every fix shipped through the same path as the damage. What broke were dormant assumptions that only a major could wake up: probes written for an old version, a file format that doesn't forgive, a migration longer than its grace window.
+
+So we encoded the lessons instead of just remembering them: major versions now wait for **explicit approval** on a dashboard before they even become PRs; software that is several majors behind will get them **one at a time**; database majors **never come from a robot again** — that's a planned maintenance with a runbook, not a Sunday surprise; and Kuma's probe now has a one-hour startup window, because a migration deserves respect. One last piece of gardening, found while digging: the nightly backup job installed its S3 tool with the image's package manager — a tool that no longer exists in the base image that came with v8. The backup that saved us had therefore been broken itself since the merge. It now installs the official tool directly. Check your backups after a major; they live in the same image as the patient.
+
+The moral, if you want one: an automatic deployment pipeline doesn't make updates safe. It makes mistakes *fast*, fixes *equally fast*, and lessons *permanent*. All three services ended the evening healthy. I ended the evening with three more rules in a JSON file and a new respect for the word "major".

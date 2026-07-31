@@ -40,7 +40,7 @@ Pour le cluster et les hôtes NixOS, c'est l'inverse : l'API k3s et le parc ne s
 
 Et la surprise du jour, parce qu'il y en a toujours une : les premières exécutions ont toutes échoué sur `Not authorized to perform sts:AssumeRoleWithWebIdentity`. GitHub émet maintenant des **sujets immuables** dans ses jetons OIDC — `repo:owner@id/repo@id:...` au lieu du classique `repo:owner/repo:...` — et toute politique de confiance écrite d'après la documentation classique casse net. Les politiques acceptent maintenant les deux formes ; les identifiants numériques sont immuables, donc rien n'est élargi.
 
-## Ce que la porte refuse, c'est la conception
+## Toute la conception tient dans ce que la porte refuse
 
 Le pipeline fait deux choses, et l'ordre compte. Sur chaque PR : un plan, en lecture seule, affiché en commentaire — c'est la preuve qu'on examine. À la fusion : un plan *frais* (jamais l'artefact de la PR — l'état a pu bouger entre les deux), puis l'apply. **Sauf si le plan contient un destroy.** Dans ce cas le job échoue, nomme les ressources condamnées, et attend qu'un humain applique depuis un shell, en connaissance de cause.
 

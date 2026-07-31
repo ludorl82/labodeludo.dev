@@ -32,6 +32,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "fable-5-durcir-webdav-forfait-vide",
       "migrer-tout-mon-homelab-vers-nixos",
       "quatre-depots-pour-un-labo-au-complet",
+      "laisser-le-pipeline-appuyer-sur-apply",
     ],
   },
   "site-web": {
@@ -49,6 +50,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
       "migrer-tout-mon-homelab-vers-nixos",
       "trois-majeures-un-jeudi-soir",
+      "laisser-le-pipeline-appuyer-sur-apply",
     ],
   },
   "pare-feu": {
@@ -94,6 +96,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "construire-un-vrai-reseau-dalarme-pour-son-homelab-et-toutes-les-manieres-dont-ca-peut-foirer-en-silence",
       "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
       "migrer-tout-mon-homelab-vers-nixos",
+      "laisser-le-pipeline-appuyer-sur-apply",
     ],
   },
   "calcul-gpu": {
@@ -105,6 +108,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "convention-ipv6-vlan-serveurs",
       "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
       "migrer-tout-mon-homelab-vers-nixos",
+      "laisser-le-pipeline-appuyer-sur-apply",
     ],
   },
   "hote-conteneurs": {

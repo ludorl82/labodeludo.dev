@@ -38,7 +38,7 @@ OIDC remplace la pire pièce du montage classique, c'est-à-dire la clé AWS sto
   L'échange OIDC : GitHub atteste le contexte du job, AWS vérifie et délimite, les identifiants meurent avec le job.
 </OidcExchangeDiagram>
 
-Pour le cluster et les hôtes NixOS, c'est l'inverse : rien n'y est joignable depuis l'internet, et c'est voulu. Plutôt que de percer un chemin pour que CI puisse pousser, c'est le labo qui tire — Argo CD roule dans le cluster, et [comin](https://github.com/nlewo/comin) roule sur chaque hôte NixOS, qui compile et bascule lui-même. Un compromis de mon compte GitHub pourrait proposer des commits, qui resteraient visibles et révocables ; il ne pourrait pas voler un kubeconfig, parce qu'il n'en existe aucun à l'extérieur du labo.
+Pour le cluster et les hôtes NixOS, c'est l'inverse : rien n'y est joignable depuis l'internet, et c'est voulu. Plutôt que de percer un chemin pour que CI puisse pousser, c'est le labo qui tire — Argo CD roule dans le cluster, et [comin](https://github.com/nlewo/comin) roule sur chaque hôte NixOS, qui compile et bascule lui-même. Si mon compte GitHub se faisait compromettre, l'attaquant pourrait proposer des commits — qui resteraient visibles et révocables — mais il ne pourrait pas voler de kubeconfig, parce qu'il n'en existe aucun à l'extérieur du labo.
 
 La surprise du jour n'a pas manqué : les premières exécutions ont toutes échoué sur `Not authorized to perform sts:AssumeRoleWithWebIdentity`. GitHub émet maintenant des **sujets immuables** (`repo:owner@id/repo@id:...`), et toute politique de confiance écrite d'après la documentation classique casse net. Les politiques acceptent désormais les deux formes ; comme les identifiants numériques sont immuables, rien n'est élargi au passage.
 

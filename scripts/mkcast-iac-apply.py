@@ -126,7 +126,34 @@ says("The backlog already answers the design questions: plan on PR, apply on")
 cont("merge, and never auto-apply a plan that contains destroys — a delete", 0.8)
 cont("stops the job and waits for a human. Weakest blast radius first.", 1.8)
 
-# --- 2. jump cut: the destroy-gate test ---------------------------------
+# --- 2. the design conversation: picking a tool per repo -----------------
+prompt("hey i want to do gitops, like argocd or flux. would that be better than github actions?")
+says("It fits per layer, not wholesale. k3s-iac is plain YAML — exactly what")
+cont("these controllers are built for. The tofu repos are not: the extensions", 0.8)
+cont("that run tofu in-cluster are the orphaned corner of that ecosystem, and", 0.8)
+cont("you'd lose plan-as-PR-comment with a destroy gate before merge.", 1.8)
+
+prompt("if we use gitops everywhere, can we still gate the prs?")
+says("Yes — but the gate is CI at PR time no matter what: controllers only")
+cont("ever see main. GitOps never replaces the PR half; it only changes who", 0.8)
+cont("holds the apply credentials.", 1.8)
+
+prompt("ok so what is the benefit of using gitops at all then, instead of github hosted runners?")
+says("For the tofu repos: essentially none — their APIs are public. For the")
+cont("cluster it's concrete: a hosted runner can't reach the k3s API at all,", 0.8)
+cont("and a controller that pulls means no kubeconfig ever leaves the lab.", 1.8)
+
+prompt("Why are you recommending Argo over Flux?")
+says("Flux's whole design is continuous reconciliation — it re-applies on an")
+cont("interval, git change or not. It would have re-scaled your eleven", 0.8)
+cont("deliberately-stopped workloads on the next tick and called it", 0.8)
+cont("convergence. Argo with selfHeal off applies on merge, and only then.", 1.8)
+line()
+says("So: cloudflare-iac + aws-iac → GitHub Actions with OIDC and the destroy")
+cont("gate · k3s-iac → Argo CD, no selfHeal, no prune · nixos-iac → comin,", 0.8)
+cont("each host pulls and builds itself. Canary first, control plane last.", 2.2)
+
+# --- 3. jump cut: the destroy-gate test ---------------------------------
 line(f"{DIM}  ── plus tard dans la session : tester la porte pour vrai ──{R}", 1.6)
 line()
 says("PR #2 is open: it deletes the throwaway TXT record created by PR #1.")

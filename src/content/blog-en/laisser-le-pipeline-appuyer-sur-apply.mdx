@@ -1,0 +1,87 @@
+---
+title: "Letting the pipeline press apply: four IaC repos, three tools, and one gate that says no"
+pubDate: 2026-07-31
+description: "The whole lab was already described as code — OpenTofu, Kubernetes YAML, Nix flakes — but every apply still went through my hands. We closed the loop in one session: GitHub Actions with OIDC for the cloud, Argo CD for the cluster, comin for NixOS. The interesting part isn't the plumbing: it's what the gate refuses, GitHub's OIDC surprise, and the two Raspberry Pis that compiled matplotlib for an hour and a half to test a Markdown parser."
+tags: ["DevOps", "ludo"]
+heroImage: "/images/blog/banner-pipeline-apply-en.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+import IacPipelinesDiagram from "../../components/IacPipelinesDiagram.astro";
+
+> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
+>
+> -   **Starting point**: four IaC repos (Cloudflare, AWS, k3s, NixOS) already imported, plans clean, nightly drift checks — but every `apply` was manual.
+> -   **Architecture**: hybrid, one tool per layer. GitHub Actions (hosted runners, OIDC, zero stored keys) **pushes** to the public APIs; Argo CD and comin **pull** from inside the lab — no fleet credential ever leaves.
+> -   **The gate**: plan on PR as a comment; on merge, a fresh plan is applied **unless it contains a destroy** — the job fails and waits for a human. Tested live against a throwaway DNS record.
+> -   **The surprises**: GitHub's OIDC tokens now carry *immutable subjects* (`repo:owner@id/...`) that break classic trust policies; and two 4 GB Pi 5s choked compiling matplotlib — a test-suite dependency of a Markdown parser — all the way to NotReady and a physical power cycle.
+> -   **Lessons**: automating apply is a credentials problem wearing an automation costume; operator state is not drift (selfHeal off, `replicas` ignored); and on a 4 GB machine, a build must lose to the node, never the reverse.
+> -   **Code**: all four sanitized repos are public — [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public), [aws-iac-public](https://github.com/ludorl82/aws-iac-public), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public).
+
+The hard part was supposed to be done already. The four repos that describe this lab — the Cloudflare account, the AWS account, the k3s cluster manifests, the NixOS configurations of all nine machines — existed, their plans were clean, and four nightly drift checks confirmed every morning that reality still matched the code. Only one thing remained: when I merged a change, I was still the one typing `tofu apply` into a shell.
+
+Closing that loop took one session with Claude Code — Fable 5, this time. As usual around here, my role was mostly to ask questions, push back on recommendations, and press the buttons the agent is not allowed to press. It turns out that last part is precisely what this article is about.
+
+## A credentials problem wearing an automation costume
+
+The design conversation ran longer than the implementation, and it circled in an instructive way. GitHub Actions everywhere? GitOps everywhere? A self-hosted runner on the bastion? Every detour came back to the same question: **who holds which credentials, and where**.
+
+Applying by hand hides something: the entire account's authority rides through one person's shell session. The moment a pipeline applies, that authority has to be written down somewhere, scoped, stored, rotated. That is the real cost — the YAML plumbing is trivial next to it.
+
+The answer eventually sorted itself by layer, and the sorting criterion is simple: *is the target reachable from the internet?*
+
+<IacPipelinesDiagram lang="en">
+  Four repos, two directions. Toward the public APIs, we push; toward the lab, the lab pulls.
+</IacPipelinesDiagram>
+
+For Cloudflare and AWS, the APIs are public and a disposable hosted runner is exactly right. AWS authenticates via OIDC: the workflow trades its GitHub-signed token for minutes-long credentials, and the trust policy accepts only this repo, this branch. No key stored anywhere. Cloudflare has no equivalent, so a dedicated, scoped token lives in the repo's secrets — the asymmetry is annoying but honest.
+
+For the cluster and the NixOS hosts, it's the reverse: the k3s API and the fleet are not on the internet, deliberately. Rather than drilling a path so CI can push, **the lab pulls**: Argo CD runs inside the cluster and watches the repo; [comin](https://github.com/nlewo/comin) runs on every NixOS host, which builds and switches itself. A compromise of my GitHub account can propose commits — visible, revertable — but cannot touch a kubeconfig, because there is none outside to steal.
+
+And the surprise of the day, because there is always one: the first runs all failed with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. GitHub now issues **immutable subjects** in its OIDC tokens — `repo:owner@id/repo@id:...` instead of the classic `repo:owner/repo:...` — and every trust policy written from the classic documentation breaks cold. The policies now accept both forms; the numeric ids are immutable, so nothing is loosened.
+
+## What the gate refuses is the design
+
+The pipeline does two things, and the order matters. On every PR: a plan, read-only, posted as a comment — that's the evidence under review. On merge: a *fresh* plan (never the PR's artifact — state may have moved in between), then the apply. **Unless the plan contains a destroy.** In that case the job fails, names the doomed resources, and waits for a human to apply from a shell, deliberately.
+
+We didn't take the gate's word for it. The test: one PR creates a throwaway TXT record — plan comment, merge, automatic apply, the record resolves on the public internet. Then a second PR deletes it. The plan comment shouts, the merge goes through, and the apply job refuses:
+
+<AsciiCast
+  src="/casts/iac-apply.cast"
+  poster="npt:0:14"
+  caption="The destroy gate tested against a real record, then the same merge delivered on the NixOS side by comin, with nobody at the keyboard."
+  disclaimer="⚠ This is not a live capture: it is a condensed reconstruction, assembled afterwards from the real session transcript. The prompts and stop messages are from the actual session; timing is compressed and the long CI-watch loops are cut. Hostnames sanitized; the DNS record shown was a throwaway created for this test."
+/>
+
+There's a detail from that day I'm quite fond of: twice, Claude Code's permission classifier blocked the agent — once on `tofu apply`, once on reading a KeePass secret — and handed those actions to me. That is exactly the gate's philosophy, applied to the agent itself: destructive actions and secrets route through the human. The pipeline, the agent, and I all ended the day under the same policy.
+
+## Operator state is not drift
+
+The Argo CD versus Flux choice deserves an explanation, because it comes from an incident. A few days ago, during a storage maintenance, eleven deliberately-stopped workloads — `replicas: 0`, that was the point — got "fixed" by an overeager agent that read zero as an anomaly. The lesson became doctrine: **a declared state and an intended state are not the same thing, and "reconcile" is not always the safe verb.**
+
+Flux re-applies manifests continuously, on a fixed interval — that's its core. It would have scaled my eleven workloads back up on the next tick and called it convergence. Argo CD, with `selfHeal` disabled and `spec.replicas` excluded from diffs, does exactly what we want: it syncs **when git changes, and only then**. Between merges, drift is displayed — incidentally replacing the nightly check with a continuous status — but never auto-corrected. PR review is the only gate; after that, the cluster obeys git, and git only when told to.
+
+## The hour and a half of matplotlib
+
+The NixOS side rolled out in stages — a canary VM first, precisely because a bad NixOS deploy takes down the host you'd use to fix it. The canary was exemplary: three seconds after its first poll, it had fetched the merge, built, switched. The rest of the x86 fleet followed in a few minutes each.
+
+Then the two Raspberry Pi 5s started compiling matplotlib.
+
+The dependency path deserves to be written out in full: the comin service renders its YAML config file — ten lines — with a tool called remarshal; remarshal depends on rich; rich depends on markdown-it-py; and markdown-it-py's **test suite** wants pytest-regressions, which wants matplotlib. A scientific plotting library, compiled from source for an hour and a half on four ARM cores, to test a Markdown parser, to pretty-print ten lines of YAML. Compiled from source because the Pis use an older nixpkgs pin than the rest of the fleet, whose aarch64 binaries had partly expired from the public cache.
+
+And while it compiled, both nodes strangled themselves: 4 GB of memory — not the 8 I'd have sworn I bought —, the compiler winning against everyone, kubelet starved, `NotReady`, and sshd unable to complete a handshake. The only remaining fix was physical: unplug, replug.
+
+The software fix comes in two independent halves — because cutting the absurd edge doesn't prevent the next one:
+
+-   `markdown-it-py` built without its tests, which drops the entire matplotlib subtree. Verified before merging with `nix why-depends`: the edge no longer exists.
+-   On every 4 GB machine, the nix daemon is capped — 2.5 GB maximum, a single job, first in line for the OOM killer. **A build must lose to the node, never the reverse.** The rule also covers the cloud instance that carries etcd: there, a starving build that wins means the control plane loses.
+
+Replayed after the fix, the same Pi deployments took under two minutes. And the correction itself — the caps adjusted from 8 GB assumptions to 4 GB reality, because measuring beats assuming — was the first change delivered to the whole fleet by comin alone, with no hands on any host.
+
+## The merge button became the deploy button
+
+The end state: all nine machines, the cluster, both cloud accounts — everything deploys on merge. The nightly drift checks didn't disappear; they were demoted, from the only net to the verification half of a closed loop. That's the right fate for them.
+
+The honest costs, to finish. Branch protection is a paid feature on private GitHub repos, so "a PR before merging" remains discipline, not enforcement — the destroy gate, though, applies no matter how a commit lands. Every commit costs the Pis a few minutes of Nix evaluation, even when the change doesn't concern them. And a pipeline that applies faster is also a pipeline that's wrong faster: the gate, the memory caps and the canary exist precisely because the question is not *whether* something will go wrong, but what happens next.
+
+The logical sequel is already in the backlog: an architecture view of the lab generated from the four public repos, regenerated nightly — because a hand-drawn diagram is wrong by the next morning, and that one would be exactly as fresh as the drift checks prove it to be.

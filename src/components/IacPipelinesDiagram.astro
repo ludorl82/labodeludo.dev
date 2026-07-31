@@ -1,0 +1,143 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+  lang?: "fr" | "en";
+}
+
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma : quatre dépôts IaC et leur chemin de déploiement après un merge. cloudflare-iac et aws-iac sont poussés par GitHub Actions vers les API publiques Cloudflare et AWS, avec un plan sur PR et une porte qui refuse tout destroy ; k3s-iac est tiré par Argo CD depuis l'intérieur du cluster (selfHeal désactivé) ; nixos-iac est tiré par comin sur chaque hôte, qui compile et bascule lui-même. Aucun identifiant du parc ne sort du labo — les flèches pull partent de l'intérieur.",
+    pushZone: "push · GitHub Actions (runners hébergés, OIDC, zéro clé stockée)",
+    pullZone: "pull · le labo vient chercher (aucun identifiant ne sort)",
+    gate1: "plan sur PR · porte anti-destroy",
+    gate2: "plan sur PR · porte anti-destroy",
+    gate3: "diff en continu · selfHeal off",
+    gate4: "gate d'éval sur PR · build local",
+    target1: "API Cloudflare",
+    target2: "API AWS",
+    target3: "cluster k3s",
+    target4: "chaque hôte NixOS",
+    argo: "Argo CD (dans le cluster)",
+    comin: "comin (sur chaque hôte)",
+    merge: "merge sur la branche principale",
+  },
+  en: {
+    ariaLabel:
+      "Diagram: four IaC repos and their deployment path after a merge. cloudflare-iac and aws-iac are pushed by GitHub Actions to the public Cloudflare and AWS APIs, with a plan on PR and a gate that refuses any destroy; k3s-iac is pulled by Argo CD from inside the cluster (selfHeal disabled); nixos-iac is pulled by comin on every host, which builds and switches itself. No fleet credential ever leaves the lab — the pull arrows start from the inside.",
+    pushZone: "push · GitHub Actions (hosted runners, OIDC, zero stored keys)",
+    pullZone: "pull · the lab comes and gets it (no credential leaves)",
+    gate1: "plan on PR · destroy gate",
+    gate2: "plan on PR · destroy gate",
+    gate3: "continuous diff · selfHeal off",
+    gate4: "eval gate on PR · local build",
+    target1: "Cloudflare API",
+    target2: "AWS API",
+    target3: "k3s cluster",
+    target4: "every NixOS host",
+    argo: "Argo CD (in-cluster)",
+    comin: "comin (on each host)",
+    merge: "merge to the default branch",
+  },
+} as const;
+
+const t = copy[lang];
+---
+
+<figure class:list={["iac-pipelines-diagram", context]}>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 700 360" role="img" aria-label={t.ariaLabel}>
+      <defs>
+        <marker id="ip-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="ip-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- merge origin -->
+      <rect x="20" y="150" width="130" height="56" rx="4" fill="var(--panel)" stroke="var(--accent-live)" />
+      <text x="85" y="174" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">git merge</text>
+      <text x="85" y="192" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.merge}</text>
+
+      <!-- push zone -->
+      <rect x="180" y="20" width="500" height="150" rx="6" fill="none" stroke="var(--panel-border)" stroke-dasharray="5 4" />
+      <text x="196" y="40" font-family="var(--font-mono)" font-size="10" fill="var(--text-muted)">{t.pushZone}</text>
+
+      <g>
+        <rect x="200" y="52" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="275" y="72" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">cloudflare-iac</text>
+        <text x="275" y="88" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.gate1}</text>
+        <line x1="350" y1="75" x2="540" y2="75" stroke="var(--text-faint)" marker-end="url(#ip-arrow)" />
+        <rect x="545" y="58" width="120" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="605" y="79" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-muted)">{t.target1}</text>
+      </g>
+
+      <g>
+        <rect x="200" y="112" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="275" y="132" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">aws-iac</text>
+        <text x="275" y="148" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.gate2}</text>
+        <line x1="350" y1="135" x2="540" y2="135" stroke="var(--text-faint)" marker-end="url(#ip-arrow)" />
+        <rect x="545" y="118" width="120" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="605" y="139" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-muted)">{t.target2}</text>
+      </g>
+
+      <!-- pull zone -->
+      <rect x="180" y="190" width="500" height="150" rx="6" fill="none" stroke="var(--accent-live)" stroke-opacity="0.55" stroke-dasharray="5 4" />
+      <text x="196" y="210" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{t.pullZone}</text>
+
+      <g>
+        <rect x="200" y="222" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="275" y="242" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">k3s-iac</text>
+        <text x="275" y="258" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.gate3}</text>
+        <line x1="540" y1="245" x2="355" y2="245" stroke="var(--accent-live)" marker-end="url(#ip-arrow-live)" />
+        <text x="447" y="238" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--accent-live)">{t.argo}</text>
+        <rect x="545" y="228" width="120" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="605" y="249" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-muted)">{t.target3}</text>
+      </g>
+
+      <g>
+        <rect x="200" y="282" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="275" y="302" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">nixos-iac</text>
+        <text x="275" y="318" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.gate4}</text>
+        <line x1="540" y1="305" x2="355" y2="305" stroke="var(--accent-live)" marker-end="url(#ip-arrow-live)" />
+        <text x="447" y="298" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--accent-live)">{t.comin}</text>
+        <rect x="545" y="288" width="120" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="605" y="309" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-muted)">{t.target4}</text>
+      </g>
+
+      <!-- merge feeds all four -->
+      <path d="M150,168 C175,168 175,75 198,75" fill="none" stroke="var(--text-faint)" marker-end="url(#ip-arrow)" />
+      <path d="M150,178 C175,178 175,135 198,135" fill="none" stroke="var(--text-faint)" marker-end="url(#ip-arrow)" />
+      <path d="M150,186 C175,186 175,245 198,245" fill="none" stroke="var(--text-faint)" marker-end="url(#ip-arrow)" />
+      <path d="M150,196 C175,196 175,305 198,305" fill="none" stroke="var(--text-faint)" marker-end="url(#ip-arrow)" />
+    </svg>
+  </div>
+  <figcaption><slot /></figcaption>
+</figure>
+
+<style>
+  .iac-pipelines-diagram {
+    margin: 2rem 0;
+  }
+  .diagram-wrap {
+    overflow-x: auto;
+  }
+  .diagram-wrap svg {
+    display: block;
+    width: 100%;
+    min-width: 34rem;
+    height: auto;
+  }
+  figcaption {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-faint);
+  }
+  .iac-pipelines-diagram.architecture {
+    margin: 1rem 0;
+  }
+</style>

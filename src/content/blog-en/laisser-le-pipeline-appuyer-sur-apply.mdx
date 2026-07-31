@@ -63,6 +63,12 @@ Choosing Argo CD over Flux comes from an incident. During a recent maintenance, 
 
 On the NixOS side, we started with a canary VM, because a bad deploy takes down the host you would use to fix it. The canary was exemplary: three seconds after its first poll, it had fetched the merge, built and switched, and the x86 fleet followed within minutes. The two Raspberry Pis, though, choked for an hour and a half on a *test-only* dependency missing from the binary cache — matplotlib, demanded by the test suite of a Markdown parser deep in comin's dependency chain — all the way to `NotReady` and a physical power cycle. There are two fixes, and they are independent: that chain now builds without its tests, and the nix daemon is capped on every 4 GB machine, because a build must lose to the node, never the reverse. Replayed after the fix, the same deployments took under two minutes — and the correction itself was delivered to the whole fleet by comin alone, with no hands on any host.
 
+## What this changes for working with the agent
+
+It's worth saying how infrastructure changes happen here: in a session with Claude Code, which writes the HCL, the YAML or the Nix while I ask questions and make the calls. Until this week, every one of those sessions ended at the same bottleneck: the agent had long finished, and I was the one applying by hand, hoping I remembered everything that had been decided further up the conversation.
+
+The pipeline transforms that last mile. A session's natural deliverable becomes a branch and a PR, where the plan comment shows in black and white what the change would do to the real world — the same evidence for an agent's work as for mine. My review narrows to a single question, "is this what we decided?", and the merge triggers everything else without anyone retyping a thing. The agent can go full speed on a branch precisely because nothing it does there touches the infrastructure; and if some session — human or agent — ever lets an unwanted destroy through, the gate catches it after the merge. The guardrails don't merely tolerate working with an agent: they're built for it, and the incident of the eleven "fixed" workloads is exactly why the GitOps half refuses to self-heal.
+
 ## The merge button became the deploy button
 
 By the end of the day, all nine machines, the cluster and both cloud accounts deploy on merge. The drift checks did not disappear: they went from being the only net to being the verification half of a closed loop, which is the right fate for them.

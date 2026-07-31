@@ -1,0 +1,58 @@
+---
+title: "Trois majeures un jeudi soir : MongoDB qui refuse d'ouvrir, les sondes qui tirent sur l'ambulance, pis la migration qu'il ne fallait surtout pas arrêter"
+pubDate: 2026-07-31
+description: "Mon nouveau robot de mises à jour m'a proposé trois versions majeures d'un coup : Grafana, Uptime Kuma, MongoDB. J'ai toutes fusionnées le soir même, confiant comme un gars qui vient de finir de construire ses garde-fous. Une base de données s'est empoisonnée elle-même, des sondes de santé ont appelé un numéro débranché depuis deux ans, et un logiciel qui écrivait DON'T STOP dans ses logs s'est fait arrêter pareil. Tout a survécu. De justesse, pis avec des leçons."
+tags: ["DevOps", "bob"]
+heroImage: "/images/blog/banner-trois-majeures.svg"
+---
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Contexte** : premier passage du robot de mises à jour hebdomadaires (Renovate, auto-hébergé) sur le dépôt du cluster. Trois PR de versions majeures : Grafana v13, Uptime Kuma v2, MongoDB 4.4 → 8.3. Toutes fusionnées le même soir.
+> -   **Grafana** : migration automatique, zéro drame. On aime Grafana.
+> -   **MongoDB** : quatre majeures d'un coup, c'est trois de trop — Mongo monte une majeure à la fois, avec un `featureCompatibilityVersion` à ajuster entre chaque. Pire : les démarrages ratés de la v8 ont modifié les métadonnées WiredTiger, rendant les fichiers illisibles par *toutes* les versions. Récupération par le mongodump nocturne dans S3.
+> -   **Le bogue caché** : les trois sondes de santé appelaient `mongo`, le shell retiré depuis la v6 — le kubelet tuait donc un mongod parfaitement sain aux 90 secondes.
+> -   **Uptime Kuma** : la migration v2 a besoin de ~40 minutes ininterrompues ; la sonde de démarrage en donnait 5. Le processus tué a laissé un verrou de migration qui bloquait chaque redémarrage.
+> -   **Après coup** : les majeures attendent maintenant une approbation explicite, les majeures de bases de données ne viennent plus jamais d'un robot, et la sonde de Kuma a une fenêtre de 60 minutes.
+
+Bob à l'appareil. La semaine passée, on a branché le labo pour que chaque fusion dans git déploie toute seule — les garde-fous, la porte qui refuse les destructions, toute l'affaire. Cette semaine, la suite logique : un robot qui *remarque* les mises à jour disponibles pis qui ouvre les PR tout seul le dimanche matin. Premier passage du robot : quatre PR. Un paquet de mises à jour mineures groupées, pis trois versions majeures, chacune sa PR, comme du monde civilisé.
+
+Je les ai toutes fusionnées le soir même. J'étais confiant. C'est exactement le genre de confiance qui produit des articles.
+
+## Grafana : le bon élève
+
+Grafana v13 a migré sa base de données tout seul, a redémarré, pis a répondu « database: ok » quand on lui a demandé comment ça allait. C'est tout. Retenez ce paragraphe, c'est le seul qui va bien.
+
+## MongoDB : quatre majeures, c'est trois de trop
+
+L'étiquette de version de MongoDB traînait à 4.4 depuis assez longtemps que le robot, tout naturellement, a proposé la dernière : 8.3. Un saut de quatre versions majeures. Le problème, c'est que MongoDB monte les majeures **une à la fois** — 4.4 vers 5.0, ajuster le `featureCompatibilityVersion`, 5.0 vers 6.0, ajuster encore, et ainsi de suite jusqu'en haut. C'est écrit dans la documentation, que j'aurais lue si j'avais su que j'étais en train de faire une montée de version de base de données. Dans ma tête, je fusionnais une PR.
+
+La 8.3 a donc démarré, regardé les fichiers, dit « non », pis planté. Jusque-là, récupérable : on redescend à 4.4 pis on monte l'échelle comme il faut. Sauf que non. Pendant ses tentatives de démarrage, la 8.3 avait eu le temps de **mettre à jour les métadonnées WiredTiger** — le format interne des fichiers. Résultat : les vieilles versions lisaient maintenant ces fichiers comme de la corruption, pis la nouvelle refusait toujours le `featureCompatibilityVersion`. Une base de données que *plus aucune version de son propre logiciel* ne voulait ouvrir. Empoisonnée par ses propres tentatives de réanimation.
+
+La sortie de secours, c'était la sauvegarde logique : un mongodump chiffré, envoyé dans S3 chaque nuit, vieux de 27 heures. Pour un contrôleur Wi-Fi, 27 heures de pertes, c'est des statistiques de trafic. On efface — en fait on *tasse*, deux copies complètes de côté, parce qu'effacer des fichiers de base de données un jeudi soir, non merci — on laisse la 8.3 s'initialiser à neuf, on restaure : 1984 documents, zéro échec. Petit détail en passant : `mv /data/*` ne prend pas les fichiers cachés. Deux fichiers cachés sont restés. C'est **toujours** les fichiers cachés.
+
+## Le bogue qui se cachait derrière le bogue
+
+La base restaurée, le pod continuait de redémarrer. Aux 90 secondes, précisément. C'est là qu'on a fini par lire les sondes de santé — les petites commandes que Kubernetes exécute pour vérifier qu'un conteneur va bien, pis qu'il redémarre s'il ne répond pas.
+
+Les trois sondes appelaient `mongo`. Le shell `mongo` a été **retiré du produit à la version 6**. Depuis la fusion, les sondes prenaient le pouls du patient en composant un numéro débranché depuis deux versions majeures — pis comme personne ne répondait, elles concluaient que le patient était mort, pis le kubelet le tuait. Un mongod parfaitement en santé, exécuté aux 90 secondes, 65 fois de suite. Le garde du corps tirait sur son propre client pis remplissait le rapport d'incident en même temps.
+
+Une ligne à changer — `mongo` devient `mongosh` — pis soudainement tout tenait debout.
+
+## Uptime Kuma : la migration qu'il ne fallait pas arrêter
+
+Pendant ce temps-là, Uptime Kuma v2 migrait sa base de données. Une grosse migration : toutes les données de surveillance des dernières années, réorganisées en tables agrégées. Le logiciel écrivait, dans ses propres logs, en majuscules : `[DON'T STOP] Migrating...`. Environ 40 minutes de travail.
+
+Sa sonde de démarrage lui donnait 5 minutes.
+
+Vous voyez où ça s'en va. Le kubelet a tué la migration en plein vol — pendant qu'elle écrivait littéralement DON'T STOP — pis le logiciel a laissé derrière lui un verrou « migration en cours ». À chaque redémarrage suivant : « une migration est déjà en cours », plantage, redémarrage, même message. 82 fois.
+
+La chirurgie : mettre en pause la synchronisation automatique du déploiement — leçon apprise à la dure, parce que ma première tentative de retirer les sondes en direct s'est fait **annuler par le pipeline lui-même** quand une fusion sans rapport a déclenché une synchronisation. Le pipeline marchait parfaitement. Contre moi. C'est le genre de moment où on est fier pis fâché en même temps. Ensuite : faire dormir le pod (`sleep infinity`), effacer le verrou directement dans la base SQLite avec le pilote que le logiciel traîne lui-même, redémarrer sans sondes, laisser la migration finir ses 40 minutes en paix, pis redonner le déploiement à git.
+
+## Ce qu'on a changé pour que ça ne recommence pas
+
+Le robot, lui, n'a rien fait de mal — il a proposé des versions, les portes ont tenu, chaque correctif a été livré par le même chemin que le dégât. Ce qui a cassé, c'était des suppositions dormantes que seule une majeure pouvait réveiller : des sondes écrites pour une vieille version, un format de fichiers qui ne pardonne pas, une migration plus longue que sa fenêtre de grâce.
+
+Alors on a encodé les leçons au lieu de juste s'en souvenir : les versions majeures attendent maintenant une **approbation explicite** sur un tableau de bord avant même de devenir des PR ; un logiciel en retard de plusieurs majeures les recevra **une à la fois** ; les majeures de bases de données ne viennent **plus jamais d'un robot** — c'est une maintenance planifiée avec un runbook, pas une surprise du dimanche ; pis la sonde de Kuma a maintenant une fenêtre de démarrage d'une heure, parce qu'une migration, ça se respecte.
+
+La morale, si vous en voulez une : un pipeline de déploiement automatique, ça ne rend pas les mises à jour sûres. Ça rend les erreurs *rapides*, les corrections *aussi rapides*, pis les leçons *permanentes*. Les trois services ont fini la soirée en santé. Moi, j'ai fini la soirée avec trois règles de plus dans un fichier JSON pis un respect neuf pour le mot « majeure ».

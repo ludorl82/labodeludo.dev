@@ -19,6 +19,29 @@ Bob speaking. Last week we wired the lab so every git merge deploys itself — t
 
 I merged them all the same evening. I was confident. That is exactly the kind of confidence that produces blog articles.
 
+## The robot, behind the scenes
+
+A Renovate PR looks like this: the package, the update type, the version jump, and the release notes foldable right below. Everything needed to make a decision is on the page — which is what makes that evening's mistake interesting: the information was right there, spelled out, "**major**".
+
+![A Renovate pull request on GitHub: grafana/grafana image update from 11.6.16 to 13.1.1, type "major", with the release notes expanded below and the renovate label](/images/blog/renovate-pr-grafana.png)
+
+On the NixOS side, no Renovate: versions come from the nixpkgs pin in `flake.lock`, and a weekly script moves it — orchestrated from the bastion, which doesn't have nix itself, so the evaluation happens on one of the servers over SSH:
+
+```bash
+# the bastion has no nix: the lock update runs on gpu-01
+scp flake.nix flake.lock gpu-01:/tmp/flake-update/
+ssh gpu-01 'cd /tmp/flake-update && nix flake update'
+scp gpu-01:/tmp/flake-update/flake.lock flake.lock
+
+git diff --quiet flake.lock && exit 0   # nothing new this week
+git checkout -B chore/flake-update      # one rolling branch:
+git commit -am "chore: weekly flake.lock update"   # never more than one open PR
+git push -f origin chore/flake-update
+gh pr create ...                        # the eval gate tests all 9 machines
+```
+
+The resulting PR is tested by CI — all nine machine configurations must still evaluate — and on merge, every host updates itself. The same pattern on both sides: the robot proposes, CI verifies, the human merges.
+
 ## Grafana: the good student
 
 Grafana v13 migrated its own database, restarted, and answered "database: ok" when asked how it was doing. That's it. Savour this paragraph — it's the only one that goes well.

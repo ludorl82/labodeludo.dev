@@ -19,6 +19,29 @@ Bob à l'appareil. La semaine passée, on a branché le labo pour que chaque fus
 
 Je les ai toutes fusionnées le soir même. J'étais confiant. C'est exactement le genre de confiance qui produit des articles.
 
+## Le robot, côté coulisses
+
+Une PR de Renovate, ça ressemble à ça : le paquet, le type de mise à jour, le saut de version, pis les notes de version dépliables juste en dessous. Tout ce qu'il faut pour prendre une décision est sur la page — c'est d'ailleurs ça qui rend l'erreur de ce soir-là intéressante : l'information était là, en toutes lettres, « **major** ».
+
+![Une pull request de Renovate sur GitHub : mise à jour de l'image grafana/grafana de 11.6.16 vers 13.1.1, type « major », avec les notes de version dépliées en dessous et l'étiquette renovate](/images/blog/renovate-pr-grafana.png)
+
+Côté machines NixOS, pas de Renovate : les versions viennent du pin nixpkgs dans `flake.lock`, pis c'est un script hebdomadaire qui le bouge — orchestré depuis le bastion, qui n'a pas nix lui-même, alors l'évaluation se fait sur un des serveurs par SSH :
+
+```bash
+# le bastion n'a pas nix : la mise à jour du lock se fait sur gpu-01
+scp flake.nix flake.lock gpu-01:/tmp/flake-update/
+ssh gpu-01 'cd /tmp/flake-update && nix flake update'
+scp gpu-01:/tmp/flake-update/flake.lock flake.lock
+
+git diff --quiet flake.lock && exit 0   # rien de neuf cette semaine
+git checkout -B chore/flake-update      # une seule branche roulante :
+git commit -am "chore: weekly flake.lock update"   # jamais plus d'une PR ouverte
+git push -f origin chore/flake-update
+gh pr create ...                        # la gate d'évaluation teste les 9 machines
+```
+
+La PR qui en sort est testée par le CI — les neuf configurations de machines doivent encore s'évaluer — pis à la fusion, chaque hôte se met à jour tout seul. Le même patron des deux bords : le robot propose, le CI vérifie, l'humain fusionne.
+
 ## Grafana : le bon élève
 
 Grafana v13 a migré sa base de données tout seul, a redémarré, pis a répondu « database: ok » quand on lui a demandé comment ça allait. C'est tout. Retenez ce paragraphe, c'est le seul qui va bien.

@@ -1,0 +1,78 @@
+---
+title: "Laisser le pipeline appuyer sur apply : quatre dépôts IaC, trois outils, et une porte qui refuse les destroys"
+pubDate: 2026-07-31
+description: "Tout le labo était déjà décrit en code, mais chaque apply passait encore par mes mains. On a fermé la boucle en une session : GitHub Actions avec OIDC pour le nuage, Argo CD pour le cluster, comin pour NixOS. Le plus intéressant n'est pas la plomberie : c'est ce que la porte refuse, et les deux Raspberry Pi qui se sont étouffés sur une dépendance de tests."
+tags: ["DevOps", "ludo"]
+heroImage: "/images/blog/banner-pipeline-apply.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+import IacPipelinesDiagram from "../../components/IacPipelinesDiagram.astro";
+import OidcExchangeDiagram from "../../components/OidcExchangeDiagram.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Point de départ** : quatre dépôts IaC (Cloudflare, AWS, k3s, NixOS) importés, plans propres, dérive vérifiée chaque nuit — mais chaque `apply` était manuel.
+> -   **Architecture** : hybride. GitHub Actions (OIDC, aucune clé stockée) **pousse** vers les API publiques ; Argo CD et comin **tirent** depuis l'intérieur du labo.
+> -   **La porte** : plan sur PR ; à la fusion, apply automatique **sauf si le plan contient un destroy** — le job échoue et attend un humain. Testée contre un enregistrement DNS réel.
+> -   **La surprise** : deux Pi 5 de 4 Go se sont étouffés sur une dépendance de la suite de tests d'un parseur Markdown, jusqu'au débranchage physique.
+> -   **Code** : [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public), [aws-iac-public](https://github.com/ludorl82/aws-iac-public), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public).
+
+Le travail difficile était censé être déjà fait. Les quatre dépôts qui décrivent ce labo existaient, leurs plans étaient propres, et quatre vérifications de dérive confirmaient chaque nuit que la réalité correspondait encore au code. Il ne restait qu'une chose : quand je fusionnais un changement, c'était encore moi qui tapais `tofu apply` dans un shell.
+
+Fermer cette boucle a pris une session avec Claude Code — Fable 5, cette fois. Mon rôle a surtout consisté à poser des questions, à contester les recommandations, et à appuyer sur les boutons que l'agent n'a pas le droit d'appuyer. Il s'avère que cette dernière partie est précisément le sujet de l'article.
+
+## Un problème d'identifiants déguisé en problème d'automatisation
+
+La conversation de conception a duré plus longtemps que l'implémentation, et chaque détour — GitHub Actions partout, GitOps partout, un runner auto-hébergé sur le bastion — ramenait à la même question : qui détient quels identifiants, et où. Appliquer à la main cache le fait que toute l'autorité du compte passe par la session shell d'une seule personne. Dès qu'un pipeline applique, cette autorité doit être écrite quelque part, délimitée, stockée et tournée. C'est là le vrai coût, et il finit par se trier naturellement par couche, selon un critère simple : est-ce que la cible est joignable depuis l'internet ?
+
+<IacPipelinesDiagram lang="fr">
+  Quatre dépôts, deux directions. Vers les API publiques, on pousse ; vers le labo, c'est le labo qui tire.
+</IacPipelinesDiagram>
+
+Pour Cloudflare et AWS, un runner hébergé jetable suffit, et il ne coûte rien : GitHub donne 2 000 minutes gratuites par mois aux dépôts privés, et un cycle plan-plus-apply en consomme environ cinq. AWS s'authentifie par OIDC. Cloudflare n'offre pas d'équivalent, alors un jeton dédié et délimité vit dans les secrets du dépôt — l'asymétrie est agaçante, mais honnête.
+
+OIDC remplace la pire pièce du montage classique, c'est-à-dire la clé AWS stockée, volable en tout temps. À la place, GitHub émet au démarrage du job un jeton signé qui affirme que ce job précis roule dans ce dépôt, sur cette branche. AWS le vérifie contre la politique de confiance du rôle, puis rend des identifiants qui meurent avec le job. Le contexte PR n'obtient qu'un rôle en lecture seule, et seule une fusion sur la branche principale peut écrire. La limite est tout aussi nette : OIDC authentifie le *contexte*, pas l'*intention*. Ce sont la revue de PR et la porte anti-destroy qui gardent ce qui atteint la branche.
+
+<OidcExchangeDiagram lang="fr">
+  L'échange OIDC : GitHub atteste le contexte du job, AWS vérifie et délimite, les identifiants meurent avec le job.
+</OidcExchangeDiagram>
+
+Pour le cluster et les hôtes NixOS, c'est l'inverse : rien n'y est joignable depuis l'internet, et c'est voulu. Plutôt que de percer un chemin pour que CI puisse pousser, c'est le labo qui tire — Argo CD roule dans le cluster, et [comin](https://github.com/nlewo/comin) roule sur chaque hôte NixOS, qui compile et bascule lui-même. Si mon compte GitHub se faisait compromettre, l'attaquant pourrait proposer des commits — qui resteraient visibles et révocables — mais il ne pourrait pas voler de kubeconfig, parce qu'il n'en existe aucun à l'extérieur du labo.
+
+## Toute la conception tient dans ce que la porte refuse
+
+Sur chaque PR, un plan en lecture seule est affiché en commentaire — c'est la preuve qu'on examine avant de fusionner. À la fusion, un plan *frais* est recalculé, parce que l'état a pu bouger depuis la PR, puis il est appliqué. Sauf s'il contient un destroy : dans ce cas, le job échoue, nomme les ressources condamnées, et attend qu'un humain applique depuis un shell, en connaissance de cause. Les destroys sont la classe irréversible des changements, et surtout la classe souvent involontaire — un attribut ForceNew transforme une retouche cosmétique en delete-recreate, et un `jq` ne rate jamais le « 1 to destroy » qu'un humain fatigué finit par rater.
+
+On n'a pas cru la porte sur parole. Une première PR crée un enregistrement TXT jetable : fusion, apply automatique, et l'enregistrement résout sur l'internet public. Une seconde PR le supprime — et le job refuse :
+
+<AsciiCast
+  src="/casts/iac-apply.cast"
+  poster="npt:0:14"
+  caption="Le choix d'un outil par dépôt, la porte anti-destroy testée contre un enregistrement réel, puis le même merge livré côté NixOS par comin, sans personne au clavier."
+  disclaimer="⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues boucles de surveillance sont coupées. Noms d'hôte sanitisés; l'enregistrement DNS montré était un jetable créé pour ce test."
+/>
+
+Il y a un détail de cette journée que j'aime beaucoup. À deux reprises, le classificateur de permissions de Claude Code a bloqué l'agent — une fois sur `tofu apply`, une fois sur la lecture d'un secret — et m'a remis ces actions entre les mains. Le pipeline, l'agent et moi avons donc fini la journée sous des politiques cousines : ce qui modifie l'infrastructure réelle et ce qui touche aux secrets passe par l'humain — et dans le cas du pipeline, la barre est placée plus précisément sur les destroys.
+
+## L'état d'opérateur n'est pas de la dérive
+
+Le choix d'Argo CD plutôt que Flux vient d'un incident. Pendant une maintenance récente, onze workloads volontairement arrêtés — `replicas: 0` était le but, pas un accident — ont été « réparés » par un agent qui a lu zéro comme une anomalie. Or Flux ré-applique les manifestes en continu, à intervalle fixe : il aurait refait exactement la même erreur au tick suivant, et l'aurait appelée de la convergence. Argo CD, avec `selfHeal` désactivé et `replicas` exclu des différences, synchronise quand git change, et seulement à ce moment-là. Entre deux fusions, la dérive est affichée, mais jamais corrigée d'office. Un état déclaré et un état voulu, ce n'est pas la même chose.
+
+## Le déploiement NixOS, et une leçon de 4 Go
+
+Côté NixOS, on a commencé par une VM canari, parce qu'un mauvais déploiement emporte l'hôte qui aurait servi à le réparer. Le canari a été exemplaire : trois secondes après son premier poll, il avait récupéré la fusion, compilé et basculé, et le parc x86 a suivi en quelques minutes. Les deux Raspberry Pi, eux, se sont étouffés pendant une heure et demie sur une dépendance *de tests* absente du cache binaire — matplotlib, exigée par la suite de tests d'un parseur Markdown au fond de la chaîne de comin — jusqu'au `NotReady` et au débranchage physique. Les correctifs sont au nombre de deux, et ils sont indépendants : cette chaîne se compile maintenant sans ses tests, et le démon nix est plafonné sur toute machine de 4 Go, parce qu'un build doit perdre contre le nœud, jamais l'inverse. Rejoués après le correctif, les mêmes déploiements ont pris moins de deux minutes — et la correction elle-même a été livrée à tout le parc par comin seul, sans qu'aucune main ne touche aucun hôte.
+
+## Ce que ça change pour le travail avec l'agent
+
+Il faut dire comment les changements d'infrastructure se font ici : en session avec Claude Code, qui écrit le HCL, le YAML ou le Nix, pendant que je pose des questions et que je tranche. Jusqu'à cette semaine, chacune de ces sessions se terminait par le même goulot : l'agent avait fini depuis longtemps, et c'était moi qui appliquais à la main, en espérant me souvenir de tout ce qui avait été décidé plus haut dans la conversation.
+
+Le pipeline transforme ce fin de parcours. Le livrable naturel d'une session devient une branche et une PR, où le commentaire de plan montre noir sur blanc ce que le changement ferait au monde réel — la même preuve pour le travail d'un agent que pour le mien. Ma revue se concentre sur une seule question, « est-ce bien ce qu'on a décidé ? », et la fusion déclenche le reste sans que personne ne retape quoi que ce soit. L'agent peut aller à pleine vitesse sur une branche précisément parce que rien de ce qu'il y fait ne touche l'infrastructure ; et si un jour une session — humaine ou agent — laisse passer un destroy non voulu, la porte l'attrape après la fusion. Les garde-fous ne se contentent pas de tolérer le travail avec un agent : ils sont taillés pour, et l'incident des onze workloads « réparés » est exactement la raison pour laquelle la moitié GitOps refuse de s'auto-guérir.
+
+## Le bouton merge est devenu le bouton deploy
+
+À la fin de la journée, les neuf machines, le cluster et les deux comptes nuage se déploient tous à la fusion. Les vérifications de dérive n'ont pas disparu pour autant : elles sont passées de seul filet de sécurité à moitié vérification d'une boucle fermée, et c'est le bon sort pour elles.
+
+Il reste des coûts, et ils méritent d'être nommés. La protection de branche est une fonction payante sur les dépôts privés GitHub, donc « une PR avant la fusion » reste une discipline plutôt qu'une contrainte — la porte anti-destroy, elle, s'applique peu importe comment le commit arrive. Chaque commit coûte quelques minutes d'évaluation Nix aux Pi, même quand le changement ne les concerne pas. Et un pipeline qui applique plus vite est aussi un pipeline qui se trompe plus vite : la porte, les plafonds mémoire et le canari existent pour répondre à « que se passe-t-il ensuite », pas à « est-ce que ça va arriver ».
+
+La suite logique est déjà au carnet : une vue d'architecture du labo, générée chaque nuit depuis les quatre dépôts publics — et exactement aussi fraîche que les vérifications de dérive peuvent le prouver.

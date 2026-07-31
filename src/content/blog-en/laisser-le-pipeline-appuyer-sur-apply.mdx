@@ -61,15 +61,9 @@ A detail I'm fond of: twice, Claude Code's permission classifier blocked the age
 
 Choosing Argo CD over Flux comes from an incident: during a maintenance, eleven workloads deliberately at `replicas: 0` got "fixed" by an agent that read zero as an anomaly. Flux re-applies manifests continuously — it would have done exactly that on the next tick and called it convergence. Argo CD, with `selfHeal` off and `replicas` excluded from diffs, syncs **when git changes, and only then**. Between merges, drift is displayed, never auto-corrected. A declared state and an intended state are not the same thing.
 
-## The hour and a half of matplotlib
+## The NixOS rollout, and a 4 GB lesson
 
-On the NixOS side: a canary VM first, because a bad deploy takes down the host you'd use to fix it. The canary was exemplary — three seconds after its first poll, fetched, built, switched. The x86 fleet followed within minutes.
-
-Then the two Raspberry Pi 5s started compiling matplotlib. The path deserves writing out in full: comin renders its ten lines of YAML with remarshal; remarshal depends on rich, which depends on markdown-it-py; and markdown-it-py's **test suite** wants pytest-regressions, which wants matplotlib. A scientific plotting library, compiled for an hour and a half on four ARM cores, to test a Markdown parser, to pretty-print ten lines of YAML — from source, because the Pis' nixpkgs pin had partly expired from the public binary cache.
-
-Meanwhile both nodes — 4 GB, not the 8 I'd have sworn I bought — strangled themselves: kubelet starved, `NotReady`, sshd silent. Final fix: unplug, replug. The software fix comes in two independent halves: `markdown-it-py` built without its tests, which drops the whole matplotlib subtree (verified with `nix why-depends` before merging); and on every 4 GB machine, the nix daemon capped at 2.5 GB, a single job, first in line for the OOM killer. **A build must lose to the node, never the reverse** — the rule also covers the instance that carries etcd.
-
-Replayed after the fix: under two minutes. And the correction itself was the first change delivered to the whole fleet by comin alone, with no hands on any host.
+On the NixOS side: a canary VM first, because a bad deploy takes down the host you'd use to fix it. The canary was exemplary — three seconds after its first poll, fetched, built, switched — and the x86 fleet followed within minutes. The two Raspberry Pis, though, choked for an hour and a half on a *test-only* dependency missing from the binary cache (matplotlib, demanded by the test suite of a Markdown parser deep in comin's chain), all the way to `NotReady` and a physical power cycle. Two independent fixes: build that chain without its tests, and cap the nix daemon on every 4 GB machine — **a build must lose to the node, never the reverse**. Replayed afterwards: under two minutes, and the correction itself was delivered to the whole fleet by comin alone.
 
 ## The merge button became the deploy button
 

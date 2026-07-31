@@ -61,15 +61,9 @@ Détail que j'aime : à deux reprises, le classificateur de permissions de Claud
 
 Le choix d'Argo CD plutôt que Flux vient d'un incident : pendant une maintenance, onze workloads volontairement à `replicas: 0` ont été « réparés » par un agent qui a lu zéro comme une anomalie. Or Flux ré-applique les manifestes en continu — il aurait refait exactement ça au tick suivant, et appelé ça de la convergence. Argo CD, avec `selfHeal` désactivé et `replicas` exclu des différences, synchronise **quand git change, et seulement là**. Entre deux fusions, la dérive est affichée, jamais corrigée d'office. Un état déclaré et un état voulu, ce n'est pas pareil.
 
-## L'heure et demie de matplotlib
+## Le déploiement NixOS, et une leçon de 4 Go
 
-Côté NixOS : une VM canari d'abord, parce qu'un mauvais déploiement emporte l'hôte qui aurait servi à le réparer. Le canari a été exemplaire — trois secondes après son premier poll, fusionné, compilé, basculé. Le parc x86 a suivi en quelques minutes.
-
-Puis les deux Raspberry Pi 5 ont commencé à compiler matplotlib. Le chemin mérite d'être écrit en entier : comin rend ses dix lignes de YAML avec remarshal ; remarshal dépend de rich, qui dépend de markdown-it-py ; et la **suite de tests** de markdown-it-py veut pytest-regressions, qui veut matplotlib. Une bibliothèque de tracé scientifique, compilée une heure et demie sur quatre cœurs ARM, pour tester un parseur Markdown, pour embellir dix lignes de YAML — depuis les sources, parce que le pin nixpkgs des Pi avait partiellement expiré du cache binaire public.
-
-Pendant ce temps, les deux nœuds — 4 Go, pas les 8 que j'aurais juré avoir achetés — se sont étranglés : kubelet affamé, `NotReady`, sshd muet. Correctif final : débrancher, rebrancher. Le correctif logiciel tient en deux moitiés indépendantes : `markdown-it-py` compilé sans ses tests, ce qui fait tomber tout le sous-arbre matplotlib (vérifié avec `nix why-depends` avant fusion) ; et sur toute machine de 4 Go, le démon nix plafonné à 2,5 Go, un seul job, premier sacrifié en cas de manque de mémoire. **Un build doit perdre contre le nœud, jamais l'inverse** — la règle vaut aussi pour l'instance qui porte etcd.
-
-Rejoués après le correctif : moins de deux minutes. Et la correction elle-même a été le premier changement livré à tout le parc par comin seul, sans qu'aucune main touche aucun hôte.
+Côté NixOS : une VM canari d'abord, parce qu'un mauvais déploiement emporte l'hôte qui aurait servi à le réparer. Le canari a été exemplaire — trois secondes après son premier poll, fusionné, compilé, basculé — et le parc x86 a suivi en quelques minutes. Les deux Raspberry Pi, eux, se sont étouffés une heure et demie sur une dépendance *de tests* absente du cache binaire (matplotlib, exigée par la suite de tests d'un parseur Markdown au fond de la chaîne de comin), jusqu'au `NotReady` et au débranchage physique. Deux correctifs, indépendants : compiler cette chaîne sans ses tests, et plafonner le démon nix sur toute machine de 4 Go — **un build doit perdre contre le nœud, jamais l'inverse**. Rejoués ensuite : moins de deux minutes, et la correction elle-même a été livrée à tout le parc par comin seul.
 
 ## Le bouton merge est devenu le bouton deploy
 

@@ -15,6 +15,7 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 > -   **Entre les deux** : un mode automatique qui, à partir d'un tout petit prompt de départ, enchaîne de longues sessions de travail en prenant lui-même les décisions raisonnables, plutôt que de s'arrêter à chaque étape pour demander confirmation.
 > -   **Coût** : passage d'une facturation à l'usage (jusqu'à 100 $ en une seule grosse journée) à l'abonnement Claude Pro, à 40 $ par mois, qui couvre autant mes sessions interactives que le travail headless.
 > -   **À part** : Claude Code rédige aussi certains articles de ce blogue de bout en bout, sous le nom de « Bob », à partir de ses propres notes de session.
+> -   **Correction (2026-08-01)** : les sauvegardes et mises à jour hebdomadaires ne sont finalement pas exécutées par une instance headless — voir la note dans la section concernée.
 
 Depuis plusieurs mois, Claude Code est mon principal outil de travail pour tout ce qui touche l'infrastructure de mon labo maison. Ce qui a changé récemment, c'est que je ne suis plus le seul déclencheur : une partie de ce travail tourne maintenant toute seule, sans que j'aie à m'assoir devant un clavier.
 
@@ -31,6 +32,8 @@ J'ai déjà décrit ailleurs [ma console conteneurisée](/blog/compartimentalisa
 Claude Code a une fonctionnalité de contrôle à distance qui me permet de consulter et, au besoin, de piloter une session en cours depuis mon téléphone — pas besoin d'ouvrir un client SSH ni de me rebrancher manuellement sur le `tmux` du bastion. C'est particulièrement utile pour une tâche headless qui roule sans supervision : je peux jeter un œil à ce qu'elle a fait, ou lui donner une nouvelle instruction, sans avoir à m'installer devant un ordinateur.
 
 ## Le mode headless : des tâches qui tournent sans moi
+
+> **Correction (2026-08-01)** : cette section décrivait les sauvegardes et les mises à jour système hebdomadaires comme exécutées par une instance headless de Claude Code. Ce n'est pas exact : ces deux routines roulent comme des scripts planifiés tout à fait conventionnels sur le bastion — déterministes, sans agent dans la boucle d'exécution. Claude Code a conçu, écrit et fait évoluer ces scripts (et le mode headless décrit ici existe bel et bien), mais ce n'est pas lui qui exécute les sauvegardes et les mises à jour chaque semaine. Je laisse le texte original tel quel, avec cette note, plutôt que de le réécrire en douce.
 
 C'est le vrai changement d'échelle. Une instance de Claude Code démarrée sans interface — en mode « headless », depuis une tâche planifiée sur le bastion — s'occupe maintenant de deux choses chaque semaine, la nuit, pendant que tout dort :
 
@@ -82,7 +85,7 @@ Ce même abonnement Claude Pro inclut aussi Claude Cowork, que je n'ai pas encor
 -   Un bastion conteneurisé donne un environnement portable et reconstructible, plutôt qu'un empilement de configuration à la main sur l'hôte.
 -   Garder une session dans `tmux` permet de s'y rebrancher n'importe quand sans perdre le contexte.
 -   Le contrôle à distance retire le besoin d'un terminal SSH pour vérifier ou piloter une tâche en cours.
--   Le même agent qui m'aide en session interactive peut tourner sans supervision, sur un horaire, pour des tâches récurrentes comme les sauvegardes ou les mises à jour système.
+-   Le même agent qui m'aide en session interactive peut tourner sans supervision, sur un horaire — mais pour les sauvegardes et les mises à jour système, ce sont finalement des scripts planifiés conventionnels qui font le travail (voir la correction plus haut).
 -   Un mode automatique intermédiaire tire de longues sessions de travail continu d'un tout petit prompt de départ, en ne s'arrêtant que pour les vraies décisions.
 -   Si l'usage est soutenu, un abonnement plat (Claude Pro, 40 $/mois) bat largement une facturation au jeton — j'ai déjà brûlé 100 $ en une seule journée avec l'API seule.
 -   Le même agent peut aussi écrire, à partir de ses propres notes de session — c'est comme ça que « Bob » signe une partie des articles de ce blogue.

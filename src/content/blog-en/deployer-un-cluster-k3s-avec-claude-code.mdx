@@ -78,7 +78,7 @@ The site you're reading right now now also runs on this cluster. The continuous-
 
 ## Backups and upgrades follow the cluster
 
-All six nodes, including the five new ones, are now covered by the same headless routine [I described in my previous post](/en/blog/claude-code-headless-bastion/): weekly, at night, while everything sleeps, a Claude Code instance connects to every node, pushes an encrypted backup to off-site storage, and applies system upgrades. Adding five machines to watch over didn't take anything more than adding their prefixes to the routine already in place.
+All six nodes, including the five new ones, are now covered by the same weekly routine [I described in my previous post](/en/blog/claude-code-headless-bastion/): weekly, at night, while everything sleeps, it connects to every node, pushes an encrypted backup to off-site storage, and applies system upgrades. Adding five machines to watch over didn't take anything more than adding their prefixes to the routine already in place. *(Correction 2026-08-01: that routine is in fact a conventional scheduled script, not a headless Claude Code instance — see the note in the linked post.)*
 
 ## What we're taking away
 

@@ -78,7 +78,7 @@ Le site que vous êtes en train de lire tourne maintenant lui aussi sur cette gr
 
 ## Les sauvegardes et les mises à jour suivent la grappe
 
-Les six nœuds de la grappe, y compris les cinq nouveaux, sont maintenant couverts par la même routine headless [dont je parlais dans mon article précédent](/blog/claude-code-headless-bastion/) : chaque semaine, la nuit, pendant que tout dort, une instance de Claude Code se connecte à chaque nœud, pousse une sauvegarde chiffrée vers un espace de stockage hors site, et applique les mises à jour système. Ajouter cinq machines à surveiller n'a rien demandé de plus qu'ajouter leurs préfixes à cette routine déjà en place.
+Les six nœuds de la grappe, y compris les cinq nouveaux, sont maintenant couverts par la même routine hebdomadaire [dont je parlais dans mon article précédent](/blog/claude-code-headless-bastion/) : chaque semaine, la nuit, pendant que tout dort, elle se connecte à chaque nœud, pousse une sauvegarde chiffrée vers un espace de stockage hors site, et applique les mises à jour système. Ajouter cinq machines à surveiller n'a rien demandé de plus qu'ajouter leurs préfixes à cette routine déjà en place. *(Correction 2026-08-01 : cette routine est en fait un script planifié conventionnel, pas une instance headless de Claude Code — voir la note dans l'article en lien.)*
 
 ## Ce qu'on retient
 

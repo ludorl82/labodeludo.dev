@@ -5,7 +5,7 @@ description: "Claude Code aux commandes, moi en mode apprentissage : tout mon pa
 tags: ["DevOps", "Labo", "ludo"]
 heroImage: "/images/blog/banner-nixos-migration.svg"
 ---
-import AsciiCastEmbed from "../../components/AsciiCastEmbed.astro";
+import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
@@ -114,8 +114,8 @@ Il téléverse un petit système d'installation, fait un `kexec` dedans (la mach
 
 Écrit comme ça, ça a l'air lisse. Ça ne l'est jamais. Voici une conversion au complet — une des neuf, celle d'une machine virtuelle — condensée : la demande, un changement d'idée en cours de route, deux murs successifs, et la machine qui finit par revenir en NixOS.
 
-<AsciiCastEmbed
-  id="U3RCAONjwkR6sGEz"
+<AsciiCast
+  src="/casts/nixos-migration.cast"
   poster="npt:0:06"
   caption="Une conversion de nœud du début à la fin, condensée en moins de deux minutes. Le Secure Boot et l'initrd qui refuse de se décompresser sont les vrais murs de cette session."
   disclaimer="⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues attentes sont coupées. Noms d'hôte sanitisés."

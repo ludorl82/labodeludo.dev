@@ -15,7 +15,7 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 > -   **In between**: an auto mode that turns a tiny starting prompt into long stretches of work, making the reasonable calls itself instead of stopping at every step to ask for confirmation.
 > -   **Cost**: moved from pay-per-use billing (up to $100 in a single heavy day) to the Claude Pro subscription, $40/month, covering both interactive sessions and headless work.
 > -   **Also**: Claude Code also writes some of this blog's posts end to end, under the name "Bob," drawing on its own session notes.
-> -   **Correction (2026-08-01, itself corrected 2026-08-02)**: the weekly backups are conventional scheduled scripts; the upgrades turned out to be a hybrid — a deterministic script for the servers, a headless Claude Code instance for the appliances. See the notes in that section.
+> -   **Correction (2026-08-01)**: the weekly backups and system upgrades are not, in the end, executed by a headless instance — see the note in that section.
 
 For several months now, Claude Code has been my main tool for everything infrastructure-related in my home lab. What's changed recently is that I'm no longer the only one triggering it: part of that work now runs entirely on its own, without me sitting down at a keyboard.
 
@@ -34,8 +34,6 @@ Claude Code has a remote control feature that lets me check in on, and if needed
 ## Headless mode: tasks that run without me
 
 > **Correction (2026-08-01)**: this section described the weekly backups and system upgrades as being executed by a headless Claude Code instance. That's not accurate: both routines run as perfectly conventional scheduled scripts on the bastion — deterministic, with no agent in the execution loop. Claude Code designed, wrote, and keeps evolving those scripts (and the headless mode described here is real), but it isn't the thing running the backups and upgrades every week. I'm leaving the original text as is, with this note, rather than quietly rewriting it.
->
-> **Correcting the correction (2026-08-02)**: while reworking the routine this week, I found my correction had overshot. The backups really are conventional scripts, and so are the server upgrades — deterministic, no agent involved. But the appliance half of that same weekly routine — the NAS, the home automation box, the Wi-Fi controller, and as of this week the firewall — *is* executed by a headless Claude Code instance, launched by the script with a built-in runbook. On that point, the original article had it right. This paragraph has now been corrected in both directions; I'll stop here.
 
 This is the real shift in scale. A Claude Code instance started with no interface at all — "headless" mode, kicked off from a scheduled task on the bastion — now handles two things every week, at night, while everything sleeps:
 
@@ -87,7 +85,7 @@ That same Claude Pro subscription also includes Claude Cowork, which I haven't t
 -   A containerized bastion gives a portable, rebuildable environment instead of a pile of hand-configured state on the host.
 -   Keeping a session in `tmux` lets me reattach any time without losing context.
 -   Remote control removes the need for an SSH terminal just to check on or steer a running task.
--   The same agent that helps me in interactive sessions can run unsupervised, on a schedule — the backups and server upgrades remain conventional scripts, but the appliance upgrades really are driven by a headless instance (see the corrections above).
+-   The same agent that helps me in interactive sessions can run unsupervised, on a schedule — but for the backups and system upgrades, it's conventional scheduled scripts doing the work in the end (see the correction above).
 -   An in-between auto mode turns a tiny starting prompt into long stretches of continuous work, only stopping for the calls that genuinely need a human.
 -   If usage is sustained, a flat subscription (Claude Pro, $40/month) beats pay-per-token billing by a wide margin — I've burned $100 in a single day on API alone.
 -   The same agent can also write, from its own session notes — that's how "Bob" comes to sign part of this blog's posts.

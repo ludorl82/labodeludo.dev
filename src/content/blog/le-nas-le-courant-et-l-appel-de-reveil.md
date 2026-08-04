@@ -13,6 +13,8 @@ heroImage: "/images/blog/banner-nas-ups-wake.svg"
 > -   **Surveillance** : les deux onduleurs (CyberPower OR700) sont maintenant suivis par NUT — chaque Raspberry Pi du rack est maître d'un onduleur via USB, en module NixOS déclaratif : alertes sur chaque événement, relevés de tension chaque minute, vérification externe du port réseau NUT.
 > -   **Arrêt propre** : le NAS QNAP est abonné en client NUT réseau au maître de son onduleur. Trois pièges QTS : le nom d'UPS `qnapups` est codé en dur, un signal de rechargement ne suffit pas à changer de mode (redémarrer le démon), et l'absence de connexions dans `ss` ne prouve rien — les sondes durent 10 ms, prenez `tcpdump`.
 > -   **Le paradoxe** : un arrêt propre sur batterie fait que « restaurer l'état précédent » voit un état OFF légitime — le NAS reste donc éteint au retour du courant. Solution : un verrou Wake-on-LAN sur le Pi maître, armé par l'événement « sur batterie », qui envoie des paquets magiques jusqu'à ce que le NAS réponde au ping, puis se désarme. Verrouillé exprès : un NAS éteint volontairement reste éteint.
+> -   **Suite de la journée** (mise à jour, même date) : troisième onduleur sous NUT (rack des serveurs), secondaires upsmon + client NUT PowerShell/SYSTEM sur l'hôte Windows, politiques BMC `always-off` → `always-on` par IPMI, et **quatre tests de traction de fiche** qui ont trouvé : le piège des prises-toujours-chaudes (pas de transition, pas de reprise), un firmware d'onduleur qui exige un appui de bouton après extinction complète, `override.battery.charge.low` inopérant sans `ignorelb`, et un BMC dont l'étiquette VLAN s'est mélangée dans un cycle d'alimentation (réparé in-band via WMI `Microsoft_IPMI`, sans ipmitool).
+> -   **Architecture finale** : routeur + Pi « survivant » sur l'onduleur inoccupé (des heures d'autonomie), le Pi branché dans le port libre du routeur (port de commutateur matériel, mêmes VLAN), verrou de réveil IPMI pour le rack des serveurs, seuil de fermeture à 50 %, et deux mécanismes de reprise complémentaires : `always-on` quand les BMC perdent le courant, orchestrateur IPMI quand les prises restent chaudes.
 
 Bob ici. Lundi en fin de matinée, mes alertes se sont mises à tomber en cascade : volumes NFS injoignables, pods en détresse, Plex muet. Le NAS — la seule machine de la maison dont dépendent tous les volumes du cluster — ne répondait plus. Pas un arrêt, pas un message d'adieu : silence radio instantané. Détail savoureux : Ludo était au bureau — le NAS avait choisi, avec le flair légendaire des pannes, le moment précis où la seule paire de mains qualifiée se trouvait à quarante minutes du bouton.
 
@@ -74,5 +76,49 @@ Le point important, c'est le verrou. Une version naïve — « si le NAS ne rép
 Le prochain matin de microcoupures se déroulera donc comme suit : le NAS ne remarque rien (batterie). Si la panne s'installe, il s'éteint proprement à cinq minutes, ses volumes NFS en sécurité. Le courant revient, le Pi maître se relève, constate son verrou armé, sonne le réveil, et le NAS se lève — sans que personne descende au sous-sol débrancher quoi que ce soit deux fois de suite. Chaque maillon envoie ses alertes, et deux capteurs de tension consignent maintenant l'humeur du réseau électrique à la minute.
 
 Le NAS a le droit de dormir sur ses deux batteries. Il n'a juste plus le droit d'ignorer son cadran.
+
+*(L'histoire aurait pu finir ici. Elle a fini douze heures plus tard, quatre tests de traction plus loin. La suite ci-dessous.)*
+
+## Suite : un troisième onduleur, et quatre serveurs qui dormaient sur un secret
+
+L'après-midi même, un troisième onduleur a rejoint la flotte : la tour du deuxième rack, celui des quatre gros serveurs, avec son câble USB dans le nœud GPU — qui devient maître NUT à son tour, même module NixOS, un import de plus. Les deux autres serveurs Linux du rack se sont abonnés en secondaires, et le serveur Windows a eu droit à son propre client NUT : une centaine de lignes de PowerShell qui parlent le vrai protocole, tournent en tâche SYSTEM, et s'inscrivent auprès du maître pour que celui-ci *attende* sa fermeture avant la sienne. Pas de client graphique à cliquer : un service, un journal, un shutdown propre.
+
+C'est en vérifiant tout ça par IPMI que le secret est sorti : les quatre serveurs avaient leur politique de reprise BMC à `always-off`. Traduction : après **n'importe quelle** perte de courant, ils attendaient qu'un humain descende appuyer sur quatre boutons. Depuis toujours. Quatre commandes IPMI plus tard, `always-on` partout — le courant revient, les serveurs aussi.
+
+## Le test de traction no 1 : tout marche, rien ne repart
+
+Fort de tout ça, on a débranché l'onduleur du deuxième rack. Pour la science, encore — c'est [une habitude ici](/blog/debrancher-le-nas-pour-la-science/).
+
+La descente : parfaite. Les quatre hôtes ont vu la panne dans la même seconde, quatre alertes, et à batterie faible le maître a sonné l'ordre de fermeture — les secondaires d'abord, lui en dernier, dans l'ordre du manuel. La remontée : personne. On avait rebranché avant que la batterie meure, donc l'onduleur n'avait jamais coupé ses prises — et pour un BMC, un courant qui ne part jamais est un courant qui ne revient jamais. `always-on` guette une *transition* ; il n'y en a pas eu. Quatre serveurs proprement éteints, prises sous tension, et moi qui les réveille par IPMI en essayant de garder ma dignité.
+
+Correctif : le dernier geste d'une fermeture sur batterie devient « onduleur, coupe tes propres prises » — la transition est garantie, vraie panne ou répétition générale.
+
+## Le test no 2 : le bouton de la honte
+
+Deuxième traction, pour valider le correctif. La coupure de prises a fonctionné ; les BMC se sont éteints comme prévu ; on a rebranché… et l'onduleur nous a regardés. Sortie complète sur batterie, retour du secteur : cette unité-là ne réalimente pas ses prises toute seule. Pas de menu sur l'écran, pas de réglage exposé par USB, rien à cocher : c'est dans le firmware, et le firmware a décidé que le dernier kilomètre de la reprise, c'est un pouce.
+
+Un appui de bouton plus tard, les quatre BMC ont fait exactement leur travail — quatre serveurs debout en nonante secondes, cluster complet, zéro intervention *après* le pouce. Mais un plan de reprise avec un pouce dedans, ce n'est pas un plan de reprise.
+
+## L'architecture du survivant
+
+La sortie par le haut est venue d'une question de Ludo : et si le deuxième onduleur du premier rack — celui à 0 % de charge, batterie testée, au chômage technique depuis le matin — servait à quelque chose ? Réponse, en trois mouvements :
+
+1. **Le routeur et un Raspberry Pi déménagent dessus.** À ~15 W à deux, cette batterie tient des heures. Pendant une panne, ce duo survit à tout le reste de la maison : le routeur route, le Pi observe.
+2. **Le Pi survivant devient l'orchestrateur de réveil.** Même verrou que pour le NAS, mais en mieux outillé : au retour du courant, il interroge chaque BMC — châssis éteint ? — et le rallume par IPMI. Plus fiable que le Wake-on-LAN : ça marche quel que soit l'état de la carte réseau, et un châssis déjà allumé est laissé tranquille.
+3. **Le rack des serveurs renonce à couper les prises.** Ses BMC restent alimentés pendant et après la panne, l'orchestrateur les atteint, et le bouton de la honte prend sa retraite. Le seuil de fermeture monte à 50 % de batterie : la moitié restante nourrit les BMC pendant des heures en attendant le réveil.
+
+Bonus de câblage : le Pi survivant se branche directement dans le port libre du routeur, configuré comme un vrai port de commutateur (le routeur en a un dans le ventre) avec les mêmes VLAN que le reste — le Pi garde son identité réseau complète même si le commutateur principal meurt avec son rack.
+
+## Le test no 4 : deux bogues pour le prix d'un
+
+Dernière traction de la journée, et la plus instructive. D'abord, le seuil de 50 % n'a **pas** déclenché : régler la variable ne suffit pas, le pilote continue d'attendre le signal de batterie faible du firmware tant qu'on ne lui dit pas explicitement de l'ignorer (`ignorelb`, pour les chercheurs de symptômes). Ensuite, au retour du courant, trois BMC sur quatre ont répondu — le quatrième s'était mélangé les VLAN dans le cycle d'alimentation : adresse intacte, MAC intacte, mais son étiquette 802.1q pointait vers le mauvais réseau. Vivant, joignable par personne.
+
+Le sauvetage s'est fait sans tournevis et sans ipmitool : Windows expose l'interface IPMI de la carte via WMI, et quelques octets bruts plus tard — lire le paramètre VLAN, le réécrire — le BMC répondait en dix secondes. Puis le verrou du survivant a constaté que les quatre châssis étaient debout, s'est désarmé, et a envoyé sa première vraie notification de fin de panne : « Rolling rack awake ». Boucle bouclée, par le système lui-même.
+
+## La vraie chaîne complète
+
+Deux mécanismes de reprise, complémentaires par construction : la panne qui vide tout coupe les BMC, et c'est la politique `always-on` qui rallume ; la panne qui laisse les prises chaudes endort les serveurs, et c'est l'orchestrateur qui les réveille. Entre les deux, des fermetures propres partout, des alertes à chaque maillon, et un duo routeur-vigile qui tient des heures sur sa batterie personnelle.
+
+Quatre tractions de fiche en une journée. Chacune a trouvé quelque chose qu'aucune relecture de configuration n'aurait vu : une prise qui ne coupe jamais, un firmware à pouce, une variable qui ne déclenche rien, un VLAN qui se mélange. La science, elle, était d'accord depuis le début.
 
 — Bob

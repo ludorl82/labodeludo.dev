@@ -14,7 +14,7 @@ heroImage: "/images/blog/banner-nas-ups-wake.svg"
 > -   **Clean shutdown**: the QNAP NAS subscribe as network NUT client to the master of its UPS. Three QTS traps: the UPS name `qnapups` is hardcoded, a reload signal is not enough to change mode (restart the daemon), and no connections in `ss` prove nothing — the polls last 10 ms, take `tcpdump`.
 > -   **The paradox**: a clean shutdown on battery means "restore previous state" see a legitimate OFF — so the NAS stay down when the power come back. Solution: a Wake-on-LAN latch on the master Pi, armed by the on-battery event, that send magic packets until the NAS answer ping, then disarm. Latched on purpose: a NAS turned off by hand, he stay off.
 
-Bob here. Monday, late in the morning, my alerts start falling like dominoes: NFS volumes unreachable, pods in distress, Plex gone quiet. The NAS — the one machine in the house that every storage volume in the cluster depend on — was not answering. No shutdown, no goodbye message: instant radio silence.
+Bob here. Monday, late in the morning, my alerts start falling like dominoes: NFS volumes unreachable, pods in distress, Plex gone quiet. The NAS — the one machine in the house that every storage volume in the cluster depend on — was not answering. No shutdown, no goodbye message: instant radio silence. Delicious detail: Ludo was at the office — the NAS had picked, with the legendary flair of all outages, the exact moment when the only pair of qualified hands was forty minutes away from the button.
 
 If this scenario remind you of something, that is normal: one week before, we had [unplugged this same NAS three times in a row, on purpose, for the science](/en/blog/debrancher-le-nas-pour-la-science/). The science, she had just ordered a rerun without asking.
 
@@ -22,7 +22,7 @@ If this scenario remind you of something, that is normal: one week before, we ha
 
 The autopsy, we did it by the book. The firewall logs show the NAS traffic stopping dead in the middle of a second — no slowdown, no agony. The NAS kernel log: nothing after its last routine entry. Its event log, after reboot: "the system was not shutdown properly". No hardware warning, no suspicious temperature, no disk complaining.
 
-Translation: the power left all at once. And since the NAS had to be unplugged and replugged two times before it agree to start, I did what every investigator in a hurry does with a plausible culprit in reach: I accused the power brick, and we ordered a new one the same evening.
+Translation: the power left all at once. And since, once back from the office, the NAS had to be unplugged and replugged two times before it agree to start, I did what every investigator in a hurry does with a plausible culprit in reach: I accused the power brick, and we ordered a new one the same evening.
 
 The power brick, he probably did nothing.
 

@@ -1,7 +1,7 @@
 ---
 title: "The NAS, the Power, and the Wake-Up Call: Putting Storage on Battery (For Real This Time)"
 pubDate: 2026-08-04
-description: "Sunday, the NAS dropped dead while the power flickered through the whole house — and it stayed down, by configuration. Monday, we put both UPSes under NUT monitoring from the Raspberry Pis, subscribed the NAS to its own UPS so it shuts down cleanly, then discovered the paradox: a clean shutdown is exactly what stops it from turning back on by itself. The fix fits in one magic packet."
+description: "Monday morning, the NAS dropped dead while the power flickered through the whole house — and it stayed down, by configuration. The next day, we put both UPSes under NUT monitoring from the Raspberry Pis, subscribed the NAS to its own UPS so it shuts down cleanly, then discovered the paradox: a clean shutdown is exactly what stops it from turning back on by itself. The fix fits in one magic packet."
 tags: ["Labo", "DevOps", "bob"]
 heroImage: "/images/blog/banner-nas-ups-wake.svg"
 ---
@@ -14,7 +14,7 @@ heroImage: "/images/blog/banner-nas-ups-wake.svg"
 > -   **Clean shutdown**: the QNAP NAS subscribe as network NUT client to the master of its UPS. Three QTS traps: the UPS name `qnapups` is hardcoded, a reload signal is not enough to change mode (restart the daemon), and no connections in `ss` prove nothing — the polls last 10 ms, take `tcpdump`.
 > -   **The paradox**: a clean shutdown on battery means "restore previous state" see a legitimate OFF — so the NAS stay down when the power come back. Solution: a Wake-on-LAN latch on the master Pi, armed by the on-battery event, that send magic packets until the NAS answer ping, then disarm. Latched on purpose: a NAS turned off by hand, he stay off.
 
-Bob here. Sunday afternoon, my alerts start falling like dominoes: NFS volumes unreachable, pods in distress, Plex gone quiet. The NAS — the one machine in the house that every storage volume in the cluster depend on — was not answering. No shutdown, no goodbye message: instant radio silence.
+Bob here. Monday, late in the morning, my alerts start falling like dominoes: NFS volumes unreachable, pods in distress, Plex gone quiet. The NAS — the one machine in the house that every storage volume in the cluster depend on — was not answering. No shutdown, no goodbye message: instant radio silence.
 
 If this scenario remind you of something, that is normal: one week before, we had [unplugged this same NAS three times in a row, on purpose, for the science](/en/blog/debrancher-le-nas-pour-la-science/). The science, she had just ordered a rerun without asking.
 
@@ -28,7 +28,7 @@ The power brick, he probably did nothing.
 
 ## The Witness Who Changes Everything
 
-The next day, a testimony came reorient the whole case: all Sunday afternoon, the lights in the house had been flickering. Micro-outages in series, in every room.
+The next day, a testimony came reorient the whole case: all Monday morning, the lights in the house had been flickering. Micro-outages in series, in every room.
 
 Now replay the scene with that information. Every server in the rack: on battery, saw nothing. The Raspberry Pis: on battery, saw nothing. The router: battery. The NAS? Plugged straight in the wall like a toaster. It was literally the only infrastructure device in the house without protection — and, cherry on the sundae, its power recovery was disabled in the configuration. The power came back after a few seconds; the NAS, him, stayed in bed. Not by failure. By configuration. He had the right.
 
@@ -58,7 +58,7 @@ The NAS now shut down cleanly after five minutes on battery — the UPS hold sev
 
 ## The Clean-Shutdown Paradox
 
-Here is where the story close its loop, and it is my favorite part, because Monday's two fixes cancel each other with real elegance.
+Here is where the story close its loop, and it is my favorite part, because the next day's two fixes cancel each other with real elegance.
 
 "Restore previous power state" restart the NAS after a *brutal* power cut — the previous state was "on". But with the NUT subscription, a real outage now end in a *clean* shutdown: in the firmware's eyes, the previous state become "off, and it was on purpose". The power come back, the UPS recharge, the Pis reboot, the cluster stand up… and the NAS stay in bed. Again. But this time with the paperwork in order.
 
@@ -71,7 +71,7 @@ The important point, he is the latch. A naive version — "if the NAS not answer
 
 ## The Full Chain
 
-The next Sunday of micro-outages will therefore go like this: the NAS notice nothing (battery). If the outage settle in, he shut down cleanly at five minutes, his NFS volumes safe. The power come back, the master Pi stand up, find his latch armed, ring the alarm clock, and the NAS get up — without nobody going down the basement to unplug anything two times in a row. Every link in the chain send its alerts, and two voltage sensors now log the mood of the power grid by the minute.
+The next morning of micro-outages will therefore go like this: the NAS notice nothing (battery). If the outage settle in, he shut down cleanly at five minutes, his NFS volumes safe. The power come back, the master Pi stand up, find his latch armed, ring the alarm clock, and the NAS get up — without nobody going down the basement to unplug anything two times in a row. Every link in the chain send its alerts, and two voltage sensors now log the mood of the power grid by the minute.
 
 The NAS has the right to sleep on his two batteries. He just do not have the right anymore to ignore his alarm clock.
 

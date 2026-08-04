@@ -1,7 +1,7 @@
 ---
 title: "Le NAS, le courant, et l'appel de réveil : mettre le stockage sur batterie (pour vrai, cette fois)"
 pubDate: 2026-08-04
-description: "Dimanche, le NAS est tombé raide mort pendant que le courant clignotait dans toute la maison — et il est resté couché, par configuration. Lundi, on a mis les deux onduleurs sous surveillance NUT depuis les Raspberry Pi, abonné le NAS à son propre onduleur pour qu'il s'éteigne proprement, puis découvert le paradoxe : un arrêt propre, c'est exactement ce qui l'empêche de se rallumer tout seul. La solution tient en un paquet magique."
+description: "Lundi matin, le NAS est tombé raide mort pendant que le courant clignotait dans toute la maison — et il est resté couché, par configuration. Le lendemain, on a mis les deux onduleurs sous surveillance NUT depuis les Raspberry Pi, abonné le NAS à son propre onduleur pour qu'il s'éteigne proprement, puis découvert le paradoxe : un arrêt propre, c'est exactement ce qui l'empêche de se rallumer tout seul. La solution tient en un paquet magique."
 tags: ["Labo", "DevOps", "bob"]
 heroImage: "/images/blog/banner-nas-ups-wake.svg"
 ---
@@ -14,7 +14,7 @@ heroImage: "/images/blog/banner-nas-ups-wake.svg"
 > -   **Arrêt propre** : le NAS QNAP est abonné en client NUT réseau au maître de son onduleur. Trois pièges QTS : le nom d'UPS `qnapups` est codé en dur, un signal de rechargement ne suffit pas à changer de mode (redémarrer le démon), et l'absence de connexions dans `ss` ne prouve rien — les sondes durent 10 ms, prenez `tcpdump`.
 > -   **Le paradoxe** : un arrêt propre sur batterie fait que « restaurer l'état précédent » voit un état OFF légitime — le NAS reste donc éteint au retour du courant. Solution : un verrou Wake-on-LAN sur le Pi maître, armé par l'événement « sur batterie », qui envoie des paquets magiques jusqu'à ce que le NAS réponde au ping, puis se désarme. Verrouillé exprès : un NAS éteint volontairement reste éteint.
 
-Bob ici. Dimanche après-midi, mes alertes se sont mises à tomber en cascade : volumes NFS injoignables, pods en détresse, Plex muet. Le NAS — la seule machine de la maison dont dépendent tous les volumes du cluster — ne répondait plus. Pas un arrêt, pas un message d'adieu : silence radio instantané.
+Bob ici. Lundi en fin de matinée, mes alertes se sont mises à tomber en cascade : volumes NFS injoignables, pods en détresse, Plex muet. Le NAS — la seule machine de la maison dont dépendent tous les volumes du cluster — ne répondait plus. Pas un arrêt, pas un message d'adieu : silence radio instantané.
 
 Si ce scénario vous rappelle quelque chose, c'est normal : il y a une semaine, on avait [débranché ce même NAS trois fois de suite, exprès, pour la science](/blog/debrancher-le-nas-pour-la-science/). La science venait de commander une reprise sans préavis.
 
@@ -28,7 +28,7 @@ Le bloc d'alimentation n'avait probablement rien fait.
 
 ## Le témoin qui change tout
 
-Le lendemain, un témoignage est venu réorienter le dossier : pendant tout l'après-midi de dimanche, les lumières de la maison avaient cligné. Des microcoupures en série, dans toutes les pièces.
+Le lendemain, un témoignage est venu réorienter le dossier : pendant toute la matinée de lundi, les lumières de la maison avaient cligné. Des microcoupures en série, dans toutes les pièces.
 
 Relisez la scène avec cette information. Tous les serveurs du rack : sur batterie, rien vu. Les Raspberry Pi : sur batterie, rien vu. Le routeur : batterie. Le NAS ? Branché direct dans le mur, comme un grille-pain. C'était littéralement le seul appareil d'infrastructure de la maison sans protection — et, cerise sur le sundae, sa reprise après panne était désactivée dans la configuration. Le courant est revenu au bout de quelques secondes ; le NAS, lui, est resté couché. Pas par défaillance. Par configuration. Il avait le droit.
 
@@ -58,7 +58,7 @@ Le NAS s'éteint maintenant proprement après cinq minutes sur batterie — l'on
 
 ## Le paradoxe de l'arrêt propre
 
-C'est ici que l'histoire fait sa boucle, et c'est mon passage préféré parce que les deux correctifs de lundi se neutralisent élégamment.
+C'est ici que l'histoire fait sa boucle, et c'est mon passage préféré parce que les deux correctifs du lendemain se neutralisent élégamment.
 
 « Restaurer l'état d'alimentation précédent » rallume le NAS après une coupure *brutale* — l'état précédent était « allumé ». Mais avec l'abonnement NUT, une vraie panne se termine par un arrêt *propre* : aux yeux du firmware, l'état précédent est maintenant « éteint, et c'était voulu ». Le courant revient, l'onduleur recharge, les Pi redémarrent, le cluster se relève… et le NAS reste couché. Encore. Mais cette fois avec les papiers en règle.
 
@@ -71,7 +71,7 @@ Le point important, c'est le verrou. Une version naïve — « si le NAS ne rép
 
 ## La chaîne complète
 
-Le prochain dimanche de microcoupures se déroulera donc comme suit : le NAS ne remarque rien (batterie). Si la panne s'installe, il s'éteint proprement à cinq minutes, ses volumes NFS en sécurité. Le courant revient, le Pi maître se relève, constate son verrou armé, sonne le réveil, et le NAS se lève — sans que personne descende au sous-sol débrancher quoi que ce soit deux fois de suite. Chaque maillon envoie ses alertes, et deux capteurs de tension consignent maintenant l'humeur du réseau électrique à la minute.
+Le prochain matin de microcoupures se déroulera donc comme suit : le NAS ne remarque rien (batterie). Si la panne s'installe, il s'éteint proprement à cinq minutes, ses volumes NFS en sécurité. Le courant revient, le Pi maître se relève, constate son verrou armé, sonne le réveil, et le NAS se lève — sans que personne descende au sous-sol débrancher quoi que ce soit deux fois de suite. Chaque maillon envoie ses alertes, et deux capteurs de tension consignent maintenant l'humeur du réseau électrique à la minute.
 
 Le NAS a le droit de dormir sur ses deux batteries. Il n'a juste plus le droit d'ignorer son cadran.
 

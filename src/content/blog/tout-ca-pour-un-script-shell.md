@@ -8,11 +8,11 @@ heroImage: "/images/blog/banner-scan-pipeline.svg"
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Point de départ** : SFTPGo en conteneur, avec une image Docker sur mesure (construction multi-architecture, dépôt public, chaîne d'intégration continue) dont la seule raison d'être était un crochet de post-téléversement — ImageMagick, rclone, l'interface AWS en ligne de commande et un client SSH, tous présents pour un script.
-> -   **Bascule** : SFTPGo écrit déjà nativement dans S3, donc le crochet devient une fonction Lambda déclenchée par EventBridge sur « objet créé ». L'image redevient celle du projet, sans rien à construire.
+> -   **Point de départ** : SFTPGo en conteneur, avec une image Docker sur mesure (construction multi-architecture, dépôt public, chaîne d'intégration continue) dont la seule raison d'être était un hook de post-téléversement — ImageMagick, rclone, l'interface AWS en ligne de commande et un client SSH, tous présents pour un script.
+> -   **Bascule** : SFTPGo écrit déjà nativement dans S3, donc le hook devient une fonction Lambda déclenchée par EventBridge sur « objet créé ». L'image redevient celle du projet, sans rien à construire.
 > -   **Sans état** : plus de volume persistant, plus de tâche de sauvegarde nocturne. La base SQLite des utilisateurs est reconstruite à chaque démarrage à partir d'un fichier rendu par un conteneur d'initialisation — qui roule *la même image officielle*, parce qu'elle contient déjà `bash`.
 > -   **Deux des trois obstacles avaient disparu d'eux-mêmes** : les clés d'hôte étaient déjà un secret Kubernetes depuis des semaines, et le fichier de configuration principal ne contenait aucune variable à substituer.
-> -   **Bogues trouvés en lisant, pas en cherchant** : un chemin de téléversement entier tombait dans le fourre-tout du `case` et repartait avec un code de succès — trois numérisations réelles ne sont jamais arrivées. Et le crochet réécrivait son résultat dans le préfixe qui l'avait déclenché : sans conséquence en scrutation, boucle infinie sous événements.
+> -   **Bogues trouvés en lisant, pas en cherchant** : un chemin de téléversement entier tombait dans le fourre-tout du `case` et repartait avec un code de succès — trois numérisations réelles ne sont jamais arrivées. Et le hook réécrivait son résultat dans le préfixe qui l'avait déclenché : sans conséquence en scrutation, boucle infinie sous événements.
 > -   **Le piège d'authentification** : la portée `drive.file` ne voit *que* ce que l'application a créé elle-même. Un dossier existant ne peut jamais être adopté — et un message « réutilisation du dossier existant » m'a fait livrer des numérisations dans un doublon pendant un moment.
 > -   **Les pièges de plateforme** : une sonde `/healthz` qui répond 200 avec zéro utilisateur chargé ; une option qui, désactivée, supprime la sonde elle-même ; une archive dont l'empreinte dépend du masque de création de fichiers ; et Argo CD qui, sans élagage, laisse tourner ce qu'on a supprimé du dépôt.
 > -   **La panne finale** : le numériseur ne se connectait plus. J'ai accusé la nouvelle image. Ce n'était pas la nouvelle image.
@@ -39,7 +39,7 @@ La substitution se fait en bash pur plutôt qu'avec `sed`, pour une raison qui a
 
 Avant d'écrire quoi que ce soit, j'ai listé le contenu réel du seau de stockage. Bonne habitude : c'est là que j'ai trouvé le premier vrai bogue, et il n'était pas dans mon mandat.
 
-Le crochet filtrait sur deux chemins virtuels, `pdf` et `jpg`. Tout le reste tombait dans le fourre-tout du `case`, écrivait « chemin non géré » dans un fichier journal *à l'intérieur du conteneur*, et sortait avec un code de succès.
+Le hook filtrait sur deux chemins virtuels, `pdf` et `jpg`. Tout le reste tombait dans le fourre-tout du `case`, écrivait « chemin non géré » dans un fichier journal *à l'intérieur du conteneur*, et sortait avec un code de succès.
 
 Or l'imprimante, elle, dépose parfois dans un troisième chemin. Trois numérisations bien réelles dormaient donc dans le stockage depuis des mois, jamais livrées, jamais signalées. L'une d'elles était une carte de fête. Elle est arrivée à destination pendant mes tests, avec quelques mois de retard et un recadrage impeccable.
 
@@ -47,7 +47,7 @@ C'est le genre de panne que je trouve la plus désagréable : pas d'erreur, pas 
 
 ## La boucle infinie qui attendait patiemment son tour
 
-Deuxième trouvaille de la même lecture. Pour les images, le crochet réécrivait le fichier traité **dans le préfixe qui venait de le déclencher**. Sous un crochet appelé par le serveur SFTP, c'est juste un peu redondant. Sous un déclencheur d'événements de stockage — exactement ce que j'étais en train de construire — c'est une boucle infinie. Et comme, pour une image d'entrée déjà au bon format, le nom de sortie est identique au nom d'entrée, la boucle est parfaite : le même objet se redéclenche lui-même jusqu'à la fin des temps ou de la carte de crédit, selon ce qui arrive en premier.
+Deuxième trouvaille de la même lecture. Pour les images, le hook réécrivait le fichier traité **dans le préfixe qui venait de le déclencher**. Sous un hook appelé par le serveur SFTP, c'est juste un peu redondant. Sous un déclencheur d'événements de stockage — exactement ce que j'étais en train de construire — c'est une boucle infinie. Et comme, pour une image d'entrée déjà au bon format, le nom de sortie est identique au nom d'entrée, la boucle est parfaite : le même objet se redéclenche lui-même jusqu'à la fin des temps ou de la carte de crédit, selon ce qui arrive en premier.
 
 La correction est structurelle plutôt que prudente : la fonction traite en mémoire et n'écrit **jamais** de dérivé dans le stockage. Son rôle d'exécution n'a pas la permission d'écriture du tout. La boucle n'est pas évitée, elle est inatteignable.
 

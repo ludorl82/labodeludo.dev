@@ -7,6 +7,7 @@ heroImage: "/images/blog/banner-survivor-island.svg"
 ---
 
 import AsciiCast from "../../components/AsciiCast.astro";
+import SurvivorIslandDiagram from "../../components/SurvivorIslandDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
@@ -29,11 +30,13 @@ La réponse classique est de sortir la surveillance du bâtiment, et c'est fait 
 
 L'idée tient en une phrase : décider explicitement quelle est la dernière chose qui meurt, et concentrer dessus tout ce qui doit fonctionner pendant une panne. Chez moi, cette île regroupe trois appareils sur l'onduleur le moins chargé de la maison :
 
-1. **Le routeur-pare-feu** — tant qu'il vit, le réseau local route et le DNS répond.
+1. **Le routeur-pare-feu (pfSense)** — tant qu'il vit, le réseau local route et le DNS répond.
 2. **Le modem WAN** — tant qu'il vit, les alertes sortent et l'accès distant entre. C'est l'ajout le moins spectaculaire et le plus important : sans lui, chaque notification meurt à la seconde zéro de n'importe quelle panne, peu importe la santé de tout ce qui se trouve derrière.
 3. **Un seul Raspberry Pi** — l'orchestrateur. Il surveille son propre onduleur (qui devient de fait le capteur secteur de la maison), envoie un battement de cœur, et détient les pouvoirs de réveil.
 
-La charge combinée fait environ 15 W sur un onduleur de 700 VA : des heures d'autonomie, contre des dizaines de minutes pour les racks de serveurs. Le Pi est branché directement dans un port libre du routeur, configuré comme un vrai port de commutateur avec les mêmes VLAN que le reste du réseau — si le commutateur principal meurt avec son rack, l'île reste un réseau complet à elle seule.
+La charge combinée fait environ 15 W sur un onduleur de 700 VA : des heures d'autonomie, contre des dizaines de minutes pour les racks de serveurs. Le Pi est branché directement dans un port libre du pfSense — un SG-1100, dont les ports sont un commutateur matériel — configuré comme un vrai port de commutateur avec les mêmes VLAN que le reste du réseau — si le commutateur principal meurt avec son rack, l'île reste un réseau complet à elle seule.
+
+<SurvivorIslandDiagram context="article" lang="fr" />
 
 Le principe transposé en langage d'entreprise serait quelque chose comme : *votre plan de reprise a besoin d'un composant dont la survie est une propriété de conception, pas un espoir*. Un bastion sur batterie généreuse, un réseau d'administration alimenté séparément, un out-of-band qui ne partage rien avec in-band — l'île est la version 15 watts de cette idée.
 

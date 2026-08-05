@@ -3,6 +3,7 @@ export type InventoryKey =
   | "site-web"
   | "surveillance"
   | "pare-feu"
+  | "alimentation"
   | "bastion"
   | "stockage"
   | "pipeline-media"
@@ -51,6 +52,16 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "migrer-tout-mon-homelab-vers-nixos",
       "trois-majeures-un-jeudi-soir",
       "laisser-le-pipeline-appuyer-sur-apply",
+    ],
+  },
+  alimentation: {
+    name: "Alimentation protégée (onduleurs)",
+    description:
+      "Trois onduleurs sous surveillance NUT, chacun maître d'un hôte via USB : les racks de serveurs s'éteignent proprement à un seuil de batterie, et l'« île du survivant » — le pare-feu pfSense, le modem WAN et un Pi orchestrateur sur l'onduleur le moins chargé — tient des heures pour alerter, émettre le battement de cœur du commutateur d'homme mort, puis réveiller les serveurs par IPMI au retour du courant. Le tout déclaré dans le dépôt des machines et validé par des débranchements volontaires.",
+    articles: [
+      "l-ile-du-survivant",
+      "le-nas-le-courant-et-l-appel-de-reveil",
+      "debrancher-le-nas-pour-la-science",
     ],
   },
   "pare-feu": {
@@ -116,6 +127,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     description:
       "Petite grappe Kubernetes (k3s) répartie entre un plan de contrôle dans le nuage et des nœuds à la maison, qui a remplacé l'ancien hôte Docker unique. Fait tourner les conteneurs du réseau serveurs, dont le pipeline de déploiement de ce site. Tous les nœuds — serveurs GPU, machines virtuelles, Raspberry Pi et la VM cloud — sont sous NixOS et décrits dans un seul dépôt : réinstaller un nœud, c'est réappliquer sa configuration, pas refaire les étapes de mémoire. Les workloads qui tournent dessus ont leur propre dépôt.",
     articles: [
+      "l-ile-du-survivant",
       "deployer-un-site-web-statique-avec-wordpress-et-s3",
       "convention-ipv6-vlan-serveurs",
       "deployer-un-cluster-k3s-avec-claude-code",

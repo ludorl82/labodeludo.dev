@@ -16,7 +16,8 @@ jobs:
       - run: npm run build
       - name: Install kubectl
         run: |
-          curl -sLO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          ARCH=$(uname -m); case "$ARCH" in aarch64) KARCH=arm64;; x86_64) KARCH=amd64;; *) KARCH=amd64;; esac
+          curl -sLO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/${KARCH}/kubectl"
           chmod +x kubectl
       - name: Deploy to k3s
         run: |

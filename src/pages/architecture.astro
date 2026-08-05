@@ -8,6 +8,7 @@ import VoiceAssistantDiagram from "../components/VoiceAssistantDiagram.astro";
 import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
 import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
 import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
+import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
 ---
 
 <BaseLayout
@@ -221,6 +222,11 @@ import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
   <section class="detail">
     <h2>Détail : stockage NFS de la grappe (chemin d'export)</h2>
     <NfsShareMoveDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : l'île du survivant (reprise après panne électrique)</h2>
+    <SurvivorIslandDiagram context="architecture" />
   </section>
 </BaseLayout>
 

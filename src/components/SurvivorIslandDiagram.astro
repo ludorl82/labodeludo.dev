@@ -1,0 +1,217 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+  lang?: "fr" | "en";
+}
+
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma : pendant une panne électrique, la maison se divise en deux zones. À gauche, la zone qui meurt : les racks de serveurs sur leurs onduleurs de quelques dizaines de minutes s'éteignent proprement, seules leurs cartes de gestion BMC restent en veille. À droite, l'île du survivant : le routeur, le modem WAN et un Raspberry Pi orchestrateur partagent l'onduleur le moins chargé et tiennent des heures. Trois flux partent de l'île : le battement de cœur vers S3 et la Lambda externe, les alertes vers le téléphone via le modem, et au retour du courant, le réveil IPMI vers les cartes de gestion des serveurs éteints.",
+    zoneTitle: "la zone qui meurt (proprement)",
+    rack1: "rack serveurs",
+    rack1Sub: "onduleur ~30–90 min",
+    srvA: "gpu-01",
+    srvB: "win-01",
+    srvC: "node-01 · node-02",
+    bmcNote: "arrêt propre à seuil de batterie — BMC en veille",
+    islandTitle: "l'île du survivant",
+    islandSub: "onduleur le moins chargé · ~15 W · des heures",
+    router: "pare-feu pfSense",
+    routerSub: "le LAN route, le DNS répond",
+    modem: "modem WAN",
+    modemSub: "les alertes sortent, l'accès entre",
+    pi: "pi-2 — orchestrateur",
+    piSub: "capteur secteur + verrou de réveil",
+    directLink: "pi-2 ↔ pfSense : port de commutateur direct",
+    heartbeat: "battement de cœur",
+    heartbeatSub: "S3 → Lambda → courriel",
+    alerts: "alertes → téléphone",
+    wake: "réveil IPMI",
+    wakeSub: "verrou : armé sur panne réelle seulement",
+    outside: "hors de la maison",
+    lastToDie: "conçue pour mourir en dernier",
+  },
+  en: {
+    ariaLabel:
+      "Diagram: during a power outage the house splits into two zones. On the left, the zone that dies: the server racks on their tens-of-minutes UPSes shut down cleanly, only their BMC management controllers stay in standby. On the right, the survivor island: the router, the WAN modem and an orchestrator Raspberry Pi share the least-loaded UPS and last for hours. Three flows leave the island: the heartbeat toward S3 and the external Lambda, alerts toward the phone through the modem, and when power returns, the IPMI wake toward the management controllers of the powered-off servers.",
+    zoneTitle: "the zone that dies (cleanly)",
+    rack1: "server racks",
+    rack1Sub: "UPS ~30–90 min",
+    srvA: "gpu-01",
+    srvB: "win-01",
+    srvC: "node-01 · node-02",
+    bmcNote: "clean shutdown at battery threshold — BMCs in standby",
+    islandTitle: "the survivor island",
+    islandSub: "least-loaded UPS · ~15 W · hours",
+    router: "pfSense firewall",
+    routerSub: "the LAN routes, DNS answers",
+    modem: "WAN modem",
+    modemSub: "alerts get out, access gets in",
+    pi: "pi-2 — orchestrator",
+    piSub: "mains sensor + wake latch",
+    directLink: "pi-2 ↔ pfSense: direct switch port",
+    heartbeat: "heartbeat",
+    heartbeatSub: "S3 → Lambda → email",
+    alerts: "alerts → phone",
+    wake: "IPMI wake",
+    wakeSub: "latch: armed on real outages only",
+    outside: "outside the house",
+    lastToDie: "designed to die last",
+  },
+} as const;
+
+const t = copy[lang];
+---
+
+<figure class="survivor-island-diagram">
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 400" role="img" aria-label={t.ariaLabel}>
+      <defs>
+        <marker id="si-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="si-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- zone qui meurt -->
+      <rect x="20" y="55" width="330" height="290" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="38" y="78" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text-faint)">{t.zoneTitle}</text>
+
+      <rect x="40" y="95" width="290" height="26" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="185" y="112" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{t.rack1} — {t.rack1Sub}</text>
+
+      <rect x="40" y="135" width="140" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="110" y="153" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">{t.srvA}</text>
+      <circle cx="52" cy="168" r="3.5" fill="var(--accent-live)" />
+      <text x="62" y="172" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">BMC</text>
+
+      <rect x="190" y="135" width="140" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="260" y="153" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">{t.srvB}</text>
+      <circle cx="202" cy="168" r="3.5" fill="var(--accent-live)" />
+      <text x="212" y="172" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">BMC</text>
+
+      <rect x="40" y="189" width="290" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="185" y="207" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">{t.srvC}</text>
+      <circle cx="52" cy="222" r="3.5" fill="var(--accent-live)" />
+      <text x="62" y="226" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">BMC</text>
+
+      <text x="185" y="260" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.bmcNote}</text>
+
+      <!-- l'île -->
+      <rect x="470" y="55" width="270" height="290" rx="8" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" />
+      <text x="488" y="78" font-family="var(--font-display)" font-size="12.5" font-weight="600" fill="var(--accent-live)">{t.islandTitle}</text>
+      <text x="488" y="94" font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">{t.islandSub}</text>
+
+      <rect x="490" y="106" width="230" height="44" rx="4" fill="var(--panel)" stroke="var(--accent-live)" />
+      <text x="605" y="124" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.router}</text>
+      <text x="605" y="140" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.routerSub}</text>
+
+      <rect x="490" y="160" width="230" height="44" rx="4" fill="var(--panel)" stroke="var(--accent-live)" />
+      <text x="605" y="178" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.modem}</text>
+      <text x="605" y="194" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.modemSub}</text>
+
+      <rect x="490" y="214" width="230" height="44" rx="4" fill="var(--panel)" stroke="var(--accent-live)" stroke-width="1.8" />
+      <text x="605" y="232" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">{t.pi}</text>
+      <text x="605" y="248" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.piSub}</text>
+
+      <path d="M490,128 L479,128 L479,236 L490,236" fill="none" stroke="var(--accent-live)" stroke-width="1.3" stroke-dasharray="3 3" />
+      <text x="605" y="280" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">{t.directLink}</text>
+
+      <text x="605" y="330" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">⚡ {t.lastToDie}</text>
+
+      <!-- réveil IPMI : île → BMCs -->
+      <path d="M488,236 L420,236 L420,160 L334,160" fill="none" stroke="var(--accent-live)" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#si-arrow-live)" />
+      <text x="410" y="130" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{t.wake}</text>
+      <text x="410" y="144" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--accent-live)">{t.wakeSub}</text>
+
+      <!-- hors de la maison -->
+      <rect x="470" y="10" width="410" height="0" fill="none" />
+      <text x="815" y="30" text-anchor="middle" font-family="var(--font-display)" font-size="11" font-weight="600" fill="var(--text-faint)">{t.outside}</text>
+      <line x1="760" y1="40" x2="880" y2="40" stroke="var(--panel-border)" stroke-width="1" stroke-dasharray="2 4" />
+
+      <!-- battement de cœur -->
+      <path d="M720,226 L800,226 L800,120" fill="none" stroke="var(--accent-live)" stroke-width="1.4" marker-end="url(#si-arrow-live)" />
+      <text x="812" y="150" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)" text-anchor="start">♥ {t.heartbeat}</text>
+      <text x="812" y="164" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)" text-anchor="start">{t.heartbeatSub}</text>
+
+      <!-- alertes -->
+      <path d="M720,182 L840,182 L840,120" fill="none" stroke="var(--text-faint)" stroke-width="1.3" marker-end="url(#si-arrow)" />
+      <text x="848" y="200" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)" text-anchor="end">{t.alerts}</text>
+    </svg>
+  </div>
+  <figcaption>
+    {
+      context === "architecture" ? (
+        lang === "en" ? (
+          <>
+            During an outage the house splits in two: the <a href="/inventaire/hote-conteneurs/">server racks</a> (see also the{" "}
+            <a href="/inventaire/alimentation/">protected-power inventory</a>){" "}
+            shut down cleanly at a battery threshold while the survivor island — router, WAN modem and one
+            orchestrator Pi on the least-loaded UPS — keeps routing, alerting and heartbeating for hours, then
+            wakes the servers over IPMI when mains return. See the article:{" "}
+            <a href="/blog/l-ile-du-survivant/">the survivor island</a>.
+          </>
+        ) : (
+          <>
+            Pendant une panne, la maison se divise en deux : les <a href="/inventaire/hote-conteneurs/">racks de
+            serveurs</a> (voir aussi l'<a href="/inventaire/alimentation/">inventaire alimentation</a>) s'éteignent proprement à un seuil de batterie pendant que l'île du survivant — routeur,
+            modem WAN et un Pi orchestrateur sur l'onduleur le moins chargé — continue de router, d'alerter et
+            d'émettre son battement de cœur pendant des heures, puis réveille les serveurs par IPMI au retour du
+            courant. Voir l'article : <a href="/blog/l-ile-du-survivant/">l'île du survivant</a>.
+          </>
+        )
+      ) : lang === "en" ? (
+        <>
+          The two zones of an outage: everything on the left dies cleanly and waits; the island on the right is
+          designed to die last — and to bring the rest back. See the{" "}
+          <a href="/architecture/">architecture overview</a>.
+        </>
+      ) : (
+        <>
+          Les deux zones d'une panne : tout ce qui est à gauche s'éteint proprement et attend ; l'île à droite est
+          conçue pour mourir en dernier — et pour ramener le reste. Voir la{" "}
+          <a href="/architecture/">vue d'ensemble de l'architecture</a>.
+        </>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .survivor-island-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 620px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+</style>

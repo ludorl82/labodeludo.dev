@@ -116,6 +116,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     description:
       "Petite grappe Kubernetes (k3s) répartie entre un plan de contrôle dans le nuage et des nœuds à la maison, qui a remplacé l'ancien hôte Docker unique. Fait tourner les conteneurs du réseau serveurs, dont le pipeline de déploiement de ce site. Tous les nœuds — serveurs GPU, machines virtuelles, Raspberry Pi et la VM cloud — sont sous NixOS et décrits dans un seul dépôt : réinstaller un nœud, c'est réappliquer sa configuration, pas refaire les étapes de mémoire. Les workloads qui tournent dessus ont leur propre dépôt.",
     articles: [
+      "l-ile-du-survivant",
       "deployer-un-site-web-statique-avec-wordpress-et-s3",
       "convention-ipv6-vlan-serveurs",
       "deployer-un-cluster-k3s-avec-claude-code",

@@ -7,6 +7,7 @@ heroImage: "/images/blog/banner-survivor-island.svg"
 ---
 
 import AsciiCast from "../../components/AsciiCast.astro";
+import SurvivorIslandDiagram from "../../components/SurvivorIslandDiagram.astro";
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
@@ -34,6 +35,8 @@ The idea fits in one sentence: explicitly decide what the last thing to die is, 
 3. **A single Raspberry Pi** — the orchestrator. It monitors its own UPS (which becomes, in effect, the house's mains sensor), emits a heartbeat, and holds the wake-up powers.
 
 The combined load is about 15 W on a 700 VA unit: hours of runtime, versus tens of minutes for the server racks. The Pi is plugged directly into a free port on the router, configured as a genuine switch port carrying the same VLANs as the rest of the network — if the main switch dies with its rack, the island remains a complete network on its own.
+
+<SurvivorIslandDiagram context="article" lang="en" />
 
 Translated into enterprise language, the principle would read something like: *your recovery plan needs a component whose survival is a design property, not a hope*. A bastion on a generous battery, a separately powered management network, an out-of-band path that shares nothing with in-band — the island is the 15-watt version of that idea.
 

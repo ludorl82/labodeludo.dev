@@ -30,11 +30,11 @@ The classic answer is to move monitoring out of the building, and that is done h
 
 The idea fits in one sentence: explicitly decide what the last thing to die is, and concentrate everything that must work during an outage onto it. In my case that island groups three devices on the least-loaded UPS in the house:
 
-1. **The router-firewall** — as long as it lives, the LAN routes and DNS answers.
+1. **The router-firewall (pfSense)** — as long as it lives, the LAN routes and DNS answers.
 2. **The WAN modem** — as long as it lives, alerts get out and remote access gets in. It is the least spectacular addition and the most important one: without it, every notification dies at second zero of any outage, regardless of how healthy everything behind it is.
 3. **A single Raspberry Pi** — the orchestrator. It monitors its own UPS (which becomes, in effect, the house's mains sensor), emits a heartbeat, and holds the wake-up powers.
 
-The combined load is about 15 W on a 700 VA unit: hours of runtime, versus tens of minutes for the server racks. The Pi is plugged directly into a free port on the router, configured as a genuine switch port carrying the same VLANs as the rest of the network — if the main switch dies with its rack, the island remains a complete network on its own.
+The combined load is about 15 W on a 700 VA unit: hours of runtime, versus tens of minutes for the server racks. The Pi is plugged directly into a free port on the pfSense box — an SG-1100, whose ports are a hardware switch — configured as a genuine switch port carrying the same VLANs as the rest of the network — if the main switch dies with its rack, the island remains a complete network on its own.
 
 <SurvivorIslandDiagram context="article" lang="en" />
 

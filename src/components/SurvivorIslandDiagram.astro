@@ -25,7 +25,7 @@ const copy = {
     modemSub: "les alertes sortent, l'accès entre",
     pi: "pi-2 — orchestrateur",
     piSub: "capteur secteur + verrou de réveil",
-    directLink: "port de commutateur direct",
+    directLink: "pi-2 ↔ pfSense : port de commutateur direct",
     heartbeat: "battement de cœur",
     heartbeatSub: "S3 → Lambda → courriel",
     alerts: "alertes → téléphone",
@@ -52,7 +52,7 @@ const copy = {
     modemSub: "alerts get out, access gets in",
     pi: "pi-2 — orchestrator",
     piSub: "mains sensor + wake latch",
-    directLink: "direct switch port",
+    directLink: "pi-2 ↔ pfSense: direct switch port",
     heartbeat: "heartbeat",
     heartbeatSub: "S3 → Lambda → email",
     alerts: "alerts → phone",
@@ -119,8 +119,8 @@ const t = copy[lang];
       <text x="605" y="232" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">{t.pi}</text>
       <text x="605" y="248" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.piSub}</text>
 
-      <path d="M605,214 C 560,210 560,160 605,150" fill="none" stroke="var(--accent-live)" stroke-width="1.3" stroke-dasharray="3 3" />
-      <text x="516" y="185" font-family="var(--font-mono)" font-size="8" fill="var(--accent-live)" transform="rotate(-90 516 185)">{t.directLink}</text>
+      <path d="M490,128 L479,128 L479,236 L490,236" fill="none" stroke="var(--accent-live)" stroke-width="1.3" stroke-dasharray="3 3" />
+      <text x="605" y="280" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">{t.directLink}</text>
 
       <text x="605" y="330" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">⚡ {t.lastToDie}</text>
 

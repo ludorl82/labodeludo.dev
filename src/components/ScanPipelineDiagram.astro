@@ -112,65 +112,66 @@ const t = copy[lang];
       <text x="94" y="348" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.driveSub}</text>
 
       <!-- s3 -->
-      <rect x="215" y="56" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="290" y="76" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.s3}</text>
-      <text x="290" y="92" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.s3Sub}</text>
+      <rect x="255" y="56" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="330" y="76" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.s3}</text>
+      <text x="330" y="92" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.s3Sub}</text>
 
       <!-- eventbridge -->
-      <rect x="215" y="140" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="290" y="160" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.eb}</text>
-      <text x="290" y="176" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.ebSub}</text>
+      <rect x="255" y="140" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="330" y="160" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.eb}</text>
+      <text x="330" y="176" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.ebSub}</text>
 
       <!-- lambda -->
-      <rect x="215" y="224" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--accent-live)" />
-      <text x="290" y="244" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.lambda}</text>
-      <text x="290" y="260" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.lambdaSub}</text>
+      <rect x="255" y="224" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--accent-live)" />
+      <text x="330" y="244" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.lambda}</text>
+      <text x="330" y="260" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.lambdaSub}</text>
 
       <!-- secrets manager -->
-      <rect x="430" y="224" width="160" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="510" y="244" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.secrets}</text>
-      <text x="510" y="260" text-anchor="middle" font-family="var(--font-mono)" font-size="7.5" fill="var(--text-faint)">{t.secretsSub}</text>
+      <rect x="455" y="224" width="160" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="535" y="244" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.secrets}</text>
+      <text x="535" y="260" text-anchor="middle" font-family="var(--font-mono)" font-size="7.5" fill="var(--text-faint)">{t.secretsSub}</text>
 
       <!-- dlq -->
-      <rect x="430" y="308" width="160" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="510" y="328" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.dlq}</text>
-      <text x="510" y="344" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.dlqSub}</text>
+      <rect x="455" y="308" width="160" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="535" y="328" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.dlq}</text>
+      <text x="535" y="344" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.dlqSub}</text>
 
       <!-- alarm -->
-      <rect x="430" y="374" width="160" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="510" y="392" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.alarm}</text>
-      <text x="510" y="406" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.alarmSub}</text>
+      <rect x="455" y="374" width="160" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="535" y="392" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.alarm}</text>
+      <text x="535" y="406" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.alarmSub}</text>
 
       <!-- printer -> sftpgo -->
       <line x1="94" y1="98" x2="94" y2="136" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
       <text x="102" y="122" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">{t.a1}</text>
 
-      <!-- sftpgo -> s3 -->
-      <path d="M164 152 H290 V52" fill="none" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
-      <text x="228" y="145" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">{t.a2}</text>
+      <!-- sftpgo -> s3 : up through the gap between the two boundaries, then
+           into S3's left edge. Must not cut across the EventBridge box. -->
+      <path d="M164 152 H178 V79 H251" fill="none" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
+      <text x="215" y="71" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-muted)">{t.a2}</text>
 
       <!-- s3 -> eventbridge -->
-      <line x1="290" y1="102" x2="290" y2="136" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
-      <text x="298" y="124" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">{t.a3}</text>
+      <line x1="330" y1="102" x2="330" y2="136" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
+      <text x="338" y="124" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">{t.a3}</text>
 
       <!-- eventbridge -> lambda -->
-      <line x1="290" y1="186" x2="290" y2="220" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
-      <text x="298" y="208" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">{t.a4}</text>
+      <line x1="330" y1="186" x2="330" y2="220" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
+      <text x="338" y="208" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">{t.a4}</text>
 
       <!-- secrets -> lambda -->
-      <line x1="430" y1="247" x2="369" y2="247" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
-      <text x="399" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-muted)">{t.a5}</text>
+      <line x1="455" y1="247" x2="409" y2="247" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
+      <text x="430" y="216" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-muted)">{t.a5}</text>
 
       <!-- lambda -> drive -->
-      <path d="M215 247 H94 V308" fill="none" stroke="var(--accent-live)" marker-end="url(#sp-arrow-live)" />
-      <text x="150" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--accent-live)">{t.a6}</text>
+      <path d="M255 247 H94 V308" fill="none" stroke="var(--accent-live)" marker-end="url(#sp-arrow-live)" />
+      <text x="175" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--accent-live)">{t.a6}</text>
 
       <!-- lambda -> dlq -->
-      <path d="M290 270 V331 H426" fill="none" stroke="var(--text-faint)" stroke-dasharray="3 3" marker-end="url(#sp-arrow)" />
-      <text x="352" y="324" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-muted)">{t.a7}</text>
+      <path d="M330 270 V331 H451" fill="none" stroke="var(--text-faint)" stroke-dasharray="3 3" marker-end="url(#sp-arrow)" />
+      <text x="392" y="324" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-muted)">{t.a7}</text>
 
       <!-- dlq -> alarm -->
-      <line x1="510" y1="354" x2="510" y2="370" stroke="var(--text-faint)" stroke-dasharray="3 3" marker-end="url(#sp-arrow)" />
+      <line x1="535" y1="354" x2="535" y2="370" stroke="var(--text-faint)" stroke-dasharray="3 3" marker-end="url(#sp-arrow)" />
 
       <!-- note -->
       <text x="360" y="450" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.note}</text>

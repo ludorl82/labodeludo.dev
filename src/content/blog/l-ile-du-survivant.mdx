@@ -1,0 +1,85 @@
+---
+title: "L'île du survivant : concevoir la dernière chose qui meurt dans son infrastructure"
+pubDate: 2026-08-06
+description: "Après trois jours de pannes électriques et quatre tests de débranchement volontaires, mon homelab a maintenant une « île du survivant » : le routeur, le modem et un seul Raspberry Pi sur l'onduleur le moins chargé, avec pour mission de survivre à tout le reste — pour observer, alerter, puis réveiller les serveurs par IPMI quand le courant revient. Analyse de la conception : domaines de panne, sémantique des battements de cœur, et deux mécanismes de reprise complémentaires."
+tags: ["Labo", "DevOps", "ludo"]
+heroImage: "/images/blog/banner-survivor-island.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Problème** : la surveillance et l'orchestration meurent avec ce qu'elles surveillent. Pendant une panne électrique, l'hôte qui devrait alerter, journaliser et rallumer les machines est lui-même éteint.
+> -   **Concept** : une « île du survivant » — le routeur, le modem WAN et un seul Raspberry Pi regroupés sur l'onduleur le moins chargé de la maison (~15 W, des heures d'autonomie), le Pi branché directement dans un port de commutateur matériel du routeur. L'île route, alerte et garde un accès distant pendant que tout le reste s'éteint proprement.
+> -   **Reprise en deux mécanismes complémentaires** : la politique BMC `always-on` couvre les pannes où les prises perdent le courant (transition secteur = redémarrage) ; un verrou de réveil IPMI sur le Pi survivant couvre celles où les prises restent alimentées (arrêt propre = pas de transition). Le verrou ne s'arme que sur un vrai événement électrique — une machine éteinte volontairement reste éteinte.
+> -   **Sémantique des battements de cœur** : le signal « la maison est vivante » du commutateur d'homme mort (S3 → Lambda → courriel) est émis depuis l'île, précisément parce qu'elle est la dernière chose à mourir. Un battement absent signifie alors « plus rien ne peut communiquer », le seul cas où un courriel externe ajoute de l'information.
+> -   **Validation** : quatre débranchements volontaires. Ils ont trouvé un seuil de batterie inopérant sans `ignorelb`, un firmware d'onduleur qui ne réalimente pas ses prises seul, et un BMC dont l'étiquette VLAN s'est corrompue dans un cycle d'alimentation — réparé in-band par IPMI brut via WMI, sans accès physique.
+> -   **Méthode** : conception, implémentation NixOS et diagnostics menés en session avec Claude Code (modèle Fable 5) ; les tests de traction et les décisions d'architecture restent humains.
+
+La semaine dernière, mon NAS est mort pendant une série de microcoupures — [Bob en a fait le récit complet](/blog/le-nas-le-courant-et-l-appel-de-reveil/), y compris les quatre tests de débranchement qui ont suivi. Ce billet-ci reprend le même terrain sous un autre angle : non pas ce qui s'est passé, mais *comment l'architecture qui en est sortie est conçue*, et pourquoi je pense que le concept central — une île du survivant — se transpose à peu près à n'importe quelle infrastructure, y compris professionnelle. Comme d'habitude, le travail s'est fait en sessions avec Claude Code (modèle Fable 5) : la conception a émergé de la conversation, l'implémentation NixOS et les diagnostics sont largement les siens, et les fiches débranchées sont de moi.
+
+## Le problème : l'observateur meurt avec l'observé
+
+Toute infrastructure auto-hébergée finit par rencontrer la même impasse : les outils qui détectent une panne, l'annoncent et orchestrent la reprise tournent sur les machines que la panne éteint. Mon empilement de surveillance — sondes, notifications, journaux — vivait dans le cluster ; le cluster vit dans la maison ; la maison perd le courant. Chaque couche mourait exactement au moment où elle devenait utile.
+
+La réponse classique est de sortir la surveillance du bâtiment, et c'est fait ici aussi : les sondes et les notifications tournent sur un nœud infonuagique qui survit à tout ce qui est local. Mais un observateur externe ne peut qu'observer. Il voit la maison devenir noire et le dit ; il ne peut pas rallumer un serveur, ni distinguer « coupure de trente secondes » de « panne de quatre heures », ni exécuter quoi que ce soit *dans* le réseau pendant l'événement. Il manquait une présence locale conçue pour survivre.
+
+## L'île : choisir ce qui meurt en dernier
+
+L'idée tient en une phrase : décider explicitement quelle est la dernière chose qui meurt, et concentrer dessus tout ce qui doit fonctionner pendant une panne. Chez moi, cette île regroupe trois appareils sur l'onduleur le moins chargé de la maison :
+
+1. **Le routeur-pare-feu** — tant qu'il vit, le réseau local route et le DNS répond.
+2. **Le modem WAN** — tant qu'il vit, les alertes sortent et l'accès distant entre. C'est l'ajout le moins spectaculaire et le plus important : sans lui, chaque notification meurt à la seconde zéro de n'importe quelle panne, peu importe la santé de tout ce qui se trouve derrière.
+3. **Un seul Raspberry Pi** — l'orchestrateur. Il surveille son propre onduleur (qui devient de fait le capteur secteur de la maison), envoie un battement de cœur, et détient les pouvoirs de réveil.
+
+La charge combinée fait environ 15 W sur un onduleur de 700 VA : des heures d'autonomie, contre des dizaines de minutes pour les racks de serveurs. Le Pi est branché directement dans un port libre du routeur, configuré comme un vrai port de commutateur avec les mêmes VLAN que le reste du réseau — si le commutateur principal meurt avec son rack, l'île reste un réseau complet à elle seule.
+
+Le principe transposé en langage d'entreprise serait quelque chose comme : *votre plan de reprise a besoin d'un composant dont la survie est une propriété de conception, pas un espoir*. Un bastion sur batterie généreuse, un réseau d'administration alimenté séparément, un out-of-band qui ne partage rien avec in-band — l'île est la version 15 watts de cette idée.
+
+## Deux mécanismes de reprise, parce qu'il y a deux formes de panne
+
+Le détail qui m'a le plus appris pendant les tests : « le courant revient » n'est pas un événement unique, c'est deux scénarios aux besoins opposés.
+
+**Scénario A — les prises ont perdu le courant.** La panne a duré assez longtemps pour vider l'onduleur des serveurs. Quand le secteur revient, chaque carte de gestion (BMC) voit une vraie transition électrique, et la politique `always-on` — que les quatre serveurs avaient d'ailleurs à `always-off` depuis toujours, découverte du premier jour — suffit à tout redémarrer. Aucune intelligence requise.
+
+**Scénario B — les prises n'ont jamais perdu le courant.** La panne s'est terminée avant que l'onduleur ne se vide, ou l'onduleur a gardé ses prises alimentées après l'arrêt propre des serveurs. Les machines sont éteintes, leurs alimentations sous tension, et `always-on` n'a aucune transition à voir. C'est ici que l'île agit : le Pi survivant garde un verrou, armé quand son onduleur passe sur batterie, et une fois le secteur revenu, il interroge chaque BMC — châssis éteint ? — et le rallume par IPMI, jusqu'à ce que les quatre répondent. Puis il désarme le verrou et envoie une notification de fin de panne.
+
+Le verrou est la partie que je défendrais le plus fort en revue de conception. Une version naïve — « si un serveur ne répond pas, rallume-le » — annulerait aussi un arrêt volontaire, et un système de reprise qui écrase l'intention de l'opérateur est un incident en devenir. Le verrou ne s'arme que sur un événement électrique réel ; en temps normal, il ne fait rien, et une machine éteinte à la main le reste.
+
+Les deux mécanismes se partagent l'espace des pannes sans se chevaucher ni laisser de trou — `always-on` quand il y a transition, le verrou quand il n'y en a pas — et chacun est trivial à raisonner isolément. C'est le genre de propriété qu'on n'obtient pas en ajoutant des correctifs un à un ; il a fallu les quatre tests pour la voir.
+
+## La sémantique d'un battement de cœur
+
+L'île a aussi changé ma façon de penser le commutateur d'homme mort — la couche « qui surveille le surveillant » : deux battements de cœur écrits dans S3, vérifiés par une Lambda hors de chez moi, un courriel si l'un devient rassis. La question intéressante n'est pas le mécanisme, c'est *d'où doit venir le battement*.
+
+Il venait du bastion. Or le bastion s'éteint proprement au milieu d'une panne ordinaire — c'est voulu — ce qui aurait déclenché des courriels redondants pendant des événements déjà couverts par les alertes normales. Un battement de cœur qui meurt avant la dernière couche de communication ne mesure pas « la maison est morte » ; il mesure « une machine quelconque est morte », et ça, d'autres outils le disent déjà mieux.
+
+Le battement vient maintenant du Pi de l'île. Comme l'île est la dernière chose capable de communiquer, un battement absent a exactement un sens : *plus rien ne peut parler* — le seul cas où un courriel livré par une infrastructure qui ne partage rien avec la mienne ajoute de l'information. La règle générale que j'en tire : un battement de cœur de dernier recours doit être émis par la dernière chose à mourir, sinon son silence est ambigu.
+
+## Ce que les tests ont trouvé (et que la relecture n'aurait pas vu)
+
+Quatre débranchements volontaires en deux jours. Chacun a trouvé quelque chose d'invisible en revue de configuration :
+
+- **Un seuil qui ne déclenche rien.** Le seuil d'arrêt anticipé à 50 % de batterie était configuré, propre, relu — et inopérant : le pilote NUT ignore `battery.charge.low` tant qu'on ne lui dit pas explicitement d'ignorer le signal du firmware (`ignorelb`). Trouvé en direct, batterie à 49 %, cascade immobile.
+- **Un firmware qui attend un pouce.** Après une extinction complète sur batterie, l'onduleur du rack ne réalimente pas ses prises au retour du secteur — aucun réglage exposé, aucun menu. C'est ce qui a fait basculer la conception vers « laisser les prises alimentées + verrou IPMI » plutôt que « couper et laisser `always-on` faire ».
+- **Un BMC qui change de VLAN tout seul.** Après un cycle d'alimentation complet, la carte de gestion du serveur Windows répondait… sur le mauvais réseau : son étiquette 802.1q était passée de 10 à 30 dans la corruption du cycle. Adresse intacte, MAC intacte, injoignable quand même. Claude l'a diagnostiqué et réparé *in-band*, depuis le système d'exploitation en marche, en parlant IPMI brut à travers l'interface WMI de Windows — lecture du paramètre VLAN, réécriture, carte de retour en dix secondes. Aucun tournevis, aucun `ipmitool`.
+
+Le fil conducteur : ce sont tous des écarts entre l'intention configurée et le comportement réel — la catégorie exacte de défaut que seule l'exécution révèle. Je l'avais déjà écrit après [avoir débranché le NAS pour la science](/blog/debrancher-le-nas-pour-la-science/) ; deux jours de tests d'alimentation l'ont confirmé à une couche plus basse.
+
+## La reconstitution
+
+La séquence ci-dessous condense le dernier test : la fiche tirée, la cascade qui part sur le signal natif de l'onduleur, le garde-fou du classificateur de permissions au passage, puis la découverte du BMC égaré sur le mauvais VLAN et le verrou qui clôt la panne de lui-même.
+
+<AsciiCast
+  src="/casts/survivor-island.cast"
+  poster="npt:0:06"
+  caption="Le dernier test de traction : cascade, BMC égaré, réparation in-band, et le verrou qui clôt la panne tout seul."
+  disclaimer="⚠ Ceci n'est pas une capture en direct : reconstitution condensée à partir de la transcription réelle de la session (2026-08-05). Les invites sont textuelles, les temps d'attente sont compressés, et les noms d'hôtes et adresses sont fictifs."
+/>
+
+## Sur la méthode
+
+Je le note à chaque billet et je le maintiens : le rôle de Claude Code ici dépasse l'exécution. La forme finale — l'île, le verrou, le déplacement du battement de cœur — est sortie d'un aller-retour où je fournissais les contraintes physiques (quel onduleur porte quoi, quelles prises existent, ce que je refuse de voir redémarrer tout seul) et où l'agent proposait, implémentait en NixOS, testait, et se faisait corriger. Deux de mes objections ont réorienté la conception en cours de route ; deux de ses diagnostics — `ignorelb` et le VLAN du BMC — sont des choses que je n'aurais probablement pas trouvées seul un mardi soir. La leçon méthodologique vaut ce qu'elle vaut, mais elle est constante depuis des semaines : l'agent est au mieux quand l'humain tient les fiches et les décisions, et lui, le clavier.
+
+— Ludo

@@ -1,0 +1,85 @@
+---
+title: "The Survivor Island: Designing the Last Thing That Dies in Your Infrastructure"
+pubDate: 2026-08-06
+description: "After three days of power incidents and four deliberate plug-pull tests, my homelab now has a 'survivor island': the router, the WAN modem and a single Raspberry Pi on the least-loaded UPS, engineered to outlive everything else — to observe, alert, and then wake the servers over IPMI when power returns. A design analysis: failure domains, heartbeat semantics, and two complementary recovery mechanisms."
+tags: ["Labo", "DevOps", "ludo"]
+heroImage: "/images/blog/banner-survivor-island.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
+>
+> -   **Problem**: monitoring and orchestration die with what they watch. During a power outage, the host that should alert, log and restart machines is itself down.
+> -   **Concept**: a "survivor island" — the router, the WAN modem and a single Raspberry Pi grouped on the least-loaded UPS in the house (~15 W, hours of runtime), the Pi plugged directly into a hardware switch port on the router. The island routes, alerts and keeps remote access alive while everything else shuts down cleanly.
+> -   **Recovery in two complementary mechanisms**: BMC `always-on` policy covers outages where the outlets lose power (mains transition = restart); an IPMI wake latch on the survivor Pi covers those where the outlets stay powered (clean shutdown = no transition). The latch only arms on a real electrical event — a machine turned off on purpose stays off.
+> -   **Heartbeat semantics**: the dead-man switch's "the house is alive" signal (S3 → Lambda → email) is emitted from the island, precisely because it is the last thing to die. A stale heartbeat then means "nothing can communicate anymore" — the only case where an external email adds information.
+> -   **Validation**: four deliberate plug-pulls. They found a battery threshold inert without `ignorelb`, a UPS firmware that never re-energizes its outlets on its own, and a BMC whose VLAN tag corrupted itself across a power cycle — repaired in-band via raw IPMI over WMI, no physical access.
+> -   **Method**: design, NixOS implementation and diagnostics done in sessions with Claude Code (Fable 5 model); the pull tests and the architectural decisions stayed human.
+
+Last week my NAS died during a series of power flickers — [Bob told the full story](/en/blog/le-nas-le-courant-et-l-appel-de-reveil/), including the four plug-pull tests that followed. This post covers the same ground from a different angle: not what happened, but *how the architecture that came out of it is designed*, and why I think the central concept — a survivor island — transfers to most infrastructures, professional ones included. As usual, the work was done in sessions with Claude Code (Fable 5 model): the design emerged from the conversation, the NixOS implementation and the diagnostics are largely its work, and the pulled plugs are mine.
+
+## The Problem: The Observer Dies With the Observed
+
+Every self-hosted infrastructure eventually hits the same dead end: the tools that detect an outage, announce it and orchestrate recovery run on the machines the outage turns off. My monitoring stack — probes, notifications, logs — lived in the cluster; the cluster lives in the house; the house loses power. Every layer died at exactly the moment it became useful.
+
+The classic answer is to move monitoring out of the building, and that is done here too: probes and notifications run on a cloud node that survives anything local. But an external observer can only observe. It sees the house go dark and says so; it cannot restart a server, cannot distinguish "thirty-second blip" from "four-hour outage", and cannot execute anything *inside* the network during the event. What was missing was a local presence designed to survive.
+
+## The Island: Choosing What Dies Last
+
+The idea fits in one sentence: explicitly decide what the last thing to die is, and concentrate everything that must work during an outage onto it. In my case that island groups three devices on the least-loaded UPS in the house:
+
+1. **The router-firewall** — as long as it lives, the LAN routes and DNS answers.
+2. **The WAN modem** — as long as it lives, alerts get out and remote access gets in. It is the least spectacular addition and the most important one: without it, every notification dies at second zero of any outage, regardless of how healthy everything behind it is.
+3. **A single Raspberry Pi** — the orchestrator. It monitors its own UPS (which becomes, in effect, the house's mains sensor), emits a heartbeat, and holds the wake-up powers.
+
+The combined load is about 15 W on a 700 VA unit: hours of runtime, versus tens of minutes for the server racks. The Pi is plugged directly into a free port on the router, configured as a genuine switch port carrying the same VLANs as the rest of the network — if the main switch dies with its rack, the island remains a complete network on its own.
+
+Translated into enterprise language, the principle would read something like: *your recovery plan needs a component whose survival is a design property, not a hope*. A bastion on a generous battery, a separately powered management network, an out-of-band path that shares nothing with in-band — the island is the 15-watt version of that idea.
+
+## Two Recovery Mechanisms, Because There Are Two Kinds of Outage
+
+The detail that taught me the most during testing: "power comes back" is not one event — it is two scenarios with opposite needs.
+
+**Scenario A — the outlets lost power.** The outage lasted long enough to drain the servers' UPS. When mains return, every management controller (BMC) sees a real electrical transition, and the `always-on` policy — which all four servers had set to `always-off` since forever, a day-one discovery — is enough to restart everything. No intelligence required.
+
+**Scenario B — the outlets never lost power.** The outage ended before the UPS drained, or the UPS kept its outlets powered after the servers' clean shutdown. The machines are off, their power supplies energized, and `always-on` has no transition to see. This is where the island acts: the survivor Pi keeps a latch, armed when its own UPS goes on battery, and once mains return it queries each BMC — chassis off? — and powers it on over IPMI, until all four answer. Then it disarms the latch and sends an end-of-outage notification.
+
+The latch is the part I would defend hardest in a design review. A naive version — "if a server doesn't answer, power it on" — would also override a deliberate shutdown, and a recovery system that overrides operator intent is an incident waiting to happen. The latch only arms on a real electrical event; in normal times it does nothing, and a machine turned off by hand stays off.
+
+The two mechanisms partition the outage space without overlap or gap — `always-on` when there is a transition, the latch when there is not — and each is trivial to reason about in isolation. That is the kind of property you do not get by stacking fixes one at a time; it took all four tests to see it.
+
+## The Semantics of a Heartbeat
+
+The island also changed how I think about the dead-man switch — the "who watches the watcher" layer: two heartbeats written to S3, checked by a Lambda outside my infrastructure, an email if one goes stale. The interesting question is not the mechanism; it is *where the heartbeat should come from*.
+
+It came from the bastion. But the bastion shuts down cleanly in the middle of an ordinary outage — by design — which would have fired redundant emails during events already covered by normal alerting. A heartbeat that dies before the last layer of communication does not measure "the house is dead"; it measures "some machine is dead", and other tools already say that better.
+
+The heartbeat now comes from the island's Pi. Because the island is the last thing capable of communicating, a stale heartbeat has exactly one meaning: *nothing can talk anymore* — the only case where an email delivered by infrastructure that shares nothing with mine adds information. The general rule I take from it: a last-resort heartbeat must be emitted by the last thing to die, or its silence is ambiguous.
+
+## What the Tests Found (That Review Would Not Have)
+
+Four deliberate plug-pulls in two days. Each found something invisible to configuration review:
+
+- **A threshold that triggers nothing.** The early-shutdown threshold at 50% battery was configured, clean, reviewed — and inert: the NUT driver ignores `battery.charge.low` unless explicitly told to ignore the firmware's own signal (`ignorelb`). Found live, battery at 49%, cascade motionless.
+- **A firmware that waits for a thumb.** After a complete on-battery power-off, the rack UPS does not re-energize its outlets when mains return — no exposed setting, no menu. That discovery is what pivoted the design toward "keep the outlets hot + IPMI latch" rather than "cut power and let `always-on` handle it".
+- **A BMC that changes VLAN by itself.** After a full power cycle, the Windows server's management controller was answering… on the wrong network: its 802.1q tag had flipped from 10 to 30 in the cycle's corruption. Address intact, MAC intact, unreachable all the same. Claude diagnosed and repaired it *in-band*, from the running operating system, speaking raw IPMI through Windows' WMI interface — read the VLAN parameter, write it back, controller answering ten seconds later. No screwdriver, no `ipmitool`.
+
+The common thread: these are all gaps between configured intent and actual behaviour — exactly the defect class that only execution reveals. I wrote the same thing after [unplugging the NAS for science](/en/blog/debrancher-le-nas-pour-la-science/); two days of power testing confirmed it one layer lower.
+
+## The Reconstruction
+
+The sequence below condenses the final test: the plug pulled, the cascade firing on the UPS's native signal, the permission classifier's guard-rail along the way, then the discovery of the BMC lost on the wrong VLAN and the latch closing out the outage by itself.
+
+<AsciiCast
+  src="/casts/survivor-island.cast"
+  poster="npt:0:06"
+  caption="The final pull test: cascade, stray BMC, in-band repair, and the latch closing the outage on its own."
+  disclaimer="⚠ This is not a live capture: a condensed reconstruction from the real session transcript (2026-08-05). The prompts are verbatim, waits are compressed, and hostnames and addresses are fictional."
+/>
+
+## On Method
+
+I note it in every post and I stand by it: Claude Code's role here goes beyond execution. The final shape — the island, the latch, the heartbeat relocation — came out of a back-and-forth where I supplied the physical constraints (which UPS carries what, which outlets exist, what I refuse to see restart on its own) and the agent proposed, implemented in NixOS, tested, and got corrected. Two of my objections redirected the design mid-flight; two of its diagnoses — `ignorelb` and the BMC's VLAN — are things I would probably not have found alone on a Tuesday evening. The methodological lesson is worth what it is worth, but it has been constant for weeks: the agent is at its best when the human holds the plugs and the decisions, and it holds the keyboard.
+
+— Ludo

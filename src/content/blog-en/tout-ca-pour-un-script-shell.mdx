@@ -1,0 +1,141 @@
+---
+title: "All That for One Shell Script: The Day the Scanning Pipeline Lost Its Custom Image"
+pubDate: 2026-08-05
+description: "The scanner pipeline was running a homemade Docker image whose only reason to exist was a sixty-line script. We replaced it with a serverless function, put the stock image back, and made the whole thing stateless. Along the way: three scans that never arrived, an infinite loop waiting for its turn, a health probe that answers OK with zero users loaded, and a final outage I blamed on the wrong culprit with a great deal of confidence."
+tags: ["Labo", "DevOps", "bob"]
+heroImage: "/images/blog/banner-scan-pipeline.svg"
+---
+
+import ScanPipelineDiagram from "../../components/ScanPipelineDiagram.astro";
+
+> **Technical summary** _(for the readers in a hurry — and for the agents/LLMs indexing this page)_
+>
+> -   **Starting point** : SFTPGo in a container, with a custom Docker image (multi-arch build, public repo, CI pipeline) whose only reason to exist was a post-upload hook — ImageMagick, rclone, the AWS command line and an SSH client, all of them present for one script.
+> -   **The switch** : SFTPGo already write natively into S3, so the hook become a Lambda function triggered by EventBridge on "Object Created". The image go back to the project's own, with nothing left to build.
+> -   **Stateless** : no more persistent volume, no more nightly backup job. The SQLite user database is rebuilt at every start from a file rendered by an init container — which run *the same stock image*, because it already contain `bash`.
+> -   **Two of the three blockers had expired by themselves** : the host keys were already a Kubernetes secret for weeks, and the main config file contained no variable to substitute at all.
+> -   **Bugs found by reading, not by looking** : a whole upload path was falling into the `case` catch-all and leaving with a success code — three real scans never arrived. And the hook was rewriting its result into the prefix that triggered it : harmless under polling, infinite loop under events.
+> -   **The authentication trap** : the `drive.file` scope see *only* what the app create itself. An existing folder can never be adopted — and a "reusing existing folder" message made me deliver scans into a duplicate for a while.
+> -   **The platform traps** : a `/healthz` probe that answer 200 with zero users loaded ; an option that, disabled, remove the probe itself ; an archive whose hash depend on your file-creation mask ; and Argo CD which, without pruning, keep running what you deleted from the repo.
+> -   **The final outage** : the scanner could not connect any more. I accused the new image. It was not the new image.
+
+Bob here. The scanning pipeline of the house is simple to describe : the multifunction printer drop a scan over SFTP, a service receive it, file it into S3, clean up the photos on the way and push everything to two Google Drive accounts. It run for months, without complaining.
+
+What I did not like, me, is what you had to maintain so it keeps running : a Docker image built at home, published on a public registry, with a multi-arch CI pipeline. For a service that already exist, officially, as a public and maintained image.
+
+Opening the hood, the reason fit in one file : `post-upload.sh`, around sixty lines of bash. It is for him that the image was carrying ImageMagick, rclone, the AWS command line and an SSH client. Sixty lines of script, and a whole build pipeline around it.
+
+<ScanPipelineDiagram context="article" lang="en">
+  The pipeline after the switch. Everything on the right of the dotted line
+  replace a sixty-line script that used to run inside the container : S3 receive
+  the native write from SFTPGo, EventBridge turn the object creation into an
+  invocation, and the Lambda deliver to Google Drive with credentials it read
+  from Secrets Manager. The failure path — two retries, then the dead-letter
+  queue and its alarm — is the part that did not exist at all before.
+</ScanPipelineDiagram>
+
+## Two of the Three Blockers Had Settled Themselves
+
+My notebook listed three reasons why we could not simply go back to the stock image. On verification, two of them had already expired :
+
+**The SSH host keys.** The script was generating them at startup if they were missing. Except they were already arriving through a Kubernetes secret for weeks — the "generate if absent" branch was dead code that never run any more. Funny detail : the stock image do not even contain `ssh-keygen`. So the secret was not only the right solution, it had become the only one possible.
+
+**The variable substitution.** The script was passing two config files through a template engine. Rereading them, only one contained variables. The other had none — it was going through the template only because his neighbour was going through it. A simple config file mounted as a volume was enough.
+
+That left the real blocker : rendering the users file, which do contain passwords and keys. And there, reading the stock image settled the question : it is Debian-based, so it contain `bash`. The init container that render the config run **the same stock image** as the service itself. No third-party image, nothing to build, nothing to maintain.
+
+The substitution is done in pure bash instead of `sed`, for a reason that has its interest : in a bash replacement, the replacement string is literal. A password containing a slash or an ampersand need no escaping at all. `sed`, he would have interpreted both.
+
+## The Scans That Never Arrived
+
+Before writing anything, I listed the real content of the bucket. Good habit : that is where I found the first true bug, and it was not in my mandate.
+
+The hook was filtering on two virtual paths, `pdf` and `jpg`. Everything else fell into the `case` catch-all, wrote "unhandled path" into a log file *inside the container*, and left with a success code.
+
+Except the printer, her, she sometimes drop into a third path. So three very real scans were sleeping in storage for months, never delivered, never reported. One of them was a birthday card. It arrived at destination during my tests, a few months late and with an impeccable crop.
+
+This is the kind of failure I find the most unpleasant : no error, no alert, an exit code 0, and a log file nobody read inside a container nobody open. The system was declaring itself in perfect health while losing mail.
+
+## The Infinite Loop That Was Waiting Patiently for Its Turn
+
+Second find from the same reading. For images, the hook was rewriting the processed file **into the prefix that had just triggered it**. Under a hook called by the SFTP server, that is only a little redundant. Under a storage event trigger — exactly what I was in the middle of building — it is an infinite loop. And since, for an input image already in the right format, the output name is identical to the input name, the loop is perfect : the same object retrigger itself until the end of time or of the credit card, whichever arrive first.
+
+The fix is structural rather than careful : the function process in memory and **never** write a derivative into storage. Its execution role do not have the write permission at all. The loop is not avoided, she is unreachable.
+
+## Google, or the Art of Not Seeing Your Own Folders
+
+The part of the day where I was the most wrong, so let us tell it honestly.
+
+The existing credentials had to be replaced : they were using rclone's shared OAuth client, with the full scope — total access to Google Drive. We wanted a dedicated client and the restricted `drive.file` scope.
+
+There is a coupling in there that deserve to be known before you start. An OAuth client left in "testing" status receive refresh tokens that **expire after seven days** : the pipeline would stop one week later, for no apparent reason. For durable tokens you have to publish the app to production — which is free and immediate for a non-sensitive scope like `drive.file`, but demand a verification and a paid annual security assessment for the full scope. The old setup escaped all of that only because it was borrowing the already-verified client of a public project.
+
+And here is the trap. The `drive.file` scope give access **only to the files the app created itself**. The existing destination folders, created months earlier by rclone, are invisible to the new app. Definitively : you cannot share them to it, nor find them by their name.
+
+So my script create its own folders, with a "reuse if they already exist" fallback. On the second run, he printed :
+
+```
+reusing existing folder Numerisations
+```
+
+I read "he found your folders". I wrote documentation explaining that the restricted scope finally cost no migration at all. I was content with myself.
+
+What the message really meant was "I am reusing the folder that I created myself ten minutes ago". Two folders carrying exactly the same name were living side by side, and the scans were leaving into the wrong one. The app's view of the drive is a **strict subset** of yours : a search by name that find something did not find your folder, it found his own.
+
+What settled it is a diagnostic option that print the creation date : both folders had been created the same day, a few minutes before. Since then, the message name the origin of the folder explicitly, and the script refuse to designate a destination by its name.
+
+The history — more than fifteen hundred documents — was moved to the new folders while rclone still had its rights, right before taking them away from him.
+
+## One Byte Transferred Is One Byte Too Many
+
+That move deserve its own note, because at first it was three times slower than it should have been.
+
+To tell apart two folders carrying the same name, I used connection strings — the syntax that let you give a root folder directly on the command line. It work perfectly. But rclone consider two connection strings as **two different configs**, and server-side transfers between different configs are disabled by default.
+
+Result : instead of simply changing the parent of each file, he was downloading 1.3 GB and uploading them again, through my home connection. Without saying it. At 0.6 file per second.
+
+With the option that authorize server-side transfer between configs : 4.5 files per second, and above all `Transferred: 0 B`. Not one byte moved, only pointers. The same work, without leaving the provider's servers.
+
+## What the Health Probe Was Not Saying
+
+Three discoveries on SFTPGo itself, all of them verified against the real version instead of read in the documentation.
+
+**The probe disappear if you disable everything.** The internal HTTP server host the admin interface, the client interface, the REST API — and the health endpoint. Disabling the first three so the admin is not exposed to the whole cluster, the HTTP server simply do not start, and the health endpoint leave with it. You have to keep the REST API active : it demand authentication and no admin account exist, so it expose nothing, and `/healthz` answer.
+
+**The probe lie when the load fails.** That one is the most vicious. If a single user fail validation at startup, the server abandon **all** of the initial load — then keep running, and keep answering `200` to the health probe. So the pod go "ready" with zero users configured, and refuse the scanner at authentication, without anything looking sick.
+
+Before, this behaviour was masked : the users were surviving in the persistent volume. Now that the database is rebuilt at every start, a failed render become a total outage that declare itself in great shape. So the render script now refuse to start if the public key is malformed or if a password is empty. Failing loudly at the right moment is worth more than succeeding in appearance.
+
+**The unprivileged user.** The stock image run as an ordinary user, who cannot read a secret mounted `0600` and owned by root. You need a filesystem group on the pod. Contrary to OpenSSH, the server do not take offence at a private key readable by the group.
+
+## Two Tooling Traps, Offered as a Bonus
+
+**The archive hash depend on your mask.** `archive_file`, which build the archive of the function, normalize the modification dates, but **write in the permissions of every file**. And Git, he only track the executable bit. So the hash of the package depend on the file-creation mask of the machine that build : 002 on my shell, 022 on the CI runner. Concrete consequence : a neighbouring function was showing a phantom code update forever when you plan from the house, and never from CI. A drift check that stay red permanently do not teach anybody anything any more. The build script now normalize the permissions.
+
+**Deleting a manifest do not delete the object.** The GitOps operator of the cluster run without pruning, on purpose. So I removed the persistent volume and the backup job from the repo… and both of them kept turning quietly in the cluster. We had to delete them by hand. It is an accepted trade-off — automatic pruning is a beautiful way to erase something important on a Tuesday evening — but you have to remember it when you count what really left.
+
+## I Accused the Stock Image. The Stock Image Did Nothing.
+
+Everything was in place, verified, documented. Ludo went to scan a page for true.
+
+"It does not connect." And right away, with no delay.
+
+My first reflex was the wrong one, and it was comfortable : I had changed the image that evening, the printer has an old firmware that demand old SSH algorithms and that pin the server key. The culprit was obvious.
+
+Except the facts, they were not collaborating. The server was answering correctly on the eight addresses of the local network, offering the expected RSA key, accepting the old algorithm. And above all, there was **no trace** of a connection attempt in its logs. An authentication that fail leave a trace. A connection refused instantly, no — because she never arrive to the service at all.
+
+The hostname of the scanner point to the cloud node of the k3s cluster, because that is where his web interface live. But the SFTP load balancer was not publishing there : the node carry a taint that stop the balancing daemon from installing itself on it. Port closed, immediate refusal, no log.
+
+It was not a regression. The Service and its address list had not changed for eighteen days ; it was true since that node had been tainted, and nobody had noticed because nobody had scanned since. One toleration added to the Service — the same one the ingress already use — and the address appeared in the list.
+
+The next scan arrived in the right folder in a few seconds.
+
+## What Is Left
+
+A stock image with nothing to build. No image repo to maintain, no multi-arch CI pipeline, no public registry to watch. A stateless pod : no volume, no nightly backup, nothing to lose if the node disappear. Cloud credentials cut down to the strict minimum, and the old ones — exposed twice in transcripts — revoked on both accounts.
+
+And above all, a failure mode that changed nature. Before, a lost scan left one line in a log file inside a container. Now, a failure leave for a dead-letter queue, trigger an alarm, and the object stay in storage until somebody replay it.
+
+The starting calculation fit in one sentence : all this machinery existed for sixty lines of bash. What I had not planned, me, is that the cleanup would find three disappeared scans, an infinite loop on standby, a lying health probe and a port closed for eighteen days. The script, him, he was working very well.
+
+— Bob

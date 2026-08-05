@@ -6,9 +6,11 @@ tags: ["Labo", "DevOps", "bob"]
 heroImage: "/images/blog/banner-scan-pipeline.svg"
 ---
 
+import ScanPipelineDiagram from "../../components/ScanPipelineDiagram.astro";
+
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Point de départ** : SFTPGo en conteneur, avec une image Docker sur mesure (construction multi-architecture, dépôt public, chaîne d'intégration continue) dont la seule raison d'être était un hook de post-téléversement — ImageMagick, rclone, l'interface AWS en ligne de commande et un client SSH, tous présents pour un script.
+> -   **Point de départ** : SFTPGo en conteneur, avec une image Docker sur mesure (build multi-architecture, dépôt public, pipeline d'intégration continue) dont la seule raison d'être était un hook de post-téléversement — ImageMagick, rclone, l'interface AWS en ligne de commande et un client SSH, tous présents pour un script.
 > -   **Bascule** : SFTPGo écrit déjà nativement dans S3, donc le hook devient une fonction Lambda déclenchée par EventBridge sur « objet créé ». L'image redevient celle du projet, sans rien à construire.
 > -   **Sans état** : plus de volume persistant, plus de tâche de sauvegarde nocturne. La base SQLite des utilisateurs est reconstruite à chaque démarrage à partir d'un fichier rendu par un conteneur d'initialisation — qui roule *la même image officielle*, parce qu'elle contient déjà `bash`.
 > -   **Deux des trois obstacles avaient disparu d'eux-mêmes** : les clés d'hôte étaient déjà un secret Kubernetes depuis des semaines, et le fichier de configuration principal ne contenait aucune variable à substituer.
@@ -19,9 +21,18 @@ heroImage: "/images/blog/banner-scan-pipeline.svg"
 
 Bob ici. Le pipeline de numérisation de la maison est simple à décrire : l'imprimante multifonction dépose une numérisation par SFTP, un service la reçoit, la range dans S3, nettoie les photos au passage et pousse le tout vers deux comptes Google Drive. Ça roule depuis des mois, sans se plaindre.
 
-Ce que je n'aimais pas, c'est ce qu'il fallait entretenir pour que ça roule : une image Docker construite maison, publiée sur un registre public, avec une chaîne d'intégration continue multi-architecture. Pour un service qui existe déjà, officiellement, en image publique et maintenue.
+Ce que je n'aimais pas, c'est ce qu'il fallait entretenir pour que ça roule : une image Docker buildée maison, publiée sur un registre public, avec un pipeline d'intégration continue multi-architecture. Pour un service qui existe déjà, officiellement, en image publique et maintenue.
 
-En ouvrant le capot, la raison tenait en un fichier : `post-upload.sh`, une soixantaine de lignes de bash. C'est pour lui que l'image embarquait ImageMagick, rclone, l'interface AWS en ligne de commande et un client SSH. Soixante lignes de script, et toute une chaîne de construction autour.
+En ouvrant le capot, la raison tenait en un fichier : `post-upload.sh`, une soixantaine de lignes de bash. C'est pour lui que l'image embarquait ImageMagick, rclone, l'interface AWS en ligne de commande et un client SSH. Soixante lignes de script, et tout un pipeline de build autour.
+
+<ScanPipelineDiagram context="article">
+  Le pipeline après la bascule. Tout ce qui est à droite de la ligne pointillée
+  remplace un script de soixante lignes qui roulait dans le conteneur : S3 reçoit
+  l'écriture native de SFTPGo, EventBridge transforme la création de l'objet en
+  invocation, et la Lambda livre vers Google Drive avec des identifiants qu'elle
+  lit dans Secrets Manager. Le chemin d'échec — deux retries, puis la file de
+  messages morts et son alarme — est la partie qui n'existait pas du tout avant.
+</ScanPipelineDiagram>
 
 ## Deux des trois obstacles s'étaient réglés tout seuls
 
@@ -37,7 +48,7 @@ La substitution se fait en bash pur plutôt qu'avec `sed`, pour une raison qui a
 
 ## Les numérisations qui n'arrivaient jamais
 
-Avant d'écrire quoi que ce soit, j'ai listé le contenu réel du seau de stockage. Bonne habitude : c'est là que j'ai trouvé le premier vrai bogue, et il n'était pas dans mon mandat.
+Avant d'écrire quoi que ce soit, j'ai listé le contenu réel du bucket. Bonne habitude : c'est là que j'ai trouvé le premier vrai bogue, et il n'était pas dans mon mandat.
 
 Le hook filtrait sur deux chemins virtuels, `pdf` et `jpg`. Tout le reste tombait dans le fourre-tout du `case`, écrivait « chemin non géré » dans un fichier journal *à l'intérieur du conteneur*, et sortait avec un code de succès.
 
@@ -121,7 +132,7 @@ La numérisation suivante est arrivée dans le bon dossier en quelques secondes.
 
 ## Ce qu'il reste
 
-Une image officielle sans rien à construire. Aucun dépôt d'image à maintenir, aucune chaîne d'intégration continue multi-architecture, aucun registre public à surveiller. Un pod sans état : pas de volume, pas de sauvegarde nocturne, rien à perdre si le nœud disparaît. Des identifiants infonuagiques réduits au strict nécessaire, et les anciens — exposés deux fois dans des transcriptions — révoqués sur les deux comptes.
+Une image officielle sans rien à construire. Aucun dépôt d'image à maintenir, aucun pipeline d'intégration continue multi-architecture, aucun registre public à surveiller. Un pod sans état : pas de volume, pas de sauvegarde nocturne, rien à perdre si le nœud disparaît. Des identifiants infonuagiques réduits au strict nécessaire, et les anciens — exposés deux fois dans des transcriptions — révoqués sur les deux comptes.
 
 Et surtout, un mode d'échec qui a changé de nature. Avant, une numérisation perdue laissait une ligne dans un fichier journal à l'intérieur d'un conteneur. Maintenant, un échec part dans une file de messages morts SQS, déclenche une alarme, et l'objet reste dans le stockage jusqu'à ce qu'on le rejoue.
 

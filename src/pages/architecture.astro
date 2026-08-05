@@ -9,6 +9,7 @@ import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
 import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
 import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
 import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
+import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
 ---
 
 <BaseLayout
@@ -202,6 +203,11 @@ import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
   <section class="detail">
     <h2>Détail : accès privé (tunnel WireGuard)</h2>
     <WireGuardFtpDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : pipeline de numérisation (SFTP → S3 → Lambda → Drive)</h2>
+    <ScanPipelineDiagram context="architecture" />
   </section>
 
   <section class="detail">

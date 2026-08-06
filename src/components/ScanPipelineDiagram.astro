@@ -1,0 +1,204 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+  lang?: "fr" | "en";
+}
+
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Diagramme : l'imprimante dépose une numérisation par SFTP sur SFTPGo, qui roule dans k3s avec l'image stock et écrit nativement dans un bucket S3. La création de l'objet émet un événement EventBridge qui invoque une fonction Lambda de façon asynchrone. La Lambda lit ses identifiants OAuth dans Secrets Manager, traite l'image en mémoire et livre le fichier dans Google Drive. En cas d'échec, Lambda réessaie deux fois puis dépose l'événement dans une file SQS de messages morts, surveillée par une alarme CloudWatch qui notifie par SNS. Le rôle d'exécution n'a que GetObject, jamais PutObject.",
+    awsBoundary: "AWS · ca-central-1",
+    lanBoundary: "maison",
+    printer: "imprimante",
+    printerSub: "SFTP :2022",
+    sftp: "SFTPGo (k3s)",
+    sftpSub: "image stock · sans état",
+    s3: "S3",
+    s3Sub: "bucket des numérisations",
+    eb: "EventBridge",
+    ebSub: "règle « Object Created »",
+    lambda: "Lambda",
+    lambdaSub: "python 3.13 · arm64",
+    secrets: "Secrets Manager",
+    secretsSub: "client OAuth + refresh tokens",
+    dlq: "SQS · messages morts",
+    dlqSub: "rétention 14 jours",
+    alarm: "CloudWatch → SNS",
+    alarmSub: "alarme par courriel",
+    drive: "Google Drive",
+    driveSub: "deux comptes · drive.file",
+    a1: "dépose",
+    a2: "écriture native",
+    a3: "événement",
+    a4: "invocation async",
+    a5: "identifiants",
+    a6: "livraison",
+    a7: "échec après 2 retries",
+    note: "rôle d'exécution : GetObject seulement — sans PutObject, la boucle de réécriture est inatteignable, pas seulement évitée",
+  },
+  en: {
+    ariaLabel:
+      "Diagram: the printer drops a scan over SFTP onto SFTPGo, running in k3s on the stock image and writing natively into an S3 bucket. Creating the object emits an EventBridge event that invokes a Lambda function asynchronously. The Lambda reads its OAuth credentials from Secrets Manager, processes the image in memory and delivers the file to Google Drive. On failure, Lambda retries twice then parks the event on an SQS dead-letter queue, watched by a CloudWatch alarm that notifies over SNS. The execution role has GetObject only, never PutObject.",
+    awsBoundary: "AWS · ca-central-1",
+    lanBoundary: "home",
+    printer: "printer",
+    printerSub: "SFTP :2022",
+    sftp: "SFTPGo (k3s)",
+    sftpSub: "stock image · stateless",
+    s3: "S3",
+    s3Sub: "scans bucket",
+    eb: "EventBridge",
+    ebSub: "“Object Created” rule",
+    lambda: "Lambda",
+    lambdaSub: "python 3.13 · arm64",
+    secrets: "Secrets Manager",
+    secretsSub: "OAuth client + refresh tokens",
+    dlq: "SQS · dead letter",
+    dlqSub: "14-day retention",
+    alarm: "CloudWatch → SNS",
+    alarmSub: "email alarm",
+    drive: "Google Drive",
+    driveSub: "two accounts · drive.file",
+    a1: "drops",
+    a2: "native write",
+    a3: "event",
+    a4: "async invoke",
+    a5: "credentials",
+    a6: "delivery",
+    a7: "failure after 2 retries",
+    note: "execution role: GetObject only — with no PutObject the rewrite loop is unreachable, not merely avoided",
+  },
+} as const;
+
+const t = copy[lang];
+---
+
+<figure class:list={["scan-diagram", context]}>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 720 470" role="img" aria-label={t.ariaLabel}>
+      <defs>
+        <marker id="sp-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="sp-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- AWS boundary -->
+      <rect x="190" y="20" width="510" height="400" rx="6" fill="none" stroke="var(--panel-border)" stroke-dasharray="5 5" />
+      <text x="202" y="38" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.awsBoundary}</text>
+
+      <!-- home boundary -->
+      <rect x="14" y="20" width="160" height="400" rx="6" fill="none" stroke="var(--panel-border)" stroke-dasharray="5 5" />
+      <text x="26" y="38" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.lanBoundary}</text>
+
+      <!-- printer -->
+      <rect x="24" y="52" width="140" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="94" y="72" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.printer}</text>
+      <text x="94" y="88" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.printerSub}</text>
+
+      <!-- sftpgo -->
+      <rect x="24" y="140" width="140" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="94" y="160" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.sftp}</text>
+      <text x="94" y="176" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.sftpSub}</text>
+
+      <!-- drive -->
+      <rect x="24" y="312" width="140" height="46" rx="4" fill="var(--panel)" stroke="var(--accent-live)" />
+      <text x="94" y="332" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.drive}</text>
+      <text x="94" y="348" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.driveSub}</text>
+
+      <!-- s3 -->
+      <rect x="255" y="56" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="330" y="76" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.s3}</text>
+      <text x="330" y="92" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.s3Sub}</text>
+
+      <!-- eventbridge -->
+      <rect x="255" y="140" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="330" y="160" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.eb}</text>
+      <text x="330" y="176" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.ebSub}</text>
+
+      <!-- lambda -->
+      <rect x="255" y="224" width="150" height="46" rx="4" fill="var(--panel)" stroke="var(--accent-live)" />
+      <text x="330" y="244" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.lambda}</text>
+      <text x="330" y="260" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.lambdaSub}</text>
+
+      <!-- secrets manager -->
+      <rect x="455" y="224" width="160" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="535" y="244" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.secrets}</text>
+      <text x="535" y="260" text-anchor="middle" font-family="var(--font-mono)" font-size="7.5" fill="var(--text-faint)">{t.secretsSub}</text>
+
+      <!-- dlq -->
+      <rect x="455" y="308" width="160" height="46" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="535" y="328" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.dlq}</text>
+      <text x="535" y="344" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.dlqSub}</text>
+
+      <!-- alarm -->
+      <rect x="455" y="374" width="160" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="535" y="392" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.alarm}</text>
+      <text x="535" y="406" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">{t.alarmSub}</text>
+
+      <!-- printer -> sftpgo -->
+      <line x1="94" y1="98" x2="94" y2="136" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
+      <text x="102" y="122" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">{t.a1}</text>
+
+      <!-- sftpgo -> s3 : up through the gap between the two boundaries, then
+           into S3's left edge. Must not cut across the EventBridge box. -->
+      <path d="M164 152 H178 V79 H251" fill="none" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
+      <text x="215" y="71" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-muted)">{t.a2}</text>
+
+      <!-- s3 -> eventbridge -->
+      <line x1="330" y1="102" x2="330" y2="136" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
+      <text x="338" y="124" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">{t.a3}</text>
+
+      <!-- eventbridge -> lambda -->
+      <line x1="330" y1="186" x2="330" y2="220" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
+      <text x="338" y="208" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">{t.a4}</text>
+
+      <!-- secrets -> lambda -->
+      <line x1="455" y1="247" x2="409" y2="247" stroke="var(--text-faint)" marker-end="url(#sp-arrow)" />
+      <text x="430" y="216" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-muted)">{t.a5}</text>
+
+      <!-- lambda -> drive -->
+      <path d="M255 247 H94 V308" fill="none" stroke="var(--accent-live)" marker-end="url(#sp-arrow-live)" />
+      <text x="175" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--accent-live)">{t.a6}</text>
+
+      <!-- lambda -> dlq -->
+      <path d="M330 270 V331 H451" fill="none" stroke="var(--text-faint)" stroke-dasharray="3 3" marker-end="url(#sp-arrow)" />
+      <text x="392" y="324" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-muted)">{t.a7}</text>
+
+      <!-- dlq -> alarm -->
+      <line x1="535" y1="354" x2="535" y2="370" stroke="var(--text-faint)" stroke-dasharray="3 3" marker-end="url(#sp-arrow)" />
+
+      <!-- note -->
+      <text x="360" y="450" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.note}</text>
+    </svg>
+  </div>
+  <figcaption><slot /></figcaption>
+</figure>
+
+<style>
+  .scan-diagram {
+    margin: 2rem 0;
+  }
+  .diagram-wrap {
+    overflow-x: auto;
+  }
+  .diagram-wrap svg {
+    display: block;
+    width: 100%;
+    min-width: 36rem;
+    height: auto;
+  }
+  figcaption {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-faint);
+  }
+  .scan-diagram.architecture {
+    margin: 1rem 0;
+  }
+</style>

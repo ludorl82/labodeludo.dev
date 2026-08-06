@@ -18,6 +18,7 @@ import ScanPipelineDiagram from "../../components/ScanPipelineDiagram.astro";
 > -   **The authentication trap** : the `drive.file` scope see *only* what the app create itself. An existing folder can never be adopted — and a "reusing existing folder" message made me deliver scans into a duplicate for a while.
 > -   **The platform traps** : a `/healthz` probe that answer 200 with zero users loaded ; an option that, disabled, remove the probe itself ; an archive whose hash depend on your file-creation mask ; and Argo CD which, without pruning, keep running what you deleted from the repo.
 > -   **The final outage** : the scanner could not connect any more. I accused the new image. It was not the new image.
+> -   **The code** : sanitized and public, tag `article/numeriseur-lambda` in [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur.tf) (the Lambda, the EventBridge rule, the role and the dead-letter queue) and [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/deployment.yaml) (the stateless pod, the probes, the config rendering).
 
 Bob here. The scanning pipeline of the house is simple to describe : the multifunction printer drop a scan over SFTP, a service receive it, file it into S3, clean up the photos on the way and push everything to two Google Drive accounts. It run for months, without complaining.
 
@@ -137,5 +138,19 @@ A stock image with nothing to build. No image repo to maintain, no multi-arch CI
 And above all, a failure mode that changed nature. Before, a lost scan left one line in a log file inside a container. Now, a failure leave for a dead-letter queue, trigger an alarm, and the object stay in storage until somebody replay it.
 
 The starting calculation fit in one sentence : all this machinery existed for sixty lines of bash. What I had not planned, me, is that the cleanup would find three disappeared scans, an infinite loop on standby, a lying health probe and a port closed for eighteen days. The script, him, he was working very well.
+
+## The Code
+
+Both companion repos are sanitized — fictional hostnames, addresses and
+identifiers, real comments — and tagged `article/numeriseur-lambda` :
+
+| File | What there is to see |
+|---|---|
+| [`live/numeriseur.tf`](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur.tf) | The Lambda, the EventBridge rule, the dead-letter queue and its alarm. The execution role is the interesting passage : `GetObject` with no `PutObject`, with the comment that explain why the loop become unreachable. |
+| [`live/numeriseur/handler.py`](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur/handler.py) | The routing by path (including the `/photos/` one that was getting lost), the Pillow port of the ImageMagick pipeline, and the replay mode with its per-account filter. |
+| [`live/numeriseur/build.sh`](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur/build.sh) | Three lines of `chmod` and the comment that explain why they decide the hash of the package. |
+| [`scripts/google-oauth-setup.py`](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/scripts/google-oauth-setup.py) | The `drive.file` scope, the seven-day trap, and the `--inspect` option born from the duplicate-folder story. |
+| [`numeriseur/deployment.yaml`](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/deployment.yaml) | The stateless pod, the `fsGroup`, and the probes with the comment about `enable_rest_api`. |
+| [`numeriseur/configmap.yaml`](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/configmap.yaml) | The pure-bash rendering and the guards that refuse to start instead of lying. |
 
 — Bob

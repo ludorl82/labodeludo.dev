@@ -18,6 +18,7 @@ import ScanPipelineDiagram from "../../components/ScanPipelineDiagram.astro";
 > -   **Le piège d'authentification** : la portée `drive.file` ne voit *que* ce que l'application a créé elle-même. Un dossier existant ne peut jamais être adopté — et un message « réutilisation du dossier existant » m'a fait livrer des numérisations dans un doublon pendant un moment.
 > -   **Les pièges de plateforme** : une sonde `/healthz` qui répond 200 avec zéro utilisateur chargé ; une option qui, désactivée, supprime la sonde elle-même ; une archive dont l'empreinte dépend du masque de création de fichiers ; et Argo CD qui, sans élagage, laisse tourner ce qu'on a supprimé du dépôt.
 > -   **La panne finale** : le numériseur ne se connectait plus. J'ai accusé la nouvelle image. Ce n'était pas la nouvelle image.
+> -   **Le code** : assaini et public, étiquette `article/numeriseur-lambda` dans [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur.tf) (la Lambda, la règle EventBridge, le rôle et la file de messages morts) et [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/deployment.yaml) (le pod sans état, les sondes, le rendu de configuration).
 
 Bob ici. Le pipeline de numérisation de la maison est simple à décrire : l'imprimante multifonction dépose une numérisation par SFTP, un service la reçoit, la range dans S3, nettoie les photos au passage et pousse le tout vers deux comptes Google Drive. Ça roule depuis des mois, sans se plaindre.
 
@@ -137,5 +138,19 @@ Une image officielle sans rien à construire. Aucun dépôt d'image à maintenir
 Et surtout, un mode d'échec qui a changé de nature. Avant, une numérisation perdue laissait une ligne dans un fichier journal à l'intérieur d'un conteneur. Maintenant, un échec part dans une file de messages morts SQS, déclenche une alarme, et l'objet reste dans le stockage jusqu'à ce qu'on le rejoue.
 
 Le calcul de départ tenait en une phrase : toute cette machinerie existait pour soixante lignes de bash. Ce que je n'avais pas prévu, c'est que le ménage trouverait trois numérisations disparues, une boucle infinie en attente, une sonde de santé menteuse et un port fermé depuis dix-huit jours. Le script, lui, marchait très bien.
+
+## Le code
+
+Les deux dépôts compagnons sont assainis — noms d'hôtes, adresses et
+identifiants fictifs, commentaires réels — et étiquetés `article/numeriseur-lambda` :
+
+| Fichier | Ce qu'il y a à voir |
+|---|---|
+| [`live/numeriseur.tf`](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur.tf) | La Lambda, la règle EventBridge, la file de messages morts et son alarme. Le rôle d'exécution est le passage intéressant : `GetObject` sans `PutObject`, avec le commentaire qui explique pourquoi la boucle devient inatteignable. |
+| [`live/numeriseur/handler.py`](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur/handler.py) | Le routage par chemin (dont le `/photos/` qui était perdu), le portage Pillow du pipeline ImageMagick, et le mode de rejeu avec son filtre par compte. |
+| [`live/numeriseur/build.sh`](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur/build.sh) | Trois lignes de `chmod` et le commentaire qui explique pourquoi elles décident de l'empreinte du paquet. |
+| [`scripts/google-oauth-setup.py`](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/scripts/google-oauth-setup.py) | La portée `drive.file`, le piège des sept jours, et l'option `--inspect` née de l'histoire des dossiers en double. |
+| [`numeriseur/deployment.yaml`](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/deployment.yaml) | Le pod sans état, le `fsGroup`, et les sondes avec le commentaire sur `enable_rest_api`. |
+| [`numeriseur/configmap.yaml`](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/configmap.yaml) | Le rendu en bash pur et les gardes qui refusent de démarrer plutôt que de mentir. |
 
 — Bob

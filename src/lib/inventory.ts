@@ -52,7 +52,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "migrer-tout-mon-homelab-vers-nixos",
       "trois-majeures-un-jeudi-soir",
       "laisser-le-pipeline-appuyer-sur-apply",
-      "tout-ca-pour-un-script-shell",
+      "tout-ca-pour-un-script-bash",
     ],
   },
   alimentation: {
@@ -97,7 +97,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "convention-ipv6-vlan-serveurs",
       "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
       "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web",
-      "tout-ca-pour-un-script-shell",
+      "tout-ca-pour-un-script-bash",
     ],
   },
   "pipeline-media": {
@@ -142,7 +142,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "quatre-depots-pour-un-labo-au-complet",
       "laisser-le-pipeline-appuyer-sur-apply",
       "trois-majeures-un-jeudi-soir",
-      "tout-ca-pour-un-script-shell",
+      "tout-ca-pour-un-script-bash",
     ],
   },
   domotique: {

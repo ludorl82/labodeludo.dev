@@ -1,0 +1,86 @@
+# topology.json — the contract between the IaC snapshots and this site
+
+The `/architecture` live view is generated from the four **public sanitized
+snapshots** ([nixos-iac-public], [k3s-iac-public], [aws-iac-public],
+[cloudflare-iac-public]). Each snapshot carries a `topology.json` at its root,
+emitted by that repo's sanitizer **from the already-sanitized tree** — so the
+data is fictional by construction and passes the same fail-closed verification
+gate as the rest of the snapshot. This site never reads the private repos;
+that is the design, not a detail.
+
+[nixos-iac-public]: https://github.com/ludorl82/nixos-iac-public
+[k3s-iac-public]: https://github.com/ludorl82/k3s-iac-public
+[aws-iac-public]: https://github.com/ludorl82/aws-iac-public
+[cloudflare-iac-public]: https://github.com/ludorl82/cloudflare-iac-public
+
+## Shape
+
+```json
+{
+  "topologyVersion": 1,
+  "repo": "k3s-iac-public",
+  "layer": "cluster",
+  "nodes": [
+    {
+      "id": "workload:kuma/kuma",
+      "kind": "workload",
+      "label": "kuma",
+      "layer": "cluster",
+      "source": "kuma/deployment.yaml",
+      "meta": {}
+    }
+  ],
+  "edges": [
+    { "from": "workload:kuma/kuma", "to": "host:cloud-01", "kind": "pinned-to" }
+  ]
+}
+```
+
+- `topologyVersion` — bumped on breaking shape changes; the join step refuses
+  versions it does not know.
+- `layer` — one per repo: `hardware` (nixos), `cluster` (k3s), `cloud` (aws),
+  `edge` (cloudflare).
+- `source` — path of the file inside that public snapshot that defines the
+  node; the site renders every box as a link to it.
+
+## Id namespaces
+
+Ids are `namespace:rest`, lowercase, matching `[a-z0-9.:/@_-]+`.
+
+| namespace | emitted by | meaning |
+|---|---|---|
+| `host:` | nixos | a machine (`host:gpu-01`) |
+| `cluster:` | k3s | the k3s cluster grouping node (`cluster:k3s`) |
+| `app:` | k3s | an Argo CD Application (`app:kuma`) |
+| `workload:` | k3s | Deployment/StatefulSet/DaemonSet/CronJob (`workload:<app>/<name>`) |
+| `route:` | k3s | an IngressRoute (`route:<app>/<name>`, `meta.hosts` = hostnames) |
+| `instance:` | aws | an EC2 instance |
+| `lambda:` | aws | a Lambda function |
+| `bucket:` | aws | an S3 bucket |
+| `tunnel:` | cloudflare | a Cloudflare Tunnel (`tunnel:k3s`) |
+| `dns:` | cloudflare | a public hostname routed through the tunnel (`dns:kuma.pub.example.com`) |
+| `access:` | cloudflare | a Cloudflare Access application |
+
+## Edge kinds
+
+| kind | meaning |
+|---|---|
+| `part-of` | workload/route → app; app → cluster |
+| `pinned-to` | workload → host (nodeSelector) |
+| `member-of` | host → cluster:k3s (the host runs a k3s server/agent) |
+| `routes-to` | dns → tunnel; tunnel → cluster; route → workload |
+| `is` | identity across layers (`instance:...` → `host:cloud-01`) |
+| `protects` | access app → dns hostname |
+
+## Rules (enforced by the emitters, re-checked by the join)
+
+1. An emitter that extracts **zero nodes** exits non-zero — an empty layer is
+   a broken parser, never a valid result.
+2. Every edge endpoint either exists in the same file's `nodes`, or is a
+   **cross-layer reference** into one of the namespaces another layer owns
+   (`host:`, `cluster:`, `tunnel:`, `dns:`). The join step resolves those and
+   fails on danglers.
+3. The join ([`join-topology.py`](join-topology.py)) additionally greps the
+   merged output against a forbidden-pattern list (real-looking RFC 1918
+   addresses, non-example domains) — belt and suspenders on top of each
+   snapshot's own gate.

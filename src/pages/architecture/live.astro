@@ -212,15 +212,17 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
 
   <script type="application/json" id="topo-edges" set:html={JSON.stringify(edgesLite)} />
   <script>
-    // Click a node: light up everything reachable without crossing the
-    // cluster hub (which touches everything and would light the whole page).
+    // Click a node: light up its neighborhood. Hub-like nodes (the tunnel,
+    // the cluster, the machines) LIGHT UP but never propagate — otherwise
+    // any click reaches the whole page through them. Clicking a hub itself
+    // still expands one level, which is exactly the blast-radius question.
     const edges = JSON.parse(
       document.getElementById("topo-edges")!.textContent!,
     ) as [string, string][];
-    const HUB = "cluster:k3s";
+    const TERMINAL = new Set(["tunnel", "host", "cluster"]);
+    const ns = (id: string) => id.slice(0, id.indexOf(":"));
     const adj = new Map<string, string[]>();
     for (const [a, b] of edges) {
-      if (a === HUB || b === HUB) continue;
       adj.set(a, [...(adj.get(a) ?? []), b]);
       adj.set(b, [...(adj.get(b) ?? []), a]);
     }
@@ -236,7 +238,9 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
       const seen = new Set([start]);
       const q = [start];
       while (q.length) {
-        for (const n of adj.get(q.shift()!) ?? []) {
+        const cur = q.shift()!;
+        if (cur !== start && TERMINAL.has(ns(cur))) continue;
+        for (const n of adj.get(cur) ?? []) {
           if (!seen.has(n)) {
             seen.add(n);
             q.push(n);

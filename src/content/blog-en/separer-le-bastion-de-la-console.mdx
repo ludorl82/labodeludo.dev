@@ -1,0 +1,217 @@
+---
+title: "Splitting the Bastion from the Console: My Shell Lived in the Operating Room"
+pubDate: 2026-08-07
+description: "My working shell ran on the most-operated machine of the lab — a 4 GB Raspberry Pi that also carried the service keys, the secrets pipeline and a k3s agent. One scare during a disk migration later, we split the two roles: the bastion stays on the survivor Pi, the console moves into a 16 GB VM. Along the way: a high-availability design built then thrown away, a repo read with confidence that was three commits stale, an SSH host key baked into the image, and a registry down for 18 hours whose best quality was that nobody noticed."
+tags: ["Labo", "DevOps", "NixOS", "bob"]
+heroImage: "/images/blog/banner-bastion-console-split-en.svg"
+---
+
+import BastionConsoleSplitDiagram from "../../components/BastionConsoleSplitDiagram.astro";
+
+> **Technical summary** _(for readers in a hurry — and for the agents/LLM that index this page)_
+>
+> -   **Starting point**: one Raspberry Pi 5 (4 GB) carrying two roles that want opposite things — the **bastion** (forced-command SSH keys, password-manager pipeline, singleton tasks) and the **interactive console** (agent sessions, git repos, builds), capped at 2 GB so it don't squeeze the k3s agent on the same host.
+> -   **Trigger**: a root-disk migration on that Pi, with the very concrete fear of losing the shell that drive the operation. The verifier cannot live on the thing it verifies.
+> -   **The split**: one NixOS module became three — shared tools (both hosts), the bastion role (the Pi only: the single import IS the singleton guard, no role flag), and a parameterized console container (`autoStart`, memory limit, per-host image pin).
+> -   **The console**: a dedicated 6 vCPU / 16 GB VM on the GPU server, deliberately NOT a k3s node — the console manage the cluster, she don't live in it. The container goes from 2 GB to 12 GB.
+> -   **The names**: the historical name follows the shell to the VM; the bastion get a fresh alias. Consumers were drained one at a time while both names still pointed at the same machine — zero risk, every switch verifiable on its own.
+> -   **High availability: fully designed, then thrown away.** Two replicated VMs, shared host keys, a rehearsed failover — the whole design existed. It died of one simple argument: this is a lab, and losing the console costs a rebuild, not an outage.
+> -   **Traps met on the way**: a second checkout of the same repo, three commits stale, that fossilized half the planning; the container's SSH host key baked into the image at build time (every rebuild silently rotated it); `tmpfiles` "C+" refusing to overwrite an existing file; a pinned-keys ConfigMap that existed only as an annotation on the live object; and an image registry down for 18 hours — invisible precisely because the console is designed to survive without it.
+> -   **Rebuild story**: the seed already existed — the nightly encrypted backup to S3. The real work was closing its gaps (the backup script did not back up itself) and adding a size floor: an object under 1 MB is a failure, not a success.
+
+Two weeks ago, I move the root disk of my Raspberry Pi onto NVMe. The
+operation, she went fine. What went less fine is the fifteen minutes where
+I realized the shell I was driving the migration with was running *on the
+machine being operated*. If that had gone sideways, my repair tool was
+leaving with the patient.
+
+That Pi — let's call him `pi-02` — did everything: SSH entry point of the
+lab, secrets server for the whole fleet's backups, password-manager
+pipeline, scheduled jobs, k3s agent, and on top of all that, my working
+console in a container capped at 2 GB. On a machine that have 4.
+
+## Two roles that want opposite things
+
+Looking at the NixOS module that declared all this, the problem became
+obvious: this was not an overloaded machine, this was **two contradictory
+roles in the same file**.
+
+| | Bastion | Console |
+|---|---|---|
+| What it is | a service — sshd + forced commands | a workspace |
+| What it wants | to be up, always | **capacity** |
+| What it weighs | almost nothing | 8–16 GB of RAM |
+| Redundancy | sit on the right power island | be rebuildable |
+
+The bastion, he is exactly where he belongs: `pi-02` sits on the survivor
+UPS, next to the router and the modem. That is the machine still standing
+when the house goes dark. But the console wants memory and peace — and the
+Pi offers neither one.
+
+The solution: each role on its own machine. The bastion stays on the Pi.
+The console moves into a dedicated VM on the GPU server (`gpu-01`, 109 GB
+of RAM doing nothing all day): 6 vCPU, 16 GB, and the container goes from
+2 GB to 12 GB. Deliberately **not** a k3s node — the console manage the
+cluster, she don't live in it. A `kubectl drain` that kills the session
+that launched it, no thank you.
+
+<BastionConsoleSplitDiagram context="article" lang="en" />
+
+## The high availability I designed, then threw away
+
+First version of the plan: two console VMs, one per hypervisor, shared SSH
+host keys, hourly replication, a DNS failover rehearsed in daylight with a
+stopwatch. A beautiful design. Complete. Defensible.
+
+I threw the whole thing away the next morning.
+
+The argument that killed it fits on one line: this is a lab. Losing the
+console costs a *rebuild* — not an outage. Everything the other machines
+actually need keeps running on the bastion Pi. And the detail that closed
+the case: the two candidate hypervisors share the same UPS. My "high
+availability" would have survived everything except a power failure —
+which is to say, the only realistic scenario.
+
+Instead: one VM, nightly backups, a documented rebuild path, and on the
+survivor Pi a **stopped emergency console** — image resident on disk, one
+`systemctl start` during an outage and I have a shell. The poor man's high
+availability, but the poor man, he sleeps well.
+
+## The name follows the shell
+
+The trickiest piece was not the VM and not NixOS: it was the name. A dozen
+consumers — pipeline triggers, scheduled jobs, every host's backups — knew
+the bastion by its historical name. And me, I wanted that name to follow
+the *console*, because that name is what my fingers type.
+
+The sequence that makes this risk-free: first you add a fresh alias,
+`bastion.lab.example`, pointing at the same machine as the old name. Then
+you drain the consumers one at a time onto the alias — each switch
+verifies on its own, and during all that time **both names point at the
+same address**. Getting it wrong is impossible; worst case you have two
+names for one machine. When the count of old-name consumers drops to "just
+me", the name is free to move to the VM, and it takes with it exactly what
+belongs to the console.
+
+## The module, split in three
+
+The monolithic module became three files, and the split carries a design
+decision I like a lot: **no role flag**. The guard for singleton tasks
+(the cloud-drive sync, for example, that must NEVER run on two hosts) is
+the import itself — one single host imports the bastion module, so one
+single host can run its services. A systemd unit that does not exist
+cannot be started by accident.
+
+The console container, meanwhile, became parameterized:
+
+```nix
+options.homelab.console = {
+  autoStart = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = "false = emergency posture: unit declared, image
+      resident, started by hand during an outage.";
+  };
+  memoryLimit = lib.mkOption { type = lib.types.str; default = "2g"; };
+  image = lib.mkOption {
+    type = lib.types.str;
+    # Pinned PER HOST, on purpose: a new digest does not restart every
+    # console at once -- a switch that changes the container definition
+    # kills the session running inside it.
+    default = "registry.lab.example:5000/console@sha256:…";
+  };
+};
+
+# Emergency posture: the unit exists, the image stays resident,
+# but nothing starts it at boot.
+systemd.services.docker-console.wantedBy =
+  lib.mkIf (!cfg.autoStart) (lib.mkForce [ ]);
+```
+
+The same module, imported by both hosts: on the VM it runs the real
+console at 12 GB, on the Pi it declares the emergency console, stopped.
+
+## The traps, in increasing order of humiliation
+
+**The repo I read with confidence.** The bastion's old home kept *two*
+checkouts of the same configuration repo. I did my whole initial
+exploration in the wrong one — three commits stale. Half of my
+"discoveries" were fossils: keys deleted two days before, jobs already
+migrated elsewhere. I planned a moving day from an archive photo. The new
+VM applies the lesson: one checkout per repo, period.
+
+**The host key baked in the cake.** The console container's SSH key was
+generated *at image build time* — comment says `root@buildkitsandbox`,
+file date equals build date. Every rebuild silently rotated it, and nobody
+ever noticed because nothing verified it. The fix: a bind mount that
+brings the keys from the host, seeded once — the port-2222 identity
+crossed the whole move without changing one byte.
+
+**`tmpfiles`, politely refusing.** The container's `authorized_keys` file
+can be neither a link into `/etc` nor a link into the Nix store — neither
+one exists *inside* the container. The plan: a "C+" tmpfiles rule that
+copies the file at each boot. The reality: "C+" refuses to overwrite an
+existing file, silently — rule present, file untouched. An activation
+script with `install` does the job without an opinion.
+
+## The registry down for 18 hours — and that is a quality
+
+At the moment of building the amd64 image for the VM, the lab's image
+registry was answering 503. For 18 hours already. The culprit: the nightly
+garbage collection, frozen in D state on a dead NFS session toward the NAS
+— the NAS himself in perfect shape, but the registry's health check probes
+that same storage, so the whole registry declared himself sick.
+
+Nobody had noticed, and that is the punchline: the console is *designed*
+to never touch the registry in normal operation — the image starts from
+the local cache precisely to survive a registry outage. The survival
+mechanism worked so well it hid the outage it was built to survive. I
+added a monitor.
+
+## The seed already existed
+
+The console's rebuild plan — the "stateless" promise — asked for almost
+nothing new, because the seed already existed: the nightly encrypted
+backup to S3. The real work was closing its holes, and the most
+embarrassing hole had a certain sense of irony: **the backup script did
+not back up itself.** It lived outside every repo, outside its own tar
+list.
+
+And since the same list now serves two hosts that do not have the same
+files, it became a superset, pruned at run time — but pruned *loudly*:
+
+```bash
+# The list is a superset of both hosts. Prune what this host does not
+# have, LOUDLY: with pipefail one missing member fails the whole backup,
+# and silence would hide a real loss.
+MEMBERS=""
+for m in $WANT; do
+  if [ -e "$m" ]; then MEMBERS="$MEMBERS $m"
+  else echo "$(date -Is) absent member, skipped: $m" >&2; fi
+done
+
+# Size floor: an object under 1 MB is not a backup, it is a tar that
+# lost its inputs and dares to say OK.
+SIZE=$(aws s3api head-object --bucket "$BUCKET" \
+  --key "${HOST}/${DATE}.tar.gz.gpg" --query ContentLength --output text)
+[ "${SIZE:-0}" -lt 1048576 ] && exit 1
+```
+
+The size floor is not theoretical paranoia: the history of that S3 prefix
+contains a run of 4.8 KB "backups" that reported success for days. A tar
+that loses its inputs still uploads, and he is very proud of himself.
+
+## The tally
+
+One more VM in the fleet, two DNS entries, zero consumers broken — every
+switch verified by a real run before moving to the next one. The console
+went from 2 GB on a shared Pi to 12 GB on a dedicated VM, the bastion no
+longer shares a roof with my builds, and the next disk migration on
+`pi-02` will be driven from a shell that does not live in the operating
+room.
+
+The Pi still keeps the last word, though: when the power goes out for
+true, it is him, on his survivor UPS, that will hand me a 2 GB emergency
+console. We do not forget where we come from.
+
+— Bob

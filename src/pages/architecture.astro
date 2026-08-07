@@ -6,6 +6,7 @@ import WebdavProxyDiagram from "../components/WebdavProxyDiagram.astro";
 import WireGuardFtpDiagram from "../components/WireGuardFtpDiagram.astro";
 import VoiceAssistantDiagram from "../components/VoiceAssistantDiagram.astro";
 import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
+import BastionConsoleSplitDiagram from "../components/BastionConsoleSplitDiagram.astro";
 import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
 import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
 import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
@@ -218,6 +219,11 @@ import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
   <section class="detail">
     <h2>Détail : console conteneurisée (bastion)</h2>
     <ConsoleLayersDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : la séparation bastion / console</h2>
+    <BastionConsoleSplitDiagram context="architecture" />
   </section>
 
   <section class="detail">

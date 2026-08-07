@@ -59,6 +59,23 @@ const src = (n: TNode) =>
 const short = (id: string) => id.slice(id.indexOf(":") + 1);
 const generated = (arch.generated as string).replace("T", " ").slice(0, 16);
 
+// the drift badge: the three nightly drift checks assert the private repos
+// still match the real infrastructure, so the snapshots this page is built
+// from are trustworthy exactly when they are green — and the page says so
+// instead of pretending. "unknown" (fetch failed, or a build without the
+// nightly pipeline) is shown as unverified, never as green.
+type Verified = {
+  status?: "ok" | "drift" | "unknown";
+  checkedAt?: string | null;
+  monitors?: { name: string; up: boolean }[];
+};
+const verified: Verified = (arch as any).verified ?? { status: "unknown" };
+const vStatus = verified.status ?? "unknown";
+const vDate = verified.checkedAt
+  ? verified.checkedAt.replace("T", " ").slice(0, 16) + " UTC"
+  : null;
+const vDown = (verified.monitors ?? []).filter((m) => !m.up);
+
 // the client-side highlighter only needs the edge list
 const edgesLite = edges.map((e) => [e.from, e.to]);
 ---
@@ -90,6 +107,22 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
 
   <div class="status">
     <span class="stamp">générée {generated} UTC</span>
+    {
+      vStatus === "ok" ? (
+        <span class="drift ok" title={`drift checks verts, ${vDate}`}>
+          ✓ conforme à l'infra réelle — {vDate}
+        </span>
+      ) : vStatus === "drift" ? (
+        <span
+          class="drift bad"
+          title={vDown.map((m) => m.name).join(", ") || "dérive détectée"}
+        >
+          ✗ dérive détectée — ce diagramme peut être en retard
+        </span>
+      ) : (
+        <span class="drift unk">vérification indisponible — non vérifié</span>
+      )
+    }
     {
       Object.entries(arch.sources as Record<string, any>).map(([repo, s]) => (
         <a
@@ -204,10 +237,12 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
   <p class="footnote">
     Régénérée chaque nuit par un pipeline qui ne lit <em>que</em> les dépôts
     publics — les sanitizers (et leurs vérifications qui refusent de publier
-    au moindre doute) restent la seule frontière de confiance. Les dépôts
-    privés font l'objet de vérifications de dérive nocturnes contre
-    l'infrastructure réelle; ce que vous voyez ici est la photo de leur
-    dernier instantané publié, pas une promesse de temps réel.
+    au moindre doute) restent la seule frontière de confiance. Le badge
+    ci-haut vient des trois vérifications de dérive nocturnes qui comparent
+    les dépôts privés à l'infrastructure réelle : ce diagramme est fiable
+    <em>exactement quand elles sont vertes</em>, et il l'admet quand elles ne
+    le sont pas — « live » veut dire « régénéré chaque nuit, dernière
+    vérification affichée », pas temps réel.
   </p>
 
   <script type="application/json" id="topo-edges" set:html={JSON.stringify(edgesLite)} />
@@ -290,6 +325,17 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
   }
   .stamp {
     color: var(--accent-live);
+  }
+  .drift.ok {
+    color: var(--accent-live);
+  }
+  .drift.bad {
+    color: var(--text);
+    background: var(--accent-default);
+    padding: 0 0.4rem;
+  }
+  .drift.unk {
+    color: var(--text-faint);
   }
   .commit {
     color: var(--text-faint);

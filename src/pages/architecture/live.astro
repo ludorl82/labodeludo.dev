@@ -1,0 +1,383 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import arch from "../../data/architecture.json";
+
+// The generated architecture view. Everything on this page comes from
+// src/data/architecture.json, produced by scripts/topology/join-topology.py
+// out of the four PUBLIC sanitized IaC snapshots — never the private repos.
+// A hand-drawn diagram is wrong the moment something changes; this one is
+// only as stale as its generation date, shown below, honestly.
+
+type TNode = {
+  id: string;
+  kind: string;
+  label: string;
+  layer: string;
+  source: string;
+  repo: string;
+  meta: Record<string, any>;
+};
+const nodes = arch.nodes as TNode[];
+const edges = arch.edges as { from: string; to: string; kind: string }[];
+
+const byLayer = (layer: string, kinds?: string[]) =>
+  nodes.filter(
+    (n) => n.layer === layer && (!kinds || kinds.includes(n.kind)),
+  );
+
+const protectedDns = new Set(
+  edges.filter((e) => e.kind === "protects").map((e) => e.to),
+);
+const pins = new Map(
+  edges.filter((e) => e.kind === "pinned-to").map((e) => [e.from, e.to]),
+);
+const isEdges = new Map(
+  edges.filter((e) => e.kind === "is").map((e) => [e.from, e.to]),
+);
+
+const dns = byLayer("edge", ["dns"]).sort((a, b) =>
+  a.label.localeCompare(b.label),
+);
+const tunnel = byLayer("edge", ["tunnel"])[0];
+const instance = byLayer("cloud", ["instance"])[0];
+const lambdas = byLayer("cloud", ["lambda"]);
+const buckets = byLayer("cloud", ["bucket"]);
+const apps = byLayer("cluster", ["app"]).sort((a, b) =>
+  a.label.localeCompare(b.label),
+);
+const workloadsByApp = new Map<string, TNode[]>();
+for (const w of byLayer("cluster", ["workload"])) {
+  const app = "app:" + w.id.slice("workload:".length).split("/")[0];
+  workloadsByApp.set(app, [...(workloadsByApp.get(app) ?? []), w]);
+}
+const hosts = byLayer("hardware", ["host"]).sort((a, b) =>
+  a.label.localeCompare(b.label),
+);
+
+const src = (n: TNode) =>
+  `https://github.com/ludorl82/${n.repo}/blob/HEAD/${n.source}`;
+const short = (id: string) => id.slice(id.indexOf(":") + 1);
+const generated = (arch.generated as string).replace("T", " ").slice(0, 16);
+
+// the client-side highlighter only needs the edge list
+const edgesLite = edges.map((e) => [e.from, e.to]);
+---
+
+<BaseLayout
+  title="Architecture générée — Le labo de Ludo"
+  description="La vraie architecture du labo, générée chaque nuit à partir des quatre dépôts IaC publics — pas dessinée à la main."
+>
+  <a class="back" href="/architecture">&larr; l'architecture dessinée</a>
+
+  <header class="page-header">
+    <h1>Architecture générée</h1>
+    <p class="subtitle">
+      Cette page n'est pas dessinée : elle est <strong>générée</strong> à
+      partir des quatre dépôts IaC publics (
+      <a href="https://github.com/ludorl82/cloudflare-iac-public">cloudflare</a
+      >, <a href="https://github.com/ludorl82/aws-iac-public">aws</a>,
+      <a href="https://github.com/ludorl82/k3s-iac-public">k3s</a>,
+      <a href="https://github.com/ludorl82/nixos-iac-public">nixos</a>) — les
+      mêmes fichiers sanitisés qui accompagnent les articles. Un diagramme
+      dessiné ment dès qu'on change quelque chose; celui-ci n'est jamais plus
+      vieux que sa date de génération. Noms et adresses fictifs, comme
+      toujours. <strong>Chaque boîte est un lien vers le fichier qui la
+      définit.</strong> Cliquer une boîte allume ce qui en dépend — un nom
+      public éclaire son chemin jusqu'au matériel, une machine éclaire ce qui
+      tombe avec elle.
+    </p>
+  </header>
+
+  <div class="status">
+    <span class="stamp">générée {generated} UTC</span>
+    {
+      Object.entries(arch.sources as Record<string, any>).map(([repo, s]) => (
+        <a
+          class="commit"
+          href={`https://github.com/ludorl82/${repo}/commit/${s.commit}`}
+        >
+          {repo.replace("-iac-public", "")}@{s.commit}
+        </a>
+      ))
+    }
+  </div>
+
+  <section class="band" data-layer="edge">
+    <h2># edge — Cloudflare</h2>
+    <div class="row">
+      {
+        dns.map((n) => (
+          <a
+            class="node dns"
+            data-node={n.id}
+            href={src(n)}
+            title={n.meta.origin ?? ""}
+          >
+            {n.label}
+            {protectedDns.has(n.id) && <span class="tag">access</span>}
+          </a>
+        ))
+      }
+    </div>
+    <div class="row">
+      <a class="node hub" data-node={tunnel.id} href={src(tunnel)}>
+        tunnel «{tunnel.label}» ── connecteurs dans le cluster
+      </a>
+    </div>
+  </section>
+
+  <section class="band" data-layer="cloud">
+    <h2># cloud — AWS</h2>
+    <div class="row">
+      <a class="node" data-node={instance.id} href={src(instance)}>
+        EC2 {instance.meta.instanceType}
+        {isEdges.has(instance.id) && (
+          <span class="dim">= {short(isEdges.get(instance.id)!)}</span>
+        )}
+      </a>
+      {
+        lambdas.map((n) => (
+          <a class="node" data-node={n.id} href={src(n)}>
+            λ {n.label}
+          </a>
+        ))
+      }
+    </div>
+    <div class="row">
+      {
+        buckets.map((n) => (
+          <a class="node chip" data-node={n.id} href={src(n)}>
+            s3://{n.label}
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="band" data-layer="cluster">
+    <h2># cluster — k3s</h2>
+    <div class="row">
+      {
+        apps.map((a) => (
+          <div class="node app" data-node={a.id}>
+            <a class="app-name" href={src(a)}>
+              {a.label}
+            </a>
+            <div class="workloads">
+              {(workloadsByApp.get(a.id) ?? []).map((w) => (
+                <a
+                  class="node wl"
+                  data-node={w.id}
+                  href={src(w)}
+                  title={w.meta.kind}
+                >
+                  {w.label}
+                  {pins.has(w.id) && (
+                    <span class="dim">→{short(pins.get(w.id)!)}</span>
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="band" data-layer="hardware">
+    <h2># matériel — NixOS</h2>
+    <div class="row">
+      {
+        hosts.map((n) => (
+          <a class="node host" data-node={n.id} href={src(n)}>
+            <strong>{n.label}</strong>
+            <span class="dim">
+              {n.meta.class} · {String(n.meta.arch).replace("-linux", "")}
+              {n.meta.k3sRole ? ` · k3s ${n.meta.k3sRole}` : ""}
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <p class="footnote">
+    Régénérée chaque nuit par un pipeline qui ne lit <em>que</em> les dépôts
+    publics — les sanitizers (et leurs vérifications qui refusent de publier
+    au moindre doute) restent la seule frontière de confiance. Les dépôts
+    privés font l'objet de vérifications de dérive nocturnes contre
+    l'infrastructure réelle; ce que vous voyez ici est la photo de leur
+    dernier instantané publié, pas une promesse de temps réel.
+  </p>
+
+  <script type="application/json" id="topo-edges" set:html={JSON.stringify(edgesLite)} />
+  <script>
+    // Click a node: light up its neighborhood. Hub-like nodes (the tunnel,
+    // the cluster, the machines) LIGHT UP but never propagate — otherwise
+    // any click reaches the whole page through them. Clicking a hub itself
+    // still expands one level, which is exactly the blast-radius question.
+    const edges = JSON.parse(
+      document.getElementById("topo-edges")!.textContent!,
+    ) as [string, string][];
+    const TERMINAL = new Set(["tunnel", "host", "cluster"]);
+    const ns = (id: string) => id.slice(0, id.indexOf(":"));
+    const adj = new Map<string, string[]>();
+    for (const [a, b] of edges) {
+      adj.set(a, [...(adj.get(a) ?? []), b]);
+      adj.set(b, [...(adj.get(b) ?? []), a]);
+    }
+    const els = document.querySelectorAll<HTMLElement>("[data-node]");
+    let active: string | null = null;
+    function apply(sel: Set<string> | null) {
+      els.forEach((el) => {
+        el.classList.toggle("lit", !!sel && sel.has(el.dataset.node!));
+        el.classList.toggle("dimmed", !!sel && !sel.has(el.dataset.node!));
+      });
+    }
+    function reach(start: string) {
+      const seen = new Set([start]);
+      const q = [start];
+      while (q.length) {
+        const cur = q.shift()!;
+        if (cur !== start && TERMINAL.has(ns(cur))) continue;
+        for (const n of adj.get(cur) ?? []) {
+          if (!seen.has(n)) {
+            seen.add(n);
+            q.push(n);
+          }
+        }
+      }
+      return seen;
+    }
+    els.forEach((el) => {
+      el.addEventListener("click", (ev) => {
+        const id = el.dataset.node!;
+        // first click selects, second click follows the link
+        if (active !== id) {
+          ev.preventDefault();
+          active = id;
+          apply(reach(id));
+        }
+      });
+    });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") {
+        active = null;
+        apply(null);
+      }
+    });
+  </script>
+</BaseLayout>
+
+<style>
+  .back {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .page-header {
+    margin: 1.5rem 0;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    max-width: 70ch;
+  }
+  .status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-bottom: 2rem;
+    font-size: 0.85rem;
+  }
+  .stamp {
+    color: var(--accent-live);
+  }
+  .commit {
+    color: var(--text-faint);
+    text-decoration: none;
+  }
+  .commit:hover {
+    color: var(--text);
+  }
+  .band {
+    border: 1px solid var(--text-faint);
+    padding: 0.75rem 1rem 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .band h2 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0 0 0.75rem;
+    font-weight: normal;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .node {
+    display: inline-block;
+    border: 1px solid var(--text-faint);
+    padding: 0.25rem 0.5rem;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: opacity 0.15s, border-color 0.15s;
+  }
+  .node:hover {
+    border-color: var(--accent-live);
+  }
+  .node.lit {
+    border-color: var(--accent-live);
+    color: var(--accent-live);
+  }
+  .node.dimmed {
+    opacity: 0.25;
+  }
+  .chip,
+  .wl {
+    font-size: 0.78rem;
+    border-style: dashed;
+  }
+  .hub {
+    border-style: double;
+    border-width: 3px;
+  }
+  .app {
+    padding: 0.4rem 0.5rem;
+  }
+  .app-name {
+    color: var(--text);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+  .workloads {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .host {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  .dim {
+    color: var(--text-faint);
+    font-size: 0.75rem;
+  }
+  .tag {
+    color: var(--bg);
+    background: var(--text-muted);
+    font-size: 0.65rem;
+    padding: 0 0.25rem;
+    margin-left: 0.35rem;
+    vertical-align: middle;
+  }
+  .footnote {
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    max-width: 75ch;
+    margin-top: 2rem;
+  }
+</style>

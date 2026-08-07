@@ -1,0 +1,1948 @@
+{
+  "edges": [
+    {
+      "from": "access:cronicle",
+      "kind": "protects",
+      "to": "dns:cronicle.pub.example.com"
+    },
+    {
+      "from": "access:frigate_nvr",
+      "kind": "protects",
+      "to": "dns:frigate.pub.example.com"
+    },
+    {
+      "from": "access:grafana",
+      "kind": "protects",
+      "to": "dns:grafana.pub.example.com"
+    },
+    {
+      "from": "access:kuma_dashboard",
+      "kind": "protects",
+      "to": "dns:kuma.pub.example.com"
+    },
+    {
+      "from": "access:kuma_push",
+      "kind": "protects",
+      "to": "dns:kuma.pub.example.com"
+    },
+    {
+      "from": "access:labodeludo_dev_staging",
+      "kind": "protects",
+      "to": "dns:dev.labodeludo.dev"
+    },
+    {
+      "from": "access:labodeludo_dev_staging_pages",
+      "kind": "protects",
+      "to": "dns:labodeludo-dev.pages.dev"
+    },
+    {
+      "from": "access:n8n",
+      "kind": "protects",
+      "to": "dns:n8n.pub.example.com"
+    },
+    {
+      "from": "access:pfsense_passerelle",
+      "kind": "protects",
+      "to": "dns:router.pub.example.com"
+    },
+    {
+      "from": "access:unifi_network_application",
+      "kind": "protects",
+      "to": "dns:unifi.pub.example.com"
+    },
+    {
+      "from": "app:access-audit",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:argocd",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:cloudflared",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:cluster-dns",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:cronicle",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:frigate",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:keepass-webdav",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:kuma",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:labodeludo",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:logging",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:n8n",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:ntfy",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:numeriseur",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:plex",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:traefik",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "app:unifi",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "dns:cronicle.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:frigate.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:grafana.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:ha-01.family.example",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:kuma.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:labodeludo.dev",
+      "kind": "routes-to",
+      "to": "bucket:labodeludo.dev"
+    },
+    {
+      "from": "dns:n8n.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:ntfy.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:plex.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:router.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:unifi.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:vault.family.example",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "host:cloud-01",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:gpu-01",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:gpu-02",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:pi-01",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:pi-02",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:srv-01",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:vm-01",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:vm-02",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:vm-03",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "instance:aws_node",
+      "kind": "is",
+      "to": "host:cloud-01"
+    },
+    {
+      "from": "route:argocd/argocd",
+      "kind": "part-of",
+      "to": "app:argocd"
+    },
+    {
+      "from": "route:argocd/argocd-tls",
+      "kind": "part-of",
+      "to": "app:argocd"
+    },
+    {
+      "from": "route:cronicle/cronicle",
+      "kind": "part-of",
+      "to": "app:cronicle"
+    },
+    {
+      "from": "route:cronicle/cronicle",
+      "kind": "serves",
+      "to": "dns:cronicle.pub.example.com"
+    },
+    {
+      "from": "route:cronicle/cronicle-secure",
+      "kind": "part-of",
+      "to": "app:cronicle"
+    },
+    {
+      "from": "route:cronicle/cronicle-secure",
+      "kind": "serves",
+      "to": "dns:cronicle.pub.example.com"
+    },
+    {
+      "from": "route:frigate/frigate",
+      "kind": "part-of",
+      "to": "app:frigate"
+    },
+    {
+      "from": "route:frigate/frigate",
+      "kind": "serves",
+      "to": "dns:frigate.pub.example.com"
+    },
+    {
+      "from": "route:frigate/frigate-secure",
+      "kind": "part-of",
+      "to": "app:frigate"
+    },
+    {
+      "from": "route:frigate/frigate-secure",
+      "kind": "serves",
+      "to": "dns:frigate.pub.example.com"
+    },
+    {
+      "from": "route:keepass-webdav/webdav-secure",
+      "kind": "part-of",
+      "to": "app:keepass-webdav"
+    },
+    {
+      "from": "route:keepass-webdav/webdav-secure",
+      "kind": "serves",
+      "to": "dns:vault.family.example"
+    },
+    {
+      "from": "route:kuma/kuma",
+      "kind": "part-of",
+      "to": "app:kuma"
+    },
+    {
+      "from": "route:kuma/kuma",
+      "kind": "serves",
+      "to": "dns:kuma.pub.example.com"
+    },
+    {
+      "from": "route:kuma/kuma-secure",
+      "kind": "part-of",
+      "to": "app:kuma"
+    },
+    {
+      "from": "route:kuma/kuma-secure",
+      "kind": "serves",
+      "to": "dns:kuma.pub.example.com"
+    },
+    {
+      "from": "route:logging/grafana",
+      "kind": "part-of",
+      "to": "app:logging"
+    },
+    {
+      "from": "route:logging/grafana",
+      "kind": "serves",
+      "to": "dns:grafana.pub.example.com"
+    },
+    {
+      "from": "route:logging/grafana-secure",
+      "kind": "part-of",
+      "to": "app:logging"
+    },
+    {
+      "from": "route:logging/grafana-secure",
+      "kind": "serves",
+      "to": "dns:grafana.pub.example.com"
+    },
+    {
+      "from": "route:logging/loki",
+      "kind": "part-of",
+      "to": "app:logging"
+    },
+    {
+      "from": "route:n8n/n8n",
+      "kind": "part-of",
+      "to": "app:n8n"
+    },
+    {
+      "from": "route:n8n/n8n",
+      "kind": "serves",
+      "to": "dns:n8n.pub.example.com"
+    },
+    {
+      "from": "route:n8n/n8n-secure",
+      "kind": "part-of",
+      "to": "app:n8n"
+    },
+    {
+      "from": "route:n8n/n8n-secure",
+      "kind": "serves",
+      "to": "dns:n8n.pub.example.com"
+    },
+    {
+      "from": "route:ntfy/ntfy",
+      "kind": "part-of",
+      "to": "app:ntfy"
+    },
+    {
+      "from": "route:ntfy/ntfy",
+      "kind": "serves",
+      "to": "dns:ntfy.pub.example.com"
+    },
+    {
+      "from": "route:ntfy/ntfy-secure",
+      "kind": "part-of",
+      "to": "app:ntfy"
+    },
+    {
+      "from": "route:ntfy/ntfy-secure",
+      "kind": "serves",
+      "to": "dns:ntfy.pub.example.com"
+    },
+    {
+      "from": "route:plex/plex",
+      "kind": "part-of",
+      "to": "app:plex"
+    },
+    {
+      "from": "route:plex/plex",
+      "kind": "serves",
+      "to": "dns:plex.pub.example.com"
+    },
+    {
+      "from": "route:plex/plex-secure",
+      "kind": "part-of",
+      "to": "app:plex"
+    },
+    {
+      "from": "route:plex/plex-secure",
+      "kind": "serves",
+      "to": "dns:plex.pub.example.com"
+    },
+    {
+      "from": "route:unifi/unifi",
+      "kind": "part-of",
+      "to": "app:unifi"
+    },
+    {
+      "from": "route:unifi/unifi-secure",
+      "kind": "part-of",
+      "to": "app:unifi"
+    },
+    {
+      "from": "tunnel:k3s",
+      "kind": "routes-to",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "workload:access-audit/cloudflare-access-gating-audit",
+      "kind": "part-of",
+      "to": "app:access-audit"
+    },
+    {
+      "from": "workload:cloudflared/cloudflared",
+      "kind": "part-of",
+      "to": "app:cloudflared"
+    },
+    {
+      "from": "workload:cloudflared/cloudflared-cloud-01",
+      "kind": "part-of",
+      "to": "app:cloudflared"
+    },
+    {
+      "from": "workload:cloudflared/cloudflared-cloud-01",
+      "kind": "pinned-to",
+      "to": "host:cloud-01"
+    },
+    {
+      "from": "workload:cronicle/cronicle",
+      "kind": "part-of",
+      "to": "app:cronicle"
+    },
+    {
+      "from": "workload:frigate/frigate",
+      "kind": "part-of",
+      "to": "app:frigate"
+    },
+    {
+      "from": "workload:frigate/frigate",
+      "kind": "pinned-to",
+      "to": "host:gpu-02"
+    },
+    {
+      "from": "workload:keepass-webdav/webdav",
+      "kind": "part-of",
+      "to": "app:keepass-webdav"
+    },
+    {
+      "from": "workload:keepass-webdav/webdav",
+      "kind": "pinned-to",
+      "to": "host:cloud-01"
+    },
+    {
+      "from": "workload:kuma/deadman-heartbeat",
+      "kind": "part-of",
+      "to": "app:kuma"
+    },
+    {
+      "from": "workload:kuma/kuma-backup",
+      "kind": "part-of",
+      "to": "app:kuma"
+    },
+    {
+      "from": "workload:kuma/kuma-backup",
+      "kind": "pinned-to",
+      "to": "host:cloud-01"
+    },
+    {
+      "from": "workload:kuma/uptime-kuma",
+      "kind": "part-of",
+      "to": "app:kuma"
+    },
+    {
+      "from": "workload:kuma/uptime-kuma",
+      "kind": "pinned-to",
+      "to": "host:cloud-01"
+    },
+    {
+      "from": "workload:labodeludo/gh-runner",
+      "kind": "part-of",
+      "to": "app:labodeludo"
+    },
+    {
+      "from": "workload:logging/alloy",
+      "kind": "part-of",
+      "to": "app:logging"
+    },
+    {
+      "from": "workload:logging/grafana",
+      "kind": "part-of",
+      "to": "app:logging"
+    },
+    {
+      "from": "workload:logging/grafana-backup",
+      "kind": "part-of",
+      "to": "app:logging"
+    },
+    {
+      "from": "workload:logging/loki",
+      "kind": "part-of",
+      "to": "app:logging"
+    },
+    {
+      "from": "workload:n8n/n8n",
+      "kind": "part-of",
+      "to": "app:n8n"
+    },
+    {
+      "from": "workload:n8n/n8n-backup",
+      "kind": "part-of",
+      "to": "app:n8n"
+    },
+    {
+      "from": "workload:ntfy/ntfy",
+      "kind": "part-of",
+      "to": "app:ntfy"
+    },
+    {
+      "from": "workload:ntfy/ntfy",
+      "kind": "pinned-to",
+      "to": "host:cloud-01"
+    },
+    {
+      "from": "workload:ntfy/ntfy-backup",
+      "kind": "part-of",
+      "to": "app:ntfy"
+    },
+    {
+      "from": "workload:ntfy/ntfy-backup",
+      "kind": "pinned-to",
+      "to": "host:cloud-01"
+    },
+    {
+      "from": "workload:numeriseur/numeriseur-sftpgo",
+      "kind": "part-of",
+      "to": "app:numeriseur"
+    },
+    {
+      "from": "workload:unifi/unifi",
+      "kind": "part-of",
+      "to": "app:unifi"
+    },
+    {
+      "from": "workload:unifi/unifi",
+      "kind": "pinned-to",
+      "to": "host:gpu-01"
+    },
+    {
+      "from": "workload:unifi/unifi-mongo-backup",
+      "kind": "part-of",
+      "to": "app:unifi"
+    }
+  ],
+  "generated": "2026-08-07T21:58:52+00:00",
+  "nodes": [
+    {
+      "id": "access:cronicle",
+      "kind": "access",
+      "label": "Cronicle",
+      "layer": "edge",
+      "meta": {
+        "domain": "cronicle.pub.example.com"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "access:frigate_nvr",
+      "kind": "access",
+      "label": "Frigate NVR",
+      "layer": "edge",
+      "meta": {
+        "domain": "frigate.pub.example.com"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "access:grafana",
+      "kind": "access",
+      "label": "Grafana",
+      "layer": "edge",
+      "meta": {
+        "domain": "grafana.pub.example.com"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "access:kuma_dashboard",
+      "kind": "access",
+      "label": "Kuma dashboard",
+      "layer": "edge",
+      "meta": {
+        "domain": "kuma.pub.example.com"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "access:kuma_push",
+      "kind": "access",
+      "label": "Kuma push (service token)",
+      "layer": "edge",
+      "meta": {
+        "domain": "kuma.pub.example.com/api/push"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "access:labodeludo_dev_staging",
+      "kind": "access",
+      "label": "labodeludo.dev staging",
+      "layer": "edge",
+      "meta": {
+        "domain": "dev.labodeludo.dev"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "access:labodeludo_dev_staging_pages",
+      "kind": "access",
+      "label": "labodeludo.dev staging (pages.dev)",
+      "layer": "edge",
+      "meta": {
+        "domain": "labodeludo-dev.pages.dev"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "access:n8n",
+      "kind": "access",
+      "label": "n8n",
+      "layer": "edge",
+      "meta": {
+        "domain": "n8n.pub.example.com"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "access:pfsense_passerelle",
+      "kind": "access",
+      "label": "pfSense (router)",
+      "layer": "edge",
+      "meta": {
+        "domain": "router.pub.example.com"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "access:unifi_network_application",
+      "kind": "access",
+      "label": "UniFi Network Application",
+      "layer": "edge",
+      "meta": {
+        "domain": "unifi.pub.example.com"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "app:access-audit",
+      "kind": "app",
+      "label": "access-audit",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "access-audit",
+        "path": "access-audit"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/access-audit.yaml"
+    },
+    {
+      "id": "app:argocd",
+      "kind": "app",
+      "label": "argocd",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "argocd",
+        "path": "argocd/install"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/argocd.yaml"
+    },
+    {
+      "id": "app:cloudflared",
+      "kind": "app",
+      "label": "cloudflared",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "cloudflared",
+        "path": "cloudflared"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/cloudflared.yaml"
+    },
+    {
+      "id": "app:cluster-dns",
+      "kind": "app",
+      "label": "cluster-dns",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "kube-system",
+        "path": "cluster-dns"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/cluster-dns.yaml"
+    },
+    {
+      "id": "app:cronicle",
+      "kind": "app",
+      "label": "cronicle",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "cronicle",
+        "path": "cronicle"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/cronicle.yaml"
+    },
+    {
+      "id": "app:frigate",
+      "kind": "app",
+      "label": "frigate",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "frigate",
+        "path": "frigate"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/frigate.yaml"
+    },
+    {
+      "id": "app:keepass-webdav",
+      "kind": "app",
+      "label": "keepass-webdav",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "keepass-webdav",
+        "path": "keepass-webdav"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/keepass-webdav.yaml"
+    },
+    {
+      "id": "app:kuma",
+      "kind": "app",
+      "label": "kuma",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "kuma",
+        "path": "kuma"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/kuma.yaml"
+    },
+    {
+      "id": "app:labodeludo",
+      "kind": "app",
+      "label": "labodeludo",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "labodeludo",
+        "path": "labodeludo"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/labodeludo.yaml"
+    },
+    {
+      "id": "app:logging",
+      "kind": "app",
+      "label": "logging",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "logging",
+        "path": "logging"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/logging.yaml"
+    },
+    {
+      "id": "app:n8n",
+      "kind": "app",
+      "label": "n8n",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "n8n",
+        "path": "n8n"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/n8n.yaml"
+    },
+    {
+      "id": "app:ntfy",
+      "kind": "app",
+      "label": "ntfy",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "ntfy",
+        "path": "ntfy"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/ntfy.yaml"
+    },
+    {
+      "id": "app:numeriseur",
+      "kind": "app",
+      "label": "numeriseur",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "numeriseur",
+        "path": "numeriseur"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/numeriseur.yaml"
+    },
+    {
+      "id": "app:plex",
+      "kind": "app",
+      "label": "plex",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "plex",
+        "path": "plex"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/plex.yaml"
+    },
+    {
+      "id": "app:traefik",
+      "kind": "app",
+      "label": "traefik",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "kube-system",
+        "path": "traefik"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/traefik.yaml"
+    },
+    {
+      "id": "app:unifi",
+      "kind": "app",
+      "label": "unifi",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "unifi",
+        "path": "unifi"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/unifi.yaml"
+    },
+    {
+      "id": "bucket:backups-portecles-example-com",
+      "kind": "bucket",
+      "label": "backups-portecles-example-com",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "bucket:cronicle-data-example-com",
+      "kind": "bucket",
+      "label": "cronicle-data-example-com",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "bucket:deadman-example-com",
+      "kind": "bucket",
+      "label": "deadman-example-com",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "bucket:frigate-snapshots-example-com",
+      "kind": "bucket",
+      "label": "frigate-snapshots-example-com",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "bucket:homelab-backups-example-com",
+      "kind": "bucket",
+      "label": "homelab-backups-example-com",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "bucket:labodeludo.dev",
+      "kind": "bucket",
+      "label": "labodeludo.dev",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "bucket:loki-logs-example-com",
+      "kind": "bucket",
+      "label": "loki-logs-example-com",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "bucket:mkv.plex.lab.example",
+      "kind": "bucket",
+      "label": "mkv.plex.lab.example",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "bucket:numeriseur-scans-example-com",
+      "kind": "bucket",
+      "label": "numeriseur-scans-example-com",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "bucket:shrt.example",
+      "kind": "bucket",
+      "label": "shrt.example",
+      "layer": "cloud",
+      "meta": {},
+      "repo": "aws-iac-public",
+      "source": "live/s3.tf"
+    },
+    {
+      "id": "cluster:k3s",
+      "kind": "cluster",
+      "label": "k3s",
+      "layer": "cluster",
+      "meta": {},
+      "repo": "k3s-iac-public",
+      "source": "argocd/README.md"
+    },
+    {
+      "id": "dns:cronicle.pub.example.com",
+      "kind": "dns",
+      "label": "cronicle.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://traefik.kube-system.svc.cluster.local:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:dev.labodeludo.dev",
+      "kind": "dns",
+      "label": "dev.labodeludo.dev",
+      "layer": "edge",
+      "meta": {},
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "dns:frigate.pub.example.com",
+      "kind": "dns",
+      "label": "frigate.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://traefik.kube-system.svc.cluster.local:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:grafana.pub.example.com",
+      "kind": "dns",
+      "label": "grafana.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://traefik.kube-system.svc.cluster.local:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:ha-01.family.example",
+      "kind": "dns",
+      "label": "ha-01.family.example",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://192.0.2.34:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:kuma.pub.example.com",
+      "kind": "dns",
+      "label": "kuma.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "http://uptime-kuma.kuma.svc.cluster.local:80"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:labodeludo-dev.pages.dev",
+      "kind": "dns",
+      "label": "labodeludo-dev.pages.dev",
+      "layer": "edge",
+      "meta": {},
+      "repo": "cloudflare-iac-public",
+      "source": "live/access-apps.tf"
+    },
+    {
+      "id": "dns:labodeludo.dev",
+      "kind": "dns",
+      "label": "labodeludo.dev",
+      "layer": "edge",
+      "meta": {
+        "origin": "s3-website"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/dns-labodeludo-dev.tf"
+    },
+    {
+      "id": "dns:n8n.pub.example.com",
+      "kind": "dns",
+      "label": "n8n.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://traefik.kube-system.svc.cluster.local:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:ntfy.pub.example.com",
+      "kind": "dns",
+      "label": "ntfy.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "http://ntfy.ntfy.svc.cluster.local:80"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:plex.pub.example.com",
+      "kind": "dns",
+      "label": "plex.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://traefik.kube-system.svc.cluster.local:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:router.pub.example.com",
+      "kind": "dns",
+      "label": "router.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://192.0.2.254:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:unifi.pub.example.com",
+      "kind": "dns",
+      "label": "unifi.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://unifi.unifi.svc.cluster.local:8443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "dns:vault.family.example",
+      "kind": "dns",
+      "label": "vault.family.example",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://traefik.kube-system.svc.cluster.local:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "host:cloud-01",
+      "kind": "host",
+      "label": "cloud-01",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "cloud-vm",
+        "k3sRole": "server",
+        "modules": [
+          "k3s-agent",
+          "private-ca"
+        ],
+        "networks": [
+          "wireguard"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/cloud-01/configuration.nix"
+    },
+    {
+      "id": "host:console-vm",
+      "kind": "host",
+      "label": "console-vm",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "vm",
+        "modules": [
+          "console-container",
+          "jumphost-tools",
+          "private-ca"
+        ],
+        "networks": []
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/console-vm/configuration.nix"
+    },
+    {
+      "id": "host:docker",
+      "kind": "host",
+      "label": "docker",
+      "layer": "hardware",
+      "meta": {
+        "arch": "aarch64-linux",
+        "class": "sbc",
+        "modules": [
+          "private-ca"
+        ],
+        "networks": [
+          "vlan10"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/docker/configuration.nix"
+    },
+    {
+      "id": "host:gpu-01",
+      "kind": "host",
+      "label": "gpu-01",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "server",
+        "k3sRole": "agent",
+        "modules": [
+          "k3s-agent",
+          "private-ca",
+          "rack-wake",
+          "ups-master"
+        ],
+        "networks": [
+          "vlan10"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/gpu-01/configuration.nix"
+    },
+    {
+      "id": "host:gpu-02",
+      "kind": "host",
+      "label": "gpu-02",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "server",
+        "k3sRole": "agent",
+        "modules": [
+          "k3s-agent",
+          "private-ca",
+          "ups-client"
+        ],
+        "networks": [
+          "vlan10"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/gpu-02/configuration.nix"
+    },
+    {
+      "id": "host:pi-01",
+      "kind": "host",
+      "label": "pi-01",
+      "layer": "hardware",
+      "meta": {
+        "arch": "aarch64-linux",
+        "class": "sbc",
+        "k3sRole": "agent",
+        "modules": [
+          "k3s-agent",
+          "nas-wake",
+          "private-ca",
+          "ups-master"
+        ],
+        "networks": [
+          "vlan10"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/pi-01/configuration.nix"
+    },
+    {
+      "id": "host:pi-02",
+      "kind": "host",
+      "label": "pi-02",
+      "layer": "hardware",
+      "meta": {
+        "arch": "aarch64-linux",
+        "class": "sbc",
+        "k3sRole": "agent",
+        "modules": [
+          "console-container",
+          "ha-backup",
+          "house-heartbeat",
+          "jumphost",
+          "k3s-agent",
+          "private-ca",
+          "rack-wake",
+          "ups-master"
+        ],
+        "networks": [
+          "vlan10"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/pi-02/configuration.nix"
+    },
+    {
+      "id": "host:srv-01",
+      "kind": "host",
+      "label": "srv-01",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "server",
+        "k3sRole": "agent",
+        "modules": [
+          "k3s-agent",
+          "private-ca",
+          "ups-client"
+        ],
+        "networks": [
+          "vlan10"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/srv-01/configuration.nix"
+    },
+    {
+      "id": "host:vm-01",
+      "kind": "host",
+      "label": "vm-01",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "vm",
+        "k3sRole": "agent",
+        "modules": [
+          "k3s-agent",
+          "private-ca"
+        ],
+        "networks": []
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/vm-01/configuration.nix"
+    },
+    {
+      "id": "host:vm-02",
+      "kind": "host",
+      "label": "vm-02",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "vm",
+        "k3sRole": "agent",
+        "modules": [
+          "k3s-agent",
+          "private-ca"
+        ],
+        "networks": []
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/vm-02/configuration.nix"
+    },
+    {
+      "id": "host:vm-03",
+      "kind": "host",
+      "label": "vm-03",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "vm",
+        "k3sRole": "agent",
+        "modules": [
+          "k3s-agent",
+          "private-ca"
+        ],
+        "networks": []
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/vm-03/configuration.nix"
+    },
+    {
+      "id": "instance:aws_node",
+      "kind": "instance",
+      "label": "aws_node",
+      "layer": "cloud",
+      "meta": {
+        "availabilityZone": "ca-central-1a",
+        "instanceType": "t3a.medium"
+      },
+      "repo": "aws-iac-public",
+      "source": "live/ec2.tf"
+    },
+    {
+      "id": "lambda:AjouterIpsCloudfront",
+      "kind": "lambda",
+      "label": "AjouterIpsCloudfront",
+      "layer": "cloud",
+      "meta": {
+        "runtime": "python3.10"
+      },
+      "repo": "aws-iac-public",
+      "source": "live/lambdas.tf"
+    },
+    {
+      "id": "lambda:add_object_url",
+      "kind": "lambda",
+      "label": "add_object_url",
+      "layer": "cloud",
+      "meta": {
+        "runtime": "python3.7"
+      },
+      "repo": "aws-iac-public",
+      "source": "live/lambdas.tf"
+    },
+    {
+      "id": "lambda:deadman-switch",
+      "kind": "lambda",
+      "label": "deadman-switch",
+      "layer": "cloud",
+      "meta": {
+        "runtime": "python3.13"
+      },
+      "repo": "aws-iac-public",
+      "source": "live/deadman.tf"
+    },
+    {
+      "id": "lambda:del_object_url",
+      "kind": "lambda",
+      "label": "del_object_url",
+      "layer": "cloud",
+      "meta": {
+        "runtime": "python3.7"
+      },
+      "repo": "aws-iac-public",
+      "source": "live/lambdas.tf"
+    },
+    {
+      "id": "lambda:numeriseur-processor",
+      "kind": "lambda",
+      "label": "numeriseur-processor",
+      "layer": "cloud",
+      "meta": {
+        "runtime": "python3.13"
+      },
+      "repo": "aws-iac-public",
+      "source": "live/numeriseur.tf"
+    },
+    {
+      "id": "route:argocd/argocd",
+      "kind": "route",
+      "label": "argocd",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "argocd.lab.example"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/install/ingressroute.yaml"
+    },
+    {
+      "id": "route:argocd/argocd-tls",
+      "kind": "route",
+      "label": "argocd-tls",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "argocd.lab.example"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/install/ingressroute.yaml"
+    },
+    {
+      "id": "route:cronicle/cronicle",
+      "kind": "route",
+      "label": "cronicle",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "cronicle.lab.example",
+          "cronicle.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "cronicle/ingressroute.yaml"
+    },
+    {
+      "id": "route:cronicle/cronicle-secure",
+      "kind": "route",
+      "label": "cronicle-secure",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "cronicle.lab.example",
+          "cronicle.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "cronicle/ingressroute.yaml"
+    },
+    {
+      "id": "route:frigate/frigate",
+      "kind": "route",
+      "label": "frigate",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "frigate.lab.example",
+          "frigate.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "frigate/ingressroute.yaml"
+    },
+    {
+      "id": "route:frigate/frigate-secure",
+      "kind": "route",
+      "label": "frigate-secure",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "frigate.lab.example",
+          "frigate.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "frigate/ingressroute.yaml"
+    },
+    {
+      "id": "route:keepass-webdav/webdav-secure",
+      "kind": "route",
+      "label": "webdav-secure",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "vault.family.example"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "keepass-webdav/ingressroute.yaml"
+    },
+    {
+      "id": "route:kuma/kuma",
+      "kind": "route",
+      "label": "kuma",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "kuma.lab.example",
+          "kuma.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "kuma/ingressroute.yaml"
+    },
+    {
+      "id": "route:kuma/kuma-secure",
+      "kind": "route",
+      "label": "kuma-secure",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "kuma.lab.example",
+          "kuma.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "kuma/ingressroute.yaml"
+    },
+    {
+      "id": "route:logging/grafana",
+      "kind": "route",
+      "label": "grafana",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "grafana.lab.example",
+          "grafana.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "logging/grafana.yaml"
+    },
+    {
+      "id": "route:logging/grafana-secure",
+      "kind": "route",
+      "label": "grafana-secure",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "grafana.lab.example",
+          "grafana.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "logging/grafana.yaml"
+    },
+    {
+      "id": "route:logging/loki",
+      "kind": "route",
+      "label": "loki",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "loki.lab.example"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "logging/loki.yaml"
+    },
+    {
+      "id": "route:n8n/n8n",
+      "kind": "route",
+      "label": "n8n",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "n8n.lab.example",
+          "n8n.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "n8n/ingressroute.yaml"
+    },
+    {
+      "id": "route:n8n/n8n-secure",
+      "kind": "route",
+      "label": "n8n-secure",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "n8n.lab.example",
+          "n8n.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "n8n/ingressroute.yaml"
+    },
+    {
+      "id": "route:ntfy/ntfy",
+      "kind": "route",
+      "label": "ntfy",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "ntfy.lab.example",
+          "ntfy.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "ntfy/ingressroute.yaml"
+    },
+    {
+      "id": "route:ntfy/ntfy-secure",
+      "kind": "route",
+      "label": "ntfy-secure",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "ntfy.lab.example",
+          "ntfy.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "ntfy/ingressroute.yaml"
+    },
+    {
+      "id": "route:plex/plex",
+      "kind": "route",
+      "label": "plex",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "plex.lab.example",
+          "plex.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "plex/ingressroute.yaml"
+    },
+    {
+      "id": "route:plex/plex-secure",
+      "kind": "route",
+      "label": "plex-secure",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "plex.lab.example",
+          "plex.pub.example.com"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "plex/ingressroute.yaml"
+    },
+    {
+      "id": "route:unifi/unifi",
+      "kind": "route",
+      "label": "unifi",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "unifi.lab.example"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "unifi/ingressroute.yaml"
+    },
+    {
+      "id": "route:unifi/unifi-secure",
+      "kind": "route",
+      "label": "unifi-secure",
+      "layer": "cluster",
+      "meta": {
+        "hosts": [
+          "unifi.lab.example"
+        ]
+      },
+      "repo": "k3s-iac-public",
+      "source": "unifi/ingressroute.yaml"
+    },
+    {
+      "id": "tunnel:k3s",
+      "kind": "tunnel",
+      "label": "k3s",
+      "layer": "edge",
+      "meta": {},
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "workload:access-audit/cloudflare-access-gating-audit",
+      "kind": "workload",
+      "label": "cloudflare-access-gating-audit",
+      "layer": "cluster",
+      "meta": {
+        "kind": "CronJob"
+      },
+      "repo": "k3s-iac-public",
+      "source": "access-audit/cronjob.yaml"
+    },
+    {
+      "id": "workload:cloudflared/cloudflared",
+      "kind": "workload",
+      "label": "cloudflared",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "cloudflared/deployment.yaml"
+    },
+    {
+      "id": "workload:cloudflared/cloudflared-cloud-01",
+      "kind": "workload",
+      "label": "cloudflared-cloud-01",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "cloudflared/deployment-aws.yaml"
+    },
+    {
+      "id": "workload:cronicle/cronicle",
+      "kind": "workload",
+      "label": "cronicle",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "cronicle/deployment.yaml"
+    },
+    {
+      "id": "workload:frigate/frigate",
+      "kind": "workload",
+      "label": "frigate",
+      "layer": "cluster",
+      "meta": {
+        "hostNetwork": true,
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "frigate/deployment.yaml"
+    },
+    {
+      "id": "workload:keepass-webdav/webdav",
+      "kind": "workload",
+      "label": "webdav",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "keepass-webdav/deployment.yaml"
+    },
+    {
+      "id": "workload:kuma/deadman-heartbeat",
+      "kind": "workload",
+      "label": "deadman-heartbeat",
+      "layer": "cluster",
+      "meta": {
+        "kind": "CronJob"
+      },
+      "repo": "k3s-iac-public",
+      "source": "kuma/deadman-heartbeat-cronjob.yaml"
+    },
+    {
+      "id": "workload:kuma/kuma-backup",
+      "kind": "workload",
+      "label": "kuma-backup",
+      "layer": "cluster",
+      "meta": {
+        "kind": "CronJob"
+      },
+      "repo": "k3s-iac-public",
+      "source": "kuma/backup-cronjob.yaml"
+    },
+    {
+      "id": "workload:kuma/uptime-kuma",
+      "kind": "workload",
+      "label": "uptime-kuma",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "kuma/deployment.yaml"
+    },
+    {
+      "id": "workload:labodeludo/gh-runner",
+      "kind": "workload",
+      "label": "gh-runner",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "labodeludo/gh-runner.yaml"
+    },
+    {
+      "id": "workload:logging/alloy",
+      "kind": "workload",
+      "label": "alloy",
+      "layer": "cluster",
+      "meta": {
+        "kind": "DaemonSet"
+      },
+      "repo": "k3s-iac-public",
+      "source": "logging/alloy.yaml"
+    },
+    {
+      "id": "workload:logging/grafana",
+      "kind": "workload",
+      "label": "grafana",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "logging/grafana.yaml"
+    },
+    {
+      "id": "workload:logging/grafana-backup",
+      "kind": "workload",
+      "label": "grafana-backup",
+      "layer": "cluster",
+      "meta": {
+        "kind": "CronJob"
+      },
+      "repo": "k3s-iac-public",
+      "source": "logging/grafana-backup-cronjob.yaml"
+    },
+    {
+      "id": "workload:logging/loki",
+      "kind": "workload",
+      "label": "loki",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "logging/loki.yaml"
+    },
+    {
+      "id": "workload:n8n/n8n",
+      "kind": "workload",
+      "label": "n8n",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "n8n/deployment.yaml"
+    },
+    {
+      "id": "workload:n8n/n8n-backup",
+      "kind": "workload",
+      "label": "n8n-backup",
+      "layer": "cluster",
+      "meta": {
+        "kind": "CronJob"
+      },
+      "repo": "k3s-iac-public",
+      "source": "n8n/backup-cronjob.yaml"
+    },
+    {
+      "id": "workload:ntfy/ntfy",
+      "kind": "workload",
+      "label": "ntfy",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "ntfy/deployment.yaml"
+    },
+    {
+      "id": "workload:ntfy/ntfy-backup",
+      "kind": "workload",
+      "label": "ntfy-backup",
+      "layer": "cluster",
+      "meta": {
+        "kind": "CronJob"
+      },
+      "repo": "k3s-iac-public",
+      "source": "ntfy/backup-cronjob.yaml"
+    },
+    {
+      "id": "workload:numeriseur/numeriseur-sftpgo",
+      "kind": "workload",
+      "label": "numeriseur-sftpgo",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "numeriseur/deployment.yaml"
+    },
+    {
+      "id": "workload:unifi/unifi",
+      "kind": "workload",
+      "label": "unifi",
+      "layer": "cluster",
+      "meta": {
+        "hostNetwork": true,
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "unifi/deployment.yaml"
+    },
+    {
+      "id": "workload:unifi/unifi-mongo-backup",
+      "kind": "workload",
+      "label": "unifi-mongo-backup",
+      "layer": "cluster",
+      "meta": {
+        "hostNetwork": true,
+        "kind": "CronJob"
+      },
+      "repo": "k3s-iac-public",
+      "source": "unifi/mongo-backup-cronjob.yaml"
+    }
+  ],
+  "sources": {
+    "aws-iac-public": {
+      "commit": "ca2d5b9",
+      "date": "2026-08-07T17:58:37-04:00"
+    },
+    "cloudflare-iac-public": {
+      "commit": "a0f9edf",
+      "date": "2026-08-07T17:58:38-04:00"
+    },
+    "k3s-iac-public": {
+      "commit": "d4ec41f",
+      "date": "2026-08-07T17:58:35-04:00"
+    },
+    "nixos-iac-public": {
+      "commit": "2fa140c",
+      "date": "2026-08-07T17:58:33-04:00"
+    }
+  },
+  "topologyVersion": 1
+}

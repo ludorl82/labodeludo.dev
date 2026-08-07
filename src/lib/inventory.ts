@@ -34,6 +34,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "migrer-tout-mon-homelab-vers-nixos",
       "quatre-depots-pour-un-labo-au-complet",
       "laisser-le-pipeline-appuyer-sur-apply",
+      "separer-le-bastion-de-la-console",
     ],
   },
   "site-web": {
@@ -79,7 +80,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
   bastion: {
     name: "Bastion / console",
     description:
-      "Point d'entrée SSH du VLAN serveurs. Exécute les outils de développement et les sessions d'agent dans des conteneurs compartimentés plutôt que directement sur l'hôte. C'est de là que partent les déploiements déclaratifs vers le reste du parc, et c'est là que roulent les vérifications de dérive nocturnes. Orchestre aussi, chaque semaine et sans supervision, les sauvegardes chiffrées et les mises à jour système de tous les nœuds de la grappe conteneurs, via une instance headless de Claude Code. Ironiquement, c'est la seule machine du labo qui n'est pas passée au déclaratif : elle est restée sous sa distribution d'origine, parce que c'est elle qui tient le manche.",
+      "Deux rôles, deux machines depuis août 2026. Le bastion — point d'entrée SSH du VLAN serveurs, clés de service à commande forcée, pipeline de secrets, tâches singleton — vit sur un Raspberry Pi branché sur l'UPS survivant, à côté du routeur. La console — sessions d'agent, dépôts, builds, dans des conteneurs compartimentés — vit dans une VM dédiée de 16 Go sur le serveur GPU, volontairement hors de la grappe k3s. Le Pi garde une console de secours arrêtée, démarrable à la main pendant une panne. C'est du bastion que partent les vérifications de dérive nocturnes et, chaque semaine sans supervision, les sauvegardes chiffrées et les mises à jour système de tout le parc, via une instance headless de Claude Code.",
     articles: [
       "compartimentalisation-des-outils-de-console",
       "claude-code-headless-bastion",

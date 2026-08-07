@@ -1,0 +1,224 @@
+---
+title: "Séparer le bastion de la console : mon shell vivait dans la salle d'opération"
+pubDate: 2026-08-07
+description: "Mon shell de travail roulait sur la machine la plus opérée du labo — un Raspberry Pi de 4 Go qui portait aussi les clés de service, le pipeline de secrets et un agent k3s. Une frousse pendant une migration de disque plus tard, on a séparé les deux rôles : le bastion reste sur le Pi survivant, la console déménage dans une VM de 16 Go. En chemin : une haute disponibilité conçue puis jetée, un dépôt lu avec confiance qui datait de trois commits, une clé d'hôte SSH cuite dans l'image, et un registre en panne depuis 18 heures dont la meilleure qualité était que personne ne s'en aperçoive."
+tags: ["Labo", "DevOps", "NixOS", "bob"]
+heroImage: "/images/blog/banner-bastion-console-split.svg"
+---
+
+import BastionConsoleSplitDiagram from "../../components/BastionConsoleSplitDiagram.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Point de départ** : un seul Raspberry Pi 5 (4 Go) cumulait deux rôles incompatibles — le **bastion** (clés SSH à commande forcée, pipeline de gestionnaire de mots de passe, tâches singleton) et la **console interactive** (sessions d'agent, dépôts git, builds), limitée à 2 Go pour ne pas étouffer l'agent k3s du même hôte.
+> -   **Déclencheur** : une migration de disque racine sur ce Pi, avec la peur très concrète de perdre le shell qui pilotait l'opération. Le vérificateur ne peut pas vivre sur la chose qu'il vérifie.
+> -   **Bascule** : un module NixOS scindé en trois — outils partagés (les deux hôtes), rôle bastion (le Pi seulement : l'import unique EST le garde-fou des singletons, pas de drapeau de rôle), et conteneur console paramétré (`autoStart`, limite mémoire, image épinglée par hôte).
+> -   **La console** : une VM dédiée de 6 vCPU / 16 Go sur le serveur GPU, volontairement PAS un nœud k3s — la console gère la grappe, elle n'y habite pas. Le conteneur passe de 2 Go à 12 Go.
+> -   **Les noms** : le nom historique suit le shell vers la VM ; le bastion reçoit un alias neuf. La migration s'est faite en drainant les consommateurs un par un pendant que les deux noms pointaient encore sur la même machine — risque zéro, chaque bascule vérifiable seule.
+> -   **Haute disponibilité : conçue au complet, puis jetée.** Deux VM répliquées, clés d'hôte partagées, bascule répétée en plein jour — tout le design existait. Il est mort d'un argument simple : c'est un labo, et perdre la console coûte une reconstruction, pas une panne de service.
+> -   **Pièges rencontrés** : un deuxième checkout du même dépôt, trois commits en retard, qui a fossilisé la moitié de la planification ; la clé d'hôte SSH du conteneur cuite dans l'image au build (chaque rebuild la tournait silencieusement) ; `tmpfiles` « C+ » qui refuse d'écraser un fichier existant ; une ConfigMap de clés pinnées qui n'existait qu'en annotation sur l'objet vivant ; et un registre d'images en panne depuis 18 heures — invisible précisément parce que la console est conçue pour survivre sans lui.
+> -   **Reconstruction** : la graine existait déjà — la sauvegarde nocturne chiffrée vers S3. Le travail réel a été d'en boucher les trous (le script de sauvegarde ne se sauvegardait pas lui-même) et d'ajouter un plancher de taille : un objet de moins de 1 Mo est un échec, pas un succès.
+
+Il y a deux semaines, j'ai déplacé la racine de mon Raspberry Pi vers un
+disque NVMe. L'opération s'est bien passée. Ce qui s'est moins bien passé,
+c'est le quart d'heure où j'ai réalisé que le shell avec lequel je pilotais
+la migration roulait *sur la machine en train d'être opérée*. Si ça avait
+mal viré, mon outil de réparation partait avec le patient.
+
+Ce Pi-là — appelons-le `pi-02` — faisait tout : point d'entrée SSH du labo,
+serveur de secrets pour les sauvegardes de tout le parc, pipeline du
+gestionnaire de mots de passe, tâches planifiées, agent k3s, et par-dessus
+le tout, ma console de travail dans un conteneur bridé à 2 Go. Sur une
+machine qui en a 4.
+
+## Deux rôles qui ne veulent pas la même chose
+
+En regardant le module NixOS qui déclarait tout ça, le problème est devenu
+évident : ce n'était pas une machine surchargée, c'était **deux rôles
+contradictoires dans le même fichier**.
+
+| | Bastion | Console |
+|---|---|---|
+| C'est quoi | un service — sshd + commandes forcées | un espace de travail |
+| Ça veut quoi | être debout, toujours | de la **capacité** |
+| Ça pèse | presque rien | 8–16 Go de RAM |
+| Redondance | tourner sur le bon îlot électrique | être reconstructible |
+
+Le bastion est exactement où il doit être : `pi-02` est branché sur l'UPS
+survivant, à côté du routeur et du modem. C'est la machine qui reste debout
+quand la maison tombe. Mais la console, elle, veut de la mémoire et de la
+paix — et le Pi n'offre ni l'une ni l'autre.
+
+La solution : chaque rôle sur sa machine. Le bastion reste sur le Pi. La
+console déménage dans une VM dédiée sur le serveur GPU (`gpu-01`, 109 Go de
+RAM qui dormaient) : 6 vCPU, 16 Go, et le conteneur passe de 2 Go à 12 Go.
+Volontairement **pas** un nœud k3s — la console gère la grappe, elle n'y
+habite pas. Un `kubectl drain` qui tue la session qui l'a lancé, non merci.
+
+<BastionConsoleSplitDiagram context="article" lang="fr" />
+
+## La haute disponibilité que j'ai conçue, puis jetée
+
+Première version du plan : deux VM console, une par hyperviseur, clés
+d'hôte SSH partagées, réplication horaire, bascule DNS répétée en plein
+jour avec chronomètre. Un beau design. Complet. Défendable.
+
+Je l'ai jeté au complet le lendemain matin.
+
+L'argument qui l'a tué tient en une ligne : c'est un labo. Perdre la
+console coûte une *reconstruction* — pas une panne de service. Les seules
+choses que les autres machines attendent du bastion continuent de rouler
+sur le Pi. Et le détail qui achevait le dossier : les deux hyperviseurs
+candidats partagent le même UPS. Ma « haute disponibilité » aurait survécu
+à tout sauf à une panne de courant, c'est-à-dire au seul scénario réaliste.
+
+À la place : une VM, des sauvegardes nocturnes, un chemin de reconstruction
+documenté, et sur le Pi survivant une **console de secours arrêtée** — image
+résidente sur disque, un `systemctl start` pendant une panne et j'ai un
+shell. La haute disponibilité du pauvre, mais du pauvre qui dort bien.
+
+## Le nom suit le shell
+
+Le morceau le plus délicat n'était ni la VM ni NixOS : c'était le nom. Une
+dizaine de consommateurs — déclencheurs de pipeline, tâches planifiées,
+sauvegardes de tout le parc — connaissaient le bastion par son nom
+historique. Et je voulais que ce nom-là suive la *console*, parce que c'est
+lui que mes doigts tapent.
+
+La séquence qui rend ça sans risque : on ajoute d'abord un alias neuf,
+`bastion.lab.example`, qui pointe sur la même machine que l'ancien nom.
+Ensuite on draine les consommateurs un par un vers l'alias — chaque
+bascule se vérifie seule, et pendant tout ce temps **les deux noms pointent
+sur la même adresse**. Se tromper est impossible ; au pire on a deux noms
+pour une machine. Quand le compte des consommateurs de l'ancien nom tombe à
+« juste moi », le nom est libre de déménager vers la VM, et il emporte avec
+lui exactement ce qui appartient à la console.
+
+## Le module scindé en trois
+
+Le module monolithique est devenu trois fichiers, et le découpage porte une
+décision de design que j'aime beaucoup : **pas de drapeau de rôle**. Le
+garde-fou des tâches singleton (la synchronisation OneDrive, par exemple,
+qui ne doit JAMAIS rouler sur deux hôtes), c'est l'import lui-même — un
+seul hôte importe le module bastion, donc un seul hôte peut faire rouler
+ses services. Une unité systemd qui n'existe pas ne peut pas être démarrée
+par accident.
+
+Le conteneur console, lui, est devenu paramétrable :
+
+```nix
+options.homelab.console = {
+  autoStart = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = "false = posture d'urgence : unité déclarée, image
+      résidente, démarrage à la main pendant une panne.";
+  };
+  memoryLimit = lib.mkOption { type = lib.types.str; default = "2g"; };
+  image = lib.mkOption {
+    type = lib.types.str;
+    # Épinglée PAR HÔTE, exprès : un nouveau digest ne redémarre pas
+    # toutes les consoles d'un coup — un switch qui change la définition
+    # du conteneur tue la session qui roule dedans.
+    default = "registry.lab.example:5000/console@sha256:…";
+  };
+};
+
+# Posture d'urgence : l'unité existe, l'image reste résidente,
+# mais rien ne la démarre au boot.
+systemd.services.docker-console.wantedBy =
+  lib.mkIf (!cfg.autoStart) (lib.mkForce [ ]);
+```
+
+Le même module, importé par les deux hôtes : sur la VM il roule la vraie
+console à 12 Go, sur le Pi il déclare la console de secours, arrêtée.
+
+## Les pièges, en ordre d'humiliation croissante
+
+**Le dépôt que j'ai lu avec confiance.** L'ancienne maison du bastion
+gardait *deux* checkouts du même dépôt de configuration. J'ai fait toute
+mon exploration initiale dans le mauvais — trois commits en retard. La
+moitié de mes « découvertes » étaient des fossiles : des clés supprimées
+depuis deux jours, des tâches déjà migrées ailleurs. J'ai planifié un
+déménagement à partir d'une photo d'archive. La nouvelle VM applique la
+leçon : un checkout par dépôt, point.
+
+**La clé d'hôte cuite dans le gâteau.** La clé SSH du conteneur console
+était générée *au build de l'image* — commentaire `root@buildkitsandbox`,
+date du fichier égale à la date du build. Chaque rebuild la tournait
+silencieusement, et personne ne s'en était jamais aperçu parce que rien ne
+la vérifiait. Le correctif : un bind mount qui monte les clés depuis
+l'hôte, semées une fois — l'identité du port 2222 a traversé tout le
+déménagement sans changer d'un octet.
+
+**`tmpfiles` qui refuse poliment.** Le fichier `authorized_keys` du
+conteneur ne peut être ni un lien vers `/etc` ni un lien vers le store Nix
+— aucun des deux n'existe *dans* le conteneur. Le plan : une règle
+`tmpfiles` de type « C+ » qui copie le fichier à chaque boot. La réalité :
+« C+ » refuse d'écraser un fichier existant, silencieusement, règle
+présente et fichier intact. Un script d'activation avec `install` fait le
+travail sans opinion.
+
+## Le registre en panne depuis 18 heures — et c'est une qualité
+
+Au moment de builder l'image amd64 pour la VM, le registre d'images du labo
+répondait 503. Depuis 18 heures. Le coupable : la collecte de déchets
+nocturne, gelée en état D sur une session NFS morte vers le NAS — le NAS
+lui-même en pleine forme, mais la sonde de santé du registre sonde le même
+stockage, donc tout le registre se déclarait malade.
+
+Personne ne s'en était aperçu, et c'est ça le punch : la console est
+*conçue* pour ne jamais toucher le registre en fonctionnement normal —
+l'image démarre depuis le cache local précisément pour survivre à une
+panne de registre. Le mécanisme de survie a fonctionné si bien qu'il a
+caché la panne qu'il était censé survivre. J'ai ajouté un moniteur.
+
+## La graine existait déjà
+
+Le plan de reconstruction de la console — la promesse « sans état » — n'a
+presque rien demandé de neuf, parce que la graine existait déjà : la
+sauvegarde nocturne chiffrée vers S3. Le vrai travail a été d'en boucher
+les trous, et le plus gênant des trous avait un certain sens de l'ironie :
+**le script de sauvegarde ne se sauvegardait pas lui-même.** Il vivait hors
+de tout dépôt, hors de sa propre liste tar.
+
+Et comme la même liste sert maintenant deux hôtes qui n'ont pas les mêmes
+fichiers, elle est devenue un sur-ensemble élagué à l'exécution — mais
+élagué *bruyamment* :
+
+```bash
+# La liste est un sur-ensemble des deux hôtes. On élague ce que l'hôte
+# n'a pas, FORT : avec pipefail, un membre manquant fait échouer la
+# sauvegarde au complet, et le silence cacherait une vraie perte.
+MEMBERS=""
+for m in $WANT; do
+  if [ -e "$m" ]; then MEMBERS="$MEMBERS $m"
+  else echo "$(date -Is) membre absent, ignoré : $m" >&2; fi
+done
+
+# Plancher de taille : un objet de moins de 1 Mo n'est pas une
+# sauvegarde, c'est un tar qui a perdu ses entrées et qui ose dire OK.
+SIZE=$(aws s3api head-object --bucket "$BUCKET" \
+  --key "${HOST}/${DATE}.tar.gz.gpg" --query ContentLength --output text)
+[ "${SIZE:-0}" -lt 1048576 ] && exit 1
+```
+
+Le plancher de taille n'est pas une paranoïa théorique : l'historique de ce
+préfixe S3 contient une série de « sauvegardes » de 4,8 Ko qui ont rapporté
+succès pendant des jours. Un tar qui perd ses entrées téléverse quand même,
+et il est très fier de lui.
+
+## Le bilan
+
+Une VM de plus dans la flotte, deux entrées DNS, zéro consommateur cassé —
+chaque bascule vérifiée par une exécution réelle avant de passer à la
+suivante. La console est passée de 2 Go sur un Pi partagé à 12 Go sur une
+VM dédiée, le bastion n'a plus à cohabiter avec mes builds, et la
+prochaine migration de disque sur `pi-02` se fera depuis un shell qui
+n'habite pas dans la salle d'opération.
+
+Le Pi garde quand même le dernier mot : quand le courant manquera pour
+vrai, c'est lui, sur son UPS survivant, qui me tendra une console de
+secours à 2 Go. On ne renie pas ses origines.
+
+— Bob

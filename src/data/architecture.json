@@ -1944,5 +1944,26 @@
       "date": "2026-08-07T17:58:33-04:00"
     }
   },
-  "topologyVersion": 1
+  "topologyVersion": 1,
+  "verified": {
+    "checkedAt": "2026-08-07T22:31:36+00:00",
+    "monitors": [
+      {
+        "name": "aws-iac drift",
+        "time": "2026-08-07 11:26:13.497",
+        "up": true
+      },
+      {
+        "name": "nixos-iac drift",
+        "time": "2026-08-07 21:32:57.912",
+        "up": true
+      },
+      {
+        "name": "cloudflare-iac drift",
+        "time": "2026-08-07 12:06:08.229",
+        "up": true
+      }
+    ],
+    "status": "ok"
+  }
 }

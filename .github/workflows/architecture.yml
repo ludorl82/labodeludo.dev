@@ -1,0 +1,51 @@
+# Nightly regeneration of the live architecture view.
+#
+# Clones the four PUBLIC sanitized snapshots — never the private repos; the
+# sanitizers' fail-closed gates are the trust boundary — joins their
+# topology.json files into src/data/architecture.json, rebuilds the site and
+# deploys to prod. No content changes, so no commit: the freshly generated
+# data only exists inside the build. The checked-in architecture.json is the
+# fallback that keeps ordinary pushes building without network access to the
+# snapshots; it goes stale by design and the page shows its generation date.
+#
+# A failed join (validation or allowlist) fails the run — a wrong diagram is
+# worse than yesterday's.
+name: Architecture
+
+on:
+  schedule:
+    - cron: "15 9 * * *" # nightly, after the 07:1x drift checks have run
+  workflow_dispatch:
+
+jobs:
+  regenerate:
+    runs-on: [self-hosted, k3s]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Clone the public snapshots
+        run: |
+          mkdir -p /tmp/topology-snapshots
+          for r in nixos-iac-public k3s-iac-public aws-iac-public cloudflare-iac-public; do
+            rm -rf "/tmp/topology-snapshots/$r"
+            git clone --depth 1 "https://github.com/ludorl82/$r.git" "/tmp/topology-snapshots/$r"
+          done
+      - name: Join topology
+        run: python3 scripts/topology/join-topology.py /tmp/topology-snapshots
+      - name: Stamp drift-check state
+        # the runner is an in-cluster pod, so it reaches Kuma's public
+        # status-page API service-to-service — no Access, no credentials.
+        # fetch-drift fails open to "unknown" (never green) and exits 0.
+        run: python3 scripts/topology/fetch-drift.py http://uptime-kuma.kuma.svc
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy to prod
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: aws s3 sync dist/ s3://labodeludo.dev/ --delete

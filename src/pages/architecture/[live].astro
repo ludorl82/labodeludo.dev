@@ -2,6 +2,17 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import arch from "../../data/architecture.json";
 
+// Staging-only for now: the page is generated only when the build sets
+// SHOW_LIVE_ARCH=1 (the staging deploy job and the nightly regeneration do;
+// the prod deploy does not). A dynamic route with an empty getStaticPaths
+// is Astro's way of not emitting the page at all — same file on every
+// branch, no dev/main drift, and prod cannot re-grow it by accident.
+export function getStaticPaths() {
+  return process.env.SHOW_LIVE_ARCH === "1"
+    ? [{ params: { live: "live" } }]
+    : [];
+}
+
 // The generated architecture view. Everything on this page comes from
 // src/data/architecture.json, produced by scripts/topology/join-topology.py
 // out of the four PUBLIC sanitized IaC snapshots — never the private repos.

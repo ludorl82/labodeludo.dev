@@ -4,9 +4,16 @@ on:
   push:
 
 jobs:
+  # Staging publishes to Cloudflare Pages (project `labodeludo-dev`, custom
+  # domain dev.labodeludo.dev). It used to `kubectl cp` a build into an nginx
+  # pod backed by the cluster's only RWX NFS claim; static content needed
+  # neither the volume nor the pod, so both are gone. Nothing here touches
+  # k3s any more, which is why this runs on a GitHub-hosted runner rather
+  # than the in-cluster one — a public repo gets those minutes free, and
+  # staging no longer needs the cluster to be up to deploy.
   deploy-staging:
     if: github.ref != 'refs/heads/main'
-    runs-on: [self-hosted, k3s]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -14,16 +21,24 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run build
-      - name: Install kubectl
-        run: |
-          ARCH=$(uname -m); case "$ARCH" in aarch64) KARCH=arm64;; x86_64) KARCH=amd64;; *) KARCH=amd64;; esac
-          curl -sLO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/${KARCH}/kubectl"
-          chmod +x kubectl
-      - name: Deploy to k3s
-        run: |
-          POD=$(./kubectl get pod -n labodeludo -l app=dev-labodeludo -o jsonpath='{.items[0].metadata.name}')
-          ./kubectl exec -n labodeludo "$POD" -- sh -c 'rm -rf /usr/share/nginx/html/* /usr/share/nginx/html/.[!.]* 2>/dev/null || true'
-          ./kubectl cp dist/. "labodeludo/$POD:/usr/share/nginx/html"
+      - name: Publish to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # --branch=staging is deliberate and must match the Pages project's
+        # production branch. Two reasons, both about not leaking the site:
+        # a custom domain only ever serves the production deployment, so any
+        # other value would leave dev.labodeludo.dev frozen; and a non-production
+        # branch creates a *preview* deployment at its own <hash>.pages.dev URL,
+        # which the Access app on dev.labodeludo.dev does not cover. Pinning the
+        # value means previews are never created at all. It is the Pages branch,
+        # not the git branch — every non-main push lands here, same as the old
+        # single staging container.
+        run: >-
+          npx --yes wrangler@4 pages deploy dist
+          --project-name=labodeludo-dev
+          --branch=staging
+          --commit-dirty=true
 
   deploy-prod:
     if: github.ref == 'refs/heads/main'

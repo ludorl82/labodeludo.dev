@@ -1,12 +1,18 @@
-# Nightly regeneration of the live architecture view.
+# Nightly regeneration of the live architecture view — STAGING ONLY for now.
+#
+# /architecture/live is gated behind SHOW_LIVE_ARCH (see the page's
+# getStaticPaths): the prod deploy never sets it, so this workflow rebuilds
+# the STAGING site with fresh data and publishes it to Cloudflare Pages —
+# it does not touch prod or its S3 bucket at all.
 #
 # Clones the four PUBLIC sanitized snapshots — never the private repos; the
 # sanitizers' fail-closed gates are the trust boundary — joins their
-# topology.json files into src/data/architecture.json, rebuilds the site and
-# deploys to prod. No content changes, so no commit: the freshly generated
-# data only exists inside the build. The checked-in architecture.json is the
-# fallback that keeps ordinary pushes building without network access to the
-# snapshots; it goes stale by design and the page shows its generation date.
+# topology.json files into src/data/architecture.json, stamps the drift-check
+# state from Kuma's public status page, rebuilds and deploys. No commit: the
+# freshly generated data only exists inside the build. The checked-in
+# architecture.json is the fallback that keeps ordinary pushes building
+# without network access to the snapshots; it goes stale by design and the
+# page shows its generation date.
 #
 # A failed join (validation or allowlist) fails the run — a wrong diagram is
 # worse than yesterday's.
@@ -23,7 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          # the staging artifact is built from dev, like every staging deploy
+          ref: dev
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -43,9 +50,17 @@ jobs:
         run: python3 scripts/topology/fetch-drift.py http://uptime-kuma.kuma.svc
       - run: npm ci
       - run: npm run build
-      - name: Deploy to prod
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
-        run: aws s3 sync dist/ s3://labodeludo.dev/ --delete
+          SHOW_LIVE_ARCH: "1"
+      - name: Publish to Cloudflare Pages (staging)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # --branch=staging must match the Pages project's production branch —
+        # same reasoning as deploy.yml: custom domains only serve production
+        # deployments, and previews would escape the Access app.
+        run: >-
+          npx --yes wrangler@4 pages deploy dist
+          --project-name=labodeludo-dev
+          --branch=staging
+          --commit-dirty=true

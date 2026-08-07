@@ -20,7 +20,12 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # SHOW_LIVE_ARCH: /architecture/live is staging-only for now — its
+      # getStaticPaths emits the page only when this is set, so the prod
+      # job below builds the same tree without it.
       - run: npm run build
+        env:
+          SHOW_LIVE_ARCH: "1"
       - name: Publish to Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}

@@ -11,6 +11,10 @@ import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
 import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
 import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
 import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
+
+// /architecture/live is staging-only for now (see its getStaticPaths);
+// only link to it from builds that actually emit it
+const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
 ---
 
 <BaseLayout
@@ -24,10 +28,18 @@ import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
     <p class="subtitle">
       Vue d'ensemble du réseau — noms et adresses fictifs (préfixe de
       documentation <code>2001:db8:.../64</code>, RFC 3849), l'idée est de
-      montrer la forme du réseau, pas le détail réel. Ce diagramme-ci est
-      dessiné à la main; sa contrepartie <a href="/architecture/live"
-      >générée depuis les dépôts IaC publics</a> ne dépend pas de ma
-      discipline pour rester vraie.
+      montrer la forme du réseau, pas le détail réel.{" "}
+      {
+        showLiveArch && (
+          <Fragment>
+            Ce diagramme-ci est dessiné à la main; sa contrepartie{" "}
+            <a href="/architecture/live">
+              générée depuis les dépôts IaC publics
+            </a>{" "}
+            ne dépend pas de ma discipline pour rester vraie.
+          </Fragment>
+        )
+      }
     </p>
   </header>
 

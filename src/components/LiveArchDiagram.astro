@@ -19,7 +19,11 @@
 // Canvas: the site column is narrow (~830px), so the flow is VERTICAL
 // (edge → cluster → hardware, same order as the bands below) and the figure
 // breaks out full-bleed on desktop. Keep the viewBox portrait-ish.
+// Two seeds: architecture.json is what the four IaC repos DECLARE,
+// fleet.json is what is physically plugged in — including everything no
+// repo names. The gap between the two is drawn, not hidden.
 import arch from "../data/architecture.json";
+import fleet from "../data/fleet.json";
 
 type TNode = {
   id: string;
@@ -86,6 +90,105 @@ const servedAtEdge = dnsNodes.filter(
   (n) => !routesTo.some((e) => e.from === n.id),
 );
 
+// ---- le parc, hors IaC -------------------------------------------------
+// fleet.json carries the boxes no repo declares: the switches, the AP, the
+// BMCs, the printer, the personal machines, the domotique. A device is
+// drawn ONCE: iacDeclared devices already have a box above (they come from
+// architecture.json), and so do the hors-IaC nodes the IaC references by
+// name — plus the onduleurs, which the UPS aggregate already stands for.
+// An empty devices array simply means the seed has not run: nothing is
+// drawn and nothing is said.
+type FDevice = {
+  class: string;
+  count?: number;
+  hostedBy?: string;
+  iacDeclared?: boolean;
+  location?: string;
+  name: string;
+  network?: string;
+  role?: string;
+};
+const fleetDevices = ((fleet as any).devices ?? []) as FDevice[];
+const drawnNames = new Set(
+  nodes
+    .filter((n) => n.kind === "host" || n.kind === "external")
+    .map((n) => n.label),
+);
+const fleetExtras = fleetDevices.filter(
+  (d) =>
+    !d.iacDeclared &&
+    !drawnNames.has(d.name) &&
+    !(d.class === "ups" && upsCount > 0),
+);
+const fleetUnits = fleetExtras.reduce((n, d) => n + (d.count ?? 1), 0);
+// the seam worth naming: an undeclared machine that nonetheless carries a
+// declared k3s agent — a layer crossing only the fleet seed can see
+const agentNames = new Set(agents.map((a) => a.label));
+const carriers = fleetExtras
+  .map((d) => ({
+    d,
+    carried: fleetDevices
+      .filter((o) => o.hostedBy === d.name && agentNames.has(o.name))
+      .map((o) => o.name),
+  }))
+  .filter((c) => c.carried.length > 0);
+
+const NET_FR: Record<string, string> = {
+  vlan10: "VLAN serveurs",
+  vlan50: "VLAN maison",
+  "out-of-band": "réseau hors bande",
+};
+const CLASS_FR: Record<string, string> = {
+  "access-point": "borne Wi-Fi",
+  bmc: "gestion hors bande",
+  camera: "caméra",
+  desktop: "poste",
+  domotique: "domotique",
+  laptop: "portable",
+  nas: "stockage",
+  phone: "téléphonie",
+  printer: "imprimante",
+  router: "routeur",
+  sbc: "carte SBC",
+  server: "serveur",
+  switch: "commutateur",
+  ups: "onduleur",
+};
+const NET_ORDER = ["vlan10", "vlan50", "out-of-band"];
+const netOf = (d: FDevice) => d.network ?? "—";
+// known networks first, then anything the map has never heard of, so a new
+// segment appears in the drawing instead of vanishing from it
+const netKeys = [
+  ...NET_ORDER.filter((k) => fleetExtras.some((d) => netOf(d) === k)),
+  ...[...new Set(fleetExtras.map(netOf))].filter((k) => !NET_ORDER.includes(k)),
+];
+
+// laid out here rather than in the markup: the band grows DOWNWARD with the
+// fleet, and the viewBox grows with it
+const F_TOP = 1000;
+const F_COLS = 5;
+const F_PITCH_X = 132;
+const F_CHIP_W = 124;
+const F_CHIP_H = 30;
+const F_PITCH_Y = 36;
+let fCursor = F_TOP + 62;
+const fleetBands = netKeys.map((net) => {
+  const head = fCursor;
+  const items = fleetExtras
+    .filter((d) => netOf(d) === net)
+    .map((d, i) => ({
+      d,
+      x: 56 + (i % F_COLS) * F_PITCH_X,
+      y: head + 12 + Math.floor(i / F_COLS) * F_PITCH_Y,
+    }));
+  fCursor = head + 12 + Math.ceil(items.length / F_COLS) * F_PITCH_Y + 10;
+  return { net, label: NET_FR[net] ?? net, items };
+});
+const fleetBottom = fCursor;
+const svgH = fleetExtras.length
+  ? fleetBottom + 26 + carriers.length * 14
+  : 1000;
+
 const appIds = kind("app").map((n) => n.id).join(" ");
 const agentIds = agents.map((n) => n.id).join(" ");
 const lambdaIds = kind("lambda").map((n) => n.id).join(" ");
@@ -109,12 +212,28 @@ const ariaLabel =
   `IaC et aucun port n'y est ouvert — et qui héberge aussi un connecteur de ` +
   `tunnel. ${appCount} applications y tournent, dont ${pinCount} workloads ` +
   `épinglés à une machine précise. Chaque boîte est cliquable et allume ce ` +
-  `qui en dépend.`;
+  `qui en dépend.` +
+  (fleetExtras.length
+    ? ` Une dernière bande montre le reste du parc : ${fleetUnits} ` +
+      `appareils bien réels — commutateurs, borne Wi-Fi, cartes de gestion ` +
+      `hors bande, imprimante, caméra, domotique, machines personnelles — ` +
+      `qu'aucun repo ne déclare, répartis sur ${netKeys.length} segments ` +
+      `réseau. Ceux-là n'ont pas de source à ouvrir, donc pas de clic.` +
+      (carriers.length
+        ? ` ${carriers.length > 1 ? "Certains d'entre eux portent" : "L'un d'eux porte"} ` +
+          `pourtant ${carriers.flatMap((c) => c.carried).join(", ")} : ` +
+          `${
+            carriers.flatMap((c) => c.carried).length > 1
+              ? "des agents du cluster tournent"
+              : "un agent du cluster tourne"
+          } sur du matériel que l'IaC ne connaît pas.`
+        : "")
+    : "");
 ---
 
 <figure class="live-arch">
   <div class="diagram-wrap">
-    <svg viewBox="0 0 760 1000" role="img" aria-label={ariaLabel}>
+    <svg viewBox={`0 0 760 ${svgH}`} role="img" aria-label={ariaLabel}>
       <defs>
         <marker id="la-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
@@ -278,7 +397,7 @@ const ariaLabel =
           <text x="122" y="930" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">domotique · hors IaC</text>
         </a>
       )}
-      <text x="64" y="955" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — présents seulement parce que l'IaC les référence</text>
+      <text x="64" y="955" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — dessinés parce que l'IaC les référence, donc cliquables</text>
 
       <!-- AWS -->
       <rect x="490" y="620" width="230" height="360" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
@@ -298,12 +417,46 @@ const ariaLabel =
       </g>
       <text x="508" y="770" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">sauvegardes · pipelines ·</text>
       <text x="508" y="784" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">le blog lui-même</text>
+
+      <!-- ============ le reste du parc ============
+           Ce que le parc contient et qu'aucun repo ne déclare. Pointillés
+           comme les autres boîtes hors IaC, mais sans nœud de topologie :
+           il n'y a rien à allumer ni de source à ouvrir — c'est justement
+           ce que la bande raconte. (Décoratif : aucune donnée topologique,
+           donc ni data-node ni data-nodes.) -->
+      {fleetExtras.length > 0 && (
+        <g>
+          <path d={`M250,980 L250,${F_TOP}`} fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
+          <rect x="40" y={F_TOP} width="680" height={fleetBottom - F_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" stroke-dasharray="4 3" />
+          <text x="58" y={F_TOP + 26} font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">le reste du parc — {fleetUnits} appareils, zéro ligne d'IaC</text>
+          <text x="58" y={F_TOP + 43} font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">bien branchés, jamais déclarés : rien à allumer, aucune source à ouvrir</text>
+          {fleetBands.map((band) => (
+            <g>
+              <text x="58" y={band.items[0].y - 6} font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{band.label} — {band.items.length}</text>
+              {band.items.map(({ d, x, y }) => (
+                <g>
+                  <title>{d.name} — {d.role ?? d.class}</title>
+                  <rect x={x} y={y} width={F_CHIP_W} height={F_CHIP_H} rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
+                  <text x={x + F_CHIP_W / 2} y={y + 13} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{d.count && d.count > 1 ? `${d.name} ×${d.count}` : d.name}</text>
+                  <text x={x + F_CHIP_W / 2} y={y + 24} text-anchor="middle" font-family="var(--font-mono)" font-size="7.5" fill="var(--text-faint)">{CLASS_FR[d.class] ?? d.class}</text>
+                </g>
+              ))}
+            </g>
+          ))}
+          {carriers.map((c, i) => (
+            <text x="58" y={fleetBottom + 18 + i * 14} font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">↑ {c.d.name} n'est déclaré nulle part et porte pourtant {c.carried.join(", ")} — le cluster déborde de son IaC.</text>
+          ))}
+        </g>
+      )}
     </svg>
   </div>
   <figcaption>
     La forme du système — générée des mêmes données que l'inventaire
     ci-dessous, et cliquable comme lui : une boîte allume ce qui en dépend,
     ici et dans l'inventaire; un deuxième clic ouvre son fichier source.
+    {fleetExtras.length > 0 &&
+      " La bande du bas, elle, ne clique pas : c'est le reste du parc, qui " +
+        "existe, qui tire du courant, et qu'aucun commit n'a jamais vu passer."}
   </figcaption>
 </figure>
 

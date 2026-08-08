@@ -8,12 +8,21 @@
 // the racks is written by hand, which is the point — the SVG this replaced
 // had drifted to showing a machine that no longer existed.
 //
-// Two rules the data imposes, and the drawing must not break:
+// Three rules the data imposes, and the drawing must not break:
 //   * `rackOrder` is a STACKING order, not a U position. The source records
 //     no U positions, so rows are evenly spaced and no U scale is drawn.
-//     The rack's TOTAL height (racks[].units) is known and may be labelled.
+//     The rack's TOTAL height (racks[].units) is known and may be WRITTEN,
+//     but it is not drawn to scale — a 42U frame scaled honestly would be
+//     mostly empty, and empty frame reads as "empty slot", which is a claim
+//     the data cannot back.
 //   * A VM or BMC is INSIDE a machine, not beside it: `hostedBy` nests it
 //     as a chip in its host's row rather than giving it a shelf of its own.
+//     A hosted box may or may not carry its host's `location` (the seed
+//     dropped it from the VMs on 2026-08-08), so the rack of a hosted box
+//     is resolved through its host, never assumed.
+//   * `power` is the whole reason a rack picture beats a list: it answers
+//     "what dies with which onduleur". It gets its own rail on the right
+//     of each rack, not a scrap at the end of a truncated line.
 //
 // Palette: this site is monochrome on purpose, so "colour by network" means
 // the existing grayscale accents, not new hues.
@@ -37,22 +46,30 @@ type Rack = { units?: number; kind?: string };
 
 const devices = (fleet.devices ?? []) as Device[];
 const racks = ((fleet as any).racks ?? {}) as Record<string, Rack>;
+const byName = new Map<string, Device>(devices.map((d) => [d.name, d]));
 
+// a row is a device that HAS a rackOrder: that is what "occupies a unit of
+// shelf" means here. Everything else is either nested or not in a rack.
 const inRack = (loc: string) =>
   devices
     .filter((d) => d.location === loc && typeof d.rackOrder === "number")
-    .sort((a, b) => (a.rackOrder ?? 99) - (b.rackOrder ?? 99));
+    .sort((a, b) => (a.rackOrder ?? 0) - (b.rackOrder ?? 0));
+
+// where a box lives: its own location, or — for a VM/BMC that carries none
+// — the location of the machine it runs inside.
+const rackOf = (d: Device): string | undefined =>
+  d.location ?? (d.hostedBy ? byName.get(d.hostedBy)?.location : undefined);
 
 const hostedOn = (name: string) =>
-  devices.filter((d) => d.hostedBy === name);
+  devices.filter((d) => d.hostedBy === name && typeof d.rackOrder !== "number");
 
-// hosted gear whose host is not itself a row (or that names no host) still
-// has to be accounted for, or the drawing would quietly lose it
+// hosted gear that belongs to this rack but whose host is not itself a row
+// still has to be counted, or the drawing quietly loses hardware
 const orphanHosted = (loc: string, rows: Device[]) =>
   devices.filter(
     (d) =>
-      d.location === loc &&
       typeof d.rackOrder !== "number" &&
+      rackOf(d) === loc &&
       !(d.hostedBy && rows.some((r) => r.name === d.hostedBy)),
   );
 
@@ -71,173 +88,364 @@ const NETWORK_LABEL: Record<string, string> = {
   aws: "hors site",
 };
 
-const RACKS = [
-  { key: "wall-rack", x: 20, title: "baie murale — sous-sol" },
-  { key: "rolling-rack", x: 390, title: "baie roulante — bureau" },
-];
-
-const ROW_H = 38;
-const ROW_GAP = 5;
-const CHIP_H = 14;
-const HEAD = 74;
-const RAIL = 9;
-
-const rowsFor = (key: string) => inRack(key);
-const rowHeight = (d: Device) =>
-  ROW_H + (hostedOn(d.name).length > 0 ? CHIP_H + 3 : 0);
-const rackHeight = (key: string) => {
-  const rows = rowsFor(key);
-  const orphans = orphanHosted(key, rows).length;
-  return (
-    HEAD +
-    rows.reduce((h, d) => h + rowHeight(d) + ROW_GAP, 0) +
-    (orphans > 0 ? 18 : 0) +
-    14
-  );
+// the only hand-written strings left, and they name the rack key, nothing
+// else: no room, no floor, no fact the seed does not carry.
+const RACK_TITLE: Record<string, string> = {
+  "wall-rack": "baie murale",
+  "rolling-rack": "baie roulante",
 };
-const height = Math.max(...RACKS.map((r) => rackHeight(r.key)), 120) + 34;
 
-const hasRacks = RACKS.some((r) => rowsFor(r.key).length > 0);
+// geometry
+const TOP = 20;
+const RACK_W = 350;
+const RACK_GAP = 20;
+const HEAD = 54; // header band inside the frame, above the first row
+const PAD_B = 14;
+const ROW_GAP = 5;
+const RAIL = 9;
+const BOX_X = 8 + RAIL + 4; // left edge of a row box, relative to the rack
+const GUT_W = 34; // power gutter, between the row boxes and the right rail
+const BOX_R = RACK_W - 8 - RAIL - 4 - GUT_W; // right edge of a row box
+const BOX_W = BOX_R - BOX_X;
+const TEXT_X = BOX_X + 14;
+const CHIP_W = 70;
+const CHIP_STEP = 74;
+const CHIP_H = 14;
+const CHIPS_PER_LINE = Math.max(1, Math.floor((BOX_W - 14) / CHIP_STEP));
+const DETAIL_CH = Math.floor((BOX_R - 8 - TEXT_X) / 4.8); // 8px monospace
+const CHIP_CH = Math.floor((CHIP_W - 8) / 4.5); // 7.5px monospace
+const DETAIL_LINES = 3;
+
+const wrap = (text: string, maxChars: number, maxLines: number) => {
+  const out: string[] = [];
+  let cur = "";
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const next = cur ? `${cur} ${word}` : word;
+    if (next.length <= maxChars) {
+      cur = next;
+      continue;
+    }
+    if (cur) out.push(cur);
+    if (out.length === maxLines) {
+      cur = "";
+      break;
+    }
+    cur = word;
+  }
+  if (cur && out.length < maxLines) out.push(cur);
+  const lines = out
+    .slice(0, maxLines)
+    .map((l) => (l.length > maxChars ? `${l.slice(0, maxChars - 1)}…` : l));
+  if (lines.length && lines.join(" ").length < text.trim().length) {
+    const last = lines[lines.length - 1];
+    lines[lines.length - 1] =
+      last.length >= maxChars ? `${last.slice(0, maxChars - 1)}…` : `${last}…`;
+  }
+  return lines;
+};
+
+const clip = (s: string, n: number) =>
+  s.length > n ? `${s.slice(0, n - 1)}…` : s;
+
 const label = (d: Device) =>
   d.count && d.count > 1 ? `${d.name} ×${d.count}` : d.name;
 
-// networks actually present, so the legend never invents an entry
+// right of the name line: the real hardware, and only when the seed names
+// it. `class` is a bucket, not a model — printing it there would dress a
+// taxonomy up as a nameplate, so a box the seed never modelled stays blank.
+const hardware = (d: Device) => d.model ?? d.spec ?? "";
+// under it: the role, plus the spec when the model already took the slot
+const detailOf = (d: Device) =>
+  [d.role, d.model && d.spec ? d.spec : null].filter(Boolean).join(" · ");
+const detailLines = (d: Device) => wrap(detailOf(d), DETAIL_CH, DETAIL_LINES);
+
+const chipLines = (d: Device) =>
+  Math.ceil(hostedOn(d.name).length / CHIPS_PER_LINE);
+const rowHeight = (d: Device) =>
+  20 +
+  detailLines(d).length * 10 +
+  6 +
+  chipLines(d) * (CHIP_H + 3) +
+  (chipLines(d) ? 2 : 0);
+
+const rowsFor = (key: string) => inRack(key);
+
+const layoutRows = (key: string) => {
+  let y = TOP + HEAD;
+  return rowsFor(key).map((d) => {
+    const top = y;
+    const h = rowHeight(d);
+    y += h + ROW_GAP;
+    return { d, top, h };
+  });
+};
+
+const bodyBottom = (key: string) => {
+  const laid = layoutRows(key);
+  return laid.length ? laid[laid.length - 1].top + laid[laid.length - 1].h : TOP + HEAD;
+};
+const frameHeight = (key: string) =>
+  bodyBottom(key) - TOP + (orphanHosted(key, rowsFor(key)).length ? 16 : 0) + PAD_B;
+
+// which onduleur holds which rows, read straight off `power`
+const powerFeeds = (key: string) => {
+  const rows = rowsFor(key);
+  const names = [...new Set(rows.map((r) => r.power).filter(Boolean))] as string[];
+  return names.map((name) => ({
+    name,
+    fed: rows.filter((r) => r.power === name),
+    source: rows.find((r) => r.name === name),
+  }));
+};
+
+const RACKS = Object.keys(racks)
+  .filter((key) => rowsFor(key).length > 0)
+  .map((key, i) => ({
+    key,
+    x: TOP + i * (RACK_W + RACK_GAP),
+    title: RACK_TITLE[key] ?? key,
+  }));
+
+const hasRacks = RACKS.length > 0;
+const anyPower = RACKS.some((r) => powerFeeds(r.key).length > 0);
+
+// networks actually drawn, so the legend never invents an entry
 const shownNetworks = [
   ...new Set(
-    RACKS.flatMap((r) => rowsFor(r.key)).map((d) => d.network ?? ""),
+    RACKS.flatMap((r) =>
+      rowsFor(r.key).flatMap((d) => [d, ...hostedOn(d.name)]),
+    ).map((d) => d.network ?? ""),
   ),
 ].filter((n) => n in NETWORK_LABEL);
+
+const legend = [
+  ...shownNetworks.map((n) => ({
+    tone: NETWORK_TONE[n],
+    text: NETWORK_LABEL[n],
+    power: false,
+  })),
+  ...(anyPower
+    ? [{ tone: "var(--text-faint)", text: "rail d'alimentation", power: true }]
+    : []),
+];
+let legendX = TOP;
+const legendItems = legend.map((item) => {
+  const at = legendX;
+  legendX += 16 + item.text.length * 5.2;
+  return { ...item, x: at };
+});
+
+// hosted gear the seed places in no rack at all — neither its own location
+// nor its host's. Zero tonight; drawn if that ever stops being true, because
+// a machine falling out of both racks must not fall out of the picture.
+const unplaced = devices.filter(
+  (d) =>
+    typeof d.rackOrder !== "number" &&
+    d.hostedBy &&
+    !(rackOf(d) && rackOf(d)! in racks),
+);
+
+const width = TOP * 2 + RACKS.length * RACK_W + Math.max(0, RACKS.length - 1) * RACK_GAP;
+const LEGEND_H = 30;
+const FOOT_H = unplaced.length ? 14 : 0;
+const height =
+  TOP + Math.max(...RACKS.map((r) => frameHeight(r.key)), 120) + LEGEND_H + FOOT_H;
+const legendY = height - FOOT_H - 10;
 
 const ariaLabel = hasRacks
   ? RACKS.map((r) => {
       const rows = rowsFor(r.key);
-      const u = racks[r.key]?.units;
+      const meta = racks[r.key] ?? {};
+      const feeds = powerFeeds(r.key);
       return (
-        `${r.title} : ${rows.length} équipements${u ? `, châssis de ${u}U` : ""}. ` +
+        `${r.title}${meta.kind ? ` (${meta.kind})` : ""} : ${rows.length} équipements` +
+        `${meta.units ? `, châssis de ${meta.units}U au total` : ""}. ` +
         rows
+          .map((d) => {
+            const hosted = hostedOn(d.name);
+            return [
+              label(d),
+              hardware(d),
+              detailOf(d),
+              d.power ? `alimenté par ${d.power}` : "",
+              hosted.length ? `contient ${hosted.map((h) => h.name).join(", ")}` : "",
+            ]
+              .filter(Boolean)
+              .join(", ");
+          })
+          .join(". ") +
+        ". " +
+        feeds
           .map(
-            (d) =>
-              `${label(d)}, ${d.model ?? d.spec ?? d.class}` +
-              (d.role ? `, ${d.role}` : "") +
-              (hostedOn(d.name).length
-                ? `, héberge ${hostedOn(d.name).map((h) => h.name).join(", ")}`
-                : ""),
+            (f) =>
+              `${f.name} tient ${f.fed.length} rangée${f.fed.length > 1 ? "s" : ""} de cette baie` +
+              `${f.source ? "" : ", et n'est pas lui-même une rangée d'ici"}.`,
           )
-          .join(". ")
+          .join(" ")
       );
     }).join(" ") +
-    " L'ordre est celui de l'inventaire, pas une position en U."
-  : "Élévation des baies — l'inventaire matériel n'a pas encore été généré.";
+    " Les rangées suivent l'ordre de l'inventaire, pas une position en U, et aucune échelle en U n'est dessinée."
+  : "Élévation des baies — l'inventaire matériel ne place aucun équipement en baie.";
 ---
 
 {
   hasRacks && (
     <figure class="racks">
       <div class="diagram-wrap">
-        <svg viewBox={`0 0 760 ${height}`} role="img" aria-label={ariaLabel}>
+        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel}>
           {RACKS.map(({ key, x, title }) => {
-            const rows = rowsFor(key);
+            const laid = layoutRows(key);
+            const rows = laid.map((l) => l.d);
             const meta = racks[key] ?? {};
             const orphans = orphanHosted(key, rows);
-            let y = HEAD;
+            const feeds = powerFeeds(key);
+            const fh = frameHeight(key);
             return (
               <Fragment>
                 {/* the enclosure: frame + two mounting rails. The rails are
                     plain strips on purpose — notches would read as U marks,
                     and the data does not know U positions. */}
-                <rect x={x} y="20" width="350" height={rackHeight(key)} rx="4"
+                <rect x={x} y={TOP} width={RACK_W} height={fh} rx="4"
                       fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
-                <rect x={x + 8} y={HEAD - 8} width={RAIL} height={rackHeight(key) - HEAD - 4}
+                <rect x={x + 8} y={TOP + HEAD - 8} width={RAIL} height={fh - HEAD}
                       fill="var(--panel)" stroke="var(--panel-border)" stroke-width="0.75" />
-                <rect x={x + 350 - 8 - RAIL} y={HEAD - 8} width={RAIL} height={rackHeight(key) - HEAD - 4}
+                <rect x={x + RACK_W - 8 - RAIL} y={TOP + HEAD - 8} width={RAIL} height={fh - HEAD}
                       fill="var(--panel)" stroke="var(--panel-border)" stroke-width="0.75" />
 
-                <text x={x + 16} y="42" font-family="var(--font-mono)" font-size="11.5" fill="var(--text-muted)">
+                <text x={x + 16} y={TOP + 22} font-family="var(--font-mono)" font-size="11.5" fill="var(--text-muted)">
                   {title}
                 </text>
-                <text x={x + 16} y="58" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">
+                <text x={x + 16} y={TOP + 38} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">
                   {meta.units ? `châssis ${meta.units}U` : "châssis"}
                   {meta.kind ? ` · ${meta.kind}` : ""} · {rows.length} équipements
                 </text>
 
-                {rows.map((d) => {
-                  const hosted = hostedOn(d.name);
-                  const top = y;
-                  y += rowHeight(d) + ROW_GAP;
+                {/* power rails: one per onduleur named by a `power` field,
+                    ticked into every row it holds up and closed on the
+                    onduleur's own row when that row is in this rack. */}
+                {feeds.map((f, fi) => {
+                  const railX = x + BOX_R + 10 + fi * 11;
+                  const tied = laid.filter(
+                    (l) => l.d.power === f.name || l.d.name === f.name,
+                  );
+                  const ys = tied.map((l) => l.top + 12);
+                  const y1 = Math.min(...ys);
+                  const y2 = Math.max(...ys);
+                  const srcY = laid.find((l) => l.d.name === f.name)?.top;
                   return (
                     <Fragment>
-                      <rect x={x + 8 + RAIL + 4} y={top} width={350 - 2 * (8 + RAIL) - 8}
-                            height={rowHeight(d)} rx="3" fill="var(--panel)"
-                            stroke="var(--panel-border)"
+                      <line x1={railX} y1={y1} x2={railX} y2={y2}
+                            stroke="var(--text-faint)" stroke-width="1" />
+                      {tied.map((l) => (
+                        <line x1={x + BOX_R} y1={l.top + 12} x2={railX} y2={l.top + 12}
+                              stroke="var(--text-faint)" stroke-width="0.75" />
+                      ))}
+                      {srcY !== undefined && (
+                        <rect x={railX - 3} y={srcY + 9} width="6" height="6"
+                              fill="var(--text-faint)" />
+                      )}
+                      <text x={railX + 8} y={(y1 + y2) / 2} text-anchor="middle"
+                            transform={`rotate(-90 ${railX + 8} ${(y1 + y2) / 2})`}
+                            font-family="var(--font-mono)" font-size="7.5" fill="var(--text-faint)">
+                        {f.name}
+                      </text>
+                    </Fragment>
+                  );
+                })}
+
+                {laid.map(({ d, top, h }) => {
+                  const hosted = hostedOn(d.name);
+                  const lines = detailLines(d);
+                  const chipTop = top + 20 + lines.length * 10 + 4;
+                  return (
+                    <Fragment>
+                      <rect x={x + BOX_X} y={top} width={BOX_W} height={h} rx="3"
+                            fill="var(--panel)" stroke="var(--panel-border)"
                             stroke-dasharray={d.iacDeclared ? undefined : "4 3"} />
                       {/* network tone: a bar, not a fill — readable without
                           asking the reader to decode a background shade */}
-                      <rect x={x + 8 + RAIL + 4} y={top} width="3" height={rowHeight(d)} fill={tone(d)} />
-                      <text x={x + 8 + RAIL + 14} y={top + 15} font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">
+                      <rect x={x + BOX_X} y={top} width="3" height={h} fill={tone(d)} />
+                      <text x={x + TEXT_X} y={top + 14} font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">
                         {label(d)}
                       </text>
-                      <text x={x + 350 - 8 - RAIL - 8} y={top + 15} text-anchor="end"
+                      <text x={x + BOX_R - 8} y={top + 14} text-anchor="end"
                             font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">
-                        {d.model ?? d.spec ?? d.class}
+                        {hardware(d)}
                       </text>
-                      {(d.role || d.spec || d.power) && (
-                        <text x={x + 8 + RAIL + 14} y={top + 27} font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">
-                          {[
-                            d.role,
-                            d.model && d.spec ? d.spec : null,
-                            d.power,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")
-                            .slice(0, 62)}
+                      {lines.map((line, li) => (
+                        <text x={x + TEXT_X} y={top + 26 + li * 10}
+                              font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">
+                          {line}
                         </text>
-                      )}
-                      {hosted.map((h, hi) => (
-                        <Fragment>
-                          <rect x={x + 8 + RAIL + 14 + hi * 74} y={top + ROW_H - 5}
-                                width="70" height={CHIP_H} rx="2" fill="none"
-                                stroke="var(--panel-border)" stroke-dasharray="2 2" />
-                          <text x={x + 8 + RAIL + 18 + hi * 74} y={top + ROW_H + 5}
-                                font-family="var(--font-mono)" font-size="7.5" fill="var(--text-faint)">
-                            {h.name.length > 11 ? h.name.slice(0, 10) + "…" : h.name}
-                          </text>
-                        </Fragment>
                       ))}
+                      {hosted.map((hd, hi) => {
+                        const cx = x + TEXT_X + (hi % CHIPS_PER_LINE) * CHIP_STEP;
+                        const cy = chipTop + Math.floor(hi / CHIPS_PER_LINE) * (CHIP_H + 3);
+                        return (
+                          <Fragment>
+                            <rect x={cx} y={cy} width={CHIP_W} height={CHIP_H} rx="2"
+                                  fill="none" stroke="var(--panel-border)" stroke-dasharray="2 2" />
+                            <rect x={cx} y={cy} width="2" height={CHIP_H} fill={tone(hd)} />
+                            <text x={cx + 6} y={cy + 10} font-family="var(--font-mono)"
+                                  font-size="7.5" fill="var(--text-faint)">
+                              {clip(hd.name, CHIP_CH)}
+                            </text>
+                          </Fragment>
+                        );
+                      })}
                     </Fragment>
                   );
                 })}
 
                 {orphans.length > 0 && (
-                  <text x={x + 16} y={y + 8} font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">
-                    + {orphans.length} hébergés sans hôte nommé
+                  <text x={x + TEXT_X} y={bodyBottom(key) + 12} font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">
+                    + {orphans.length} hébergé{orphans.length > 1 ? "s" : ""} dans cette baie sans rangée hôte : {orphans.map((o) => o.name).join(", ")}
                   </text>
                 )}
               </Fragment>
             );
           })}
 
-          {/* legend, built from the networks actually drawn */}
-          {shownNetworks.map((n, i) => (
+          {/* legend, built from what is actually drawn */}
+          {legendItems.map((item) => (
             <Fragment>
-              <rect x={20 + i * 150} y={height - 20} width="3" height="10" fill={NETWORK_TONE[n]} />
-              <text x={28 + i * 150} y={height - 11} font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">
-                {NETWORK_LABEL[n]}
+              {item.power ? (
+                <Fragment>
+                  <line x1={item.x + 1} y1={legendY - 10} x2={item.x + 1} y2={legendY}
+                        stroke="var(--text-faint)" stroke-width="1" />
+                  <rect x={item.x - 2} y={legendY - 6} width="6" height="6" fill="var(--text-faint)" />
+                </Fragment>
+              ) : (
+                <rect x={item.x} y={legendY - 9} width="3" height="10" fill={item.tone} />
+              )}
+              <text x={item.x + 10} y={legendY} font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">
+                {item.text}
               </text>
             </Fragment>
           ))}
+
+          {unplaced.length > 0 && (
+            <text x={TOP} y={height - 4} font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">
+              {unplaced.length} machine{unplaced.length > 1 ? "s" : ""} hébergée{unplaced.length > 1 ? "s" : ""} dont l'hôte n'est dans aucune baie : {unplaced.map((u) => u.name).join(", ")}
+            </text>
+          )}
         </svg>
       </div>
       <figcaption>
-        Les deux baies, relevées chaque nuit dans l'inventaire du matériel.
+        {RACKS.length > 1
+          ? "Les baies du parc, relevées chaque nuit dans l'inventaire du matériel."
+          : "La baie du parc, relevée chaque nuit dans l'inventaire du matériel."}
         Trait plein pour ce que les dépôts déclarent, pointillé pour le
         reste — le matériel que personne n'a jamais écrit nulle part. La
         barre de gauche donne le réseau, les puces en pointillé sont les
         machines virtuelles et les contrôleurs qui vivent <em>dans</em> la
         machine au-dessus d'elles, et le modèle réel est écrit à droite de
-        chaque rangée. Le châssis est à sa vraie hauteur, mais
-        les rangées sont dans l'ordre de l'inventaire et pas à leur position
-        en U : le document source ne note pas les U, alors je ne fais pas
-        semblant de les connaître.
+        chaque rangée. À droite, le rail vertical relie chaque rangée à
+        l'onduleur qui la tient : le carré plein marque l'onduleur lui-même,
+        et tout ce qui pend au même trait tombe avec lui. La hauteur totale
+        du châssis est écrite en en-tête, mais les rangées sont dans l'ordre
+        de l'inventaire et pas à leur position en U : le document source ne
+        note pas les U, alors je ne fais pas semblant de les connaître.
         Envie de voir la vraie chose plutôt que mes rectangles ?
         <a href="/blog/un-tiroir-1u-pour-mes-trois-raspberry-pi/">
           l'article du tiroir 1U

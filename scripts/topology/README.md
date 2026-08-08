@@ -19,7 +19,8 @@ Two files feed the nightly author, and they answer different questions:
   "generated": "2026-08-08T09:00:00+00:00",
   "devices": [
     { "name": "gpu-01", "class": "server", "network": "vlan10",
-      "role": "agent k3s, GPU", "iacDeclared": true }
+      "role": "agent k3s, GPU", "iacDeclared": true,
+      "location": "rolling-rack", "rackOrder": 1, "power": "ups-03" }
   ]
 }
 ```
@@ -32,7 +33,12 @@ class** — household appliances are emitted one entry per family with a
 living room. **No addresses of any kind** — a diagram does not need them,
 and their absence removes the largest class of leak by construction.
 `iacDeclared` says whether the device also appears in `architecture.json`,
-so the author does not draw it twice.
+so the author does not draw it twice. `location` (`wall-rack`,
+`rolling-rack`, `not-racked`, `off-site`) and `rackOrder` (1 = topmost)
+place the racked gear; `rackOrder` is a stacking order, not a U position,
+because the source document does not record U positions. `power` names the
+UPS entry feeding the box — that field is what lets a drawing show the
+survivor island.
 
 An empty `devices` array is valid and means "the seed has not run yet" —
 the site must build either way.

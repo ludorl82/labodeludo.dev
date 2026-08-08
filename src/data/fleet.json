@@ -1,264 +1,339 @@
 {
   "devices": [
     {
-      "class": "server",
-      "iacDeclared": true,
-      "name": "gpu-01",
-      "network": "vlan10",
-      "role": "agent k3s, GPU, hôte de machines virtuelles"
-    },
-    {
-      "class": "server",
-      "iacDeclared": true,
-      "name": "gpu-02",
-      "network": "vlan10",
-      "role": "agent k3s dédié, GPU, enregistreur vidéo"
-    },
-    {
-      "class": "server",
-      "iacDeclared": true,
-      "name": "srv-01",
-      "network": "vlan10",
-      "role": "agent k3s, extraction Blu-ray, hôte de machines virtuelles"
-    },
-    {
-      "class": "server",
-      "iacDeclared": false,
-      "name": "hyperv-host",
-      "network": "vlan10",
-      "role": "poste Windows, GPU, hôte de machines virtuelles, modèle de langage local"
-    },
-    {
-      "class": "sbc",
-      "iacDeclared": true,
-      "name": "pi-01",
-      "network": "vlan10",
-      "role": "agent k3s, arm64"
-    },
-    {
-      "class": "sbc",
-      "iacDeclared": true,
-      "name": "pi-02",
-      "network": "vlan10",
-      "role": "agent k3s, arm64, rebond d'administration et récupération de secrets"
-    },
-    {
-      "class": "sbc",
-      "iacDeclared": true,
-      "name": "pi-03",
-      "network": "vlan10",
-      "role": "registre de conteneurs privé, hors cluster"
-    },
-    {
-      "class": "sbc",
-      "iacDeclared": false,
-      "name": "ha-01",
-      "network": "vlan10",
-      "role": "hub domotique, API locale"
-    },
-    {
-      "class": "vm",
-      "iacDeclared": true,
-      "name": "vm-01",
-      "network": "vlan10",
-      "role": "agent k3s, machine virtuelle"
-    },
-    {
-      "class": "vm",
-      "iacDeclared": true,
-      "name": "vm-02",
-      "network": "vlan10",
-      "role": "agent k3s, machine virtuelle"
-    },
-    {
-      "class": "vm",
-      "iacDeclared": true,
-      "name": "vm-03",
-      "network": "vlan10",
-      "role": "agent k3s, machine virtuelle"
-    },
-    {
-      "class": "vm",
-      "iacDeclared": true,
-      "name": "console-vm",
-      "network": "vlan10",
-      "role": "console d'administration, hors cluster"
-    },
-    {
-      "class": "nas",
-      "iacDeclared": false,
-      "name": "nas",
-      "network": "vlan10",
-      "role": "stockage réseau, export NFS du cluster, médiathèque"
-    },
-    {
-      "class": "cloud-vm",
-      "iacDeclared": true,
-      "name": "cloud-01",
-      "network": "aws",
-      "role": "unique plan de contrôle k3s, extrémité du tunnel chiffré"
-    },
-    {
       "class": "router",
       "iacDeclared": false,
+      "location": "wall-rack",
       "name": "router",
       "network": "vlan10",
-      "role": "pare-feu, routage inter-VLAN, DNS privé, tunnel chiffré sortant"
+      "rackOrder": 1,
+      "role": "pare-feu et routeur de périphérie, terminaison du tunnel chiffré"
     },
     {
       "class": "switch",
       "iacDeclared": false,
+      "location": "wall-rack",
       "name": "switch-01",
       "network": "out-of-band",
-      "role": "commutateur 48 ports non administrable, baie réseau"
-    },
-    {
-      "class": "switch",
-      "iacDeclared": false,
-      "name": "switch-02",
-      "network": "out-of-band",
-      "role": "commutateur 24 ports non administrable, baie de calcul"
+      "rackOrder": 2,
+      "role": "commutateur non administrable, 48 ports"
     },
     {
       "class": "access-point",
       "iacDeclared": false,
+      "location": "wall-rack",
       "name": "ap-01",
       "network": "vlan50",
-      "role": "point d'accès Wi-Fi bi-radio, alimenté par PoE"
+      "rackOrder": 3,
+      "role": "point d'accès Wi-Fi bi-bande, alimenté par PoE"
     },
     {
-      "class": "bmc",
-      "iacDeclared": false,
-      "name": "bmc-01",
-      "network": "out-of-band",
-      "role": "gestion hors-bande d'un hôte de calcul"
+      "class": "sbc",
+      "iacDeclared": true,
+      "location": "wall-rack",
+      "name": "pi-03",
+      "network": "vlan10",
+      "rackOrder": 4,
+      "role": "registre de conteneurs privé, hors cluster"
     },
     {
-      "class": "bmc",
-      "iacDeclared": false,
-      "name": "bmc-02",
-      "network": "out-of-band",
-      "role": "gestion hors-bande d'un hôte de calcul"
+      "class": "sbc",
+      "iacDeclared": true,
+      "location": "wall-rack",
+      "name": "pi-01",
+      "network": "vlan10",
+      "rackOrder": 5,
+      "role": "agent k3s"
     },
     {
-      "class": "bmc",
-      "iacDeclared": false,
-      "name": "bmc-03",
-      "network": "out-of-band",
-      "role": "gestion hors-bande d'un hôte de calcul"
+      "class": "sbc",
+      "iacDeclared": true,
+      "location": "wall-rack",
+      "name": "pi-02",
+      "network": "vlan10",
+      "rackOrder": 6,
+      "role": "agent k3s, rebond d'administration et console de secours"
     },
     {
-      "class": "bmc",
+      "class": "sbc",
       "iacDeclared": false,
-      "name": "bmc-04",
-      "network": "out-of-band",
-      "role": "gestion hors-bande d'un hôte de calcul"
+      "location": "wall-rack",
+      "name": "ha-01",
+      "network": "vlan10",
+      "rackOrder": 7,
+      "role": "contrôleur domotique, mono-rattaché"
+    },
+    {
+      "class": "domotique",
+      "count": 1,
+      "iacDeclared": false,
+      "location": "wall-rack",
+      "name": "hub-energie",
+      "network": "vlan50",
+      "rackOrder": 8,
+      "role": "concentrateur de suivi énergétique"
+    },
+    {
+      "class": "phone",
+      "iacDeclared": false,
+      "location": "wall-rack",
+      "name": "phone-01",
+      "network": "vlan50",
+      "rackOrder": 9,
+      "role": "base de téléphonie SIP"
+    },
+    {
+      "class": "nas",
+      "iacDeclared": false,
+      "location": "wall-rack",
+      "name": "nas",
+      "network": "vlan10",
+      "rackOrder": 10,
+      "role": "stockage partagé, export NFS du cluster, diffusion média"
     },
     {
       "class": "ups",
       "iacDeclared": false,
+      "location": "wall-rack",
       "name": "ups-01",
       "network": "out-of-band",
-      "role": "onduleur 1U, protection de la baie réseau"
+      "rackOrder": 11,
+      "role": "onduleur 1U de la baie murale"
     },
     {
       "class": "ups",
       "iacDeclared": false,
+      "location": "wall-rack",
       "name": "ups-02",
       "network": "out-of-band",
-      "role": "onduleur 1U, protection de la baie réseau"
+      "rackOrder": 12,
+      "role": "onduleur 1U de la baie murale"
+    },
+    {
+      "class": "server",
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "name": "gpu-01",
+      "network": "vlan10",
+      "power": "ups-03",
+      "rackOrder": 1,
+      "role": "agent k3s, GPU, hôte de virtualisation, maître de la gestion d'onduleur"
+    },
+    {
+      "class": "server",
+      "iacDeclared": false,
+      "location": "rolling-rack",
+      "name": "hyperv-host",
+      "network": "vlan10",
+      "power": "ups-03",
+      "rackOrder": 2,
+      "role": "poste Windows avec GPU, hôte de virtualisation, inférence locale"
+    },
+    {
+      "class": "server",
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "name": "gpu-02",
+      "network": "vlan10",
+      "power": "ups-03",
+      "rackOrder": 3,
+      "role": "agent k3s, GPU réservé à la vidéosurveillance et au transcodage"
+    },
+    {
+      "class": "server",
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "name": "srv-01",
+      "network": "vlan10",
+      "power": "ups-03",
+      "rackOrder": 4,
+      "role": "agent k3s, extraction de disques optiques, hôte de virtualisation"
+    },
+    {
+      "class": "switch",
+      "iacDeclared": false,
+      "location": "rolling-rack",
+      "name": "switch-02",
+      "network": "out-of-band",
+      "power": "ups-03",
+      "rackOrder": 5,
+      "role": "commutateur non administrable, 24 ports"
+    },
+    {
+      "class": "ups",
+      "iacDeclared": false,
+      "location": "rolling-rack",
+      "name": "ups-03",
+      "network": "out-of-band",
+      "rackOrder": 6,
+      "role": "onduleur tour de la baie roulante, piloté en USB par un hôte"
+    },
+    {
+      "class": "bmc",
+      "iacDeclared": false,
+      "location": "rolling-rack",
+      "name": "bmc-01",
+      "network": "out-of-band",
+      "power": "ups-03",
+      "role": "gestion hors-bande et console distante d'une machine GPU"
+    },
+    {
+      "class": "bmc",
+      "iacDeclared": false,
+      "location": "rolling-rack",
+      "name": "bmc-02",
+      "network": "out-of-band",
+      "power": "ups-03",
+      "role": "gestion hors-bande et console distante de l'hôte de virtualisation Windows"
+    },
+    {
+      "class": "bmc",
+      "iacDeclared": false,
+      "location": "rolling-rack",
+      "name": "bmc-03",
+      "network": "out-of-band",
+      "power": "ups-03",
+      "role": "gestion hors-bande et console distante d'une machine de la baie roulante"
+    },
+    {
+      "class": "bmc",
+      "iacDeclared": false,
+      "location": "rolling-rack",
+      "name": "bmc-04",
+      "network": "out-of-band",
+      "power": "ups-03",
+      "role": "gestion hors-bande et console distante d'une machine de la baie roulante"
+    },
+    {
+      "class": "vm",
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "name": "vm-01",
+      "network": "vlan10",
+      "power": "ups-03",
+      "role": "agent k3s, machine virtuelle hébergée sur une machine GPU"
+    },
+    {
+      "class": "vm",
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "name": "vm-02",
+      "network": "vlan10",
+      "power": "ups-03",
+      "role": "agent k3s, machine virtuelle hébergée dans la baie roulante"
+    },
+    {
+      "class": "vm",
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "name": "vm-03",
+      "network": "vlan10",
+      "power": "ups-03",
+      "role": "agent k3s, machine virtuelle sur l'hôte de virtualisation Windows"
+    },
+    {
+      "class": "vm",
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "name": "console-vm",
+      "network": "vlan10",
+      "power": "ups-03",
+      "role": "console d'administration du cluster, volontairement hors cluster"
+    },
+    {
+      "class": "cloud-vm",
+      "iacDeclared": true,
+      "location": "off-site",
+      "name": "cloud-01",
+      "network": "aws",
+      "role": "unique nœud du plan de contrôle k3s, terminaison du tunnel chiffré, hébergement de l'alerte"
     },
     {
       "class": "printer",
       "iacDeclared": false,
+      "location": "not-racked",
       "name": "printer-01",
       "network": "vlan50",
-      "role": "imprimante multifonction, numérisation vers le service de dépôt"
+      "role": "imprimante multifonction, numérisation vers le cluster"
     },
     {
       "class": "camera",
       "iacDeclared": false,
+      "location": "not-racked",
       "name": "cam-01",
       "network": "vlan50",
-      "role": "caméra extérieure, enregistrée par le service de vidéosurveillance"
+      "role": "caméra extérieure enregistrée par le NVR"
     },
     {
       "class": "desktop",
       "iacDeclared": false,
+      "location": "not-racked",
       "name": "desktop-01",
       "network": "vlan50",
-      "role": "poste de travail fixe"
+      "role": "poste de bureau personnel"
     },
     {
       "class": "laptop",
       "iacDeclared": false,
+      "location": "not-racked",
       "name": "laptop-01",
       "network": "vlan50",
-      "role": "ordinateur portable Windows, accès SSH par clé"
+      "role": "portable personnel"
     },
     {
       "class": "phone",
       "iacDeclared": false,
-      "name": "phone-01",
-      "network": "vlan50",
-      "role": "base de téléphonie SIP"
-    },
-    {
-      "class": "phone",
-      "iacDeclared": false,
+      "location": "not-racked",
       "name": "phone-02",
       "network": "vlan50",
-      "role": "téléphone mobile"
+      "role": "téléphone mobile personnel"
     },
     {
       "class": "domotique",
       "count": 6,
       "iacDeclared": false,
+      "location": "not-racked",
       "name": "prises-intelligentes",
       "network": "vlan50",
-      "role": "prises et blocs multiprises pilotables"
+      "role": "prises et multiprises pilotables"
     },
     {
       "class": "domotique",
       "count": 2,
       "iacDeclared": false,
+      "location": "not-racked",
       "name": "enceintes-connectees",
       "network": "vlan50",
-      "role": "enceintes vocales de salon"
+      "role": "enceintes connectées"
     },
     {
       "class": "domotique",
       "count": 1,
       "iacDeclared": false,
-      "name": "satellite-vocal",
+      "location": "not-racked",
+      "name": "satellites-vocaux",
       "network": "vlan50",
-      "role": "satellite de commande vocale, salle à manger"
+      "role": "satellite vocal de la domotique"
     },
     {
       "class": "domotique",
       "count": 1,
       "iacDeclared": false,
-      "name": "carillon-sonnette",
+      "location": "not-racked",
+      "name": "carillon-de-porte",
       "network": "vlan50",
-      "role": "carillon de sonnette relié au hub domotique"
+      "role": "carillon de sonnette relié à la domotique"
     },
     {
       "class": "domotique",
       "count": 1,
       "iacDeclared": false,
-      "name": "compteur-energie",
-      "network": "vlan50",
-      "role": "boîtier de suivi de la consommation électrique"
-    },
-    {
-      "class": "domotique",
-      "count": 1,
-      "iacDeclared": false,
+      "location": "not-racked",
       "name": "projecteur",
       "network": "vlan50",
-      "role": "projecteur Android de bureau"
+      "role": "projecteur vidéo du bureau"
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-08-08T15:18:39+00:00"
+  "generated": "2026-08-08T15:43:35+00:00"
 }

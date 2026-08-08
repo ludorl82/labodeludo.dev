@@ -54,7 +54,14 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # SHOW_LIVE_ARCH is on in production since 2026-08-08. The generated
+      # architecture and rack drawings are no longer a preview: they carry
+      # their own generation date and drift badge, so they say how fresh
+      # they are instead of pretending. Setting this to "0" hides both
+      # again without touching a page.
       - run: npm run build
+        env:
+          SHOW_LIVE_ARCH: "1"
       - env:
           AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}

@@ -7,6 +7,22 @@ snapshot clones under `snapshots/`, the labodeludo.dev checkout under
 `site/src/data/architecture.json`). You have not seen, and must not seek,
 any private repository or real infrastructure detail.
 
+## Two seeds, one drawing
+
+- `architecture.json` — what the IaC repos **declare** (nodes, edges).
+- `site/src/data/fleet.json` — what physically **exists**, including the
+  boxes no repo declares: the switch, the AP, the printer, cameras,
+  personal machines, the UPSes, the BMCs. Sanitized before it reached you;
+  it carries no addresses on purpose. `iacDeclared: true` means the device
+  is already in `architecture.json` — draw it once, not twice.
+
+The drawing should show **the whole lab**, not only its declared half. A
+device present in the fleet but absent from the IaC is not an error to
+hide: draw it, muted/dashed like the existing hors-IaC boxes, because the
+gap between what is declared and what exists is part of the story. If
+`fleet.json` has an empty `devices` array the seed has not run yet — draw
+from `architecture.json` alone and say nothing about it.
+
 ## Your one deliverable
 
 Update `site/src/components/LiveArchDiagram.astro` — and ONLY that file —

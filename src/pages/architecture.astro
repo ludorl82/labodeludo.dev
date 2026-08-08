@@ -1,12 +1,28 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ArchGenerated from "../components/ArchGenerated.astro";
+import FrigateDetectorDiagram from "../components/FrigateDetectorDiagram.astro";
+import CloudflareTunnelDiagram from "../components/CloudflareTunnelDiagram.astro";
+import WebdavProxyDiagram from "../components/WebdavProxyDiagram.astro";
+import WireGuardFtpDiagram from "../components/WireGuardFtpDiagram.astro";
+import VoiceAssistantDiagram from "../components/VoiceAssistantDiagram.astro";
+import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
+import BastionConsoleSplitDiagram from "../components/BastionConsoleSplitDiagram.astro";
+import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
+import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
+import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
+import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
 
-// This page is ONE drawing, authored every night by a headless Claude Code
-// session from seeds it may read (the four public IaC snapshots, and the
-// sanitized fleet list) — never by hand. The hand-drawn overview that used
-// to live here is gone: a drawing maintained by discipline is wrong the
-// moment something changes, and that was the whole point of the exercise.
+// Two halves, on purpose. The top is ONE drawing, authored every night by
+// a headless Claude Code session from seeds it may read (the four public
+// IaC snapshots and the sanitized fleet list) — never by hand; the
+// hand-drawn OVERVIEW that used to live here is gone, because a whole-lab
+// drawing maintained by discipline is wrong the moment anything changes.
+//
+// The bottom is the opposite case and that is why it survives: each of
+// these eleven diagrams explains one MECHANISM, was drawn for its article,
+// and describes a decision rather than an inventory. Nothing generated can
+// replace them, and they do not rot when a host is renamed.
 //
 // Still gated: the generated view renders only when the build sets
 // SHOW_LIVE_ARCH=1 (staging + the nightly job). Prod gets the honest note
@@ -44,6 +60,70 @@ const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
       </p>
     )
   }
+
+  <section class="details">
+    <h2># les pièces, en détail</h2>
+    <p class="section-note">
+      Onze schémas rapprochés, dessinés à la main pour leurs articles : ce
+      que le schéma généré ne peut pas raconter, parce qu'ils expliquent un
+      mécanisme plutôt qu'un inventaire.
+    </p>
+
+  <section class="detail">
+    <h2>Détail : détection vidéo (Frigate)</h2>
+    <FrigateDetectorDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : accès public (tunnel Cloudflare)</h2>
+    <CloudflareTunnelDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : requête WebDAV (proxy et en-tête Destination)</h2>
+    <WebdavProxyDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : accès privé (tunnel WireGuard)</h2>
+    <WireGuardFtpDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : pipeline de numérisation (SFTP → S3 → Lambda → Drive)</h2>
+    <ScanPipelineDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : assistant vocal (Home Assistant + Ollama)</h2>
+    <VoiceAssistantDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : console conteneurisée (bastion)</h2>
+    <ConsoleLayersDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : la séparation bastion / console</h2>
+    <BastionConsoleSplitDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : grappe conteneurs (k3s)</h2>
+    <K3sClusterDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : stockage NFS de la grappe (chemin d'export)</h2>
+    <NfsShareMoveDiagram context="architecture" />
+  </section>
+
+    <section class="detail">
+      <h2>Détail : l'île du survivant (reprise après panne électrique)</h2>
+      <SurvivorIslandDiagram context="architecture" />
+    </section>
+  </section>
 </BaseLayout>
 
 <style>
@@ -78,5 +158,37 @@ const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
     max-width: var(--measure);
     border-left: 2px solid var(--panel-border);
     padding-left: 1rem;
+  }
+
+  .details {
+    margin: 4rem 0 0;
+    border-top: 1px solid var(--panel-border);
+    padding-top: 2rem;
+  }
+
+  .details > h2 {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: normal;
+    color: var(--text-muted);
+    margin: 0 0 0.5rem;
+  }
+
+  .section-note {
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    max-width: var(--measure);
+    margin: 0 0 1.5rem;
+  }
+
+  .detail {
+    margin: 2.5rem 0;
+  }
+
+  .detail h2 {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
   }
 </style>

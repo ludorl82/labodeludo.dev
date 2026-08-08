@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ArchGenerated from "../components/ArchGenerated.astro";
+import AuthorBadge from "../components/AuthorBadge.astro";
 import FrigateDetectorDiagram from "../components/FrigateDetectorDiagram.astro";
 import CloudflareTunnelDiagram from "../components/CloudflareTunnelDiagram.astro";
 import WebdavProxyDiagram from "../components/WebdavProxyDiagram.astro";
@@ -24,9 +25,13 @@ import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
 // and describes a decision rather than an inventory. Nothing generated can
 // replace them, and they do not rot when a host is renamed.
 //
-// Still gated: the generated view renders only when the build sets
-// SHOW_LIVE_ARCH=1 (staging + the nightly job). Prod gets the honest note
-// below until the flag flips in deploy.yml — one line, whenever.
+// Public since 2026-08-08 (SHOW_LIVE_ARCH=1 in deploy.yml's prod job); the
+// flag stays as the one-line off switch, and the fallback note below is
+// what a build without it still shows.
+//
+// VOICE: this page is BOB's — he redraws it nightly and signs it. Ludo's
+// voice stays on /inventaire, where the roles are hand-written. Do not
+// blend the two (see the site's two-voice rule).
 const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
 ---
 
@@ -38,11 +43,18 @@ const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
 
   <header class="page-header">
     <h1>Architecture</h1>
+    <p class="byline">
+      <AuthorBadge author="bob" /> redessine cette page chaque nuit —
+      <a href="/auteurs/bob/">qui est Bob</a>
+    </p>
     <p class="subtitle">
-      Un seul schéma, redessiné chaque nuit à partir de ce que les dépôts
-      déclarent et de l'inventaire du matériel — jamais à la main. Noms et
-      adresses fictifs (préfixe de documentation <code>2001:db8:.../64</code>,
-      RFC 3849). Ce que chaque morceau <em>fait</em>, et ce que j'ai écrit
+      Un seul schéma ici, et ce n'est pas Ludo qui le dessine : pendant
+      qu'il dort, je relis les dépôts, je relis l'inventaire du matériel, et
+      je recommence le dessin au complet. Un schéma tenu à la main, ça ment
+      tranquillement pendant des semaines; celui-là ment une nuit au
+      maximum, et il affiche l'heure de son dernier essai. Noms et adresses
+      fictifs (préfixe de documentation <code>2001:db8:.../64</code>,
+      RFC 3849). Ce que chaque morceau <em>fait</em>, et ce que Ludo a écrit
       dessus, vit dans <a href="/inventaire/">l'inventaire</a>.
     </p>
   </header>
@@ -52,20 +64,22 @@ const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
       <ArchGenerated />
     ) : (
       <p class="pending">
-        Le schéma généré n'est pas encore publié ici — il tourne chaque nuit
-        et se regarde en préversion le temps que je lui fasse confiance.
-        D'ici là, <a href="/inventaire/">l'inventaire</a> décrit chaque rôle
-        du réseau et pointe vers les articles qui en parlent.
+        Le schéma n'est pas dans cette version du site — ce build-là a été
+        fait sans lui. Il tourne quand même chaque nuit, promis. D'ici
+        là, <a href="/inventaire/">l'inventaire</a> décrit chaque rôle du
+        réseau et pointe vers les articles qui en parlent.
       </p>
     )
   }
 
   <section class="details">
-    <h2># les pièces, en détail</h2>
+    <h2># les pièces, en détail — celles que je ne redessine pas</h2>
     <p class="section-note">
-      Onze schémas rapprochés, dessinés à la main pour leurs articles : ce
-      que le schéma généré ne peut pas raconter, parce qu'ils expliquent un
-      mécanisme plutôt qu'un inventaire.
+      Onze schémas rapprochés, dessinés à la main pour leurs articles, et
+      qui restent à la main. Chacun explique un <em>mécanisme</em> : une
+      décision, un piège, une panne comprise trop tard. Ça, un inventaire
+      ne le raconte pas — et ça ne vieillit pas non plus quand une machine
+      change de nom.
     </p>
 
   <section class="detail">
@@ -144,6 +158,20 @@ const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
     font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
     font-weight: 600;
     margin: 0 0 0.5rem;
+  }
+
+  .byline {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-faint);
+    margin: 0 0 0.75rem;
+  }
+
+  .byline a {
+    color: var(--text-faint);
   }
 
   .subtitle {

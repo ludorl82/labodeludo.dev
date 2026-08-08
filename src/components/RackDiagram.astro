@@ -60,8 +60,9 @@ const label = (d: Device) => (d.count && d.count > 1 ? `${d.name} ×${d.count}` 
 const ariaLabel = hasRacks
   ? `Élévation des deux baies : la baie murale contient ${wall.length} ` +
     `équipements, la baie roulante ${rolling.length}. Chaque rangée nomme ` +
-    `l'appareil et son rôle; les appareils protégés par un onduleur sont ` +
-    `marqués. Tout vient de l'inventaire matériel régénéré chaque nuit.`
+    `l'appareil et sa catégorie; le trait plein marque ce que les dépôts ` +
+    `d'infrastructure déclarent, le pointillé ce qu'ils ignorent. Tout ` +
+    `vient de l'inventaire matériel régénéré chaque nuit.`
   : "Élévation des baies — l'inventaire matériel n'a pas encore été généré.";
 ---
 
@@ -102,8 +103,8 @@ const ariaLabel = hasRacks
                     width="318"
                     height={ROW_H}
                     rx="3"
-                    fill={d.class === "ups" ? "none" : "var(--panel)"}
-                    stroke={d.class === "ups" ? "var(--accent-live)" : "var(--panel-border)"}
+                    fill="var(--panel)"
+                    stroke="var(--panel-border)"
                     stroke-dasharray={d.iacDeclared ? undefined : "4 3"}
                   />
                   <text
@@ -111,7 +112,7 @@ const ariaLabel = hasRacks
                     y={PAD_TOP + 31 + i * (ROW_H + ROW_GAP)}
                     font-family="var(--font-mono)"
                     font-size="10.5"
-                    fill={d.class === "ups" ? "var(--accent-live)" : "var(--text)"}
+                    fill="var(--text)"
                   >
                     {label(d)}
                   </text>
@@ -133,11 +134,14 @@ const ariaLabel = hasRacks
         </svg>
       </div>
       <figcaption>
-        Les deux baies, dessinées à partir de l'inventaire matériel régénéré
-        chaque nuit — trait plein pour ce que les dépôts IaC déclarent,
-        pointillé pour le reste, vert pour les onduleurs. L'ordre est celui
-        de l'inventaire, pas une position en U : le document source ne note
-        pas les U, alors le dessin ne prétend pas les connaître.
+        Les deux baies, relevées chaque nuit dans l'inventaire du matériel —
+        trait plein pour ce que les dépôts déclarent, pointillé pour le
+        reste, que personne n'a jamais écrit nulle part. L'ordre est celui
+        de l'inventaire et pas une position en U : le document source ne
+        note pas les U, alors je ne fais pas semblant de les connaître.
+        L'image d'avant, elle, montrait encore fièrement une machine partie
+        à la retraite depuis trois jours.
+        <span class="sig">— Bob, qui redessine</span>
       </figcaption>
     </figure>
   )
@@ -157,6 +161,11 @@ const ariaLabel = hasRacks
     max-width: 900px;
     height: auto;
     margin-inline: auto;
+  }
+  .sig {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--text-muted);
   }
   figcaption {
     color: var(--text-faint);

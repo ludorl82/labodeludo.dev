@@ -34,6 +34,7 @@ const externals = kind("external");
 const upsCount = externals.filter((n) => n.id.startsWith("external:ups")).length;
 const hasNas = externals.some((n) => n.id === "external:nas");
 const hasRouter = externals.some((n) => n.id === "external:router");
+const ha01 = externals.find((n) => n.id === "external:ha-01");
 
 const ariaLabel =
   `Schéma d'architecture : les visiteurs entrent par Cloudflare (${dnsCount} ` +
@@ -47,7 +48,7 @@ const ariaLabel =
 
 <figure class="live-arch">
   <div class="diagram-wrap">
-    <svg viewBox="0 0 760 950" role="img" aria-label={ariaLabel}>
+    <svg viewBox="0 0 760 1000" role="img" aria-label={ariaLabel}>
       <defs>
         <marker id="la-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
@@ -118,7 +119,7 @@ const ariaLabel =
       <path d="M565,550 L565,618" fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
 
       <!-- maison -->
-      <rect x="40" y="620" width="420" height="310" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
+      <rect x="40" y="620" width="420" height="360" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
       <text x="58" y="644" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">maison — {homeHosts.length} machines NixOS</text>
       {
         homeHosts.map((h, i) => (
@@ -152,10 +153,17 @@ const ariaLabel =
           <text x="378" y="866" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">hors IaC</text>
         </Fragment>
       )}
-      <text x="64" y="905" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — présents seulement parce que l'IaC les référence</text>
+      {ha01 && (
+        <Fragment>
+          <rect x="64" y="884" width="116" height="34" rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
+          <text x="122" y="902" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{ha01.label}</text>
+          <text x="122" y="914" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">domotique · hors IaC</text>
+        </Fragment>
+      )}
+      <text x="64" y="955" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — présents seulement parce que l'IaC les référence</text>
 
       <!-- AWS -->
-      <rect x="490" y="620" width="230" height="310" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
+      <rect x="490" y="620" width="230" height="360" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
       <text x="508" y="644" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">AWS ca-central</text>
       <rect x="508" y="660" width="194" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
       <text x="605" y="681" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{cloudHost?.label ?? "cloud-01"} (EC2)</text>

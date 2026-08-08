@@ -46,9 +46,11 @@ def scan(value: str, where: str) -> None:
     for m in ANY_V6.finditer(value):
         s = m.group(0)
         groups = [g for g in s.split(":") if g]
-        # host:port also matches the loose pattern — only treat it as an
-        # address when it has :: or at least three hex groups
-        if "::" in s or len(groups) >= 3:
+        # host:port and timestamps (11:26:13) also match the loose pattern —
+        # only treat it as an address when it has ::, four-plus groups, or a
+        # hex letter in some group (every real prefix here has one)
+        hexish = any(re.search(r"[a-f]", g, re.I) for g in groups)
+        if "::" in s or len(groups) >= 4 or (len(groups) >= 3 and hexish):
             if not s.lower().startswith("2001:db8"):
                 raise Leak(f"non-documentation IPv6 {s!r} at {where}")
     # a bare @ is everywhere in code (JSX, decorators) — only the full

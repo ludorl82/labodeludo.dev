@@ -117,6 +117,17 @@ for n in nodes.values():
             edges.append({"from": rid, "to": n["id"], "kind": "serves"})
             n_serves += 1
 
+# cluster↔cloud storage join: an app's manifests may name S3 buckets
+# (meta.s3Refs, captured by the k3s emitter) — promoted to a `uses` edge
+# only when the aws layer actually declares that bucket. No match, no edge.
+n_s3 = 0
+for n in list(nodes.values()):
+    for ref in n.get("meta", {}).get("s3Refs", []):
+        if f"bucket:{ref}" in nodes:
+            edges.append({"from": n["id"], "to": f"bucket:{ref}",
+                          "kind": "uses"})
+            n_s3 += 1
+
 # ---------------------------------------------------------------------------
 # Positive allowlist over every string in the merged output — shared with
 # scan-public.py, see allowlist.py. Knows only what fictional data looks
@@ -143,5 +154,5 @@ with open(out_path, "w", encoding="utf-8") as f:
     json.dump(result, f, indent=2, sort_keys=True)
     f.write("\n")
 print(f"join-topology: {len(result['nodes'])} nodes, "
-      f"{len(result['edges'])} edges ({n_serves} cross-layer serves) "
-      f"-> {out_path}")
+      f"{len(result['edges'])} edges ({n_serves} cross-layer serves, "
+      f"{n_s3} app→bucket uses) -> {out_path}")

@@ -13,6 +13,7 @@ import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 > -   **Le chiffre** : les quatre dépôts IaC déclarent **11 appareils**. Le labo en compte **37**. L'écart, c'est tout ce qu'aucun outil déclaratif ne touche.
 > -   **Deux semences** : les quatre instantanés publics assainis donnent ce qui est *déclaré* (116 nœuds, 133 liens) ; un document privé donne ce qui est *là*. Aucune des deux ne dessine le labo toute seule.
 > -   **L'inversion** : le pipeline déterministe que j'avais construit rendait une page qui *était* un inventaire. Il est devenu la semence, et une session Claude Code sans surveillance est devenue le dessinateur.
+> -   **« Généré » ≠ « vrai »** : le dessin n'est vrai que si les dépôts le sont. Les vérifications de dérive nocturnes le mesurent, le badge affiche leur résultat, et il tombe en panne vers « inconnu », **jamais vers le vert**. Le même signal bloque la réconciliation privée quand la dérive est rouge.
 > -   **La frontière** : les sessions privées lisent les vrais noms, les sessions publiques ne voient que du matériel public, et **seul du code — jamais un modèle — fait traverser les données**, derrière deux barrières indépendantes.
 > -   **Pourquoi deux** : une liste blanche positive laisse passer un nom d'hôte réel sans aucun signe distinctif — pas de point, pas d'arobase, pas de chiffre. Seule une liste noire privée l'attrape. Chacune seule était un faux sentiment de sécurité.
 > -   **Ce que les nuits ont trouvé** : mon tunnel VPN était étiqueté à l'envers dans mes propres notes, un rack documenté « aucun onduleur » en a un, et un document de disposition physique nommait une machine qui n'existait plus depuis deux semaines.
@@ -59,6 +60,20 @@ Il en découle une répartition qui me semble maintenant évidente, et qui ne l'
 Le diagramme conceptuel dessiné à la main, lui, a disparu. Le garder comme jumeau « explicatif » revenait à conserver exactement la charge d'entretien que le projet existait pour supprimer.
 
 <LiveArchDiagram />
+
+## « Généré » ne veut pas dire « vrai »
+
+Il y a un raccourci confortable dans lequel je ne veux pas tomber, parce que c'est exactement celui qui rend un dessin dangereux : un diagramme généré n'est pas plus vrai qu'un diagramme dessiné à la main. Il est seulement **aussi vrai que sa source**.
+
+Or la source, ici, ce sont les dépôts d'infrastructure. Le dessin est donc exact si et seulement si les dépôts décrivent encore la réalité — ce qui n'a rien d'automatique. Du code d'infrastructure peut dériver aussi bien qu'un document : quelqu'un change un paramètre à la main sur la console du fournisseur, et le dépôt raconte tranquillement une version périmée du monde, avec toute la crédibilité que confère un fichier versionné.
+
+C'est précisément ce que les vérifications de dérive nocturnes mesurent, et elles existaient déjà avant ce projet. Trois d'entre elles interrogent leur fournisseur respectif et comparent l'état réel au plan calculé depuis le dépôt : un écart, et le contrôle passe au rouge. La quatrième couche n'en a plus besoin — depuis la [fermeture de la boucle GitOps](/blog/laisser-le-pipeline-appuyer-sur-apply/), le cluster est réconcilié en continu, ce qui pose la même question en permanence plutôt qu'une fois par nuit.
+
+Le dessin porte donc son résultat de vérification à côté de lui. La page n'affirme pas « ceci est en direct » — ce serait faux, et invérifiable. Elle affirme quelque chose de plus faible et de démontrable : **régénéré cette nuit, et voici quand les contrôles ont confirmé pour la dernière fois que les dépôts correspondaient à la réalité**. Le badge dit « conforme à l'infra réelle » avec sa date, ou nomme le contrôle qui a échoué.
+
+Une règle gouverne ce badge, et c'est la seule qui compte : **il tombe en panne vers « inconnu », jamais vers le vert**. N'importe quel problème de lecture — le service de surveillance injoignable, une réponse malformée, un délai dépassé — écrase le bloc de vérification par un « non vérifié » explicite, et la construction du site continue. Un vert périmé est le seul mensonge que ce badge n'a pas le droit de dire, parce que c'est le seul qui serait cru.
+
+Le même signal sert une deuxième fois, du côté privé, et c'est l'usage que je trouve le plus élégant. La session qui réconcilie mes notes contre les dépôts ne démarre **que si** les contrôles de dérive sont au vert ce matin-là. La raison tient en une ligne de logique : réconcilier un document contre des dépôts n'a de sens que si les dépôts, eux, correspondent encore au monde. Si les dépôts ont dérivé, aligner mes notes dessus ne corrige rien — ça propage l'erreur dans un document de plus, avec l'autorité de l'automatisation en prime. Quand la dérive est rouge, la nuit est sautée et je reçois une notification. Une réconciliation refusée coûte une journée de fraîcheur ; une réconciliation contre une source fausse coûte la confiance dans les deux documents.
 
 ## Deux barrières, parce qu'une seule ment
 

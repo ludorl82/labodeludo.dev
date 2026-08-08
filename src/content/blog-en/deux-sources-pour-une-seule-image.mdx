@@ -13,6 +13,7 @@ import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 > -   **The number**: the four IaC repositories declare **11 devices**. The lab has **37**. The gap is everything no declarative tool ever touches.
 > -   **Two seeds**: the four sanitized public snapshots give what is *declared* (116 nodes, 133 edges); a private document gives what is *there*. Neither one draws the lab on its own.
 > -   **The inversion**: the deterministic pipeline I built rendered a page that *was* an inventory. It became the seed instead, and an unattended Claude Code session became the draughtsman.
+> -   **"Generated" ≠ "true"**: the drawing is only true if the repositories are. The nightly drift checks measure that, the badge shows their result, and it fails to "unknown", **never to green**. The same signal blocks the private reconciliation when drift is red.
 > -   **The boundary**: private sessions read the real names, public sessions see only public material, and **only driver code — never a model — carries data across**, behind two independent gates.
 > -   **Why two**: a positive allowlist waves through a real hostname with no distinguishing marks — no dot, no at-sign, no digits. Only a private denylist catches it. Either one alone was a false sense of safety.
 > -   **What the nights found**: my VPN tunnel was labelled backwards in my own notes, a rack documented as having no UPS has one, and a physical-layout document named a machine that had not existed for two weeks.
@@ -59,6 +60,20 @@ From that follows a division of labour that now seems obvious and was not, at th
 The hand-drawn conceptual diagram is gone. Keeping it as an "explanatory" twin meant carrying exactly the maintenance burden the project existed to remove.
 
 <LiveArchDiagram />
+
+## "Generated" does not mean "true"
+
+There is a comfortable shortcut I do not want to take, because it is exactly the one that makes a drawing dangerous: a generated diagram is not truer than a hand-drawn one. It is only **as true as its source**.
+
+And the source here is the infrastructure repositories. So the drawing is accurate if and only if the repositories still describe reality — which is not automatic at all. Infrastructure code can drift just as well as a document: somebody changes a setting by hand in the provider's console, and the repository quietly tells a stale version of the world, with all the credibility a version-controlled file confers.
+
+That is precisely what the nightly drift checks measure, and they existed before this project. Three of them query their respective provider and compare the real state against the plan computed from the repository: any gap, and the check goes red. The fourth layer no longer needs one — since [closing the GitOps loop](/en/blog/laisser-le-pipeline-appuyer-sur-apply/), the cluster is continuously reconciled, which asks the same question permanently rather than once a night.
+
+So the drawing carries its verification result beside it. The page does not claim "this is live" — that would be false, and unverifiable. It claims something weaker and demonstrable: **regenerated tonight, and here is when the checks last confirmed the repositories matched reality**. The badge reads "matches the real infrastructure" with its date, or names the check that failed.
+
+One rule governs that badge, and it is the only one that matters: **it fails to "unknown", never to green**. Any read problem — the monitoring service unreachable, a malformed response, a timeout — overwrites the verification block with an explicit "not verified", and the site build carries on. A stale green is the one lie this badge is not allowed to tell, because it is the only one that would be believed.
+
+The same signal is used a second time, on the private side, and that is the use I find most elegant. The session that reconciles my notes against the repositories starts **only if** the drift checks are green that morning. The reasoning fits in one line: reconciling a document against repositories only means something if the repositories themselves still match the world. If the repositories have drifted, aligning my notes to them corrects nothing — it propagates the error into one more document, with the authority of automation on top. When drift is red, the night is skipped and I get a notification. A refused reconciliation costs a day of freshness; a reconciliation against a false source costs the trust in both documents.
 
 ## Two gates, because one of them lies
 

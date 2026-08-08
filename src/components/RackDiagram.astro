@@ -4,14 +4,19 @@
 // AUTOMATED-AUTHOR CONTRACT: refreshed by the nightly diagram job (prompt:
 // scripts/topology/prompts/rack-diagram.md) from src/data/fleet.json, which
 // itself comes from a private document a sibling session reconciles every
-// night. Every box, label and count here is read from that file: nothing
-// about the racks is written by hand, which is the whole point — the SVG
-// this replaces had drifted to showing a machine that no longer existed,
-// hosts on the wrong OS, and the cloud instance in the wrong region.
+// night. Every box, label and count is read from that file: nothing about
+// the racks is written by hand, which is the point — the SVG this replaced
+// had drifted to showing a machine that no longer existed.
 //
-// Anything written here must pass scripts/topology/scan-public.py.
-// rackOrder is a STACKING order, not a U position: the source document does
-// not record U positions, so the drawing must not imply any.
+// Two rules the data imposes, and the drawing must not break:
+//   * `rackOrder` is a STACKING order, not a U position. The source records
+//     no U positions, so rows are evenly spaced and no U scale is drawn.
+//     The rack's TOTAL height (racks[].units) is known and may be labelled.
+//   * A VM or BMC is INSIDE a machine, not beside it: `hostedBy` nests it
+//     as a chip in its host's row rather than giving it a shelf of its own.
+//
+// Palette: this site is monochrome on purpose, so "colour by network" means
+// the existing grayscale accents, not new hues.
 import fleet from "../data/fleet.json";
 
 type Device = {
@@ -19,50 +24,108 @@ type Device = {
   class: string;
   network?: string;
   role?: string;
+  spec?: string;
   iacDeclared?: boolean;
   location?: string;
   rackOrder?: number;
   power?: string;
+  hostedBy?: string;
   count?: number;
 };
-const devices = (fleet.devices ?? []) as Device[];
+type Rack = { units?: number; kind?: string };
 
-// Only things that occupy a slot get a row. VMs and BMCs carry their
-// host's location but no rackOrder, because they are not rack units —
-// they live inside a machine that already has a row. They are counted
-// under the rack instead of drawn as phantom shelves.
+const devices = (fleet.devices ?? []) as Device[];
+const racks = ((fleet as any).racks ?? {}) as Record<string, Rack>;
+
 const inRack = (loc: string) =>
   devices
     .filter((d) => d.location === loc && typeof d.rackOrder === "number")
     .sort((a, b) => (a.rackOrder ?? 99) - (b.rackOrder ?? 99));
 
-const hostedIn = (loc: string) =>
+const hostedOn = (name: string) =>
+  devices.filter((d) => d.hostedBy === name);
+
+// hosted gear whose host is not itself a row (or that names no host) still
+// has to be accounted for, or the drawing would quietly lose it
+const orphanHosted = (loc: string, rows: Device[]) =>
   devices.filter(
-    (d) => d.location === loc && typeof d.rackOrder !== "number",
+    (d) =>
+      d.location === loc &&
+      typeof d.rackOrder !== "number" &&
+      !(d.hostedBy && rows.some((r) => r.name === d.hostedBy)),
   );
 
-const wall = inRack("wall-rack");
-const rolling = inRack("rolling-rack");
-const hasRacks = wall.length > 0 || rolling.length > 0;
+const NETWORK_TONE: Record<string, string> = {
+  vlan10: "var(--accent-devops)",
+  vlan50: "var(--accent-maison)",
+  "out-of-band": "var(--accent-labo)",
+  aws: "var(--accent-cloud)",
+};
+const tone = (d: Device) => NETWORK_TONE[d.network ?? ""] ?? "var(--accent-default)";
 
-// each rack's own UPSes, so the power note can name them without inventing
-const upsIn = (list: Device[]) => list.filter((d) => d.class === "ups");
+const NETWORK_LABEL: Record<string, string> = {
+  vlan10: "VLAN serveurs",
+  vlan50: "VLAN maison",
+  "out-of-band": "hors réseau",
+  aws: "hors site",
+};
 
-const ROW_H = 26;
-const ROW_GAP = 4;
-const PAD_TOP = 52;
-const rackHeight = (list: Device[]) =>
-  PAD_TOP + list.length * (ROW_H + ROW_GAP) + 16;
-const height = Math.max(rackHeight(wall), rackHeight(rolling)) + 40;
+const RACKS = [
+  { key: "wall-rack", x: 20, title: "baie murale — sous-sol" },
+  { key: "rolling-rack", x: 390, title: "baie roulante — bureau" },
+];
 
-const label = (d: Device) => (d.count && d.count > 1 ? `${d.name} ×${d.count}` : d.name);
+const ROW_H = 38;
+const ROW_GAP = 5;
+const CHIP_H = 14;
+const HEAD = 74;
+const RAIL = 9;
+
+const rowsFor = (key: string) => inRack(key);
+const rowHeight = (d: Device) =>
+  ROW_H + (hostedOn(d.name).length > 0 ? CHIP_H + 3 : 0);
+const rackHeight = (key: string) => {
+  const rows = rowsFor(key);
+  const orphans = orphanHosted(key, rows).length;
+  return (
+    HEAD +
+    rows.reduce((h, d) => h + rowHeight(d) + ROW_GAP, 0) +
+    (orphans > 0 ? 18 : 0) +
+    14
+  );
+};
+const height = Math.max(...RACKS.map((r) => rackHeight(r.key)), 120) + 34;
+
+const hasRacks = RACKS.some((r) => rowsFor(r.key).length > 0);
+const label = (d: Device) =>
+  d.count && d.count > 1 ? `${d.name} ×${d.count}` : d.name;
+
+// networks actually present, so the legend never invents an entry
+const shownNetworks = [
+  ...new Set(
+    RACKS.flatMap((r) => rowsFor(r.key)).map((d) => d.network ?? ""),
+  ),
+].filter((n) => n in NETWORK_LABEL);
 
 const ariaLabel = hasRacks
-  ? `Élévation des deux baies : la baie murale contient ${wall.length} ` +
-    `équipements, la baie roulante ${rolling.length}. Chaque rangée nomme ` +
-    `l'appareil et sa catégorie; le trait plein marque ce que les dépôts ` +
-    `d'infrastructure déclarent, le pointillé ce qu'ils ignorent. Tout ` +
-    `vient de l'inventaire matériel régénéré chaque nuit.`
+  ? RACKS.map((r) => {
+      const rows = rowsFor(r.key);
+      const u = racks[r.key]?.units;
+      return (
+        `${r.title} : ${rows.length} équipements${u ? `, châssis de ${u}U` : ""}. ` +
+        rows
+          .map(
+            (d) =>
+              `${label(d)}, ${d.spec ?? d.class}` +
+              (d.role ? `, ${d.role}` : "") +
+              (hostedOn(d.name).length
+                ? `, héberge ${hostedOn(d.name).map((h) => h.name).join(", ")}`
+                : ""),
+          )
+          .join(". ")
+      );
+    }).join(" ") +
+    " L'ordre est celui de l'inventaire, pas une position en U."
   : "Élévation des baies — l'inventaire matériel n'a pas encore été généré.";
 ---
 
@@ -71,76 +134,102 @@ const ariaLabel = hasRacks
     <figure class="racks">
       <div class="diagram-wrap">
         <svg viewBox={`0 0 760 ${height}`} role="img" aria-label={ariaLabel}>
-          {[
-            { list: wall, x: 20, title: "baie murale — sous-sol" },
-            { list: rolling, x: 390, title: "baie roulante — bureau" },
-          ].map(({ list, x, title }) => (
+          {RACKS.map(({ key, x, title }) => {
+            const rows = rowsFor(key);
+            const meta = racks[key] ?? {};
+            const orphans = orphanHosted(key, rows);
+            let y = HEAD;
+            return (
+              <Fragment>
+                {/* the enclosure: frame + two mounting rails. The rails are
+                    plain strips on purpose — notches would read as U marks,
+                    and the data does not know U positions. */}
+                <rect x={x} y="20" width="350" height={rackHeight(key)} rx="4"
+                      fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+                <rect x={x + 8} y={HEAD - 8} width={RAIL} height={rackHeight(key) - HEAD - 4}
+                      fill="var(--panel)" stroke="var(--panel-border)" stroke-width="0.75" />
+                <rect x={x + 350 - 8 - RAIL} y={HEAD - 8} width={RAIL} height={rackHeight(key) - HEAD - 4}
+                      fill="var(--panel)" stroke="var(--panel-border)" stroke-width="0.75" />
+
+                <text x={x + 16} y="42" font-family="var(--font-mono)" font-size="11.5" fill="var(--text-muted)">
+                  {title}
+                </text>
+                <text x={x + 16} y="58" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">
+                  {meta.units ? `châssis ${meta.units}U` : "châssis"}
+                  {meta.kind ? ` · ${meta.kind}` : ""} · {rows.length} équipements
+                </text>
+
+                {rows.map((d) => {
+                  const hosted = hostedOn(d.name);
+                  const top = y;
+                  y += rowHeight(d) + ROW_GAP;
+                  return (
+                    <Fragment>
+                      <rect x={x + 8 + RAIL + 4} y={top} width={350 - 2 * (8 + RAIL) - 8}
+                            height={rowHeight(d)} rx="3" fill="var(--panel)"
+                            stroke="var(--panel-border)"
+                            stroke-dasharray={d.iacDeclared ? undefined : "4 3"} />
+                      {/* network tone: a bar, not a fill — readable without
+                          asking the reader to decode a background shade */}
+                      <rect x={x + 8 + RAIL + 4} y={top} width="3" height={rowHeight(d)} fill={tone(d)} />
+                      <text x={x + 8 + RAIL + 14} y={top + 15} font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">
+                        {label(d)}
+                      </text>
+                      <text x={x + 350 - 8 - RAIL - 8} y={top + 15} text-anchor="end"
+                            font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">
+                        {d.spec ?? d.class}
+                        {d.power ? ` · ${d.power}` : ""}
+                      </text>
+                      {d.role && (
+                        <text x={x + 8 + RAIL + 14} y={top + 27} font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">
+                          {d.role.length > 52 ? d.role.slice(0, 51) + "…" : d.role}
+                        </text>
+                      )}
+                      {hosted.map((h, hi) => (
+                        <Fragment>
+                          <rect x={x + 8 + RAIL + 14 + hi * 74} y={top + ROW_H - 5}
+                                width="70" height={CHIP_H} rx="2" fill="none"
+                                stroke="var(--panel-border)" stroke-dasharray="2 2" />
+                          <text x={x + 8 + RAIL + 18 + hi * 74} y={top + ROW_H + 5}
+                                font-family="var(--font-mono)" font-size="7.5" fill="var(--text-faint)">
+                            {h.name.length > 11 ? h.name.slice(0, 10) + "…" : h.name}
+                          </text>
+                        </Fragment>
+                      ))}
+                    </Fragment>
+                  );
+                })}
+
+                {orphans.length > 0 && (
+                  <text x={x + 16} y={y + 8} font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">
+                    + {orphans.length} hébergés sans hôte nommé
+                  </text>
+                )}
+              </Fragment>
+            );
+          })}
+
+          {/* legend, built from the networks actually drawn */}
+          {shownNetworks.map((n, i) => (
             <Fragment>
-              <rect
-                x={x}
-                y="20"
-                width="350"
-                height={rackHeight(list)}
-                rx="6"
-                fill="none"
-                stroke="var(--panel-border)"
-                stroke-width="1.5"
-              />
-              <text x={x + 16} y="42" font-family="var(--font-mono)" font-size="11.5" fill="var(--text-muted)">
-                {title}
+              <rect x={20 + i * 150} y={height - 20} width="3" height="10" fill={NETWORK_TONE[n]} />
+              <text x={28 + i * 150} y={height - 11} font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">
+                {NETWORK_LABEL[n]}
               </text>
-              <text x={x + 16} y="56" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">
-                {list.length} équipements · {upsIn(list).length > 0 ? `${upsIn(list).length} onduleur${upsIn(list).length > 1 ? "s" : ""}` : "pas d'onduleur"}
-                {hostedIn(title.startsWith("baie murale") ? "wall-rack" : "rolling-rack").length > 0
-                  ? ` · ${hostedIn(title.startsWith("baie murale") ? "wall-rack" : "rolling-rack").length} hébergés (VM, BMC)`
-                  : ""}
-              </text>
-              {list.map((d, i) => (
-                <Fragment>
-                  <rect
-                    x={x + 16}
-                    y={PAD_TOP + 14 + i * (ROW_H + ROW_GAP)}
-                    width="318"
-                    height={ROW_H}
-                    rx="3"
-                    fill="var(--panel)"
-                    stroke="var(--panel-border)"
-                    stroke-dasharray={d.iacDeclared ? undefined : "4 3"}
-                  />
-                  <text
-                    x={x + 26}
-                    y={PAD_TOP + 31 + i * (ROW_H + ROW_GAP)}
-                    font-family="var(--font-mono)"
-                    font-size="10.5"
-                    fill="var(--text)"
-                  >
-                    {label(d)}
-                  </text>
-                  <text
-                    x={x + 326}
-                    y={PAD_TOP + 31 + i * (ROW_H + ROW_GAP)}
-                    text-anchor="end"
-                    font-family="var(--font-mono)"
-                    font-size="8.5"
-                    fill="var(--text-faint)"
-                  >
-                    {d.class}
-                    {d.power ? ` · ${d.power}` : ""}
-                  </text>
-                </Fragment>
-              ))}
             </Fragment>
           ))}
         </svg>
       </div>
       <figcaption>
-        Les deux baies, relevées chaque nuit dans l'inventaire du matériel —
-        trait plein pour ce que les dépôts déclarent, pointillé pour le
-        reste, que personne n'a jamais écrit nulle part. L'ordre est celui
-        de l'inventaire et pas une position en U : le document source ne
-        note pas les U, alors je ne fais pas semblant de les connaître.
-        L'image d'avant, elle, montrait encore fièrement une machine partie
-        à la retraite depuis trois jours.
+        Les deux baies, relevées chaque nuit dans l'inventaire du matériel.
+        Trait plein pour ce que les dépôts déclarent, pointillé pour le
+        reste — le matériel que personne n'a jamais écrit nulle part. La
+        barre de gauche donne le réseau, les puces en pointillé sont les
+        machines virtuelles et les contrôleurs qui vivent <em>dans</em> la
+        machine au-dessus d'elles. Le châssis est à sa vraie hauteur, mais
+        les rangées sont dans l'ordre de l'inventaire et pas à leur position
+        en U : le document source ne note pas les U, alors je ne fais pas
+        semblant de les connaître.
         <span class="sig">— Bob, qui redessine</span>
       </figcaption>
     </figure>

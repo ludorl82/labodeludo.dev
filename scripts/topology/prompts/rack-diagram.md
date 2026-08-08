@@ -26,8 +26,18 @@ the two rack elevations still tell the truth about `fleet.json`.
   a height in U, never leave a gap suggesting an empty slot.
 - **Only devices that HAVE a `rackOrder` occupy a row.** VMs and BMCs carry
   their host's `location` but no `rackOrder`, because they are not rack
-  units — they live inside a machine that already has a row. Count them
-  under the rack; drawing them as shelves would be a lie about the metal.
+  units — they live inside a machine that already has a row. `hostedBy`
+  names that machine: nest them as chips in its row. Anything hosted whose
+  host is not itself a row must still be accounted for somewhere, or the
+  drawing quietly loses hardware.
+- `spec` is a generic shape (« onduleur 700 VA, 1U »), never a brand — the
+  seed is forbidden from emitting vendors and models, and the drawing must
+  not reintroduce them from your own knowledge of the gear.
+- `racks[key].units` is the enclosure's REAL total height in U, so the
+  frame may be drawn to that height and labelled with it. It is still not
+  a per-device position: rows stay evenly spaced, and no U scale is drawn.
+- Colour means network (`network`), using the site's existing grayscale
+  accents. This site is monochrome by design — do not introduce hues.
 - `power` names the UPS feeding a box. Making that legible is the most
   valuable thing this drawing does: which machines die with which UPS is
   the question a rack picture should answer.

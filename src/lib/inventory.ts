@@ -19,6 +19,16 @@ interface InventoryItem {
   description: string;
   /** Blog post ids (src/content/blog/<id>.md) related to this item. */
   articles: string[];
+  /**
+   * Topology node ids (src/data/architecture.json) this role covers — the
+   * bridge between the hand-written role vocabulary and the generated one,
+   * so a box on the generated view can reach the articles about it.
+   *
+   * Deliberately incomplete: the roles with no entry are exactly the ones
+   * no IaC repo declares (personal machines, cameras, mobile clients) —
+   * the same boundary the « hors IaC » band states out loud.
+   */
+  nodes?: string[];
 }
 
 export const INVENTORY: Record<InventoryKey, InventoryItem> = {
@@ -36,12 +46,19 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "laisser-le-pipeline-appuyer-sur-apply",
       "separer-le-bastion-de-la-console",
     ],
+    nodes: [
+      "tunnel:k3s",
+      "app:traefik",
+      "app:cloudflared",
+      "host:cloud-01",
+    ],
   },
   "site-web": {
     name: "Site web statique",
     description:
       "Ce blogue lui-même : contenu statique généré et déployé automatiquement par la grappe conteneurs, servi via le proxy inverse de la VM cloud. Le pipeline qui le construit est décrit en git comme le reste, pas configuré à la main.",
     articles: ["deployer-un-site-web-statique-avec-wordpress-et-s3"],
+    nodes: ["bucket:labodeludo.dev", "app:labodeludo"],
   },
   surveillance: {
     name: "Surveillance + alertes",
@@ -55,6 +72,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "laisser-le-pipeline-appuyer-sur-apply",
       "tout-ca-pour-un-script-bash",
     ],
+    nodes: ["app:kuma", "app:ntfy", "app:logging"],
   },
   alimentation: {
     name: "Alimentation protégée (onduleurs)",
@@ -64,6 +82,11 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "l-ile-du-survivant",
       "le-nas-le-courant-et-l-appel-de-reveil",
       "debrancher-le-nas-pour-la-science",
+    ],
+    nodes: [
+      "external:ups-gpu-01",
+      "external:ups-pi-01",
+      "external:ups-pi-02",
     ],
   },
   "pare-feu": {
@@ -75,6 +98,9 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "convention-ipv6-vlan-serveurs",
       "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
       "renumeroter-les-adresses-ip-de-mon-cluster-k3s",
+    ],
+    nodes: [
+      "external:router",
     ],
   },
   bastion: {
@@ -90,6 +116,10 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "quatre-depots-pour-un-labo-au-complet",
       "laisser-le-pipeline-appuyer-sur-apply",
     ],
+    nodes: [
+      "host:pi-02",
+      "host:console-vm",
+    ],
   },
   stockage: {
     name: "Stockage (NAS)",
@@ -99,6 +129,9 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
       "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web",
       "tout-ca-pour-un-script-bash",
+    ],
+    nodes: [
+      "external:nas",
     ],
   },
   "pipeline-media": {
@@ -112,6 +145,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "migrer-tout-mon-homelab-vers-nixos",
       "laisser-le-pipeline-appuyer-sur-apply",
     ],
+    nodes: ["app:plex", "app:frigate", "host:srv-01", "host:gpu-02"],
   },
   "calcul-gpu": {
     name: "Calcul GPU",
@@ -124,6 +158,9 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "migrer-tout-mon-homelab-vers-nixos",
       "laisser-le-pipeline-appuyer-sur-apply",
     ],
+    // gpu-02 belongs to pipeline-media (it runs the NVR); a node maps to
+    // exactly one role so the reverse lookup stays unambiguous
+    nodes: ["host:gpu-01"],
   },
   "hote-conteneurs": {
     name: "Grappe conteneurs (k3s)",
@@ -145,6 +182,14 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "trois-majeures-un-jeudi-soir",
       "tout-ca-pour-un-script-bash",
     ],
+    nodes: [
+      "cluster:k3s",
+      "host:docker",
+      "host:pi-01",
+      "host:vm-01",
+      "host:vm-02",
+      "host:vm-03",
+    ],
   },
   domotique: {
     name: "Domotique",
@@ -153,6 +198,9 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     articles: [
       "ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3",
       "ok-bob-entrainer-un-mot-de-reveil-francais-quebecois",
+    ],
+    nodes: [
+      "external:ha-01",
     ],
   },
   "postes-personnels": {
@@ -178,4 +226,32 @@ export function inventoryForArticle(id: string): InventoryKey[] {
   return (Object.keys(INVENTORY) as InventoryKey[]).filter((key) =>
     INVENTORY[key].articles.includes(id),
   );
+}
+
+// node id -> role, built once. A node belongs to at most one role: the
+// reverse link has to be unambiguous, so a duplicate is a mapping bug and
+// says so loudly at build time rather than picking a winner silently.
+const NODE_TO_ROLE = new Map<string, InventoryKey>();
+for (const key of Object.keys(INVENTORY) as InventoryKey[]) {
+  for (const id of INVENTORY[key].nodes ?? []) {
+    const seen = NODE_TO_ROLE.get(id);
+    if (seen) {
+      throw new Error(
+        `inventory: node ${id} is claimed by both "${seen}" and "${key}"`,
+      );
+    }
+    NODE_TO_ROLE.set(id, key);
+  }
+}
+
+/**
+ * The role covering a topology node, if any.
+ *
+ * Deliberately fail-soft: architecture.json is regenerated every night from
+ * the public IaC snapshots, so a node id can disappear (or appear) without
+ * this file changing. An unmapped node simply renders without a role link —
+ * a hard failure here would let a nightly refresh break the whole site.
+ */
+export function roleForNode(id: string): InventoryKey | undefined {
+  return NODE_TO_ROLE.get(id);
 }

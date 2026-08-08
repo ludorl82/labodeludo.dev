@@ -1,0 +1,125 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FrigateDetectorDiagram from "../../components/FrigateDetectorDiagram.astro";
+import CloudflareTunnelDiagram from "../../components/CloudflareTunnelDiagram.astro";
+import WebdavProxyDiagram from "../../components/WebdavProxyDiagram.astro";
+import WireGuardFtpDiagram from "../../components/WireGuardFtpDiagram.astro";
+import VoiceAssistantDiagram from "../../components/VoiceAssistantDiagram.astro";
+import ConsoleLayersDiagram from "../../components/ConsoleLayersDiagram.astro";
+import BastionConsoleSplitDiagram from "../../components/BastionConsoleSplitDiagram.astro";
+import K3sClusterDiagram from "../../components/K3sClusterDiagram.astro";
+import NfsShareMoveDiagram from "../../components/NfsShareMoveDiagram.astro";
+import SurvivorIslandDiagram from "../../components/SurvivorIslandDiagram.astro";
+import ScanPipelineDiagram from "../../components/ScanPipelineDiagram.astro";
+---
+
+<BaseLayout
+  title="Architecture, en détail — Le labo de Ludo"
+  description="Les schémas détaillés du homelab : détection vidéo, tunnels, pipeline de numérisation, grappe k3s, reprise après panne."
+>
+  <a class="back" href="/architecture/">&larr; l'architecture</a>
+
+  <header class="page-header">
+    <h1>Architecture, en détail</h1>
+    <p class="subtitle">
+      Les pièces, une par une — chaque schéma vient d'un article et garde le
+      même vocabulaire que la <a href="/architecture/">vue d'ensemble</a> :
+      noms et adresses fictifs, trait plein pour une liaison réseau, trait
+      pointillé vert pour un tunnel chiffré ou un routage applicatif.
+    </p>
+  </header>
+
+  <section class="detail">
+    <h2>Détail : détection vidéo (Frigate)</h2>
+    <FrigateDetectorDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : accès public (tunnel Cloudflare)</h2>
+    <CloudflareTunnelDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : requête WebDAV (proxy et en-tête Destination)</h2>
+    <WebdavProxyDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : accès privé (tunnel WireGuard)</h2>
+    <WireGuardFtpDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : pipeline de numérisation (SFTP → S3 → Lambda → Drive)</h2>
+    <ScanPipelineDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : assistant vocal (Home Assistant + Ollama)</h2>
+    <VoiceAssistantDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : console conteneurisée (bastion)</h2>
+    <ConsoleLayersDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : la séparation bastion / console</h2>
+    <BastionConsoleSplitDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : grappe conteneurs (k3s)</h2>
+    <K3sClusterDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : stockage NFS de la grappe (chemin d'export)</h2>
+    <NfsShareMoveDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : l'île du survivant (reprise après panne électrique)</h2>
+    <SurvivorIslandDiagram context="architecture" />
+  </section>
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-live);
+  }
+
+  .page-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    max-width: var(--measure);
+    margin: 0 0 2.5rem;
+  }
+
+  .detail {
+    margin: 3rem 0;
+  }
+
+  .detail h2 {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+  }
+</style>

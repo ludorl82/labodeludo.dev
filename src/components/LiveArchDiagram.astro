@@ -1,0 +1,154 @@
+---
+// The SHAPE view of the generated architecture — drawn connections, few
+// boxes — sitting above the exhaustive bands on /architecture/live.
+//
+// AUTOMATED-AUTHOR CONTRACT: this component is refreshed by the nightly
+// diagram job (see scripts/topology/prompts/arch-diagram.md). The layout is
+// authored; every COUNT and every host name comes from architecture.json so
+// the numbers cannot silently lie between refreshes. Anything written here
+// must pass scripts/topology/scan-public.py (documentation IPs and
+// example-family domains only).
+import arch from "../data/architecture.json";
+
+type TNode = { id: string; kind: string; label: string; meta: any };
+const nodes = arch.nodes as TNode[];
+const kind = (k: string) => nodes.filter((n) => n.kind === k);
+
+const dnsCount = kind("dns").length;
+const accessCount = kind("access").length;
+const appCount = kind("app").length;
+const lambdaCount = kind("lambda").length;
+const bucketCount = kind("bucket").length;
+const hosts = kind("host");
+const homeHosts = hosts.filter((h) => h.meta.class !== "cloud-vm");
+const cloudHost = hosts.find((h) => h.meta.class === "cloud-vm");
+const k3sAgents = hosts.filter((h) => h.meta.k3sRole === "agent").length;
+const pinCount = (arch.edges as any[]).filter(
+  (e) => e.kind === "pinned-to",
+).length;
+
+const ariaLabel =
+  `Schéma d'architecture : les visiteurs entrent par Cloudflare (${dnsCount} ` +
+  `noms publics, ${accessCount} applications Access), qui route soit vers le ` +
+  `bucket S3 du blog, soit dans le tunnel sortant vers le cluster k3s. Le ` +
+  `cluster s'étend sur deux sites reliés par WireGuard : la maison ` +
+  `(${homeHosts.length} machines NixOS, ${k3sAgents} agents k3s) et un EC2 ` +
+  `chez AWS qui est l'unique control-plane. ${appCount} applications y ` +
+  `tournent, dont ${pinCount} workloads épinglés à une machine précise.`;
+---
+
+<figure class="live-arch">
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 920 540" role="img" aria-label={ariaLabel}>
+      <defs>
+        <marker id="la-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="la-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- visiteurs -->
+      <ellipse cx="120" cy="46" rx="78" ry="28" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="120" y="43" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">visiteurs</text>
+      <text x="120" y="58" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">HTTPS</text>
+
+      <!-- Cloudflare edge -->
+      <rect x="300" y="18" width="330" height="58" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="465" y="40" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">Cloudflare edge</text>
+      <text x="465" y="58" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{dnsCount} noms publics · {accessCount} apps Access · 0 port ouvert</text>
+      <path d="M198,46 L298,46" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
+
+      <!-- blog statique : CF -> S3 -->
+      <rect x="720" y="18" width="180" height="58" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="810" y="40" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">s3://labodeludo.dev</text>
+      <text x="810" y="58" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">ce blog — fichiers statiques</text>
+      <path d="M632,46 L718,46" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
+
+      <!-- tunnel sortant (initié par le cluster) -->
+      <path d="M465,140 L465,78" fill="none" stroke="var(--accent-live)" stroke-width="1.7" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
+      <text x="480" y="115" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">tunnel cloudflared — sortant</text>
+
+      <!-- ============ cluster k3s (s'étend sur les deux sites) ============ -->
+      <rect x="60" y="140" width="800" height="230" rx="8" fill="none" stroke="var(--accent-live)" stroke-width="1.2" stroke-dasharray="2 3" />
+      <text x="76" y="162" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">cluster k3s — un seul cluster, deux sites</text>
+
+      <!-- traefik / entrée -->
+      <rect x="370" y="178" width="190" height="46" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="465" y="197" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">traefik (ingress)</text>
+      <text x="465" y="213" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">TLS interne, routage par nom</text>
+
+      <!-- apps -->
+      <rect x="330" y="266" width="270" height="58" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="465" y="288" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{appCount} applications</text>
+      <text x="465" y="306" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{pinCount} workloads épinglés à leur machine</text>
+      <path d="M465,226 L465,264" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
+
+      <!-- control-plane EC2 (dans le cluster, côté AWS) -->
+      <rect x="660" y="222" width="180" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="750" y="245" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{cloudHost?.label ?? "cloud-01"}</text>
+      <text x="750" y="262" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">EC2 — UNIQUE control-plane</text>
+      <text x="750" y="277" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">etcd · taint dédiée</text>
+      <text x="750" y="292" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">site AWS</text>
+      <path d="M602,295 L658,295" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
+
+      <!-- agents (maison) -->
+      <rect x="100" y="222" width="200" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="200" y="245" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{k3sAgents} agents k3s</text>
+      <text x="200" y="262" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">serveurs · Pi · VMs</text>
+      <text x="200" y="277" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">VLAN serveurs, maison</text>
+      <path d="M328,295 L302,295" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
+
+      <!-- WireGuard entre les deux sites -->
+      <path d="M300,340 H660" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" />
+      <text x="480" y="356" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">WireGuard — maison ⇄ AWS, seul port exposé de la maison</text>
+
+      <!-- ============ matériel maison ============ -->
+      <rect x="60" y="400" width="600" height="110" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
+      <text x="76" y="422" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">maison — {homeHosts.length} machines NixOS</text>
+      {
+        homeHosts.map((h, i) => (
+          <Fragment>
+            <rect x={84 + (i % 5) * 112} y={434 + Math.floor(i / 5) * 36} width="100" height="28" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+            <text x={134 + (i % 5) * 112} y={452 + Math.floor(i / 5) * 36} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{h.label}</text>
+          </Fragment>
+        ))
+      }
+      <path d="M200,304 L200,398" fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
+
+      <!-- AWS band -->
+      <rect x="690" y="400" width="170" height="110" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
+      <text x="706" y="422" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">AWS ca-central</text>
+      <text x="706" y="446" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">λ {lambdaCount} fonctions</text>
+      <text x="706" y="466" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">s3 {bucketCount} buckets</text>
+      <text x="706" y="486" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">sauvegardes · pipelines</text>
+      <path d="M750,302 L750,398" fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
+    </svg>
+  </div>
+  <figcaption>
+    La forme du système — générée des mêmes données que l'inventaire
+    ci-dessous. Un seul cluster sur deux sites; tout le trafic public entre
+    par le tunnel, sauf le blog lui-même, servi en statique depuis S3.
+  </figcaption>
+</figure>
+
+<style>
+  .live-arch {
+    margin: 0 0 2rem;
+  }
+  .diagram-wrap {
+    overflow-x: auto;
+  }
+  .diagram-wrap svg {
+    min-width: 700px;
+    width: 100%;
+    height: auto;
+  }
+  figcaption {
+    color: var(--text-faint);
+    font-size: 0.8rem;
+    max-width: 70ch;
+    margin-top: 0.5rem;
+  }
+</style>

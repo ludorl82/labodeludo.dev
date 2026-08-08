@@ -1,5 +1,216 @@
 {
+  "devices": [
+    {
+      "class": "server",
+      "iacDeclared": true,
+      "name": "gpu-01",
+      "network": "vlan10",
+      "role": "agent k3s, calcul GPU, hôte de virtualisation"
+    },
+    {
+      "class": "server",
+      "iacDeclared": true,
+      "name": "gpu-02",
+      "network": "vlan10",
+      "role": "transcodage vidéo, agent k3s réservé à la vidéosurveillance"
+    },
+    {
+      "class": "server",
+      "iacDeclared": true,
+      "name": "srv-01",
+      "network": "vlan10",
+      "role": "extraction de disques, hôte de virtualisation, agent k3s"
+    },
+    {
+      "class": "server",
+      "iacDeclared": false,
+      "name": "hyperv-host",
+      "network": "vlan10",
+      "role": "poste de jeu et hôte d'hyperviseur, modèle de langage local"
+    },
+    {
+      "class": "sbc",
+      "iacDeclared": true,
+      "name": "pi-01",
+      "network": "vlan10",
+      "role": "agent k3s sur nano-ordinateur"
+    },
+    {
+      "class": "sbc",
+      "iacDeclared": true,
+      "name": "pi-02",
+      "network": "vlan10",
+      "role": "agent k3s, rebond d'administration et pipeline de secrets"
+    },
+    {
+      "class": "sbc",
+      "iacDeclared": true,
+      "name": "sbc-01",
+      "network": "vlan10",
+      "role": "registre de conteneurs privé, hors grappe"
+    },
+    {
+      "class": "sbc",
+      "iacDeclared": false,
+      "name": "ha-01",
+      "network": "vlan10",
+      "role": "domotique, boîtier dédié"
+    },
+    {
+      "class": "vm",
+      "iacDeclared": true,
+      "name": "vm-01",
+      "network": "vlan10",
+      "role": "machine virtuelle, agent k3s"
+    },
+    {
+      "class": "vm",
+      "iacDeclared": true,
+      "name": "vm-02",
+      "network": "vlan10",
+      "role": "machine virtuelle, agent k3s"
+    },
+    {
+      "class": "vm",
+      "iacDeclared": true,
+      "name": "vm-03",
+      "network": "vlan10",
+      "role": "machine virtuelle, agent k3s"
+    },
+    {
+      "class": "vm",
+      "iacDeclared": true,
+      "name": "console-vm",
+      "network": "vlan10",
+      "role": "console d'administration, hors grappe"
+    },
+    {
+      "class": "cloud-vm",
+      "iacDeclared": true,
+      "name": "cloud-01",
+      "network": "aws",
+      "role": "nœud de contrôle k3s, seul point d'entrée public"
+    },
+    {
+      "class": "nas",
+      "iacDeclared": false,
+      "name": "nas",
+      "network": "vlan10",
+      "role": "stockage partagé, médiathèque, exports pour la grappe"
+    },
+    {
+      "class": "router",
+      "iacDeclared": false,
+      "name": "router",
+      "network": "vlan10",
+      "role": "pare-feu, routage inter-VLAN, terminaison du tunnel chiffré"
+    },
+    {
+      "class": "switch",
+      "iacDeclared": false,
+      "name": "switch-01",
+      "network": "vlan10",
+      "role": "commutateur non géré, baie réseau"
+    },
+    {
+      "class": "switch",
+      "iacDeclared": false,
+      "name": "switch-02",
+      "network": "vlan10",
+      "role": "commutateur non géré, baie de calcul"
+    },
+    {
+      "class": "access-point",
+      "iacDeclared": false,
+      "name": "ap-01",
+      "network": "vlan50",
+      "role": "point d'accès sans fil bi-bande, alimenté par le câble réseau"
+    },
+    {
+      "class": "printer",
+      "iacDeclared": false,
+      "name": "printer-01",
+      "network": "vlan50",
+      "role": "imprimante multifonction"
+    },
+    {
+      "class": "camera",
+      "iacDeclared": false,
+      "name": "cam-01",
+      "network": "vlan50",
+      "role": "caméra extérieure enregistrée par la vidéosurveillance"
+    },
+    {
+      "class": "laptop",
+      "iacDeclared": false,
+      "name": "laptop-01",
+      "network": "vlan50",
+      "role": "poste de travail personnel"
+    },
+    {
+      "class": "laptop",
+      "iacDeclared": false,
+      "name": "laptop-02",
+      "network": "vlan50",
+      "role": "portable personnel"
+    },
+    {
+      "class": "phone",
+      "iacDeclared": false,
+      "name": "phone-01",
+      "network": "vlan50",
+      "role": "base de téléphonie sur IP"
+    },
+    {
+      "class": "phone",
+      "iacDeclared": false,
+      "name": "phone-02",
+      "network": "vlan50",
+      "role": "téléphone mobile personnel"
+    },
+    {
+      "class": "bmc",
+      "iacDeclared": false,
+      "name": "bmc-01",
+      "network": "out-of-band",
+      "role": "gestion hors bande d'un hôte de calcul GPU"
+    },
+    {
+      "class": "bmc",
+      "iacDeclared": false,
+      "name": "bmc-02",
+      "network": "out-of-band",
+      "role": "gestion hors bande d'un hôte d'hyperviseur"
+    },
+    {
+      "class": "bmc",
+      "iacDeclared": false,
+      "name": "bmc-03",
+      "network": "out-of-band",
+      "role": "gestion hors bande d'un hôte du pipeline média"
+    },
+    {
+      "class": "bmc",
+      "iacDeclared": false,
+      "name": "bmc-04",
+      "network": "out-of-band",
+      "role": "gestion hors bande d'un hôte de transcodage"
+    },
+    {
+      "class": "ups",
+      "iacDeclared": false,
+      "name": "ups-01",
+      "network": "out-of-band",
+      "role": "onduleur de la baie réseau"
+    },
+    {
+      "class": "ups",
+      "iacDeclared": false,
+      "name": "ups-02",
+      "network": "out-of-band",
+      "role": "onduleur de la baie réseau"
+    }
+  ],
   "fleetVersion": 1,
-  "generated": null,
-  "devices": []
+  "generated": "2026-08-08T15:11:02+00:00"
 }

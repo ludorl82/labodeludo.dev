@@ -1,0 +1,122 @@
+---
+title: "Deux sources pour une seule image : ce que l'IaC déclare, ce que mes notes savent"
+pubDate: 2026-08-08
+description: "Mes quatre dépôts d'infrastructure connaissent onze machines. Il y en a trente-sept dans la maison. Le reste — le commutateur, la borne Wi-Fi, les onduleurs, l'imprimante, la passerelle d'Hydro-Québec — ne vit que dans un document privé que je tiens à la main, et qui pourrit exactement comme tous les documents tenus à la main. Cet article raconte comment les deux sources sèment maintenant une vue publique dessinée chaque nuit, pourquoi le pipeline déterministe que j'avais construit a cessé d'être le résultat pour devenir la semence, et pourquoi il faut deux barrières et non une pour laisser des données traverser cette frontière."
+tags: ["DevOps", "Labo", "ludo"]
+heroImage: "/images/blog/banner-deux-sources.svg"
+---
+
+import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Le chiffre** : les quatre dépôts IaC déclarent **11 appareils**. Le labo en compte **37**. L'écart, c'est tout ce qu'aucun outil déclaratif ne touche.
+> -   **Deux semences** : les quatre instantanés publics assainis donnent ce qui est *déclaré* (116 nœuds, 133 liens) ; un document privé donne ce qui est *là*. Aucune des deux ne dessine le labo toute seule.
+> -   **L'inversion** : le pipeline déterministe que j'avais construit rendait une page qui *était* un inventaire. Il est devenu la semence, et une session Claude Code sans surveillance est devenue le dessinateur.
+> -   **« Généré » ≠ « vrai »** : le dessin n'est vrai que si les dépôts le sont. Les vérifications de dérive nocturnes le mesurent, le badge affiche leur résultat, et il tombe en panne vers « inconnu », **jamais vers le vert**. Le même signal bloque la réconciliation privée quand la dérive est rouge.
+> -   **La frontière** : les sessions privées lisent les vrais noms, les sessions publiques ne voient que du matériel public, et **seul du code — jamais un modèle — fait traverser les données**, derrière deux barrières indépendantes.
+> -   **Pourquoi deux** : une liste blanche positive laisse passer un nom d'hôte réel sans aucun signe distinctif — pas de point, pas d'arobase, pas de chiffre. Seule une liste noire privée l'attrape. Chacune seule était un faux sentiment de sécurité.
+> -   **Ce que les nuits ont trouvé** : mon tunnel VPN était étiqueté à l'envers dans mes propres notes, un rack documenté « aucun onduleur » en a un, et un document de disposition physique nommait une machine qui n'existait plus depuis deux semaines.
+> -   **Le code** : les quatre instantanés publics, étiquetés `article/architecture-generee` à l'état exact que décrit cet article — chacun avec le `topology.json` que son assainisseur émet : [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/blob/article/architecture-generee/topology.json), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/architecture-generee/topology.json), [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/architecture-generee/topology.json), [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public/blob/article/architecture-generee/topology.json). Le résultat : [/architecture](/architecture/) et [/inventaire](/inventaire/).
+
+Il y a une phrase que j'ai écrite ici il y a une semaine, à la fin de l'article sur le [pipeline qui appuie sur apply](/blog/laisser-le-pipeline-appuyer-sur-apply/), et que je dois maintenant corriger : « une vue d'architecture du labo, générée chaque nuit depuis les quatre dépôts publics ». C'est ce que j'ai construit. Ce n'est pas ce qui roule aujourd'hui, et l'écart entre les deux est le sujet de cet article.
+
+## Le diagramme est faux dès que quelqu'un change quelque chose
+
+Le point de départ n'a rien de théorique. Je tiens depuis des mois un document qui décrit la disposition physique du labo — quel appareil dans quel rack, alimenté par quel onduleur — et un fichier SVG dessiné à la main qui montre l'élévation des deux racks.
+
+En allant les vérifier, les deux mentaient. Le document nommait une machine qui n'existait plus depuis deux semaines : un Raspberry Pi 4 réaffecté début août, dont le nom était passé à une autre machine entre-temps. Le SVG, lui, montrait des hôtes sous le mauvais système d'exploitation et l'instance infonuagique dans la mauvaise région. Un rack complet y était documenté comme n'ayant aucun onduleur, alors qu'il en a un — un onduleur de 1500 VA, posé en bas, branché en USB dans la machine qui sert de maître au protocole de surveillance électrique. Difficile de rater plus visible.
+
+Rien de tout ça n'est de la négligence particulière. C'est le comportement normal d'un artefact tenu à la main : il est exact le jour où on l'écrit, puis il se dégrade au rythme des changements qu'on oublie d'y reporter. J'ai passé un mois à mettre le labo en code précisément pour arrêter de faire confiance à ce genre de document, et il m'en restait deux dans un coin.
+
+Le SVG a été supprimé. Le document, lui, est devenu quelque chose de plus utile qu'une description : une **source de données**.
+
+## Ce que le code déclare, et ce qu'il ne verra jamais
+
+Voici le chiffre qui a réorienté tout le projet. Les quatre dépôts qui décrivent ce labo — machines NixOS, charges k3s, compte AWS, périphérie Cloudflare — déclarent onze appareils. Le labo en compte trente-sept.
+
+Les vingt-six autres ne sont pas des oublis. Ce sont les objets qu'aucun outil déclaratif ne touche, par nature : le commutateur non administrable, la borne Wi-Fi, les trois onduleurs, l'imprimante multifonction, les caméras, les postes personnels, les contrôleurs de gestion hors bande des serveurs, et la passerelle du programme **Hilo** — le programme d'effacement de pointe d'Hydro-Québec, où le distributeur déclenche des événements l'hiver et rémunère la puissance effacée. Aucun `tofu apply` ne fera jamais apparaître un commutateur dans un rack.
+
+Un dessin d'architecture qui ne montre que les onze est donc exact et inutile. Il décrit fidèlement la partie du labo qui se laisse décrire, et laisse croire que le reste n'existe pas. C'est le piège de l'infrastructure en code quand on la prend pour un inventaire : elle est excellente pour dire ce qui est *voulu*, et muette sur ce qui est simplement *là*.
+
+D'où deux semences plutôt qu'une.
+
+**La première semence, publique.** Chacun des quatre dépôts privés produit déjà un instantané public assaini — j'ai raconté ce mécanisme en détail dans [quatre dépôts pour un labo au complet](/blog/quatre-depots-pour-un-labo-au-complet/). Chaque assainisseur émet maintenant en plus un fichier `topology.json`, calculé **sur l'arbre déjà assaini, avant la barrière de vérification** : ce qu'il contient est donc fictif par construction, et passe au scanner comme le reste. Le site joint les quatre en un graphe unique — 116 nœuds, 133 liens — dont la clé de jointure est la carte des noms d'hôtes que les assainisseurs imposent. Cette carte était une commodité de publication ; elle est devenue une interface porteuse, exactement comme je le soupçonnais en écrivant l'article précédent.
+
+**La deuxième semence, privée.** Une session nocturne lit le document de disposition physique — celui qui connaît les trente-sept boîtes — et en rend un fichier `fleet.json` assaini avec **la même carte de noms** que les assainisseurs. Il ne contient aucune adresse, d'aucune sorte : un dessin n'en a pas besoin, et leur absence supprime toute une catégorie de fuite plutôt que de la filtrer. Il contient le modèle réel du matériel (vingt-neuf des trente-sept appareils en ont un), sa classe, son rack, l'onduleur qui l'alimente, et le cas échéant la machine qui l'héberge.
+
+C'est cette deuxième semence qui rend le dessin honnête. Sans elle, la page montre un cluster suspendu dans le vide. Avec elle, elle montre un cluster branché dans un commutateur, dans un rack, sur un onduleur, dans un sous-sol.
+
+## Le pipeline déterministe a arrêté d'être le résultat
+
+La première version de la page rendait le graphe joint directement : quatre bandes, une par dépôt, chacune énumérant ses ressources, avec un diagramme au-dessus. Techniquement irréprochable. Entièrement dérivé. Sans aucun secret dans le build.
+
+Et en la regardant, la critique est tombée toute seule : ça ressemble à un inventaire. Ce n'en était pas seulement l'apparence — c'en était un. Une page qui énumère quatre dépôts est une liste avec un dessin en haut, pas une architecture. L'architecture, c'est le jugement qu'on porte sur cette liste : quoi regrouper, quoi taire, quoi mettre au centre.
+
+Le jugement est précisément ce qu'un rendu déterministe ne peut pas fournir. Alors le pipeline a changé de rôle. Il ne rend plus la page ; il **sème** un auteur, et l'auteur est une session Claude Code sans surveillance qui redessine le SVG chaque nuit. C'est le même mode headless que j'avais décrit en [automatisant le labo depuis le bastion](/blog/claude-code-headless-bastion/), mais appliqué à une tâche d'une autre nature : pas une manipulation, une rédaction.
+
+Il en découle une répartition qui me semble maintenant évidente, et qui ne l'était pas au départ. La page [/architecture](/architecture/) porte **un seul dessin**, celui que la nuit redessine, avec son badge de dérive et sa provenance. La page [/inventaire](/inventaire/) porte ce que seule une main humaine peut écrire — ce que chaque rôle fait, et les articles que j'ai écrits dessus — et a absorbé la moitié énumérable, groupée par rôle. Elle se termine par une liste « pas encore rattaché » qui nomme les neuf applications qu'aucun rôle ne réclame encore. Un inventaire qui cache silencieusement ce qu'il ne connaît pas est un inventaire qui pourrit ; celui-là montre ses trous.
+
+Le diagramme conceptuel dessiné à la main, lui, a disparu. Le garder comme jumeau « explicatif » revenait à conserver exactement la charge d'entretien que le projet existait pour supprimer.
+
+<LiveArchDiagram />
+
+## « Généré » ne veut pas dire « vrai »
+
+Il y a un raccourci confortable dans lequel je ne veux pas tomber, parce que c'est exactement celui qui rend un dessin dangereux : un diagramme généré n'est pas plus vrai qu'un diagramme dessiné à la main. Il est seulement **aussi vrai que sa source**.
+
+Or la source, ici, ce sont les dépôts d'infrastructure. Le dessin est donc exact si et seulement si les dépôts décrivent encore la réalité — ce qui n'a rien d'automatique. Du code d'infrastructure peut dériver aussi bien qu'un document : quelqu'un change un paramètre à la main sur la console du fournisseur, et le dépôt raconte tranquillement une version périmée du monde, avec toute la crédibilité que confère un fichier versionné.
+
+C'est précisément ce que les vérifications de dérive nocturnes mesurent, et elles existaient déjà avant ce projet. Trois d'entre elles interrogent leur fournisseur respectif et comparent l'état réel au plan calculé depuis le dépôt : un écart, et le contrôle passe au rouge. La quatrième couche n'en a plus besoin — depuis la [fermeture de la boucle GitOps](/blog/laisser-le-pipeline-appuyer-sur-apply/), le cluster est réconcilié en continu, ce qui pose la même question en permanence plutôt qu'une fois par nuit.
+
+Le dessin porte donc son résultat de vérification à côté de lui. La page n'affirme pas « ceci est en direct » — ce serait faux, et invérifiable. Elle affirme quelque chose de plus faible et de démontrable : **régénéré cette nuit, et voici quand les contrôles ont confirmé pour la dernière fois que les dépôts correspondaient à la réalité**. Le badge dit « conforme à l'infra réelle » avec sa date, ou nomme le contrôle qui a échoué.
+
+Une règle gouverne ce badge, et c'est la seule qui compte : **il tombe en panne vers « inconnu », jamais vers le vert**. N'importe quel problème de lecture — le service de surveillance injoignable, une réponse malformée, un délai dépassé — écrase le bloc de vérification par un « non vérifié » explicite, et la construction du site continue. Un vert périmé est le seul mensonge que ce badge n'a pas le droit de dire, parce que c'est le seul qui serait cru.
+
+Le même signal sert une deuxième fois, du côté privé, et c'est l'usage que je trouve le plus élégant. La session qui réconcilie mes notes contre les dépôts ne démarre **que si** les contrôles de dérive sont au vert ce matin-là. La raison tient en une ligne de logique : réconcilier un document contre des dépôts n'a de sens que si les dépôts, eux, correspondent encore au monde. Si les dépôts ont dérivé, aligner mes notes dessus ne corrige rien — ça propage l'erreur dans un document de plus, avec l'autorité de l'automatisation en prime. Quand la dérive est rouge, la nuit est sautée et je reçois une notification. Une réconciliation refusée coûte une journée de fraîcheur ; une réconciliation contre une source fausse coûte la confiance dans les deux documents.
+
+## Deux barrières, parce qu'une seule ment
+
+Voilà où le projet devient une question de sécurité plutôt que de mise en page.
+
+La règle de base ne bouge pas : une session qui a lu les dépôts privés n'écrit jamais de contenu public. Les sessions publiques roulent dans un répertoire de travail qui ne contient que du matériel public — les instantanés assainis, le site, le graphe joint. Elles ne peuvent pas divulguer ce qu'elles n'ont jamais lu.
+
+Reste le fichier `fleet.json`, qui doit bel et bien traverser, puisqu'il est calculé d'un côté et consommé de l'autre. Il traverse par **du code de pilotage, jamais par un modèle** : le script qui orchestre la nuit le copie lui-même, après vérification. Et la vérification est double.
+
+La première barrière est celle du dépôt public : une **liste blanche positive**, qui n'accepte que ce qui a la forme d'une donnée fictive — adresses de documentation, domaines de la famille `example`. Elle a une propriété que j'aime beaucoup : le dépôt public n'apprend jamais à quoi ressemble un vrai nom. Il n'y a rien à voler dedans.
+
+La deuxième barrière est une **liste noire privée**, qui vit dans le script de pilotage et nulle part ailleurs — parce qu'énumérer ce qui ne doit jamais sortir, c'est littéralement écrire le décodeur. Ce script est d'ailleurs explicitement exclu de la publication de son propre dépôt, et j'ai découvert au passage que cette exclusion manquait pendant une journée entière, ce qui rendait l'arbre entier impubliable sans que rien ne le dise.
+
+J'ai testé les deux barrières avant de les armer, et le test a payé immédiatement. Un vrai nom d'hôte, tout court, traverse la liste blanche positive sans la moindre résistance : il n'a pas de point, pas d'arobase, pas de chiffre, il ressemble à un identifiant de code ordinaire. Seule la liste noire l'attrape. Dans l'autre sens, la liste noire ne connaît que ce que j'ai pensé à y écrire, et la liste blanche attrape les formes que je n'ai pas anticipées. Chacune prise seule aurait été un faux sentiment de sécurité — et le genre de faux sentiment de sécurité qu'on ne découvre qu'après la publication.
+
+## Ce que les nuits ont trouvé et que je n'avais pas vu
+
+La partie que je n'attendais pas est que la réconciliation nocturne trouve des erreurs dans **mes** documents, et pas seulement l'inverse.
+
+La meilleure : mon tunnel VPN était étiqueté à l'envers, sur le diagramme comme dans le texte de mes notes. Je décrivais depuis des mois une connexion entrante vers la maison. En lisant réellement la configuration déclarée, la session a constaté que c'est le nœud infonuagique qui écoute — c'est lui qui porte le port d'écoute, et son pair n'a aucun point de contact déclaré. Autrement dit, **c'est la maison qui appelle vers l'extérieur**, pas le contraire. La correction est mineure sur le dessin et importante sur la compréhension : elle change entièrement la surface exposée que ce tunnel représente. Reste une question ouverte que j'ai notée honnêtement plutôt que de la refermer : est-ce qu'une règle entrante devenue inutile traîne encore dans le pare-feu ?
+
+Les autres trouvailles sont plus modestes et tout aussi révélatrices : une taille d'instance infonuagique passée au cran supérieur sans que mes notes suivent, un décompte d'hôtes resté à dix après être passé à onze, une entrée DNS qui pointait encore vers un service retiré, et ce rack documenté sans onduleur.
+
+Aucune de ces erreurs n'aurait causé de panne. Toutes auraient causé une mauvaise décision, un jour, à trois heures du matin, quand on lit son propre diagramme en croyant qu'il dit la vérité.
+
+## Nommer le matériel, ou pas
+
+Un dernier choix, parce qu'il a été fait deux fois et que la deuxième fois était la bonne.
+
+Ma première version cachait le modèle du pare-feu et celui du NAS. La logique semblait solide : ces deux boîtes sont la porte d'entrée et le coffre-fort, et un numéro de modèle exact est une liste de vulnérabilités connues offerte à qui la cherche.
+
+Sauf que ces deux appareils sont parfaitement lisibles sur les photos de rack que j'ai publiées moi-même il y a trois semaines, dans [l'article sur le tiroir 1U](/blog/un-tiroir-1u-pour-mes-trois-raspberry-pi/). Caviarder un dessin quand la photographie est déjà en ligne ne protège rien du tout : ça dégrade seulement le dessin. L'exemption a sauté, et les vingt-neuf modèles s'affichent.
+
+Ce qui reste interdit partout, en revanche, ce sont les numéros de série et les versions de logiciel ou de micrologiciel. La distinction tient debout : une photo montre **quelle** boîte je possède, jamais **quel niveau de correctif** elle porte. Et c'est le niveau de correctif qui décide si une vulnérabilité s'applique. Ce que la vraie protection de ces deux boîtes assure, ce n'est de toute façon pas la discrétion sur leur modèle : rien n'est redirigé depuis l'internet, le tunnel part de la maison, et le trafic public entre par un tunnel infonuagique derrière une authentification.
+
+## Le document tenu à la main est devenu une base de données
+
+Ce que je retiens dépasse le diagramme.
+
+J'avais deux catégories d'artefacts : le code, vérifié chaque nuit par des contrôles de dérive, et les notes, vérifiées par ma discipline. La première catégorie ne ment pas longtemps. La seconde ment tout le temps, silencieusement, et le seul moment où on s'en aperçoit est celui où on s'en sert pour décider.
+
+La réconciliation nocturne ne transforme pas les notes en code. Elle leur donne ce que le code avait déjà : quelqu'un qui les relit chaque nuit en les confrontant à une autre source, et qui signale les contradictions plutôt que de les recouvrir. Le document de disposition physique n'est plus une description qui se dégrade — il est devenu la source d'un dessin que je regarde, ce qui veut dire que ses erreurs deviennent visibles au lieu de dormir.
+
+Et il y a une conséquence secondaire que je n'avais pas prévue en commençant : à partir du moment où un document privé sème une page publique, il faut décider explicitement, ligne par ligne, ce qui a le droit de sortir. Cette obligation-là est un cadeau. Elle m'a forcé à écrire noir sur blanc des règles que je n'avais jamais formulées — les modèles oui, les numéros de série non, les adresses jamais — et à les faire appliquer par une machine plutôt que par ma mémoire.
+
+Le reste du travail, c'est Bob qui l'a fait — et il en a sa propre version, écrite depuis l'autre bout du pipeline : [je redessine ces pages chaque nuit](/blog/je-redessine-ces-pages-chaque-nuit/).

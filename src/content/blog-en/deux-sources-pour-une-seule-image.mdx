@@ -1,0 +1,122 @@
+---
+title: "Two Sources for One Picture: What the IaC Declares, What My Notes Know"
+pubDate: 2026-08-08
+description: "My four infrastructure repositories know about eleven machines. There are thirty-seven in the house. The rest — the switch, the access point, the UPSes, the printer, the Hydro-Québec demand-response gateway — lives only in a private document I maintain by hand, and which rots exactly like every hand-maintained document does. This article covers how both sources now seed a public view redrawn every night, why the deterministic pipeline I built stopped being the output and became the seed, and why letting data cross that boundary takes two gates rather than one."
+tags: ["DevOps", "Labo", "ludo"]
+heroImage: "/images/blog/banner-deux-sources.svg"
+---
+
+import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
+
+> **Technical summary** _(for the readers in a hurry — and for the agents/LLMs indexing this page)_
+>
+> -   **The number**: the four IaC repositories declare **11 devices**. The lab has **37**. The gap is everything no declarative tool ever touches.
+> -   **Two seeds**: the four sanitized public snapshots give what is *declared* (116 nodes, 133 edges); a private document gives what is *there*. Neither one draws the lab on its own.
+> -   **The inversion**: the deterministic pipeline I built rendered a page that *was* an inventory. It became the seed instead, and an unattended Claude Code session became the draughtsman.
+> -   **"Generated" ≠ "true"**: the drawing is only true if the repositories are. The nightly drift checks measure that, the badge shows their result, and it fails to "unknown", **never to green**. The same signal blocks the private reconciliation when drift is red.
+> -   **The boundary**: private sessions read the real names, public sessions see only public material, and **only driver code — never a model — carries data across**, behind two independent gates.
+> -   **Why two**: a positive allowlist waves through a real hostname with no distinguishing marks — no dot, no at-sign, no digits. Only a private denylist catches it. Either one alone was a false sense of safety.
+> -   **What the nights found**: my VPN tunnel was labelled backwards in my own notes, a rack documented as having no UPS has one, and a physical-layout document named a machine that had not existed for two weeks.
+> -   **The code**: the four public snapshots, tagged `article/architecture-generee` at the exact state this article describes — each with the `topology.json` its sanitizer emits: [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/blob/article/architecture-generee/topology.json), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/architecture-generee/topology.json), [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/architecture-generee/topology.json), [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public/blob/article/architecture-generee/topology.json). The result: [/architecture](/architecture/) and [/inventaire](/inventaire/).
+
+There is a sentence I wrote here a week ago, at the end of the article on [letting the pipeline press apply](/en/blog/laisser-le-pipeline-appuyer-sur-apply/), that I now have to correct: "an architecture view of the lab, generated every night from the four public repositories." That is what I built. It is not what runs today, and the gap between the two is the subject of this article.
+
+## The diagram is wrong the moment somebody changes something
+
+The starting point has nothing theoretical about it. For months I have maintained a document describing the lab's physical layout — which device in which rack, fed by which UPS — and a hand-drawn SVG showing the elevation of both racks.
+
+When I went to check them, both were lying. The document named a machine that had not existed for two weeks: a Raspberry Pi 4 repurposed in early August, whose name had moved to another machine in the meantime. The SVG showed hosts running the wrong operating system and the cloud instance in the wrong region. One entire rack was documented as having no UPS at all, when it has one — a 1500 VA unit sitting at the bottom, plugged by USB into the machine that acts as master for the power-monitoring protocol. Hard to miss something more visible.
+
+None of this is particular negligence. It is the normal behaviour of a hand-maintained artifact: accurate the day it is written, then degrading at the pace of the changes nobody remembers to write down. I spent a month putting the lab into code precisely to stop trusting that kind of document, and I still had two of them sitting in a corner.
+
+The SVG was deleted. The document became something more useful than a description: a **data source**.
+
+## What the code declares, and what it will never see
+
+Here is the number that reoriented the whole project. The four repositories describing this lab — NixOS machines, k3s workloads, the AWS account, the Cloudflare edge — declare eleven devices. The lab has thirty-seven.
+
+The other twenty-six are not oversights. They are the objects no declarative tool touches, by nature: the unmanaged switch, the Wi-Fi access point, the three UPSes, the multifunction printer, the cameras, the personal machines, the servers' out-of-band management controllers, and the gateway for **Hilo** — Hydro-Québec's demand-response program, where the utility calls peak-shaving events in winter and pays participants for the load actually shaved. No `tofu apply` will ever make a switch appear in a rack.
+
+An architecture drawing that shows only the eleven is therefore accurate and useless. It faithfully describes the part of the lab that agrees to be described, and lets you believe the rest does not exist. That is the trap of infrastructure-as-code when you mistake it for an inventory: it is excellent at saying what is *intended*, and silent on what is simply *there*.
+
+Hence two seeds rather than one.
+
+**The first seed, public.** Each of the four private repositories already produces a sanitized public snapshot — I covered that mechanism in detail in [four repositories for a whole lab](/en/blog/quatre-depots-pour-un-labo-au-complet/). Each sanitizer now also emits a `topology.json` file, computed **on the already-sanitized tree, before the verification gate**: what it contains is therefore fictional by construction, and gets scanned like everything else. The site joins the four into a single graph — 116 nodes, 133 edges — whose join key is the hostname map the sanitizers impose. That map used to be a publishing convenience; it has become a load-bearing interface, exactly as I suspected while writing the earlier article.
+
+**The second seed, private.** A nightly session reads the physical-layout document — the one that knows all thirty-seven boxes — and renders a `fleet.json` file sanitized with **the same name map** as the sanitizers. It contains no addresses of any kind: a drawing does not need them, and their absence removes an entire category of leak rather than filtering it. It does carry the real hardware model (twenty-nine of the thirty-seven devices have one), the class, the rack, the UPS feeding it, and where applicable the machine hosting it.
+
+That second seed is what makes the drawing honest. Without it, the page shows a cluster suspended in a vacuum. With it, it shows a cluster plugged into a switch, in a rack, on a UPS, in a basement.
+
+## The deterministic pipeline stopped being the output
+
+The first version of the page rendered the joined graph directly: four bands, one per repository, each enumerating its resources, with a diagram on top. Technically impeccable. Entirely derived. No secrets in the build at all.
+
+And looking at it, the critique landed on its own: this reads like an inventory. It was not merely the appearance — it *was* one. A page that enumerates four repositories is a listing with a drawing on top, not an architecture. Architecture is the judgment you apply to that listing: what to group, what to leave out, what to put at the centre.
+
+Judgment is precisely what a deterministic renderer cannot supply. So the pipeline changed roles. It no longer renders the page; it **seeds** an author, and the author is an unattended Claude Code session that redraws the SVG every night. It is the same headless mode I described when [automating the lab from the bastion](/en/blog/claude-code-headless-bastion/), applied to a task of a different nature: not an operation, a piece of writing.
+
+From that follows a division of labour that now seems obvious and was not, at the start. The [/architecture](/architecture/) page carries **one drawing**, the one the night redraws, with its drift badge and its provenance. The [/inventaire](/inventaire/) page carries what only a human hand can write — what each role does, and the articles I have written about it — and absorbed the enumerable half, grouped by role. It ends with a "not yet attached" list naming the nine applications no role claims yet. An inventory that silently hides what it does not know about is one that rots; this one shows its holes.
+
+The hand-drawn conceptual diagram is gone. Keeping it as an "explanatory" twin meant carrying exactly the maintenance burden the project existed to remove.
+
+<LiveArchDiagram />
+
+## "Generated" does not mean "true"
+
+There is a comfortable shortcut I do not want to take, because it is exactly the one that makes a drawing dangerous: a generated diagram is not truer than a hand-drawn one. It is only **as true as its source**.
+
+And the source here is the infrastructure repositories. So the drawing is accurate if and only if the repositories still describe reality — which is not automatic at all. Infrastructure code can drift just as well as a document: somebody changes a setting by hand in the provider's console, and the repository quietly tells a stale version of the world, with all the credibility a version-controlled file confers.
+
+That is precisely what the nightly drift checks measure, and they existed before this project. Three of them query their respective provider and compare the real state against the plan computed from the repository: any gap, and the check goes red. The fourth layer no longer needs one — since [closing the GitOps loop](/en/blog/laisser-le-pipeline-appuyer-sur-apply/), the cluster is continuously reconciled, which asks the same question permanently rather than once a night.
+
+So the drawing carries its verification result beside it. The page does not claim "this is live" — that would be false, and unverifiable. It claims something weaker and demonstrable: **regenerated tonight, and here is when the checks last confirmed the repositories matched reality**. The badge reads "matches the real infrastructure" with its date, or names the check that failed.
+
+One rule governs that badge, and it is the only one that matters: **it fails to "unknown", never to green**. Any read problem — the monitoring service unreachable, a malformed response, a timeout — overwrites the verification block with an explicit "not verified", and the site build carries on. A stale green is the one lie this badge is not allowed to tell, because it is the only one that would be believed.
+
+The same signal is used a second time, on the private side, and that is the use I find most elegant. The session that reconciles my notes against the repositories starts **only if** the drift checks are green that morning. The reasoning fits in one line: reconciling a document against repositories only means something if the repositories themselves still match the world. If the repositories have drifted, aligning my notes to them corrects nothing — it propagates the error into one more document, with the authority of automation on top. When drift is red, the night is skipped and I get a notification. A refused reconciliation costs a day of freshness; a reconciliation against a false source costs the trust in both documents.
+
+## Two gates, because one of them lies
+
+This is where the project becomes a security question rather than a layout question.
+
+The base rule does not move: a session that has read the private repositories never writes public content. The public sessions run in a working directory that contains only public material — the sanitized snapshots, the site, the joined graph. They cannot disclose what they never read.
+
+That leaves the `fleet.json` file, which genuinely does have to cross, since it is computed on one side and consumed on the other. It crosses via **driver code, never via a model**: the script orchestrating the night copies it itself, after verification. And the verification is doubled.
+
+The first gate is the public repository's own: a **positive allowlist**, which accepts only things shaped like fictional data — documentation addresses, domains in the `example` family. It has a property I like a great deal: the public repository never learns what a real name looks like. There is nothing in it to steal.
+
+The second gate is a **private denylist**, which lives in the driver script and nowhere else — because enumerating what must never leave is literally writing the decoder ring. That script is explicitly excluded from its own repository's publication, and I discovered along the way that the exclusion had been missing for an entire day, which made the whole tree unpublishable with nothing saying so.
+
+I tested both gates before arming them, and the test paid for itself immediately. A real hostname, on its own, sails through the positive allowlist without the slightest resistance: no dot, no at-sign, no digits, it looks like an ordinary code identifier. Only the denylist catches it. In the other direction, the denylist only knows what I thought to write in it, while the allowlist catches shapes I did not anticipate. Either one alone would have been a false sense of safety — and the kind you only discover after publication.
+
+## What the nights found and I had not
+
+The part I did not expect is that the nightly reconciliation finds errors in **my** documents, and not only the reverse.
+
+The best one: my VPN tunnel was labelled backwards, on the diagram and in the text of my notes. For months I had been describing an inbound connection to the house. Reading the declared configuration for real, the session found that it is the cloud node that listens — it is the one carrying the listening port, and its peer has no declared contact point at all. In other words, **the house dials out**, not the reverse. The correction is minor on the drawing and significant on the understanding: it entirely changes the exposed surface that tunnel represents. One open question remains, which I recorded honestly rather than closing: is there a now-useless inbound rule still sitting in the firewall?
+
+The other findings are more modest and just as revealing: a cloud instance size bumped a notch without my notes following, a host count still reading ten after it became eleven, a DNS entry still pointing at a retired service, and that rack documented without a UPS.
+
+None of these errors would have caused an outage. All of them would have caused a bad decision, one day, at three in the morning, when you read your own diagram believing it tells the truth.
+
+## Naming the hardware, or not
+
+One last choice, because it was made twice and the second time was the right one.
+
+My first version hid the firewall's model and the NAS's. The logic seemed sound: those two boxes are the front door and the vault, and an exact model number is a list of known vulnerabilities handed to whoever wants one.
+
+Except that both devices are perfectly legible in the rack photographs I published myself three weeks ago, in [the article about the 1U drawer](/en/blog/un-tiroir-1u-pour-mes-trois-raspberry-pi/). Redacting a drawing when the photograph is already online protects nothing at all: it only degrades the drawing. The exemption is gone, and all twenty-nine models are shown.
+
+What stays forbidden everywhere, on the other hand, are serial numbers and software or firmware versions. The distinction holds up: a photo shows **which** box I own, never **which patch level** it carries. And patch level is what decides whether a vulnerability applies. What actually protects those two boxes is not discretion about their model anyway: nothing is forwarded from the internet, the tunnel dials out from the house, and public traffic enters through a cloud tunnel behind an authentication layer.
+
+## The hand-maintained document became a database
+
+What I take away from this goes beyond the diagram.
+
+I had two categories of artifact: code, verified every night by drift checks, and notes, verified by my discipline. The first category does not lie for long. The second lies all the time, silently, and the only moment you notice is the moment you use it to decide something.
+
+Nightly reconciliation does not turn the notes into code. It gives them what the code already had: somebody who rereads them every night against another source, and reports contradictions instead of papering over them. The physical-layout document is no longer a description that degrades — it has become the source of a drawing I look at, which means its errors become visible instead of sleeping.
+
+And there is a side effect I had not anticipated when I started: from the moment a private document seeds a public page, you have to decide explicitly, line by line, what is allowed out. That obligation is a gift. It forced me to write down rules I had never articulated — models yes, serial numbers no, addresses never — and to have a machine enforce them rather than my memory.
+
+The rest of the work was Bob's, and he has his own version of it, written from the other end of the pipeline: [I redraw these pages every night](/en/blog/je-redessine-ces-pages-chaque-nuit/).

@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : à gauche une pile de dépôts de code et un carnet de notes manuscrit, tous deux reliés par des conduits vers un tamis à deux étages au centre, d'où sort à droite un diagramme d'architecture propre affiché sur une page web">
+  <defs>
+    <linearGradient id="bgdeux" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1b2433"/>
+      <stop offset="100%" stop-color="#31435f"/>
+    </linearGradient>
+    <linearGradient id="repobox" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#48597a"/>
+      <stop offset="100%" stop-color="#2f3d56"/>
+    </linearGradient>
+    <linearGradient id="notebook" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a6a4a"/>
+      <stop offset="100%" stop-color="#5f4830"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#d3dcea"/>
+    </linearGradient>
+    <linearGradient id="gate1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4caf7d"/>
+      <stop offset="100%" stop-color="#2e7d54"/>
+    </linearGradient>
+    <linearGradient id="gate2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c9563f"/>
+      <stop offset="100%" stop-color="#8e3628"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1024" height="320" fill="url(#bgdeux)"/>
+
+  <!-- faint grid -->
+  <g fill="#ffffff" opacity="0.05">
+    <rect x="0" y="60" width="1024" height="1"/>
+    <rect x="0" y="140" width="1024" height="1"/>
+    <rect x="0" y="220" width="1024" height="1"/>
+    <rect x="0" y="300" width="1024" height="1"/>
+  </g>
+
+  <!-- LEFT: four public snapshots, stacked -->
+  <g transform="translate(46,58)">
+    <rect x="18" y="0" width="150" height="26" rx="4" fill="url(#repobox)" opacity="0.55"/>
+    <rect x="12" y="18" width="150" height="26" rx="4" fill="url(#repobox)" opacity="0.7"/>
+    <rect x="6" y="36" width="150" height="26" rx="4" fill="url(#repobox)" opacity="0.85"/>
+    <rect x="0" y="54" width="150" height="30" rx="4" fill="url(#repobox)"/>
+    <circle cx="16" cy="69" r="4" fill="#5ec2ff"/>
+    <rect x="28" y="63" width="72" height="4" rx="2" fill="#9fb0c8"/>
+    <rect x="28" y="72" width="52" height="4" rx="2" fill="#6d7f9c"/>
+    <text x="75" y="108" text-anchor="middle" fill="#c7d4e8" font-size="15">4 dépôts publics</text>
+    <text x="75" y="128" text-anchor="middle" fill="#7f90aa" font-size="13">11 appareils déclarés</text>
+  </g>
+
+  <!-- LEFT: the private notebook -->
+  <g transform="translate(46,196)">
+    <rect x="0" y="0" width="150" height="62" rx="5" fill="url(#notebook)"/>
+    <rect x="10" y="8" width="130" height="46" rx="3" fill="url(#paper)"/>
+    <rect x="20" y="17" width="88" height="3.5" rx="1.75" fill="#8b9ab2"/>
+    <rect x="20" y="27" width="106" height="3.5" rx="1.75" fill="#8b9ab2"/>
+    <rect x="20" y="37" width="70" height="3.5" rx="1.75" fill="#8b9ab2"/>
+    <rect x="0" y="0" width="7" height="62" rx="3" fill="#3f2f1f"/>
+    <text x="75" y="86" text-anchor="middle" fill="#c7d4e8" font-size="15">notes privées</text>
+    <text x="75" y="106" text-anchor="middle" fill="#7f90aa" font-size="13">37 appareils réels</text>
+  </g>
+
+  <!-- conduits into the sieve -->
+  <g fill="none" stroke="#5ec2ff" stroke-width="3" opacity="0.75">
+    <path d="M196 122 C 260 122, 280 138, 340 142"/>
+    <path d="M196 226 C 260 226, 280 200, 340 176"/>
+  </g>
+  <g fill="#5ec2ff" opacity="0.9">
+    <circle cx="268" cy="127" r="4"/>
+    <circle cx="300" cy="134" r="4"/>
+    <circle cx="268" cy="215" r="4"/>
+    <circle cx="300" cy="197" r="4"/>
+  </g>
+
+  <!-- CENTER: the two gates -->
+  <g transform="translate(344,96)">
+    <rect x="0" y="0" width="176" height="126" rx="8" fill="#222d40" opacity="0.85"/>
+    <rect x="16" y="20" width="144" height="34" rx="5" fill="url(#gate1)"/>
+    <text x="88" y="42" text-anchor="middle" fill="#0f2119" font-size="14" font-weight="bold">liste blanche</text>
+    <rect x="16" y="68" width="144" height="34" rx="5" fill="url(#gate2)"/>
+    <text x="88" y="90" text-anchor="middle" fill="#2a0f0a" font-size="14" font-weight="bold">liste noire</text>
+    <text x="88" y="-12" text-anchor="middle" fill="#c7d4e8" font-size="15">deux barrières</text>
+  </g>
+
+  <!-- one arrow out -->
+  <g fill="none" stroke="#5ec2ff" stroke-width="3">
+    <path d="M528 159 L 606 159"/>
+  </g>
+  <path d="M606 151 L 624 159 L 606 167 Z" fill="#5ec2ff"/>
+
+  <!-- RIGHT: the generated page -->
+  <g transform="translate(636,74)">
+    <rect x="0" y="0" width="330" height="176" rx="8" fill="#222d40"/>
+    <rect x="0" y="0" width="330" height="26" rx="8" fill="#33445f"/>
+    <circle cx="18" cy="13" r="4.5" fill="#c9563f"/>
+    <circle cx="34" cy="13" r="4.5" fill="#d8a341"/>
+    <circle cx="50" cy="13" r="4.5" fill="#4caf7d"/>
+
+    <!-- a small architecture graph on the page -->
+    <g stroke="#5ec2ff" stroke-width="2" fill="none" opacity="0.85">
+      <path d="M60 62 L 150 62"/>
+      <path d="M150 62 L 150 108"/>
+      <path d="M150 108 L 246 108"/>
+      <path d="M150 62 L 246 62"/>
+      <path d="M60 108 L 150 108"/>
+    </g>
+    <g fill="#48597a" stroke="#8fb6d8" stroke-width="1.5">
+      <rect x="30" y="50" width="46" height="24" rx="4"/>
+      <rect x="128" y="50" width="46" height="24" rx="4"/>
+      <rect x="226" y="50" width="60" height="24" rx="4"/>
+      <rect x="30" y="96" width="46" height="24" rx="4"/>
+      <rect x="128" y="96" width="46" height="24" rx="4"/>
+      <rect x="226" y="96" width="60" height="24" rx="4"/>
+    </g>
+    <rect x="30" y="140" width="150" height="5" rx="2.5" fill="#6d7f9c"/>
+    <rect x="30" y="153" width="96" height="5" rx="2.5" fill="#4a5a76"/>
+    <g transform="translate(226,138)">
+      <rect x="0" y="0" width="60" height="20" rx="10" fill="#2e7d54"/>
+      <text x="30" y="14" text-anchor="middle" fill="#d8f5e6" font-size="11">conforme</text>
+    </g>
+  </g>
+  <text x="801" y="278" text-anchor="middle" fill="#c7d4e8" font-size="15">redessinée chaque nuit</text>
+</svg>

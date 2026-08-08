@@ -12,7 +12,18 @@ import RackDiagram from "../../components/RackDiagram.astro";
 // grouped by role, plus everything the mapping has not claimed yet. That
 // last group is deliberate — a role list that silently drops what it does
 // not know about is the kind of inventory that rots.
-const roles = Object.entries(INVENTORY) as [InventoryKey, (typeof INVENTORY)[InventoryKey]][];
+// ORDER: most-written-about first, DERIVED. These used to render in
+// `Object.entries` order — i.e. the order they were typed into the object
+// literal, which put the richest role tenth and `alimentation` between
+// `surveillance` and `pare-feu` for no reason at all. Sorting by article
+// count means the order maintains itself as I write, and the reader meets
+// the parts of the lab with the most to say about them first.
+//
+// Ties keep declaration order (Array.prototype.sort is stable), so the
+// order is deterministic and only ever moves when an article is added.
+const roles = (
+  Object.entries(INVENTORY) as [InventoryKey, (typeof INVENTORY)[InventoryKey]][]
+).sort((a, b) => b[1].articles.length - a[1].articles.length);
 
 const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
 type TNode = { id: string; kind: string; label: string; layer: string; meta: any };

@@ -1,4 +1,5 @@
 ---
+import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ArchGenerated from "../components/ArchGenerated.astro";
 import AuthorBadge from "../components/AuthorBadge.astro";
@@ -33,6 +34,56 @@ import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
 // voice stays on /inventaire, where the roles are hand-written. Do not
 // blend the two (see the site's two-voice rule).
 const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
+
+// ORDER: newest article first, DERIVED — never hand-arranged. These
+// sections used to sit in the order their blocks happened to be appended
+// over the months, which read as random (Frigate 07-09 ahead of the tunnel
+// 07-03, the scan pipeline 08-05 landing mid-list). Everything else on this
+// page comes from data; this list now does too, so it cannot drift out of
+// order when a diagram is added.
+//
+// `slug` is the article the diagram was drawn for — the same one its
+// architecture-context figcaption links to (enforced by
+// scripts/check-diagram-links.mjs), and the source of the sort key.
+const DETAILS = [
+  { slug: "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
+    title: "détection vidéo (Frigate)", Component: FrigateDetectorDiagram },
+  { slug: "retirer-pare-feu-tunnel-cloudflare",
+    title: "accès public (tunnel Cloudflare)", Component: CloudflareTunnelDiagram },
+  { slug: "le-move-qui-echouait-une-histoire-de-proxy-de-schema-http-et-dun-coffre-fort-presque-corrompu",
+    title: "requête WebDAV (proxy et en-tête Destination)", Component: WebdavProxyDiagram },
+  { slug: "ftp-prive-wireguard",
+    title: "accès privé (tunnel WireGuard)", Component: WireGuardFtpDiagram },
+  { slug: "tout-ca-pour-un-script-bash",
+    title: "pipeline de numérisation (SFTP → S3 → Lambda → Drive)", Component: ScanPipelineDiagram },
+  { slug: "ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3",
+    title: "assistant vocal (Home Assistant + Ollama)", Component: VoiceAssistantDiagram },
+  { slug: "compartimentalisation-des-outils-de-console",
+    title: "console conteneurisée (bastion)", Component: ConsoleLayersDiagram },
+  { slug: "separer-le-bastion-de-la-console",
+    title: "la séparation bastion / console", Component: BastionConsoleSplitDiagram },
+  { slug: "deployer-un-cluster-k3s-avec-claude-code",
+    title: "grappe conteneurs (k3s)", Component: K3sClusterDiagram },
+  { slug: "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
+    title: "stockage NFS de la grappe (chemin d'export)", Component: NfsShareMoveDiagram },
+  { slug: "l-ile-du-survivant",
+    title: "l'île du survivant (reprise après panne électrique)", Component: SurvivorIslandDiagram },
+];
+
+// Fail LOUD on an unknown slug. Sorting on a missing date would quietly
+// park that diagram at one end of the page and look deliberate — exactly
+// the silent wrongness this page exists to stop.
+const posts = await getCollection("blog");
+const dateOf = new Map(posts.map((p) => [p.id, +p.data.pubDate]));
+const unknown = DETAILS.filter((d) => !dateOf.has(d.slug)).map((d) => d.slug);
+if (unknown.length) {
+  throw new Error(
+    `architecture.astro: DETAILS references unknown article(s): ${unknown.join(", ")}`,
+  );
+}
+const details = [...DETAILS].sort(
+  (a, b) => dateOf.get(b.slug)! - dateOf.get(a.slug)!,
+);
 ---
 
 <BaseLayout
@@ -75,67 +126,22 @@ const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
   <section class="details">
     <h2># les pièces, en détail — celles que je ne redessine pas</h2>
     <p class="section-note">
-      Onze schémas rapprochés, dessinés à la main pour leurs articles, et
-      qui restent à la main. Chacun explique un <em>mécanisme</em> : une
-      décision, un piège, une panne comprise trop tard. Ça, un inventaire
+      {details.length} schémas rapprochés, dessinés à la main pour leurs
+      articles, et qui restent à la main. Chacun explique un <em>mécanisme</em> :
+      une décision, un piège, une panne comprise trop tard. Ça, un inventaire
       ne le raconte pas — et ça ne vieillit pas non plus quand une machine
-      change de nom.
+      change de nom. Classés du plus récent au plus ancien, selon la date de
+      l'article : même l'ordre, je ne le décide pas à la main.
     </p>
 
-  <section class="detail">
-    <h2>Détail : détection vidéo (Frigate)</h2>
-    <FrigateDetectorDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : accès public (tunnel Cloudflare)</h2>
-    <CloudflareTunnelDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : requête WebDAV (proxy et en-tête Destination)</h2>
-    <WebdavProxyDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : accès privé (tunnel WireGuard)</h2>
-    <WireGuardFtpDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : pipeline de numérisation (SFTP → S3 → Lambda → Drive)</h2>
-    <ScanPipelineDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : assistant vocal (Home Assistant + Ollama)</h2>
-    <VoiceAssistantDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : console conteneurisée (bastion)</h2>
-    <ConsoleLayersDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : la séparation bastion / console</h2>
-    <BastionConsoleSplitDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : grappe conteneurs (k3s)</h2>
-    <K3sClusterDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : stockage NFS de la grappe (chemin d'export)</h2>
-    <NfsShareMoveDiagram context="architecture" />
-  </section>
-
-    <section class="detail">
-      <h2>Détail : l'île du survivant (reprise après panne électrique)</h2>
-      <SurvivorIslandDiagram context="architecture" />
-    </section>
+    {
+      details.map(({ title, Component }) => (
+        <section class="detail">
+          <h2>Détail : {title}</h2>
+          <Component context="architecture" />
+        </section>
+      ))
+    }
   </section>
 </BaseLayout>
 

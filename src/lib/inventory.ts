@@ -57,7 +57,11 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     name: "Site web statique",
     description:
       "Ce blogue lui-même : contenu statique généré et déployé automatiquement par la grappe conteneurs, servi via le proxy inverse de la VM cloud. Le pipeline qui le construit est décrit en git comme le reste, pas configuré à la main.",
-    articles: ["deployer-un-site-web-statique-avec-wordpress-et-s3"],
+    articles: [
+      "deployer-un-site-web-statique-avec-wordpress-et-s3",
+      "deux-sources-pour-une-seule-image",
+      "je-redessine-ces-pages-chaque-nuit",
+    ],
     nodes: ["bucket:labodeludo.dev", "app:labodeludo"],
   },
   surveillance: {
@@ -71,6 +75,8 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "trois-majeures-un-jeudi-soir",
       "laisser-le-pipeline-appuyer-sur-apply",
       "tout-ca-pour-un-script-bash",
+      "deux-sources-pour-une-seule-image",
+      "je-redessine-ces-pages-chaque-nuit",
     ],
     nodes: ["app:kuma", "app:ntfy", "app:logging"],
   },
@@ -115,6 +121,8 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web",
       "quatre-depots-pour-un-labo-au-complet",
       "laisser-le-pipeline-appuyer-sur-apply",
+      "deux-sources-pour-une-seule-image",
+      "je-redessine-ces-pages-chaque-nuit",
     ],
     nodes: [
       "host:pi-02",
@@ -129,6 +137,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "deplacer-mes-partages-nfs-sur-un-ssd-sans-toucher-a-kubernetes",
       "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web",
       "tout-ca-pour-un-script-bash",
+      "un-pod-qui-voyage-leger",
     ],
     nodes: [
       "external:nas",
@@ -181,6 +190,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "laisser-le-pipeline-appuyer-sur-apply",
       "trois-majeures-un-jeudi-soir",
       "tout-ca-pour-un-script-bash",
+      "un-pod-qui-voyage-leger",
     ],
     nodes: [
       "cluster:k3s",

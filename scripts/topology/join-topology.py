@@ -103,59 +103,12 @@ for n in nodes.values():
             n_serves += 1
 
 # ---------------------------------------------------------------------------
-# Positive allowlist over every string in the merged output. Knows only what
-# fictional data looks like, never what real data looks like.
+# Positive allowlist over every string in the merged output — shared with
+# scan-public.py, see allowlist.py. Knows only what fictional data looks
+# like, never what real data looks like.
 # ---------------------------------------------------------------------------
-ALLOWED_V4 = re.compile(
-    r"\b(192\.0\.2|198\.51\.100|203\.0\.113|198\.18\.0)\.\d{1,3}\b")
-ANY_V4 = re.compile(r"\b\d{1,3}(\.\d{1,3}){3}\b")
-ANY_V6 = re.compile(r"\b[0-9a-fA-F:]*::?[0-9a-fA-F:]+\b")
-HOSTLIKE = re.compile(r"\b[a-z0-9-]+(\.[a-z0-9-]+)+\b", re.I)
-ALLOWED_SUFFIX = (
-    ".example", "example.com", "labodeludo.dev", "labodeludo.com",
-    "pages.dev", "cfargotunnel.com", "amazonaws.com", "svc.cluster.local",
-    "acm-validations.aws", "github.com",
-)
-
-def scan(value, where):
-    for m in ANY_V4.finditer(value):
-        if not ALLOWED_V4.match(m.group(0)):
-            die(f"non-documentation IPv4 {m.group(0)!r} at {where}")
-    for m in ANY_V6.finditer(value):
-        s = m.group(0)
-        # host:port also matches the loose pattern — only treat it as an
-        # address when it has :: or at least three hex groups
-        groups = [g for g in s.split(":") if g]
-        if "::" in s or len(groups) >= 3:
-            if not s.lower().startswith("2001:db8"):
-                die(f"non-documentation IPv6 {s!r} at {where}")
-    if "@" in value:
-        die(f"unexpected @ in {value!r} at {where}")
-    for m in HOSTLIKE.finditer(value):
-        s = m.group(0).lower()
-        if ANY_V4.match(s) or s.endswith(ALLOWED_SUFFIX):
-            continue
-        # EC2 instance types (t3a.medium) match the hostname shape
-        if re.fullmatch(r"[a-z]\d[a-z]{0,2}\.(nano|micro|small|medium|"
-                        r"\d*x?large|metal)", s):
-            continue
-        if "." not in s or s.split(".")[-1].isdigit():
-            continue
-        # tolerate file-ish tokens (foo.nix, a/b.yaml refs collapse on /)
-        if s.split(".")[-1] in ("nix", "yaml", "yml", "tf", "json", "py",
-                                "sh", "md", "crt", "xml", "lock", "local"):
-            continue
-        die(f"hostname-like string {s!r} outside the allowlist at {where}")
-
-def walk(obj, where):
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            walk(v, f"{where}.{k}")
-    elif isinstance(obj, list):
-        for i, v in enumerate(obj):
-            walk(v, f"{where}[{i}]")
-    elif isinstance(obj, str):
-        scan(obj, where)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from allowlist import Leak, walk  # noqa: E402
 
 result = {
     "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -164,8 +117,11 @@ result = {
     "nodes": sorted(nodes.values(), key=lambda n: n["id"]),
     "edges": sorted(edges, key=lambda e: (e["from"], e["to"], e["kind"])),
 }
-walk({"nodes": result["nodes"], "edges": result["edges"],
-      "sources": sources}, "$")
+try:
+    walk({"nodes": result["nodes"], "edges": result["edges"],
+          "sources": sources}, "$")
+except Leak as e:
+    die(str(e))
 
 os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
 with open(out_path, "w", encoding="utf-8") as f:

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 import arch from "../../data/architecture.json";
 
 // Staging-only for now: the page is generated only when the build sets
@@ -145,6 +146,8 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
       ))
     }
   </div>
+
+  <LiveArchDiagram />
 
   <section class="band" data-layer="edge">
     <h2># edge — Cloudflare</h2>

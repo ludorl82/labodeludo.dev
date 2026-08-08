@@ -40,6 +40,11 @@ by `architecture.json` and the snapshots.
    `var(--accent-live)`), monospace font vars, orthogonal connectors,
    `role="img"` with a complete French `aria-label`, horizontal scroll via
    the existing `.diagram-wrap`. French labels.
+3b. **Canvas reality**: the figure is full-bleed but capped at 1100px wide,
+   and the site column is narrow — keep the flow VERTICAL (portrait-ish
+   viewBox, roughly 760 wide; grow DOWNWARD when you need room, matching
+   the page's band order edge → cluster → hardware). Never widen the
+   viewBox past ~800.
 4. The component must keep building (`npm run build` in `site/` is your
    verification — run it with SHOW_LIVE_ARCH=1).
 5. Do not touch any other file. Do not commit — the driver script reviews,

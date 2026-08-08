@@ -1,0 +1,209 @@
+---
+title: "Un pod qui voyage léger : sortir l'état de mon planificateur de tâches"
+pubDate: 2026-08-07
+description: "Mon planificateur de tâches gardait ses données sur le disque de son nœud — un pod techniquement mobile, pratiquement riveté. En une session avec Claude Code (Fable 5), son moteur de stockage est passé sur S3 : 1 136 enregistrements copiés en 21 secondes, et un pod qui change maintenant de nœud en 12 secondes parce qu'il n'a plus rien à transporter. L'occasion de clarifier ce que « stateless » veut vraiment dire : on n'élimine pas l'état, on le déménage chez quelqu'un dont c'est le métier."
+tags: ["Cloud", "DevOps", "ludo"]
+heroImage: "/images/blog/banner-stateless-move.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Point de départ** : Cronicle, le planificateur qui déclenche à peu près tout dans mon labo, stockait ses données sur le disque de son nœud k3s. Conséquence structurelle : le pod ne pouvait tourner que là. Un drain du nœud laissait le remplaçant `Pending` avec `volume node affinity conflict` — huit nœuds en santé, zéro candidat.
+> -   **Bascule** : le moteur de stockage fichier de Cronicle est remplacé par son moteur S3 (déjà inclus dans l'image, SDK AWS compris). Migration avec l'outil fourni, `storage-migrate.js` : 1 136 enregistrements, 16 Mo, 21 secondes.
+> -   **Résultat** : un pod sans volume. Éviction → replanifié → prêt sur un autre nœud en 12 secondes, historique intact, parce que l'état vit dans un bucket S3 versionné qui ne remarque même pas le drain.
+> -   **La leçon** : « stateless » ne veut pas dire « sans état ». Le pod a toujours un état — événements, usagers, historique de jobs. Il a juste cessé d'en être le gardien. On déménage l'état vers un service dont la durabilité est le métier; ce qui reste dans le pod, c'est du scratch qu'on peut perdre sans regret.
+> -   **Les coûts, assumés** : chaque lecture devient un aller-retour réseau (un cache LRU règle l'essentiel), les identifiants S3 deviennent un secret à gérer, et la config du logiciel doit être possédée déclarativement — ce qui a exposé au passage combien d'état se cachait ailleurs que dans le volume.
+> -   **Ce qui ne devrait pas être stateless** : les applications à base de SQLite et les bases de données restent volontairement épinglées dans mon cluster. Le pire endroit sur le spectre, c'est le milieu — un pod qui a l'air mobile mais qui traîne un état que personne ne protège.
+> -   **Transparence** : la migration a été menée en session avec Claude Code (Fable 5). J'ai validé les décisions et tranché les appels qui m'appartenaient — notamment celui de retirer la job de sauvegarde nocturne au profit du versionnage du bucket.
+
+J'ai voulu redémarrer un nœud de mon cluster k3s. Rien de spécial : un
+drain, un reboot, un uncordon, l'affaire de dix minutes. Sauf que sur ce
+nœud tournait mon planificateur de tâches, et que le drain a produit un
+résultat que je connaissais en théorie mais que je n'avais jamais regardé
+en face : le pod évincé s'est fait remplacer par un pod `Pending` — et il
+serait resté `Pending` pour l'éternité.
+
+`0/9 nodes are available: 1 node(s) had volume node affinity conflict.`
+
+Huit nœuds en parfaite santé, prêts à accueillir n'importe quoi. Zéro
+candidat. Parce que les données du planificateur vivaient sur le disque du
+nœud que je venais de vider, et qu'un pod ne peut pas tourner à trois
+mètres de son disque.
+
+C'est ce qu'on appelle un workload stateful, et je veux profiter de
+l'occasion pour décortiquer ce mot-là — parce que la migration qui a suivi,
+menée en session avec Claude Code (Fable 5), est probablement le meilleur
+exemple pédagogique que mon labo m'ait donné cette année.
+
+## « Stateless » ne veut pas dire « sans état »
+
+Commençons par tordre le cou à la définition naïve. Mon planificateur —
+[Cronicle](https://github.com/jhuckaby/Cronicle), qui déclenche les
+sauvegardes, les vérifications de dérive d'infrastructure et à peu près
+tout ce qui roule à heure fixe chez moi — a un état, et pas un petit :
+la liste des événements planifiés, les usagers, les clés d'API,
+l'historique complet des jobs, les logs des exécutions terminées. Sans cet
+état, il ne sert à rien.
+
+Rendre ce pod « stateless », ça n'a jamais voulu dire faire disparaître
+tout ça. Ça veut dire **déménager la garde de l'état hors du pod** — vers
+un service dont la durabilité est le métier — pour que le pod, lui, ne
+possède plus rien qui mérite d'être protégé.
+
+La distinction utile, c'est celle-là :
+
+| | Workload stateful | Workload stateless |
+|---|---|---|
+| L'état existe? | oui | oui — mais ailleurs |
+| Qui le garde | le pod, via son volume | un service externe (S3, une BD) |
+| Perdre le pod | un incident | un non-événement |
+| Changer de nœud | copie de données, ou impossible | replanification, quelques secondes |
+| La sauvegarde | une job de plus à surveiller | une propriété du service de stockage |
+
+La colonne de droite ne s'obtient pas gratuitement. On y reviendra. Mais
+d'abord, la partie qui m'a surpris : faire l'inventaire de l'état qu'on
+pense connaître.
+
+## L'état se cache là où on ne le cherche pas
+
+Le volume de données, c'était la partie facile : 16 Mo, 1 136
+enregistrements. C'est en préparant la migration que le reste est apparu —
+et c'est la vraie leçon de l'exercice. L'état d'un logiciel ne vit jamais
+seulement dans son répertoire de données.
+
+**La configuration.** Cronicle lit un `config.json` au démarrage, et cette
+version-là n'offre aucune surcharge par variables d'environnement. Tant que
+le stockage était le comportement par défaut de l'image, personne n'avait
+besoin de posséder ce fichier; changer de moteur de stockage a forcé la
+question. La config est maintenant déclarée dans une ConfigMap, versionnée
+en git — de l'état de configuration qui existait depuis toujours, mais
+qui n'appartenait à personne.
+
+**Le secret qui n'en était pas un.** Le `secret_key` de l'installation —
+celui qui protège les communications multi-serveurs — s'est révélé être la
+valeur par défaut cuite dans l'image publique, partagée par toutes les
+installations du monde qui utilisent cette image. Il avait *l'air* d'un
+état précieux; c'était du décor.
+
+**Le répertoire qui ne servait à rien.** Un des trois montages du volume
+pointait sur le dossier des plugins. Vide. Depuis toujours. Monté,
+sauvegardé, transporté — pour rien.
+
+**Le scratch déguisé en données.** Les logs en cours d'écriture et la file
+d'attente locale ressemblent à de l'état, mais leur perte ne coûte que les
+jobs en vol au moment précis d'un crash. Ce genre d'état-là a le droit de
+mourir avec le pod : c'est devenu un `emptyDir`, et c'est très bien comme
+ça.
+
+L'inventaire honnête donne donc quatre catégories : l'état durable (à
+déménager), l'état de configuration (à déclarer), le faux état (à jeter),
+et le scratch (à laisser mourir). La migration, c'est juste la mécanique
+qui découle de ce tri.
+
+## La migration elle-même : presque décevante
+
+C'est la section la plus courte, et c'est voulu — le gros du travail était
+le tri ci-dessus, pas la tuyauterie. Cronicle embarque déjà un moteur de
+stockage S3 et l'outil pour migrer d'un moteur à l'autre. La séquence :
+une dernière sauvegarde de l'ère « disque local », le pod à zéro réplique,
+`storage-migrate.js` dans une Job éphémère avec l'ancien stockage en
+lecture seule, et le commit des nouveaux manifestes.
+
+Les 1 136 enregistrements ont pris 21 secondes à copier. La partie la plus
+délicate de toute l'opération a été de s'assurer qu'ArgoCD ne remonte pas
+le pod pendant la copie — il est configuré pour ignorer le nombre de
+répliques, précisément pour que ce genre de manœuvre manuelle tienne le
+temps qu'il faut.
+
+Et après? Après, le même drain qui m'avait coincé donne ceci.
+
+<AsciiCast
+  src="/casts/stateless-move.cast"
+  poster="npt:0:12"
+  caption="Le même drain, avant et après : le pod riveté à son disque qui reste Pending devant huit nœuds libres, puis le pod stateless qui est prêt sur un autre nœud 12 secondes après l'éviction — parce qu'il n'y a plus rien à déménager."
+  disclaimer="⚠ Ceci n'est pas une capture en direct : c'est une simulation pédagogique. La migration vers S3 est réelle et les deux comportements montrés sont les comportements véridiques de ces deux configurations, mais les drains ont été rejoués pour l'enregistrement, le minutage est condensé, le stockage d'origine est simplifié en « disque local », et les noms d'hôte sont fictifs."
+/>
+
+Douze secondes entre l'éviction et le pod prêt sur un autre nœud. Et le
+détail qui compte : **aucune de ces secondes n'a servi à déplacer des
+données**. Le pod transporte son image et sa config; tout ce qu'il sait
+est dans un bucket qui n'a même pas remarqué le drain. Le nœud est redevenu
+ce qu'il aurait toujours dû être — du CPU et de la RAM interchangeables.
+
+## Ce que ça change pour vrai
+
+La vitesse du drain, c'est la démonstration spectaculaire, mais ce n'est
+pas le vrai gain. Le vrai gain, c'est tout ce qui cesse d'être une
+opération spéciale :
+
+**Les nœuds redeviennent du bétail.** Mon parc se fait réinstaller
+régulièrement — c'est un labo, les machines changent de rôle. Avant, chaque
+réinstallation demandait de se demander « qu'est-ce qui vit sur ce
+disque-là? ». Pour ce workload, la réponse est maintenant : rien.
+
+**La sauvegarde a changé de nature.** Il y avait une job nocturne qui
+archivait le volume, avec son événement planifié et son moniteur. Les trois
+sont supprimés. Le bucket est versionné, avec trente jours de rétention sur
+les versions non courantes : la « sauvegarde » n'est plus une tâche qui
+peut échouer, c'est une propriété du stockage. J'ai pesé le pour et le
+contre avant de retirer la job — une copie indépendante protège contre des
+scénarios que le versionnage ne couvre pas — et pour 16 Mo de données
+reconstruisibles, j'ai choisi la simplicité. C'est le genre d'appel qui
+m'appartenait, pas à l'outil.
+
+**Les sondes restent.** Stateless ne veut pas dire immortel. Le pod dépend
+maintenant de S3 comme il dépendait avant de son disque, et une sonde de
+vivacité qui traverse le processus jusqu'au stockage garde exactement la
+même job : détecter le zombie qui a l'air `Running` avec un backend mort
+en dessous.
+
+## Les coûts, parce qu'il y en a
+
+Rien de tout ça n'est gratuit, et la colonne des coûts mérite d'être écrite
+au complet.
+
+**Chaque lecture est devenue un aller-retour réseau.** Le disque local se
+mesurait en microsecondes; S3 en dizaines de millisecondes, depuis la
+maison. Pour un planificateur qui lit quelques enregistrements par minute,
+c'est invisible — surtout avec le cache LRU du moteur de stockage activé.
+Pour un workload qui fait des milliers de lectures par seconde, ce même
+choix serait une catastrophe. La latence acceptable est une propriété du
+workload, pas de l'architecture.
+
+**Un secret de plus à gérer.** Le pod a maintenant des identifiants S3, à
+portée strictement limitée à son bucket. L'état qu'on déménage, il faut
+ensuite en contrôler l'accès.
+
+**La dépendance externe.** Le planificateur de mon labo dépend maintenant
+d'un service infonuagique. Si ma connexion tombe, il tombe. J'ai jugé
+l'échange acceptable — le même argument de disponibilité qui m'a fait
+épingler mes outils d'alerte *hors* de la maison joue ici dans l'autre
+sens — mais c'est un vrai choix d'architecture, pas un détail.
+
+## Ce qui ne sera jamais stateless chez moi
+
+Le mot de la fin, parce que c'est la moitié de la leçon : **tout ne devrait
+pas être stateless.** Dans le même cluster, mes applications à base de
+SQLite restent volontairement épinglées à leur nœud avec leur stockage
+local — SQLite sur un stockage réseau est une source classique de
+corruption, et ces applications-là n'ont pas de moteur S3 à offrir. Une
+base de données, elle, EST l'état : la rendre « stateless » n'a pas de
+sens, on la rend durable autrement (réplication, sauvegardes testées).
+
+Le spectre a deux extrémités saines : l'état confié à un service fait pour
+ça, ou l'état assumé, épinglé, avec une stratégie de sauvegarde explicite.
+La position dangereuse, c'est le milieu — le pod qui a l'air mobile parce
+que « c'est Kubernetes », mais qui traîne un volume que personne ne
+protège et qu'un drain de routine peut orpheliner. C'est exactement là que
+mon planificateur a vécu pendant des mois. Le drain raté n'était pas une
+panne : c'était la configuration qui me disait la vérité.
+
+---
+
+_La migration décrite ici a été réalisée en session avec Claude Code
+(Fable 5) : inventaire de l'état, écriture des manifestes, migration et
+vérifications. Les décisions d'architecture — et le choix de retirer la
+sauvegarde nocturne — sont les miennes. Les noms d'hôtes et de buckets de
+cet article sont fictifs, comme d'habitude sur ce blogue._

@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : à gauche, un pod enchaîné au disque de son nœud devant des nœuds libres barrés d'un X; à droite, le même pod bondit léger d'un nœud à l'autre pendant que ses données reposent dans un bucket S3 au-dessus">
+  <defs>
+    <linearGradient id="bgsm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2333"/>
+      <stop offset="100%" stop-color="#2e3f5c"/>
+    </linearGradient>
+    <linearGradient id="podg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7ec8ff"/>
+      <stop offset="100%" stop-color="#3a8fd0"/>
+    </linearGradient>
+    <linearGradient id="bucketg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd166"/>
+      <stop offset="100%" stop-color="#e0a832"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="320" fill="url(#bgsm)"/>
+
+  <!-- dividing line -->
+  <line x1="512" y1="24" x2="512" y2="296" stroke="#4a5a7a" stroke-width="2" stroke-dasharray="6 8"/>
+
+  <!-- ====== LEFT: stateful, chained ====== -->
+  <text x="256" y="46" fill="#8fa3c8" font-size="20" font-weight="bold" text-anchor="middle">AVANT — stateful</text>
+
+  <!-- node with pod + disk -->
+  <g>
+    <rect x="80" y="180" width="150" height="90" rx="8" fill="#243149" stroke="#4a5a7a" stroke-width="2"/>
+    <text x="155" y="292" fill="#6b7fa3" font-size="14" text-anchor="middle">nœud A</text>
+    <!-- disk inside node -->
+    <ellipse cx="190" cy="248" rx="26" ry="9" fill="#3a4a68" stroke="#5a6f96" stroke-width="2"/>
+    <rect x="164" y="228" width="52" height="20" fill="#3a4a68" stroke="#5a6f96" stroke-width="2"/>
+    <ellipse cx="190" cy="228" rx="26" ry="9" fill="#4a5f85" stroke="#5a6f96" stroke-width="2"/>
+    <text x="190" y="252" fill="#a8bcdd" font-size="11" text-anchor="middle">data</text>
+    <!-- pod on node -->
+    <rect x="98" y="196" width="52" height="44" rx="10" fill="url(#podg)" stroke="#a8d8ff" stroke-width="2"/>
+    <circle cx="115" cy="212" r="4" fill="#0e2438"/>
+    <circle cx="133" cy="212" r="4" fill="#0e2438"/>
+    <path d="M113 226 q11 8 22 0" stroke="#0e2438" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- chain from pod to disk -->
+    <g stroke="#9aabc9" stroke-width="3" fill="none">
+      <ellipse cx="152" cy="240" rx="6" ry="4"/>
+      <ellipse cx="160" cy="236" rx="6" ry="4"/>
+      <ellipse cx="168" cy="232" rx="6" ry="4"/>
+    </g>
+  </g>
+
+  <!-- free nodes, refused -->
+  <g>
+    <rect x="280" y="180" width="90" height="90" rx="8" fill="#243149" stroke="#4a5a7a" stroke-width="2"/>
+    <text x="325" y="292" fill="#6b7fa3" font-size="14" text-anchor="middle">nœud B</text>
+    <path d="M305 205 l40 40 M345 205 l-40 40" stroke="#d06a6a" stroke-width="5" stroke-linecap="round"/>
+    <rect x="390" y="180" width="90" height="90" rx="8" fill="#243149" stroke="#4a5a7a" stroke-width="2"/>
+    <text x="435" y="292" fill="#6b7fa3" font-size="14" text-anchor="middle">nœud C</text>
+    <path d="M415 205 l40 40 M455 205 l-40 40" stroke="#d06a6a" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <text x="256" y="120" fill="#d06a6a" font-size="15" text-anchor="middle" font-style="italic">« volume node affinity conflict »</text>
+  <text x="256" y="142" fill="#8fa3c8" font-size="13" text-anchor="middle">huit nœuds libres, zéro candidat</text>
+
+  <!-- ====== RIGHT: stateless, leaping ====== -->
+  <text x="768" y="46" fill="#8fa3c8" font-size="20" font-weight="bold" text-anchor="middle">APRÈS — stateless</text>
+
+  <!-- S3 bucket in the sky -->
+  <g>
+    <path d="M718 78 l100 0 l-14 52 l-72 0 z" fill="url(#bucketg)" stroke="#ffe6a8" stroke-width="2"/>
+    <ellipse cx="768" cy="78" rx="50" ry="11" fill="#ffdd88" stroke="#ffe6a8" stroke-width="2"/>
+    <text x="768" y="115" fill="#5c4400" font-size="13" font-weight="bold" text-anchor="middle">S3 · data</text>
+  </g>
+
+  <!-- nodes -->
+  <g>
+    <rect x="560" y="200" width="110" height="70" rx="8" fill="#243149" stroke="#4a5a7a" stroke-width="2"/>
+    <text x="615" y="292" fill="#6b7fa3" font-size="14" text-anchor="middle">nœud A</text>
+    <rect x="712" y="200" width="110" height="70" rx="8" fill="#243149" stroke="#4a5a7a" stroke-width="2"/>
+    <text x="767" y="292" fill="#6b7fa3" font-size="14" text-anchor="middle">nœud B</text>
+    <rect x="864" y="200" width="110" height="70" rx="8" fill="#243149" stroke="#87d787" stroke-width="2.5"/>
+    <text x="919" y="292" fill="#87d787" font-size="14" text-anchor="middle">nœud C</text>
+  </g>
+
+  <!-- ghost pods showing the leap -->
+  <g opacity="0.25">
+    <rect x="584" y="168" width="52" height="44" rx="10" fill="url(#podg)"/>
+  </g>
+  <g opacity="0.5">
+    <rect x="736" y="140" width="52" height="44" rx="10" fill="url(#podg)"/>
+  </g>
+  <!-- landed pod, happy -->
+  <g>
+    <rect x="893" y="180" width="52" height="44" rx="10" fill="url(#podg)" stroke="#a8d8ff" stroke-width="2"/>
+    <circle cx="910" cy="196" r="4" fill="#0e2438"/>
+    <circle cx="928" cy="196" r="4" fill="#0e2438"/>
+    <path d="M908 208 q11 9 22 0" stroke="#0e2438" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- leap arc -->
+  <path d="M615 190 Q 767 90 905 178" stroke="#87d787" stroke-width="3" fill="none" stroke-dasharray="2 9" stroke-linecap="round"/>
+  <path d="M896 168 l10 9 l-14 3 z" fill="#87d787"/>
+
+  <!-- data link pod <-> bucket -->
+  <path d="M919 178 Q 900 140 812 112" stroke="#ffd166" stroke-width="2" fill="none" stroke-dasharray="5 5"/>
+
+  <text x="768" y="165" fill="#87d787" font-size="15" text-anchor="middle" font-style="italic">12 secondes, rien à transporter</text>
+</svg>

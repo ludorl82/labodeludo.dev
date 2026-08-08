@@ -1,9 +1,9 @@
-# Nightly regeneration of the live architecture view — STAGING ONLY for now.
+# Nightly regeneration of the generated drawings, straight to production.
 #
-# /architecture/live is gated behind SHOW_LIVE_ARCH (see the page's
-# getStaticPaths): the prod deploy never sets it, so this workflow rebuilds
-# the STAGING site with fresh data and publishes it to Cloudflare Pages —
-# it does not touch prod or its S3 bucket at all.
+# Since 2026-08-08 the generated architecture and rack elevations are public,
+# so their DATA has to stay fresh in prod: this rebuilds main with a freshly
+# joined architecture.json and syncs it to S3. Component changes still travel
+# the normal dev -> PR -> main path; only the data is refreshed here.
 #
 # Clones the four PUBLIC sanitized snapshots — never the private repos; the
 # sanitizers' fail-closed gates are the trust boundary — joins their
@@ -29,8 +29,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # the staging artifact is built from dev, like every staging deploy
-          ref: dev
+          # production content comes from main — never from dev, or a night
+          # would publish unmerged work
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -52,20 +53,14 @@ jobs:
       - run: npm run build
         env:
           SHOW_LIVE_ARCH: "1"
-      - name: Publish to Cloudflare Pages (staging)
+      - name: Deploy to prod
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        # --branch=staging must match the Pages project's production branch —
-        # same reasoning as deploy.yml: custom domains only serve production
-        # deployments, and previews would escape the Access app.
-        run: >-
-          npx --yes wrangler@4 pages deploy dist
-          --project-name=labodeludo-dev
-          --branch=staging
-          --commit-dirty=true
+          AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: aws s3 sync dist/ s3://labodeludo.dev/ --delete
       - name: Kuma heartbeat
-        # push monitor "architecture-nightly (staging)" — fires on ABSENCE,
+        # push monitor "architecture-nightly" — fires on ABSENCE,
         # which also covers GitHub silently disabling the cron after 60 idle
         # days. The runner is in-cluster, so the URL is the internal Service.
         if: always()

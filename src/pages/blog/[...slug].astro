@@ -6,7 +6,7 @@ import AuthorBadge from "../../components/AuthorBadge.astro";
 import AuthorLine from "../../components/AuthorLine.astro";
 import ShareButtons from "../../components/ShareButtons.astro";
 import { primaryCategory } from "../../lib/category";
-import { authorFromTags } from "../../lib/author";
+import { authorFromTags, AUTHORS } from "../../lib/author";
 import { INVENTORY, inventoryForArticle } from "../../lib/inventory";
 
 export async function getStaticPaths() {
@@ -31,6 +31,8 @@ const relatedInventory = inventoryForArticle(post.id);
   title={`${post.data.title} — Le labo de Ludo`}
   description={post.data.description}
   heroImage={post.data.heroImage}
+  pubDate={post.data.pubDate}
+  authorName={AUTHORS[author].name}
 >
   <a class="back" href="/">&larr; tous les articles</a>
 

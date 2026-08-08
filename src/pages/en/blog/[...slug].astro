@@ -5,7 +5,7 @@ import CategoryChip from "../../../components/CategoryChip.astro";
 import AuthorBadge from "../../../components/AuthorBadge.astro";
 import ShareButtons from "../../../components/ShareButtons.astro";
 import { primaryCategory } from "../../../lib/category";
-import { authorFromTags } from "../../../lib/author";
+import { authorFromTags, AUTHORS } from "../../../lib/author";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blogEn");
@@ -22,14 +22,6 @@ const author = authorFromTags(post.data.tags);
 
 const frenchPosts = await getCollection("blog");
 const hasFrench = frenchPosts.some((p) => p.id === post.id);
-
-// One article carries an AMP twin, as a test. Keyed by slug on purpose: this
-// is not a feature, and nothing should start generating these silently.
-const AMP_TWINS: Record<string, string> = {
-  "laisser-le-pipeline-appuyer-sur-apply":
-    "/en/blog/laisser-le-pipeline-appuyer-sur-apply/amp/",
-};
-const ampUrl = AMP_TWINS[post.id];
 ---
 
 <BaseLayout
@@ -37,7 +29,8 @@ const ampUrl = AMP_TWINS[post.id];
   title={`${post.data.title} — Le labo de Ludo`}
   description={post.data.description}
   heroImage={post.data.heroImage}
-  ampUrl={ampUrl}
+  pubDate={post.data.pubDate}
+  authorName={AUTHORS[author].name}
 >
   <a class="back" href="/en/">&larr; all posts</a>
 

@@ -9,15 +9,27 @@ interface Props {
   description?: string;
   lang?: "fr" | "en";
   heroImage?: string;
-  /** absolute path of an AMP twin, if this page has one. Exactly one article
-      has one, as a deliberate test — see the comment at the top of it. */
-  ampUrl?: string;
+  /** article pages only — drives article:published_time and og:type */
+  pubDate?: Date;
+  /** article pages only — display name, e.g. "Ludovic Lamarre" or "Bob" */
+  authorName?: string;
 }
 
-const { title, description, lang = "fr", heroImage, ampUrl } = Astro.props;
+const { title, description, lang = "fr", heroImage, pubDate, authorName } =
+  Astro.props;
 
 const ogImageUrl = new URL(resolveOgImage(heroImage), Astro.site).toString();
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
+
+// LinkedIn's Post Inspector listed no date and no author for our articles
+// (2026-08-08): og:type said "article" everywhere, including the index, but
+// none of the article:* properties that go with it were ever emitted. Only
+// pages that really are articles claim to be, and those carry the date and
+// byline that make the claim true.
+const isArticle = Boolean(pubDate);
+const ogType = isArticle ? "article" : "website";
+const publishedISO = pubDate ? new Date(pubDate).toISOString() : undefined;
+const ogLocale = lang === "en" ? "en_CA" : "fr_CA";
 
 const homeHref = lang === "en" ? "/en/" : "/";
 const tagline =
@@ -64,12 +76,16 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     <title>{title}</title>
 
     <link rel="canonical" href={canonicalUrl} />
-    {ampUrl && <link rel="amphtml" href={new URL(ampUrl, Astro.site).toString()} />}
-    <meta property="og:type" content="article" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:title" content={title} />
     {description && <meta property="og:description" content={description} />}
     <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:site_name" content="Le labo de Ludo" />
+    <meta property="og:locale" content={ogLocale} />
+    {publishedISO && <meta property="article:published_time" content={publishedISO} />}
+    {authorName && <meta property="article:author" content={authorName} />}
+    {authorName && <meta name="author" content={authorName} />}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     {description && <meta name="twitter:description" content={description} />}

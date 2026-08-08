@@ -9,5 +9,9 @@ export default defineConfig({
   integrations: [mdx(), sitemap()],
   redirects: {
     '/blog': '/',
+    // The inventory index is now the "rôles" section of the architecture
+    // hub. The per-role permalinks stay: articles link to them, and so do
+    // the boxes on both diagrams.
+    '/inventaire': '/architecture/#roles',
   },
 });

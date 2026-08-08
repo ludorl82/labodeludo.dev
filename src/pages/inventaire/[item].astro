@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostList from "../../components/PostList.astro";
 import { INVENTORY, type InventoryKey } from "../../lib/inventory";
+import arch from "../../data/architecture.json";
 
 export async function getStaticPaths() {
   return (Object.keys(INVENTORY) as InventoryKey[]).map((item) => ({
@@ -18,16 +19,51 @@ const posts = info.articles
   .map((id) => allPosts.find((post) => post.id === id))
   .filter((post): post is NonNullable<typeof post> => post !== undefined)
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// The other half of the bridge: what this role IS in the generated
+// topology. Gated like the rest of the generated material, and fail-soft —
+// a node id that vanished from a nightly refresh simply isn't listed.
+const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
+const liveNodes = showLiveArch
+  ? (info.nodes ?? [])
+      .map((id) => (arch.nodes as any[]).find((n) => n.id === id))
+      .filter(Boolean)
+  : [];
 ---
 
 <BaseLayout title={`${info.name} — Le labo de Ludo`} description={info.description}>
-  <a class="back" href="/inventaire/">&larr; inventaire</a>
+  <a class="back" href="/architecture/#roles">&larr; les rôles</a>
 
   <header class="item-header">
     <h1>{info.name}</h1>
   </header>
 
   <p class="description">{info.description}</p>
+
+  {
+    liveNodes.length > 0 && (
+      <section class="live-nodes">
+        <h2># dans l'architecture générée</h2>
+        <ul>
+          {liveNodes.map((n: any) => (
+            <li>
+              <a
+                href={`https://github.com/ludorl82/${n.repo}/blob/HEAD/${n.source}`}
+              >
+                <code>{n.id}</code>
+              </a>
+              <span class="dim">{n.layer}</span>
+            </li>
+          ))}
+        </ul>
+        <p class="dim note">
+          Ces identifiants viennent des dépôts IaC publics, pas de cette
+          page — <a href="/architecture/">la vue générée</a> les redessine
+          chaque nuit.
+        </p>
+      </section>
+    )
+  }
 
   {
     posts.length > 0 ? (
@@ -39,6 +75,52 @@ const posts = info.articles
 </BaseLayout>
 
 <style>
+  .live-nodes {
+    margin: 0 0 2rem;
+  }
+
+  .live-nodes h2 {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: normal;
+    color: var(--text-muted);
+    margin: 0 0 0.5rem;
+  }
+
+  .live-nodes ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .live-nodes li {
+    border: 1px dashed var(--panel-border);
+    padding: 0.2rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  .live-nodes a {
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .live-nodes a:hover {
+    color: var(--accent-live);
+  }
+
+  .live-nodes .dim {
+    color: var(--text-faint);
+    margin-left: 0.4rem;
+  }
+
+  .live-nodes .note {
+    font-size: 0.78rem;
+    margin: 0.6rem 0 0;
+  }
+
   .back {
     display: inline-block;
     margin-bottom: 2rem;

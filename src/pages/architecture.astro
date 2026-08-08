@@ -1,20 +1,14 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import FrigateDetectorDiagram from "../components/FrigateDetectorDiagram.astro";
-import CloudflareTunnelDiagram from "../components/CloudflareTunnelDiagram.astro";
-import WebdavProxyDiagram from "../components/WebdavProxyDiagram.astro";
-import WireGuardFtpDiagram from "../components/WireGuardFtpDiagram.astro";
-import VoiceAssistantDiagram from "../components/VoiceAssistantDiagram.astro";
-import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
-import BastionConsoleSplitDiagram from "../components/BastionConsoleSplitDiagram.astro";
-import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
-import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
-import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
-import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
+import ArchGenerated from "../components/ArchGenerated.astro";
+import { INVENTORY } from "../lib/inventory";
 
-// /architecture/live is staging-only for now (see its getStaticPaths);
-// only link to it from builds that actually emit it
+// The generated half of this page is staging-only for now: it renders
+// only when the build sets SHOW_LIVE_ARCH=1 (staging deploy + the
+// nightly regeneration job). Prod gets the conceptual half and the
+// roles — same file everywhere, no dev/main drift.
 const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
+const roles = Object.entries(INVENTORY);
 ---
 
 <BaseLayout
@@ -26,23 +20,24 @@ const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
   <header class="page-header">
     <h1>Architecture</h1>
     <p class="subtitle">
-      Vue d'ensemble du réseau — noms et adresses fictifs (préfixe de
-      documentation <code>2001:db8:.../64</code>, RFC 3849), l'idée est de
-      montrer la forme du réseau, pas le détail réel.{" "}
-      {
-        showLiveArch && (
-          <Fragment>
-            Ce diagramme-ci est dessiné à la main; sa contrepartie{" "}
-            <a href="/architecture/live">
-              générée depuis les dépôts IaC publics
-            </a>{" "}
-            ne dépend pas de ma discipline pour rester vraie.
-          </Fragment>
-        )
-      }
+      Trois façons de regarder le même labo, de la plus fraîche à la plus
+      expliquée — noms et adresses fictifs (préfixe de documentation
+      <code>2001:db8:.../64</code>, RFC 3849). Chaque boîte mène au rôle
+      qu'elle occupe, et chaque rôle aux articles qui en parlent.
     </p>
   </header>
 
+  {showLiveArch && <ArchGenerated />}
+
+  <section id="dessin" class="hub-section">
+    <h2># la vue expliquée</h2>
+    <p class="section-note">
+      Dessinée à la main, celle-ci : elle montre ce que les dépôts ne
+      décrivent pas — VLANs, adressage, chemins de secours.{" "}
+      {showLiveArch
+        ? "Elle vieillit à la vitesse de ma discipline, contrairement à la vue générée ci-haut."
+        : "Elle vieillit à la vitesse de ma discipline — c'est sa faiblesse assumée."}
+    </p>
   <div class="diagram-wrap">
     <svg
       class="diagram"
@@ -198,63 +193,44 @@ const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
   <div class="legend">
     <span class="legend-item"><span class="swatch structural" /> liaison réseau</span>
     <span class="legend-item"><span class="swatch live" /> tunnel chiffré / routage applicatif</span>
-    <span class="legend-item">les éléments soulignés au survol pointent vers leur fiche d'<a href="/inventaire/">inventaire</a></span>
+    <span class="legend-item">les éléments soulignés au survol pointent vers leur rôle</span>
   </div>
-
-  <section class="detail">
-    <h2>Détail : détection vidéo (Frigate)</h2>
-    <FrigateDetectorDiagram context="architecture" />
   </section>
 
-  <section class="detail">
-    <h2>Détail : accès public (tunnel Cloudflare)</h2>
-    <CloudflareTunnelDiagram context="architecture" />
+  <section id="roles" class="hub-section">
+    <h2># les rôles</h2>
+    <p class="section-note">
+      Ce que chaque morceau fait, et ce que j'ai écrit dessus. C'est la
+      couche que rien ne peut générer à ma place.
+    </p>
+    <ul class="roles">
+      {
+        roles.map(([key, item]) => (
+          <li>
+            <a class="role-card" href={`/inventaire/${key}/`}>
+              <p class="role-name">{item.name}</p>
+              <p class="role-desc">{item.description}</p>
+              {item.articles.length > 0 && (
+                <p class="role-count">
+                  {item.articles.length} article{item.articles.length > 1 ? "s" : ""}
+                </p>
+              )}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
   </section>
 
-  <section class="detail">
-    <h2>Détail : requête WebDAV (proxy et en-tête Destination)</h2>
-    <WebdavProxyDiagram context="architecture" />
+  <section class="hub-section">
+    <h2># les pièces, en détail</h2>
+    <p class="section-note">
+      Onze schémas rapprochés — détection vidéo, tunnels, pipeline de
+      numérisation, grappe k3s, reprise après panne électrique :
+      <a href="/architecture/details/">l'architecture en détail</a>.
+    </p>
   </section>
 
-  <section class="detail">
-    <h2>Détail : accès privé (tunnel WireGuard)</h2>
-    <WireGuardFtpDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : pipeline de numérisation (SFTP → S3 → Lambda → Drive)</h2>
-    <ScanPipelineDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : assistant vocal (Home Assistant + Ollama)</h2>
-    <VoiceAssistantDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : console conteneurisée (bastion)</h2>
-    <ConsoleLayersDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : la séparation bastion / console</h2>
-    <BastionConsoleSplitDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : grappe conteneurs (k3s)</h2>
-    <K3sClusterDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : stockage NFS de la grappe (chemin d'export)</h2>
-    <NfsShareMoveDiagram context="architecture" />
-  </section>
-
-  <section class="detail">
-    <h2>Détail : l'île du survivant (reprise après panne électrique)</h2>
-    <SurvivorIslandDiagram context="architecture" />
-  </section>
 </BaseLayout>
 
 <style>
@@ -309,6 +285,70 @@ const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
     width: 100%;
     min-width: 640px;
     height: auto;
+  }
+
+  .hub-section {
+    margin: 3.5rem 0;
+  }
+
+  .hub-section h2 {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: normal;
+    color: var(--text-muted);
+    margin: 0 0 0.5rem;
+  }
+
+  .section-note {
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    max-width: var(--measure);
+    margin: 0 0 1.25rem;
+  }
+
+  .roles {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  }
+
+  .role-card {
+    display: block;
+    height: 100%;
+    border: 1px solid var(--panel-border);
+    padding: 0.75rem 0.9rem;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .role-card:hover {
+    border-color: var(--accent-live);
+  }
+
+  .role-name {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 0.35rem;
+  }
+
+  .role-desc {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .role-count {
+    color: var(--text-faint);
+    font-size: 0.75rem;
+    margin: 0.4rem 0 0;
   }
 
   .legend {

@@ -17,6 +17,10 @@ ALLOWED_SUFFIX = (
     ".example", "example.com", "labodeludo.dev", "labodeludo.com",
     "pages.dev", "cfargotunnel.com", "amazonaws.com", "svc.cluster.local",
     "acm-validations.aws", "github.com",
+    # the hand-drawn diagrams label their nodes in French with the same
+    # intent as example.net (relais.exemple.net, portail.exemple.net) —
+    # fictional by construction, and no lab name has ever looked like this
+    "exemple.net", "exemple.com",
 )
 # A dotted token is only treated as a HOSTNAME when its final label is a
 # public TLD — code identifiers (arch.nodes), filenames (foo.yaml) and

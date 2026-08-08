@@ -1,18 +1,9 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
-import arch from "../../data/architecture.json";
-
-// Staging-only for now: the page is generated only when the build sets
-// SHOW_LIVE_ARCH=1 (the staging deploy job and the nightly regeneration do;
-// the prod deploy does not). A dynamic route with an empty getStaticPaths
-// is Astro's way of not emitting the page at all — same file on every
-// branch, no dev/main drift, and prod cannot re-grow it by accident.
-export function getStaticPaths() {
-  return process.env.SHOW_LIVE_ARCH === "1"
-    ? [{ params: { live: "live" } }]
-    : [];
-}
+// The generated half of /architecture, rendered only when the hub's
+// showLiveArch gate is on (SHOW_LIVE_ARCH=1: staging + the nightly job).
+import LiveArchDiagram from "./LiveArchDiagram.astro";
+import arch from "../data/architecture.json";
+import { INVENTORY, roleForNode } from "../lib/inventory";
 
 // The generated architecture view. Everything on this page comes from
 // src/data/architecture.json, produced by scripts/topology/join-topology.py
@@ -69,6 +60,14 @@ const externals = byLayer("external", ["external"]).sort((a, b) =>
   a.label.localeCompare(b.label),
 );
 
+// the bridge to the writing: a node whose role is known gets a discreet
+// link to that role's page, which carries the articles about it. Unmapped
+// nodes simply render without one — see roleForNode's fail-soft contract.
+const roleOf = (n: TNode) => {
+  const key = roleForNode(n.id);
+  return key ? { key, name: INVENTORY[key].name } : null;
+};
+
 const src = (n: TNode) =>
   `https://github.com/ludorl82/${n.repo}/blob/HEAD/${n.source}`;
 const short = (id: string) => id.slice(id.indexOf(":") + 1);
@@ -94,32 +93,6 @@ const vDown = (verified.monitors ?? []).filter((m) => !m.up);
 // the client-side highlighter only needs the edge list
 const edgesLite = edges.map((e) => [e.from, e.to]);
 ---
-
-<BaseLayout
-  title="Architecture générée — Le labo de Ludo"
-  description="La vraie architecture du labo, générée chaque nuit à partir des quatre dépôts IaC publics — pas dessinée à la main."
->
-  <a class="back" href="/architecture">&larr; l'architecture dessinée</a>
-
-  <header class="page-header">
-    <h1>Architecture générée</h1>
-    <p class="subtitle">
-      Cette page n'est pas dessinée : elle est <strong>générée</strong> à
-      partir des quatre dépôts IaC publics (
-      <a href="https://github.com/ludorl82/cloudflare-iac-public">cloudflare</a
-      >, <a href="https://github.com/ludorl82/aws-iac-public">aws</a>,
-      <a href="https://github.com/ludorl82/k3s-iac-public">k3s</a>,
-      <a href="https://github.com/ludorl82/nixos-iac-public">nixos</a>) — les
-      mêmes fichiers sanitisés qui accompagnent les articles. Un diagramme
-      dessiné ment dès qu'on change quelque chose; celui-ci n'est jamais plus
-      vieux que sa date de génération. Noms et adresses fictifs, comme
-      toujours. <strong>Tout est cliquable — le schéma comme
-      l'inventaire.</strong> Cliquer une boîte allume ce qui en dépend, dans
-      les deux à la fois : un nom public éclaire son chemin jusqu'au
-      matériel, une machine éclaire ce qui tombe avec elle. Un deuxième clic
-      ouvre le fichier qui la définit; Échap efface.
-    </p>
-  </header>
 
   <div class="status">
     <span class="stamp">générée {generated} UTC</span>
@@ -214,6 +187,11 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
             <a class="app-name" href={src(a)}>
               {a.label}
             </a>
+            {roleOf(a) && (
+              <a class="role-link" href={`/inventaire/${roleOf(a)!.key}/`}>
+                {roleOf(a)!.name} ›
+              </a>
+            )}
             <div class="workloads">
               {(workloadsByApp.get(a.id) ?? []).map((w) => (
                 <a
@@ -240,13 +218,20 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
     <div class="row">
       {
         hosts.map((n) => (
-          <a class="node host" data-node={n.id} href={src(n)}>
-            <strong>{n.label}</strong>
-            <span class="dim">
-              {n.meta.class} · {String(n.meta.arch).replace("-linux", "")}
-              {n.meta.k3sRole ? ` · k3s ${n.meta.k3sRole}` : ""}
-            </span>
-          </a>
+          <div class="host-cell">
+            <a class="node host" data-node={n.id} href={src(n)}>
+              <strong>{n.label}</strong>
+              <span class="dim">
+                {n.meta.class} · {String(n.meta.arch).replace("-linux", "")}
+                {n.meta.k3sRole ? ` · k3s ${n.meta.k3sRole}` : ""}
+              </span>
+            </a>
+            {roleOf(n) && (
+              <a class="role-link" href={`/inventaire/${roleOf(n)!.key}/`}>
+                {roleOf(n)!.name} ›
+              </a>
+            )}
+          </div>
         ))
       }
     </div>
@@ -258,7 +243,7 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
         <h2># hors IaC — vu depuis ses bords</h2>
         <div class="row">
           {externals.map((n) => (
-            <a class="node ext" data-node={n.id} href={src(n)} title={n.meta.via ?? n.meta.origin ?? ""}>
+            <a class="node ext" data-node={n.id} href={roleForNode(n.id) ? `/inventaire/${roleForNode(n.id)}/` : src(n)} title={n.meta.via ?? n.meta.origin ?? ""}>
               {n.label}
               <span class="dim">
                 {n.meta.origin ? "origine du tunnel" : n.meta.via}
@@ -370,7 +355,6 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
       }
     });
   </script>
-</BaseLayout>
 
 <style>
   .back {
@@ -481,6 +465,24 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
     display: inline-flex;
     flex-direction: column;
     gap: 0.1rem;
+  }
+  .host-cell {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .role-link {
+    color: var(--text-faint);
+    font-size: 0.7rem;
+    text-decoration: none;
+    padding-left: 0.15rem;
+  }
+  .role-link:hover {
+    color: var(--accent-live);
+  }
+  .app .role-link {
+    display: block;
+    margin: -0.15rem 0 0.3rem;
   }
   .band-note {
     color: var(--text-faint);

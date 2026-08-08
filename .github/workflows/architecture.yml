@@ -64,3 +64,11 @@ jobs:
           --project-name=labodeludo-dev
           --branch=staging
           --commit-dirty=true
+      - name: Kuma heartbeat
+        # push monitor "architecture-nightly (staging)" — fires on ABSENCE,
+        # which also covers GitHub silently disabling the cron after 60 idle
+        # days. The runner is in-cluster, so the URL is the internal Service.
+        if: always()
+        run: >-
+          curl -fsS -m 10
+          "${{ secrets.KUMA_PUSH_URL_ARCHITECTURE }}?status=${{ job.status == 'success' && 'up' || 'down' }}&msg=${{ job.status }}"

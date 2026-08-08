@@ -45,8 +45,11 @@ by `architecture.json` and the snapshots.
    viewBox, roughly 760 wide; grow DOWNWARD when you need room, matching
    the page's band order edge → cluster → hardware). Never widen the
    viewBox past ~800.
-4. The component must keep building (`npm run build` in `site/` is your
-   verification — run it with SHOW_LIVE_ARCH=1).
+4. The component must keep building. Try `SHOW_LIVE_ARCH=1 npm run build`
+   in `site/` as your verification; if the sandbox denies it, say so and
+   double-check your edit by reading it — the driver runs the same build
+   (and the scan-public gate) before anything is committed, so a breakage
+   is caught either way.
 5. Do not touch any other file. Do not commit — the driver script reviews,
    gates and commits your change.
 

@@ -2,7 +2,7 @@
 import "../styles/global.css";
 import Lightbox from "../components/Lightbox.astro";
 import EasterEggs from "../components/EasterEggs.astro";
-import { resolveOgImage } from "../lib/ogImage";
+import { resolveOgImage, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT } from "../lib/ogImage";
 
 interface Props {
   title: string;
@@ -81,6 +81,11 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     <meta property="og:title" content={title} />
     {description && <meta property="og:description" content={description} />}
     <meta property="og:image" content={ogImageUrl} />
+    {/* declared so LinkedIn/Facebook can pick the large-card layout without
+        fetching the image first — every card is generated at this size */}
+    <meta property="og:image:width" content={String(OG_IMAGE_WIDTH)} />
+    <meta property="og:image:height" content={String(OG_IMAGE_HEIGHT)} />
+    <meta property="og:image:alt" content={title} />
     <meta property="og:site_name" content="Le labo de Ludo" />
     <meta property="og:locale" content={ogLocale} />
     {publishedISO && <meta property="article:published_time" content={publishedISO} />}

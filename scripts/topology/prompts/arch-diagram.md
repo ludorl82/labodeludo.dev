@@ -13,6 +13,11 @@ Update `site/src/components/LiveArchDiagram.astro` — and ONLY that file —
 so its drawn SHAPE still tells the truth about the architecture described
 by `architecture.json` and the snapshots.
 
+It is rendered inside `src/components/ArchGenerated.astro`, which is itself
+the gated top half of the `/architecture` hub — so your diagram sits above
+the exhaustive bands, the hand-drawn view and the role cards. Do not touch
+any of those.
+
 ## What "still tells the truth" means
 
 - Compare the diagram's structural claims against the data: sites, the

@@ -113,10 +113,11 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
       mêmes fichiers sanitisés qui accompagnent les articles. Un diagramme
       dessiné ment dès qu'on change quelque chose; celui-ci n'est jamais plus
       vieux que sa date de génération. Noms et adresses fictifs, comme
-      toujours. <strong>Chaque boîte est un lien vers le fichier qui la
-      définit.</strong> Cliquer une boîte allume ce qui en dépend — un nom
-      public éclaire son chemin jusqu'au matériel, une machine éclaire ce qui
-      tombe avec elle.
+      toujours. <strong>Tout est cliquable — le schéma comme
+      l'inventaire.</strong> Cliquer une boîte allume ce qui en dépend, dans
+      les deux à la fois : un nom public éclaire son chemin jusqu'au
+      matériel, une machine éclaire ce qui tombe avec elle. Un deuxième clic
+      ouvre le fichier qui la définit; Échap efface.
     </p>
   </header>
 
@@ -303,12 +304,21 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
       adj.set(a, [...(adj.get(a) ?? []), b]);
       adj.set(b, [...(adj.get(b) ?? []), a]);
     }
-    const els = document.querySelectorAll<HTMLElement>("[data-node]");
+    const els = document.querySelectorAll<HTMLElement>(
+      "[data-node], [data-nodes]",
+    );
+    function idsOf(el: HTMLElement): string[] {
+      return el.dataset.node
+        ? [el.dataset.node]
+        : (el.dataset.nodes ?? "").split(" ").filter(Boolean);
+    }
     let active: string | null = null;
     function apply(sel: Set<string> | null) {
       els.forEach((el) => {
-        el.classList.toggle("lit", !!sel && sel.has(el.dataset.node!));
-        el.classList.toggle("dimmed", !!sel && !sel.has(el.dataset.node!));
+        const mine = idsOf(el);
+        const hit = !!sel && mine.some((id) => sel.has(id));
+        el.classList.toggle("lit", hit);
+        el.classList.toggle("dimmed", !!sel && !hit);
       });
     }
     function reach(start: string) {
@@ -328,12 +338,20 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
     }
     els.forEach((el) => {
       el.addEventListener("click", (ev) => {
-        const id = el.dataset.node!;
-        // first click selects, second click follows the link
-        if (active !== id) {
+        // single node: light its neighborhood (first click selects,
+        // second follows the link). Aggregate (data-nodes): light exactly
+        // its members — no traversal, no link.
+        const key = el.dataset.node ?? el.dataset.nodes!;
+        if (active !== key) {
           ev.preventDefault();
-          active = id;
-          apply(reach(id));
+          active = key;
+          apply(
+            el.dataset.node
+              ? reach(el.dataset.node)
+              : new Set(idsOf(el)),
+          );
+        } else if (!el.dataset.node) {
+          ev.preventDefault();
         }
       });
     });

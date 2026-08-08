@@ -33,6 +33,17 @@ volumes, a UPS module). Draw them dashed and muted, never as first-class
 boxes, and never invent one the data does not contain — their absence is
 part of the story the page tells.
 
+## Interactivity contract
+
+The diagram participates in the page's click-highlight. Every box that
+represents topology nodes MUST keep (or gain) either
+`data-node="<id>"` (single node — wrapped in an SVG `<a>` with
+`href={src(node)}` and a `<title>` tooltip) or
+`data-nodes="<id> <id>..."` (aggregate — a `<g>`; a click lights exactly
+its members). Ids come from architecture.json. Decorative marks
+(visiteurs, arrows, the WireGuard line) carry neither. The driver refuses
+a refresh that strips these attributes.
+
 ## Hard rules
 
 1. **Counts and names must come from `architecture.json` at build time**

@@ -9,14 +9,31 @@
 // must pass scripts/topology/scan-public.py (documentation IPs and
 // example-family domains only).
 //
+// INTERACTIVITY CONTRACT: every box that represents topology nodes carries
+// data-node="<id>" (single node — joins the page's click-highlight and
+// links to its source file) or data-nodes="<id> <id>..." (aggregate — a
+// click lights exactly its members). Decorative marks (visiteurs, arrows,
+// the WireGuard line) carry neither. The nightly driver refuses a refresh
+// that strips these attributes.
+//
 // Canvas: the site column is narrow (~830px), so the flow is VERTICAL
 // (edge → cluster → hardware, same order as the bands below) and the figure
 // breaks out full-bleed on desktop. Keep the viewBox portrait-ish.
 import arch from "../data/architecture.json";
 
-type TNode = { id: string; kind: string; label: string; meta: any };
+type TNode = {
+  id: string;
+  kind: string;
+  label: string;
+  meta: any;
+  repo: string;
+  source: string;
+};
 const nodes = arch.nodes as TNode[];
 const kind = (k: string) => nodes.filter((n) => n.kind === k);
+const byId = (id: string) => nodes.find((n) => n.id === id);
+const src = (n: TNode) =>
+  `https://github.com/ludorl82/${n.repo}/blob/HEAD/${n.source}`;
 
 const dnsCount = kind("dns").length;
 const accessCount = kind("access").length;
@@ -26,14 +43,26 @@ const bucketCount = kind("bucket").length;
 const hosts = kind("host");
 const homeHosts = hosts.filter((h) => h.meta.class !== "cloud-vm");
 const cloudHost = hosts.find((h) => h.meta.class === "cloud-vm");
-const k3sAgents = hosts.filter((h) => h.meta.k3sRole === "agent").length;
+const agents = hosts.filter((h) => h.meta.k3sRole === "agent");
+const k3sAgents = agents.length;
 const pinCount = (arch.edges as any[]).filter(
   (e) => e.kind === "pinned-to",
 ).length;
 const externals = kind("external");
-const upsCount = externals.filter((n) => n.id.startsWith("external:ups")).length;
-const hasNas = externals.some((n) => n.id === "external:nas");
-const hasRouter = externals.some((n) => n.id === "external:router");
+const upsNodes = externals.filter((n) => n.id.startsWith("external:ups"));
+const upsCount = upsNodes.length;
+const nas = byId("external:nas");
+const router = byId("external:router");
+const ha01 = byId("external:ha-01");
+const tunnel = kind("tunnel")[0];
+const traefik = byId("app:traefik");
+const blogBucket = byId("bucket:labodeludo.dev");
+
+const appIds = kind("app").map((n) => n.id).join(" ");
+const agentIds = agents.map((n) => n.id).join(" ");
+const lambdaIds = kind("lambda").map((n) => n.id).join(" ");
+const bucketIds = kind("bucket").map((n) => n.id).join(" ");
+const upsIds = upsNodes.map((n) => n.id).join(" ");
 
 const ariaLabel =
   `Schéma d'architecture : les visiteurs entrent par Cloudflare (${dnsCount} ` +
@@ -42,12 +71,13 @@ const ariaLabel =
   `cluster s'étend sur deux sites reliés par WireGuard : la maison ` +
   `(${homeHosts.length} machines NixOS, ${k3sAgents} agents k3s) et un EC2 ` +
   `chez AWS qui est l'unique control-plane. ${appCount} applications y ` +
-  `tournent, dont ${pinCount} workloads épinglés à une machine précise.`;
+  `tournent, dont ${pinCount} workloads épinglés à une machine précise. ` +
+  `Chaque boîte est cliquable et allume ce qui en dépend.`;
 ---
 
 <figure class="live-arch">
   <div class="diagram-wrap">
-    <svg viewBox="0 0 760 950" role="img" aria-label={ariaLabel}>
+    <svg viewBox="0 0 760 1000" role="img" aria-label={ariaLabel}>
       <defs>
         <marker id="la-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
@@ -57,26 +87,32 @@ const ariaLabel =
         </marker>
       </defs>
 
-      <!-- visiteurs -->
+      <!-- visiteurs (décoratif) -->
       <ellipse cx="190" cy="46" rx="82" ry="28" fill="var(--panel)" stroke="var(--panel-border)" />
       <text x="190" y="43" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--text)">visiteurs</text>
       <text x="190" y="58" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">HTTPS</text>
 
       <!-- le blog lui-même : servi en statique -->
-      <rect x="470" y="18" width="230" height="56" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="585" y="40" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">s3://labodeludo.dev</text>
-      <text x="585" y="57" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">ce blog — fichiers statiques</text>
+      <a class="svg-node" data-node={blogBucket?.id} href={blogBucket && src(blogBucket)}>
+        <title>le bucket S3 du blog — cliquer pour allumer son chemin</title>
+        <rect x="470" y="18" width="230" height="56" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="585" y="40" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">s3://labodeludo.dev</text>
+        <text x="585" y="57" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">ce blog — fichiers statiques</text>
+      </a>
 
-      <!-- Cloudflare edge -->
-      <rect x="80" y="120" width="600" height="60" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="380" y="143" text-anchor="middle" font-family="var(--font-display)" font-size="12.5" font-weight="600" fill="var(--text)">Cloudflare edge</text>
-      <text x="380" y="161" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{dnsCount} noms publics · {accessCount} apps Access · 0 port ouvert vers la maison</text>
+      <!-- Cloudflare edge = le tunnel et ses noms -->
+      <a class="svg-node" data-node={tunnel?.id} href={tunnel && src(tunnel)}>
+        <title>l'edge Cloudflare — le tunnel et ses noms publics</title>
+        <rect x="80" y="120" width="600" height="60" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="380" y="143" text-anchor="middle" font-family="var(--font-display)" font-size="12.5" font-weight="600" fill="var(--text)">Cloudflare edge</text>
+        <text x="380" y="161" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{dnsCount} noms publics · {accessCount} apps Access · 0 port ouvert vers la maison</text>
+      </a>
 
       <path d="M190,74 L190,118" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
       <path d="M585,118 L585,76" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
       <text x="600" y="100" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">statique</text>
 
-      <!-- tunnel sortant -->
+      <!-- tunnel sortant (décoratif — la boîte edge porte le nœud) -->
       <path d="M380,248 L380,182" fill="none" stroke="var(--accent-live)" stroke-width="1.7" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
       <text x="394" y="220" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">tunnel cloudflared — sortant, initié du cluster</text>
 
@@ -85,31 +121,43 @@ const ariaLabel =
       <text x="58" y="274" font-family="var(--font-mono)" font-size="11" fill="var(--accent-live)">cluster k3s — un seul cluster, deux sites</text>
 
       <!-- traefik -->
-      <rect x="280" y="292" width="200" height="48" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="380" y="312" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">traefik (ingress)</text>
-      <text x="380" y="329" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">TLS interne, routage par nom</text>
+      <a class="svg-node" data-node={traefik?.id} href={traefik && src(traefik)}>
+        <title>traefik — l'ingress du cluster</title>
+        <rect x="280" y="292" width="200" height="48" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="380" y="312" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">traefik (ingress)</text>
+        <text x="380" y="329" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">TLS interne, routage par nom</text>
+      </a>
 
-      <!-- apps -->
-      <rect x="245" y="376" width="270" height="58" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="380" y="399" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{appCount} applications</text>
-      <text x="380" y="417" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{pinCount} workloads épinglés à leur machine</text>
+      <!-- apps (agrégat : un clic allume exactement ses membres) -->
+      <g class="svg-node" data-nodes={appIds}>
+        <title>les applications du cluster — cliquer pour les allumer dans l'inventaire</title>
+        <rect x="245" y="376" width="270" height="58" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="380" y="399" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{appCount} applications</text>
+        <text x="380" y="417" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{pinCount} workloads épinglés à leur machine</text>
+      </g>
       <path d="M380,340 L380,374" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
 
-      <!-- agents maison (dans le cluster) -->
-      <rect x="80" y="470" width="230" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="195" y="494" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{k3sAgents} agents k3s</text>
-      <text x="195" y="511" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">serveurs · Pi · VMs</text>
-      <text x="195" y="526" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">VLAN serveurs, maison</text>
-      <path d="M310,455 L360,436" fill="none" stroke="var(--text-faint)" stroke-width="1.5" transform="translate(0,0)" marker-end="url(#la-arrow)" />
+      <!-- agents maison (agrégat) -->
+      <g class="svg-node" data-nodes={agentIds}>
+        <title>les agents k3s de la maison</title>
+        <rect x="80" y="470" width="230" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="195" y="494" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{k3sAgents} agents k3s</text>
+        <text x="195" y="511" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">serveurs · Pi · VMs</text>
+        <text x="195" y="526" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">VLAN serveurs, maison</text>
+      </g>
+      <path d="M310,455 L360,436" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
 
       <!-- control-plane EC2 (dans le cluster) -->
-      <rect x="450" y="470" width="230" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-      <text x="565" y="494" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{cloudHost?.label ?? "cloud-01"}</text>
-      <text x="565" y="511" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">EC2 — UNIQUE control-plane</text>
-      <text x="565" y="526" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">etcd · taint dédiée · site AWS</text>
+      <a class="svg-node" data-node={cloudHost?.id} href={cloudHost && src(cloudHost)}>
+        <title>cloud-01 — cliquer pour voir ce qui tombe avec lui</title>
+        <rect x="450" y="470" width="230" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+        <text x="565" y="494" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{cloudHost?.label ?? "cloud-01"}</text>
+        <text x="565" y="511" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">EC2 — UNIQUE control-plane</text>
+        <text x="565" y="526" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">etcd · taint dédiée · site AWS</text>
+      </a>
       <path d="M450,455 L400,436" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
 
-      <!-- WireGuard entre les deux moitiés du cluster -->
+      <!-- WireGuard entre les deux moitiés du cluster (décoratif) -->
       <path d="M310,510 H450" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" />
       <text x="380" y="566" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">WireGuard — seul port exposé de la maison</text>
 
@@ -118,57 +166,78 @@ const ariaLabel =
       <path d="M565,550 L565,618" fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
 
       <!-- maison -->
-      <rect x="40" y="620" width="420" height="310" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
+      <rect x="40" y="620" width="420" height="360" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
       <text x="58" y="644" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">maison — {homeHosts.length} machines NixOS</text>
       {
         homeHosts.map((h, i) => (
-          <Fragment>
+          <a class="svg-node" data-node={h.id} href={src(h)}>
+            <title>{h.label} — {h.meta.class} · cliquer pour voir ce qui en dépend</title>
             <rect x={64 + (i % 3) * 128} y={660 + Math.floor(i / 3) * 44} width="116" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
             <text x={122 + (i % 3) * 128} y={678 + Math.floor(i / 3) * 44} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{h.label}</text>
             <text x={122 + (i % 3) * 128} y={690 + Math.floor(i / 3) * 44} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{h.meta.class}</text>
-          </Fragment>
+          </a>
         ))
       }
 
-      <!-- hors IaC, vu depuis ses bords : router / NAS / UPS -->
-      {hasRouter && (
-        <Fragment>
+      <!-- hors IaC, vu depuis ses bords : router / NAS / UPS / ha-01 -->
+      {router && (
+        <a class="svg-node" data-node={router.id} href={src(router)}>
+          <title>le pare-feu — hors IaC, origine de tunnel</title>
           <rect x="64" y="836" width="116" height="34" rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
           <text x="122" y="854" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">router</text>
           <text x="122" y="866" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">pare-feu · hors IaC</text>
-        </Fragment>
+        </a>
       )}
-      {hasNas && (
-        <Fragment>
+      {nas && (
+        <a class="svg-node" data-node={nas.id} href={src(nas)}>
+          <title>le NAS — hors IaC, référencé par NFS et plex</title>
           <rect x="192" y="836" width="116" height="34" rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
           <text x="250" y="854" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">nas</text>
           <text x="250" y="866" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">NFS · plex · hors IaC</text>
-        </Fragment>
+        </a>
       )}
       {upsCount > 0 && (
-        <Fragment>
+        <g class="svg-node" data-nodes={upsIds}>
+          <title>les UPS — hors IaC, une par hôte maître NUT</title>
           <rect x="320" y="836" width="116" height="34" rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
           <text x="378" y="854" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{upsCount} UPS</text>
           <text x="378" y="866" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">hors IaC</text>
-        </Fragment>
+        </g>
       )}
-      <text x="64" y="905" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — présents seulement parce que l'IaC les référence</text>
+      {ha01 && (
+        <a class="svg-node" data-node={ha01.id} href={src(ha01)}>
+          <title>la domotique — hors IaC, origine de tunnel</title>
+          <rect x="64" y="884" width="116" height="34" rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
+          <text x="122" y="902" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{ha01.label}</text>
+          <text x="122" y="914" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">domotique · hors IaC</text>
+        </a>
+      )}
+      <text x="64" y="955" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — présents seulement parce que l'IaC les référence</text>
 
       <!-- AWS -->
-      <rect x="490" y="620" width="230" height="310" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
+      <rect x="490" y="620" width="230" height="360" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
       <text x="508" y="644" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">AWS ca-central</text>
-      <rect x="508" y="660" width="194" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-      <text x="605" y="681" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{cloudHost?.label ?? "cloud-01"} (EC2)</text>
-      <text x="508" y="726" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">λ {lambdaCount} fonctions Lambda</text>
-      <text x="508" y="748" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">s3 {bucketCount} buckets</text>
+      <a class="svg-node" data-node={cloudHost?.id} href={cloudHost && src(cloudHost)}>
+        <title>cloud-01, côté matériel</title>
+        <rect x="508" y="660" width="194" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+        <text x="605" y="681" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{cloudHost?.label ?? "cloud-01"} (EC2)</text>
+      </a>
+      <g class="svg-node" data-nodes={lambdaIds}>
+        <title>les fonctions Lambda</title>
+        <text x="508" y="726" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">λ {lambdaCount} fonctions Lambda</text>
+      </g>
+      <g class="svg-node" data-nodes={bucketIds}>
+        <title>les buckets S3</title>
+        <text x="508" y="748" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">s3 {bucketCount} buckets</text>
+      </g>
       <text x="508" y="770" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">sauvegardes · pipelines ·</text>
       <text x="508" y="784" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">le blog lui-même</text>
     </svg>
   </div>
   <figcaption>
     La forme du système — générée des mêmes données que l'inventaire
-    ci-dessous. Un seul cluster sur deux sites; tout le trafic public entre
-    par le tunnel, sauf le blog lui-même, servi en statique depuis S3.
+    ci-dessous, et cliquable comme lui : une boîte allume ce qui en dépend,
+    ici et dans l'inventaire; un deuxième clic ouvre son fichier source.
   </figcaption>
 </figure>
 
@@ -192,6 +261,22 @@ const ariaLabel =
     max-width: 1100px;
     height: auto;
     margin-inline: auto;
+  }
+  .svg-node {
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .svg-node:hover rect {
+    stroke: var(--accent-live);
+  }
+  .svg-node.lit rect {
+    stroke: var(--accent-live);
+  }
+  .svg-node.lit text {
+    fill: var(--accent-live);
+  }
+  .svg-node.dimmed {
+    opacity: 0.25;
   }
   figcaption {
     color: var(--text-faint);

@@ -7,88 +7,94 @@
       "name": "router",
       "network": "vlan10",
       "rackOrder": 1,
-      "role": "routeur/pare-feu de peripherie, sortie des deux VLAN, terminaison du tunnel chiffre",
-      "spec": "routeur/pare-feu compact, faible consommation"
+      "role": "pare-feu et routeur de périmètre, DNS privé, tunnel chiffré",
+      "spec": "pare-feu compact, 4 ports"
     },
     {
       "class": "switch",
       "iacDeclared": false,
       "location": "wall-rack",
+      "model": "Netgear GS348",
       "name": "switch-01",
-      "network": "vlan10",
+      "network": "out-of-band",
       "rackOrder": 2,
-      "role": "commutation du rack mural",
-      "spec": "commutateur 48 ports, non administrable, sans ventilateur"
+      "role": "commutation, distribution réseau du site",
+      "spec": "48 ports gigabit, non administrable, sans ventilateur"
     },
     {
       "class": "access-point",
       "iacDeclared": false,
       "location": "wall-rack",
+      "model": "Ubiquiti UniFi UAP-AC-PRO",
       "name": "ap-01",
       "network": "vlan50",
       "rackOrder": 3,
-      "role": "couverture Wi-Fi de la maison, pilotee par un controleur dans le cluster",
-      "spec": "borne Wi-Fi bi-bande PoE"
+      "role": "point d'accès sans fil",
+      "spec": "802.11ac bi-bande, PoE"
     },
     {
       "class": "sbc",
       "iacDeclared": true,
       "location": "wall-rack",
+      "model": "Raspberry Pi 4",
       "name": "pi-03",
       "network": "vlan10",
       "rackOrder": 4,
-      "role": "registre de conteneurs prive, hors cluster",
-      "spec": "SBC aarch64, 2 Go de RAM"
+      "role": "registre de conteneurs privé, hors cluster",
+      "spec": "aarch64, 2 Go"
     },
     {
       "class": "sbc",
       "iacDeclared": true,
       "location": "wall-rack",
+      "model": "Raspberry Pi 5",
       "name": "pi-01",
       "network": "vlan10",
       "rackOrder": 5,
-      "role": "agent k3s aarch64",
-      "spec": "SBC aarch64"
+      "role": "agent k3s",
+      "spec": "aarch64"
     },
     {
       "class": "sbc",
       "iacDeclared": true,
       "location": "wall-rack",
+      "model": "Raspberry Pi 5",
       "name": "pi-02",
       "network": "vlan10",
       "rackOrder": 6,
-      "role": "agent k3s aarch64, rebond d'administration, console de secours a l'arret",
-      "spec": "SBC aarch64, amorcage hybride cle USB + NVMe"
+      "role": "agent k3s, hôte de rebond, console de secours, filaire uniquement",
+      "spec": "aarch64, 4 Go, amorçage hybride USB + NVMe"
     },
     {
       "class": "sbc",
       "iacDeclared": false,
       "location": "wall-rack",
+      "model": "Home Assistant Green",
       "name": "ha-01",
       "network": "vlan10",
       "rackOrder": 7,
-      "role": "controleur domotique, mono-rattache par conception",
-      "spec": "appliance domotique aarch64"
+      "role": "cœur domotique, mono-rattaché par conception",
+      "spec": "aarch64"
     },
     {
       "class": "domotique",
       "count": 1,
       "iacDeclared": false,
       "location": "wall-rack",
-      "name": "compteur-energie",
+      "name": "energie-domotique",
       "network": "vlan50",
       "rackOrder": 8,
-      "role": "concentrateur de suivi energetique"
+      "role": "collecte de la consommation électrique"
     },
     {
       "class": "phone",
       "iacDeclared": false,
       "location": "wall-rack",
-      "name": "phone-01",
+      "model": "DP750",
+      "name": "phone-02",
       "network": "vlan50",
       "rackOrder": 9,
-      "role": "base telephonique de la maison",
-      "spec": "base telephonique SIP"
+      "role": "base de téléphonie SIP"
     },
     {
       "class": "nas",
@@ -97,93 +103,100 @@
       "name": "nas",
       "network": "vlan10",
       "rackOrder": 10,
-      "role": "stockage partage du cluster, mediatheque",
-      "spec": "NAS reseau, baies extractibles"
+      "role": "stockage réseau, export NFS du cluster, médiathèque",
+      "spec": "stockage réseau multi-baies, export NFS"
     },
     {
       "class": "ups",
       "iacDeclared": false,
       "location": "wall-rack",
+      "model": "CyberPower OR700LCDRM1U",
       "name": "ups-01",
       "network": "out-of-band",
       "rackOrder": 11,
-      "role": "secours electrique du rack mural",
-      "spec": "onduleur 700 VA / 400 W, 1U"
+      "role": "onduleur du rack réseau",
+      "spec": "700 VA / 400 W, 1U, 6 prises, AVR"
     },
     {
       "class": "ups",
       "iacDeclared": false,
       "location": "wall-rack",
+      "model": "CyberPower OR700LCDRM1U",
       "name": "ups-02",
       "network": "out-of-band",
       "rackOrder": 12,
-      "role": "secours electrique du rack mural",
-      "spec": "onduleur 700 VA / 400 W, 1U"
+      "role": "onduleur du rack réseau",
+      "spec": "700 VA / 400 W, 1U, 6 prises, AVR"
     },
     {
       "class": "server",
       "iacDeclared": true,
       "location": "rolling-rack",
+      "model": "Supermicro X11SRA-RF",
       "name": "gpu-01",
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 1,
-      "role": "agent k3s, GPU general, hote de virtualisation, maitre de l'arret sur batterie",
-      "spec": "hote x86, 2 GPU"
+      "role": "agent k3s GPU non marqué, hôte de virtualisation, maître de gestion d'onduleur",
+      "spec": "2× RTX 3060"
     },
     {
       "class": "server",
       "iacDeclared": false,
       "location": "rolling-rack",
+      "model": "Supermicro X11SRA-RF",
       "name": "hyperv-host",
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 2,
-      "role": "poste Windows de jeu et d'inference locale, hote de virtualisation",
-      "spec": "hote x86, 1 GPU"
+      "role": "jeu vidéo, inférence locale, hôte de virtualisation Windows",
+      "spec": "RTX 3060, Windows"
     },
     {
       "class": "server",
       "iacDeclared": true,
       "location": "rolling-rack",
+      "model": "Supermicro X9SCL/X9SCM",
       "name": "gpu-02",
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 3,
-      "role": "agent k3s reserve au transcodage video et a la video-surveillance",
-      "spec": "hote x86, 1 GPU"
+      "role": "transcodage vidéo, agent k3s réservé à la vidéosurveillance",
+      "spec": "GPU dédié"
     },
     {
       "class": "server",
       "iacDeclared": true,
       "location": "rolling-rack",
+      "model": "Supermicro X9SCL/X9SCM",
       "name": "srv-01",
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 4,
-      "role": "agent k3s, extraction de disques optiques, hote de virtualisation",
-      "spec": "hote x86, lecteurs de disques optiques"
+      "role": "extraction de disques optiques, hôte de virtualisation, agent k3s"
     },
     {
       "class": "switch",
       "iacDeclared": false,
       "location": "rolling-rack",
+      "model": "Netgear GS324",
       "name": "switch-02",
-      "network": "vlan10",
+      "network": "out-of-band",
       "power": "ups-03",
       "rackOrder": 5,
-      "role": "commutation du rack roulant",
-      "spec": "commutateur 24 ports, non administrable, sans ventilateur"
+      "role": "commutation du rack de calcul",
+      "spec": "24 ports gigabit, non administrable, sans ventilateur"
     },
     {
       "class": "ups",
       "iacDeclared": false,
       "location": "rolling-rack",
+      "model": "CyberPower LX1500GU",
       "name": "ups-03",
       "network": "out-of-band",
       "rackOrder": 6,
-      "role": "secours electrique du rack roulant, ne retablit pas sa sortie seul",
-      "spec": "onduleur 1500 VA, format tour"
+      "role": "onduleur du rack de calcul, arrêt propre piloté",
+      "spec": "1500 VA, format tour"
     },
     {
       "class": "vm",
@@ -192,19 +205,7 @@
       "location": "rolling-rack",
       "name": "vm-01",
       "network": "vlan10",
-      "power": "ups-03",
       "role": "agent k3s"
-    },
-    {
-      "class": "vm",
-      "hostedBy": "gpu-01",
-      "iacDeclared": true,
-      "location": "rolling-rack",
-      "name": "console-vm",
-      "network": "vlan10",
-      "power": "ups-03",
-      "role": "console d'administration de la flotte, hors cluster",
-      "spec": "VM, 6 vCPU / 16 Gio"
     },
     {
       "class": "vm",
@@ -213,7 +214,6 @@
       "location": "rolling-rack",
       "name": "vm-02",
       "network": "vlan10",
-      "power": "ups-03",
       "role": "agent k3s"
     },
     {
@@ -223,52 +223,65 @@
       "location": "rolling-rack",
       "name": "vm-03",
       "network": "vlan10",
-      "power": "ups-03",
-      "role": "agent k3s, service de depot de fichiers"
+      "role": "agent k3s"
+    },
+    {
+      "class": "vm",
+      "hostedBy": "gpu-01",
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "name": "console-vm",
+      "network": "vlan10",
+      "role": "console d'administration, délibérément hors cluster",
+      "spec": "6 vCPU, 16 Gio, 100 Go"
     },
     {
       "class": "bmc",
       "hostedBy": "gpu-01",
       "iacDeclared": false,
       "location": "rolling-rack",
-      "name": "bmc-gpu-01",
+      "model": "Supermicro X11SRA-RF",
+      "name": "bmc-01",
       "network": "out-of-band",
       "power": "ups-03",
-      "role": "administration hors bande, console distante, allumage a distance",
-      "spec": "controleur d'administration integre a la carte mere"
+      "role": "gestion hors bande, console distante",
+      "spec": "carte partagée avec la carte réseau de l'hôte"
     },
     {
       "class": "bmc",
       "hostedBy": "hyperv-host",
       "iacDeclared": false,
       "location": "rolling-rack",
-      "name": "bmc-hyperv-host",
+      "model": "Supermicro X11SRA-RF",
+      "name": "bmc-02",
       "network": "out-of-band",
       "power": "ups-03",
-      "role": "administration hors bande, console distante, allumage a distance",
-      "spec": "controleur d'administration integre a la carte mere"
+      "role": "gestion hors bande, console distante",
+      "spec": "carte partagée avec la carte réseau de l'hôte"
     },
     {
       "class": "bmc",
       "hostedBy": "srv-01",
       "iacDeclared": false,
       "location": "rolling-rack",
-      "name": "bmc-srv-01",
+      "model": "Supermicro X9SCL/X9SCM",
+      "name": "bmc-03",
       "network": "out-of-band",
       "power": "ups-03",
-      "role": "administration hors bande, console distante, allumage a distance",
-      "spec": "controleur d'administration integre a la carte mere, generation anterieure"
+      "role": "gestion hors bande, console distante",
+      "spec": "mode bascule, port dédié ou embarqué"
     },
     {
       "class": "bmc",
       "hostedBy": "gpu-02",
       "iacDeclared": false,
       "location": "rolling-rack",
-      "name": "bmc-gpu-02",
+      "model": "Supermicro X9SCL/X9SCM",
+      "name": "bmc-04",
       "network": "out-of-band",
       "power": "ups-03",
-      "role": "administration hors bande, console distante, allumage a distance",
-      "spec": "controleur d'administration integre a la carte mere, generation anterieure"
+      "role": "gestion hors bande, console distante",
+      "spec": "mode bascule, port dédié ou embarqué"
     },
     {
       "class": "cloud-vm",
@@ -276,8 +289,8 @@
       "location": "off-site",
       "name": "cloud-01",
       "network": "aws",
-      "role": "unique noeud de controle k3s, sortie de secours d'alerte, terminaison du tunnel chiffre",
-      "spec": "instance cloud 2 vCPU / 4 Gio"
+      "role": "plan de contrôle k3s et etcd, unique nœud maître, extrémité du tunnel chiffré",
+      "spec": "instance EC2 t3a.medium, région canadienne"
     },
     {
       "class": "desktop",
@@ -285,8 +298,7 @@
       "location": "not-racked",
       "name": "desktop-01",
       "network": "vlan50",
-      "role": "poste de travail personnel",
-      "spec": "PC de bureau"
+      "role": "poste de travail personnel"
     },
     {
       "class": "laptop",
@@ -294,35 +306,34 @@
       "location": "not-racked",
       "name": "laptop-01",
       "network": "vlan50",
-      "role": "portable personnel, acces distant par cle uniquement",
-      "spec": "portable Windows"
+      "role": "portable personnel, accès distant par clé",
+      "spec": "Windows 11"
     },
     {
       "class": "phone",
       "iacDeclared": false,
       "location": "not-racked",
-      "name": "phone-02",
+      "name": "phone-01",
       "network": "vlan50",
-      "role": "telephone personnel",
-      "spec": "telephone mobile"
+      "role": "téléphone mobile personnel"
     },
     {
       "class": "printer",
       "iacDeclared": false,
       "location": "not-racked",
+      "model": "Brother MFC-L5900DW",
       "name": "printer-01",
       "network": "vlan50",
-      "role": "impression et numerisation, depot des scans vers le cluster",
-      "spec": "imprimante laser multifonction"
+      "role": "impression et numérisation vers le stockage objet"
     },
     {
       "class": "camera",
       "iacDeclared": false,
       "location": "not-racked",
+      "model": "AD410",
       "name": "cam-01",
       "network": "vlan50",
-      "role": "camera d'entree, enregistree par la video-surveillance du cluster",
-      "spec": "camera IP exterieure"
+      "role": "caméra d'entrée, la seule enregistrée par le magnétoscope réseau"
     },
     {
       "class": "domotique",
@@ -331,7 +342,7 @@
       "location": "not-racked",
       "name": "prises-intelligentes",
       "network": "vlan50",
-      "role": "prises et barrettes connectees"
+      "role": "prises et barres connectées pilotées par la domotique"
     },
     {
       "class": "domotique",
@@ -340,25 +351,26 @@
       "location": "not-racked",
       "name": "enceintes-connectees",
       "network": "vlan50",
-      "role": "enceintes vocales"
+      "role": "enceintes connectées"
     },
     {
       "class": "domotique",
       "count": 1,
       "iacDeclared": false,
       "location": "not-racked",
+      "model": "Home Assistant Voice Preview Edition",
       "name": "satellites-vocaux",
       "network": "vlan50",
-      "role": "satellite vocal de piece, mot d'activation local"
+      "role": "satellite vocal, mot d'activation personnalisé"
     },
     {
       "class": "domotique",
       "count": 1,
       "iacDeclared": false,
       "location": "not-racked",
-      "name": "carillon-de-porte",
+      "name": "carillon",
       "network": "vlan50",
-      "role": "carillon de sonnette relie a la domotique"
+      "role": "carillon de sonnette"
     },
     {
       "class": "domotique",
@@ -367,18 +379,18 @@
       "location": "not-racked",
       "name": "projecteur",
       "network": "vlan50",
-      "role": "projecteur de salon"
+      "role": "projection vidéo"
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-08-08T17:08:01+00:00",
+  "generated": "2026-08-08T17:33:47+00:00",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants, cadre ouvert",
       "units": 42
     },
     "wall-rack": {
-      "kind": "mural, 2 montants, profondeur reglable",
+      "kind": "mural, 2 montants, cadre ouvert",
       "units": 8
     }
   }

@@ -30,9 +30,11 @@ the two rack elevations still tell the truth about `fleet.json`.
   names that machine: nest them as chips in its row. Anything hosted whose
   host is not itself a row must still be accounted for somewhere, or the
   drawing quietly loses hardware.
-- `spec` is a generic shape (« onduleur 700 VA, 1U »), never a brand — the
-  seed is forbidden from emitting vendors and models, and the drawing must
-  not reintroduce them from your own knowledge of the gear.
+- `model` is the real hardware (« Netgate 1100 », « Raspberry Pi 5 ») and
+  belongs on the row: naming the gear is deliberate. `spec` complements it
+  with capability (« 700 VA, 1U »). Print what the data says and nothing
+  more — never add a model, a firmware version or a serial from your own
+  knowledge of the hardware.
 - `racks[key].units` is the enclosure's REAL total height in U, so the
   frame may be drawn to that height and labelled with it. It is still not
   a per-device position: rows stay evenly spaced, and no U scale is drawn.

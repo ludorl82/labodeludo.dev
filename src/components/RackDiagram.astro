@@ -25,6 +25,7 @@ type Device = {
   network?: string;
   role?: string;
   spec?: string;
+  model?: string;
   iacDeclared?: boolean;
   location?: string;
   rackOrder?: number;
@@ -116,7 +117,7 @@ const ariaLabel = hasRacks
         rows
           .map(
             (d) =>
-              `${label(d)}, ${d.spec ?? d.class}` +
+              `${label(d)}, ${d.model ?? d.spec ?? d.class}` +
               (d.role ? `, ${d.role}` : "") +
               (hostedOn(d.name).length
                 ? `, héberge ${hostedOn(d.name).map((h) => h.name).join(", ")}`
@@ -176,13 +177,19 @@ const ariaLabel = hasRacks
                         {label(d)}
                       </text>
                       <text x={x + 350 - 8 - RAIL - 8} y={top + 15} text-anchor="end"
-                            font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">
-                        {d.spec ?? d.class}
-                        {d.power ? ` · ${d.power}` : ""}
+                            font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">
+                        {d.model ?? d.spec ?? d.class}
                       </text>
-                      {d.role && (
-                        <text x={x + 8 + RAIL + 14} y={top + 27} font-family="var(--font-mono)" font-size="8.5" fill="var(--text-muted)">
-                          {d.role.length > 52 ? d.role.slice(0, 51) + "…" : d.role}
+                      {(d.role || d.spec || d.power) && (
+                        <text x={x + 8 + RAIL + 14} y={top + 27} font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">
+                          {[
+                            d.role,
+                            d.model && d.spec ? d.spec : null,
+                            d.power,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")
+                            .slice(0, 62)}
                         </text>
                       )}
                       {hosted.map((h, hi) => (
@@ -226,7 +233,8 @@ const ariaLabel = hasRacks
         reste — le matériel que personne n'a jamais écrit nulle part. La
         barre de gauche donne le réseau, les puces en pointillé sont les
         machines virtuelles et les contrôleurs qui vivent <em>dans</em> la
-        machine au-dessus d'elles. Le châssis est à sa vraie hauteur, mais
+        machine au-dessus d'elles, et le modèle réel est écrit à droite de
+        chaque rangée. Le châssis est à sa vraie hauteur, mais
         les rangées sont dans l'ordre de l'inventaire et pas à leur position
         en U : le document source ne note pas les U, alors je ne fais pas
         semblant de les connaître.

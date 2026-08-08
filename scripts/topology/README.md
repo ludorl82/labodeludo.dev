@@ -60,6 +60,7 @@ Ids are `namespace:rest`, lowercase, matching `[a-z0-9.:/@_-]+`.
 | `tunnel:` | cloudflare | a Cloudflare Tunnel (`tunnel:k3s`) |
 | `dns:` | cloudflare | a public hostname routed through the tunnel (`dns:kuma.pub.example.com`) |
 | `access:` | cloudflare | a Cloudflare Access application |
+| `external:` | any | hors-IaC hardware, derived ONLY from what the IaC references (a non-cluster tunnel origin → `external:router`, NFS/plex → `external:nas`, a ups-master module → `external:ups-<host>`). Never hand-listed; gear nothing references stays invisible by design. Ids in this namespace MAY collide across snapshots — the join merges them (meta union + `meta.seenBy`) instead of failing. |
 
 ## Edge kinds
 
@@ -71,6 +72,8 @@ Ids are `namespace:rest`, lowercase, matching `[a-z0-9.:/@_-]+`.
 | `routes-to` | dns → tunnel; tunnel → cluster; route → workload |
 | `is` | identity across layers (`instance:...` → `host:cloud-01`) |
 | `protects` | access app → dns hostname |
+| `uses` | app/host → external hardware it leans on (NFS, plex backend) |
+| `powered-by` | host → its UPS |
 
 ## Rules (enforced by the emitters, re-checked by the join)
 

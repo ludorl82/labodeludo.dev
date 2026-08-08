@@ -24,11 +24,13 @@ ALLOWED_SUFFIX = (
 # list is generic internet knowledge (not derived from any private data)
 # and intentionally over-broad; it must at minimum cover every TLD the lab
 # actually uses so a real name can never pass.
+# Word-like TLDs (.to, .sh, .run, .live, .network...) are deliberately
+# ABSENT: they collide with code identifiers (e.to, deploy.sh) and the lab
+# uses none of them. Every TLD the lab actually uses (com net in ca io dev)
+# must stay, or a real name could pass.
 PUBLIC_TLDS = frozenset((
-    "com net org io in dev ca app cloud me info biz xyz cc tv co uk fr de "
-    "eu us nl ch at be es it pl se no fi dk ie nz au jp kr cn ru br mx ar "
-    "site online store tech ai gg ly to sh ws host page link email zone "
-    "systems network digital live world today space fun run"
+    "com net org io in dev ca app me co uk fr de eu us nl ch at be es "
+    "pl se no fi dk ie nz au jp kr cn ru br mx ar biz info xyz cc tv ai"
 ).split())
 
 
@@ -49,8 +51,12 @@ def scan(value: str, where: str) -> None:
         if "::" in s or len(groups) >= 3:
             if not s.lower().startswith("2001:db8"):
                 raise Leak(f"non-documentation IPv6 {s!r} at {where}")
-    if "@" in value:
-        raise Leak(f"unexpected @ in {value!r} at {where}")
+    # a bare @ is everywhere in code (JSX, decorators) — only the full
+    # email shape with a non-example domain is a leak
+    for m in re.finditer(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})",
+                         value):
+        if not m.group(1).lower().endswith(ALLOWED_SUFFIX):
+            raise Leak(f"email-shaped {m.group(0)!r} at {where}")
     for m in HOSTLIKE.finditer(value):
         s = m.group(0).lower()
         if ANY_V4.match(s) or s.endswith(ALLOWED_SUFFIX):

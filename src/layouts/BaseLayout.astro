@@ -9,9 +9,12 @@ interface Props {
   description?: string;
   lang?: "fr" | "en";
   heroImage?: string;
+  /** absolute path of an AMP twin, if this page has one. Exactly one article
+      has one, as a deliberate test — see the comment at the top of it. */
+  ampUrl?: string;
 }
 
-const { title, description, lang = "fr", heroImage } = Astro.props;
+const { title, description, lang = "fr", heroImage, ampUrl } = Astro.props;
 
 const ogImageUrl = new URL(resolveOgImage(heroImage), Astro.site).toString();
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
@@ -61,6 +64,7 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     <title>{title}</title>
 
     <link rel="canonical" href={canonicalUrl} />
+    {ampUrl && <link rel="amphtml" href={new URL(ampUrl, Astro.site).toString()} />}
     <meta property="og:type" content="article" />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:title" content={title} />

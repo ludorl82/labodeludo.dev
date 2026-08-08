@@ -76,6 +76,11 @@
       "to": "cluster:k3s"
     },
     {
+      "from": "app:cronicle",
+      "kind": "uses",
+      "to": "external:nas"
+    },
+    {
       "from": "app:frigate",
       "kind": "part-of",
       "to": "cluster:k3s"
@@ -101,9 +106,19 @@
       "to": "cluster:k3s"
     },
     {
+      "from": "app:logging",
+      "kind": "uses",
+      "to": "external:nas"
+    },
+    {
       "from": "app:n8n",
       "kind": "part-of",
       "to": "cluster:k3s"
+    },
+    {
+      "from": "app:n8n",
+      "kind": "uses",
+      "to": "external:nas"
     },
     {
       "from": "app:ntfy",
@@ -121,6 +136,11 @@
       "to": "cluster:k3s"
     },
     {
+      "from": "app:plex",
+      "kind": "uses",
+      "to": "external:nas"
+    },
+    {
       "from": "app:traefik",
       "kind": "part-of",
       "to": "cluster:k3s"
@@ -129,6 +149,11 @@
       "from": "app:unifi",
       "kind": "part-of",
       "to": "cluster:k3s"
+    },
+    {
+      "from": "app:unifi",
+      "kind": "uses",
+      "to": "external:nas"
     },
     {
       "from": "dns:cronicle.pub.example.com",
@@ -144,6 +169,11 @@
       "from": "dns:grafana.pub.example.com",
       "kind": "routes-to",
       "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:ha-01.family.example",
+      "kind": "routes-to",
+      "to": "external:ha-01"
     },
     {
       "from": "dns:ha-01.family.example",
@@ -178,6 +208,11 @@
     {
       "from": "dns:router.pub.example.com",
       "kind": "routes-to",
+      "to": "external:router"
+    },
+    {
+      "from": "dns:router.pub.example.com",
+      "kind": "routes-to",
       "to": "tunnel:k3s"
     },
     {
@@ -196,9 +231,19 @@
       "to": "cluster:k3s"
     },
     {
+      "from": "host:docker",
+      "kind": "uses",
+      "to": "external:nas"
+    },
+    {
       "from": "host:gpu-01",
       "kind": "member-of",
       "to": "cluster:k3s"
+    },
+    {
+      "from": "host:gpu-01",
+      "kind": "powered-by",
+      "to": "external:ups-gpu-01"
     },
     {
       "from": "host:gpu-02",
@@ -211,9 +256,24 @@
       "to": "cluster:k3s"
     },
     {
+      "from": "host:pi-01",
+      "kind": "uses",
+      "to": "external:nas"
+    },
+    {
+      "from": "host:pi-01",
+      "kind": "powered-by",
+      "to": "external:ups-pi-01"
+    },
+    {
       "from": "host:pi-02",
       "kind": "member-of",
       "to": "cluster:k3s"
+    },
+    {
+      "from": "host:pi-02",
+      "kind": "powered-by",
+      "to": "external:ups-pi-02"
     },
     {
       "from": "host:srv-01",
@@ -566,7 +626,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-08-07T21:58:52+00:00",
+  "generated": "2026-08-08T02:13:21+00:00",
   "nodes": [
     {
       "id": "access:cronicle",
@@ -1118,6 +1178,76 @@
       },
       "repo": "cloudflare-iac-public",
       "source": "live/tunnels.tf"
+    },
+    {
+      "id": "external:ha-01",
+      "kind": "external",
+      "label": "ha-01",
+      "layer": "external",
+      "meta": {
+        "origin": "https://192.0.2.34:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "external:nas",
+      "kind": "external",
+      "label": "nas",
+      "layer": "external",
+      "meta": {
+        "seenBy": [
+          "nixos-iac-public",
+          "k3s-iac-public"
+        ],
+        "via": "nas-wake module, NFS mounts; nfs-client PVCs, plex EndpointSlice"
+      },
+      "repo": "nixos-iac-public",
+      "source": "modules/nas-wake.nix"
+    },
+    {
+      "id": "external:router",
+      "kind": "external",
+      "label": "router",
+      "layer": "external",
+      "meta": {
+        "origin": "https://192.0.2.254:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
+      "id": "external:ups-gpu-01",
+      "kind": "external",
+      "label": "ups (gpu-01)",
+      "layer": "external",
+      "meta": {
+        "via": "ups-master"
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/gpu-01/configuration.nix"
+    },
+    {
+      "id": "external:ups-pi-01",
+      "kind": "external",
+      "label": "ups (pi-01)",
+      "layer": "external",
+      "meta": {
+        "via": "ups-master"
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/pi-01/configuration.nix"
+    },
+    {
+      "id": "external:ups-pi-02",
+      "kind": "external",
+      "label": "ups (pi-02)",
+      "layer": "external",
+      "meta": {
+        "via": "ups-master"
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/pi-02/configuration.nix"
     },
     {
       "id": "host:cloud-01",
@@ -1932,21 +2062,21 @@
       "date": "2026-08-07T17:58:37-04:00"
     },
     "cloudflare-iac-public": {
-      "commit": "a0f9edf",
-      "date": "2026-08-07T17:58:38-04:00"
+      "commit": "53f4f03",
+      "date": "2026-08-07T22:11:50-04:00"
     },
     "k3s-iac-public": {
-      "commit": "d4ec41f",
-      "date": "2026-08-07T17:58:35-04:00"
+      "commit": "149801c",
+      "date": "2026-08-07T22:11:49-04:00"
     },
     "nixos-iac-public": {
-      "commit": "2fa140c",
-      "date": "2026-08-07T17:58:33-04:00"
+      "commit": "f4b2559",
+      "date": "2026-08-07T22:11:47-04:00"
     }
   },
   "topologyVersion": 1,
   "verified": {
-    "checkedAt": "2026-08-07T22:31:36+00:00",
+    "checkedAt": "2026-08-08T02:13:21+00:00",
     "monitors": [
       {
         "name": "aws-iac drift",

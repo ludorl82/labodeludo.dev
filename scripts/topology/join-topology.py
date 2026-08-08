@@ -33,7 +33,7 @@ EXPECTED = {
     "cloudflare-iac-public": "edge",
 }
 NODE_NS = ("host", "cluster", "app", "workload", "route", "instance",
-           "lambda", "bucket", "tunnel", "dns", "access")
+           "lambda", "bucket", "tunnel", "dns", "access", "external")
 ID_RE = re.compile(r"^[a-z]+:[A-Za-z0-9.:/@_-]+$")
 
 def die(msg):
@@ -64,6 +64,21 @@ for repo, layer in EXPECTED.items():
         if not ID_RE.match(n["id"]) or n["id"].split(":")[0] not in NODE_NS:
             die(f"{repo}: bad node id {n['id']}")
         if n["id"] in nodes:
+            # external: hors-IaC hardware may legitimately be referenced by
+            # several layers (the NAS from both k3s and nixos) — merge the
+            # evidence instead of failing; any other namespace colliding is
+            # still a contract violation
+            if n["id"].startswith("external:"):
+                prev_node = nodes[n["id"]]
+                for k, v in n.get("meta", {}).items():
+                    if k in prev_node["meta"] and prev_node["meta"][k] != v:
+                        prev_node["meta"][k] = f"{prev_node['meta'][k]}; {v}"
+                    else:
+                        prev_node["meta"][k] = v
+                seen_by = prev_node["meta"].setdefault(
+                    "seenBy", [prev_node["repo"]])
+                seen_by.append(repo)
+                continue
             die(f"duplicate node id across snapshots: {n['id']}")
         n["repo"] = repo
         nodes[n["id"]] = n

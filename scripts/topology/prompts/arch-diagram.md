@@ -25,6 +25,14 @@ by `architecture.json` and the snapshots.
   path exists, the control-plane moved...), adjust the smallest set of
   boxes/paths/labels that makes the diagram true again.
 
+## The hors-IaC nodes
+
+`external:` nodes (layer `external`) are hardware NOT declared in any IaC
+repo, surfaced only because the IaC references it (a tunnel origin, NFS
+volumes, a UPS module). Draw them dashed and muted, never as first-class
+boxes, and never invent one the data does not contain — their absence is
+part of the story the page tells.
+
 ## Hard rules
 
 1. **Counts and names must come from `architecture.json` at build time**

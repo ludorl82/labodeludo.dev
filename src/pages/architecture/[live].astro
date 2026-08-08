@@ -65,6 +65,9 @@ for (const w of byLayer("cluster", ["workload"])) {
 const hosts = byLayer("hardware", ["host"]).sort((a, b) =>
   a.label.localeCompare(b.label),
 );
+const externals = byLayer("external", ["external"]).sort((a, b) =>
+  a.label.localeCompare(b.label),
+);
 
 const src = (n: TNode) =>
   `https://github.com/ludorl82/${n.repo}/blob/HEAD/${n.source}`;
@@ -248,6 +251,31 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
     </div>
   </section>
 
+  {
+    externals.length > 0 && (
+      <section class="band" data-layer="external">
+        <h2># hors IaC — vu depuis ses bords</h2>
+        <div class="row">
+          {externals.map((n) => (
+            <a class="node ext" data-node={n.id} href={src(n)} title={n.meta.via ?? n.meta.origin ?? ""}>
+              {n.label}
+              <span class="dim">
+                {n.meta.origin ? "origine du tunnel" : n.meta.via}
+              </span>
+            </a>
+          ))}
+        </div>
+        <p class="band-note">
+          Rien ici n'est déclaré dans un dépôt IaC — ces boîtes n'existent
+          que parce que l'IaC les <em>référence</em> (une origine de tunnel,
+          des volumes NFS, un module UPS). Le matériel que rien de
+          déclaratif ne touche — la switch, l'AP, les BMC — est absent par
+          construction : la frontière visible fait partie du portrait.
+        </p>
+      </section>
+    )
+  }
+
   <p class="footnote">
     Régénérée chaque nuit par un pipeline qui ne lit <em>que</em> les dépôts
     publics — les sanitizers (et leurs vérifications qui refusent de publier
@@ -268,7 +296,7 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
     const edges = JSON.parse(
       document.getElementById("topo-edges")!.textContent!,
     ) as [string, string][];
-    const TERMINAL = new Set(["tunnel", "host", "cluster"]);
+    const TERMINAL = new Set(["tunnel", "host", "cluster", "external"]);
     const ns = (id: string) => id.slice(0, id.indexOf(":"));
     const adj = new Map<string, string[]>();
     for (const [a, b] of edges) {
@@ -421,6 +449,18 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
     display: inline-flex;
     flex-direction: column;
     gap: 0.1rem;
+  }
+  .ext {
+    border-style: dashed;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  .band-note {
+    color: var(--text-faint);
+    font-size: 0.8rem;
+    max-width: 70ch;
+    margin: 0.75rem 0 0;
   }
   .dim {
     color: var(--text-faint);

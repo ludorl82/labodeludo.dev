@@ -177,7 +177,33 @@ const t = copy[lang];
       <text x="360" y="450" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.note}</text>
     </svg>
   </div>
-  <figcaption><slot /></figcaption>
+  <figcaption>
+    <slot>
+      {/* Alone among the eleven diagrams, this one had no default caption:
+          its article passes one through the slot, so on /architecture the
+          figcaption rendered empty — and with it, no link back to the
+          article. The other ten build their architecture-context caption
+          inside the component, which is why only this one went missing. */}
+      {context === "architecture" && (
+        <Fragment>
+          {lang === "fr"
+            ? "Le pipeline de numérisation, de l'imprimante jusqu'à Google Drive — détaillé dans l'article "
+            : "The scanning pipeline, from the printer to Google Drive — detailed in the article "}
+          <a
+            href={
+              lang === "fr"
+                ? "/blog/tout-ca-pour-un-script-bash/"
+                : "/en/blog/tout-ca-pour-un-script-bash/"
+            }
+          >
+            {lang === "fr"
+              ? "« Tout ça pour un script bash »"
+              : "“All That for a Bash Script”"}
+          </a>.
+        </Fragment>
+      )}
+    </slot>
+  </figcaption>
 </figure>
 
 <style>

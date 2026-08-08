@@ -116,6 +116,22 @@ const figcaptionEn =
         <a href={lang === "fr" ? "/architecture/" : "/architecture/"}>{lang === "fr" ? "Voir l'architecture complète" : "See the full architecture"}</a>
       </>
     )}
+    {/* On the architecture page this caption NAMED its article without
+        linking it — alone among the eleven diagrams. */}
+    {context === "architecture" && (
+      <>
+        {" "}
+        <a
+          href={
+            lang === "fr"
+              ? "/blog/separer-le-bastion-de-la-console/"
+              : "/en/blog/separer-le-bastion-de-la-console/"
+          }
+        >
+          {lang === "fr" ? "Lire l'article" : "Read the article"}
+        </a>
+      </>
+    )}
   </figcaption>
 </figure>
 

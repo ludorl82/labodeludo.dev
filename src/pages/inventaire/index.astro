@@ -1,0 +1,212 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { INVENTORY, roleForNode, type InventoryKey } from "../../lib/inventory";
+import arch from "../../data/architecture.json";
+
+// The hand-maintained half of the site's self-description: what each part
+// of the lab DOES, and what I have written about it. Updated when I write,
+// not by a pipeline — that is the point of it.
+//
+// It also carries the enumerable half: the topology nodes each role covers,
+// grouped by role, plus everything the mapping has not claimed yet. That
+// last group is deliberate — a role list that silently drops what it does
+// not know about is the kind of inventory that rots.
+const roles = Object.entries(INVENTORY) as [InventoryKey, (typeof INVENTORY)[InventoryKey]][];
+
+const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
+type TNode = { id: string; kind: string; label: string; layer: string; meta: any };
+const nodes = showLiveArch ? (arch.nodes as TNode[]) : [];
+
+const nodesOf = (key: InventoryKey) =>
+  nodes.filter((n) => roleForNode(n.id) === key);
+
+// Nodes no role claims yet. Scoped to the things a reader would call a
+// "part of the lab" — applications and machines. DNS names, Access apps,
+// routes and workloads are plumbing that belongs to whatever they point
+// at, and listing all forty of them would bury the actual gaps.
+const GAP_KINDS = ["app", "host", "external", "instance", "cluster", "tunnel"];
+const unclaimed = nodes
+  .filter((n) => GAP_KINDS.includes(n.kind) && !roleForNode(n.id))
+  .sort((a, b) => a.id.localeCompare(b.id));
+---
+
+<BaseLayout
+  title="Inventaire — Le labo de Ludo"
+  description="Les rôles qui composent le homelab, ce qu'ils font, et les articles qui en parlent."
+>
+  <a class="back" href="/">&larr; tous les articles</a>
+
+  <header class="page-header">
+    <h1>Inventaire</h1>
+    <p class="subtitle">
+      Ce que chaque morceau du labo fait, et ce que j'ai écrit dessus. Cette
+      page-ci est tenue à la main, article après article — c'est la couche
+      que rien ne peut générer à ma place. La forme du réseau, elle, se
+      redessine toute seule chaque nuit :
+      <a href="/architecture/">l'architecture</a>.
+    </p>
+  </header>
+
+  <ul class="items">
+    {
+      roles.map(([key, item]) => (
+        <li class="item-entry">
+          <a class="item-link" href={`/inventaire/${key}/`}>
+            <p class="name">{item.name}</p>
+            <p class="description">{item.description}</p>
+            <p class="meta">
+              {item.articles.length > 0 && (
+                <span>
+                  {item.articles.length} article
+                  {item.articles.length > 1 ? "s" : ""}
+                </span>
+              )}
+              {nodesOf(key).length > 0 && (
+                <span class="nodes">
+                  {nodesOf(key).length} élément
+                  {nodesOf(key).length > 1 ? "s" : ""} dans le schéma
+                </span>
+              )}
+            </p>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  {
+    unclaimed.length > 0 && (
+      <section class="unclaimed">
+        <h2># pas encore rattaché</h2>
+        <p class="note">
+          Ces applications et machines existent dans le schéma généré mais
+          aucun rôle ne les revendique encore — le plus souvent parce que je
+          n'ai pas encore écrit dessus. La liste est là pour que le trou se
+          voie plutôt que de disparaître discrètement.
+        </p>
+        <ul>
+          {unclaimed.map((n) => (
+            <li>
+              <code>{n.id}</code>
+              <span class="dim">{n.layer}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-live);
+  }
+
+  .page-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    max-width: var(--measure);
+    margin: 0 0 2.5rem;
+  }
+
+  .items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  }
+
+  .item-link {
+    display: block;
+    height: 100%;
+    border: 1px solid var(--panel-border);
+    padding: 0.85rem 1rem;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .item-link:hover {
+    border-color: var(--accent-live);
+  }
+
+  .name {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.4rem;
+  }
+
+  .description {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .meta {
+    color: var(--text-faint);
+    font-size: 0.75rem;
+    margin: 0.5rem 0 0;
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .unclaimed {
+    margin: 3rem 0 0;
+  }
+
+  .unclaimed h2 {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: normal;
+    color: var(--text-muted);
+    margin: 0 0 0.5rem;
+  }
+
+  .unclaimed .note {
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    max-width: var(--measure);
+    margin: 0 0 1rem;
+  }
+
+  .unclaimed ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .unclaimed li {
+    border: 1px dashed var(--panel-border);
+    padding: 0.2rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  .unclaimed .dim {
+    color: var(--text-faint);
+    margin-left: 0.4rem;
+  }
+</style>

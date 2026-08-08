@@ -1,3 +1,44 @@
+# The seeds behind /architecture
+
+Two files feed the nightly author, and they answer different questions:
+
+- **`architecture.json`** — what the IaC repos *declare*, joined from the
+  four public snapshots (contract below). Deterministic, gate-published.
+- **`src/data/fleet.json`** — what physically *exists*, including the boxes
+  no repo declares (the switch, the AP, the printer, cameras, personal
+  machines). It is derived from a hand-maintained PRIVATE document by the
+  nightly job's private session, sanitized through the same host map the
+  `*-iac` sanitizers use, and it crosses into this repo only after two
+  mechanical gates: the positive allowlist (`scan-public.py`) and a
+  denylist of real names that lives in the private driver and is never
+  published. Shape:
+
+```json
+{
+  "fleetVersion": 1,
+  "generated": "2026-08-08T09:00:00+00:00",
+  "devices": [
+    { "name": "gpu-01", "class": "server", "network": "vlan10",
+      "role": "agent k3s, GPU", "iacDeclared": true }
+  ]
+}
+```
+
+`class` is conventional (`server`, `sbc`, `vm`, `nas`, `router`, `switch`,
+`access-point`, `printer`, `camera`, `ups`, `bmc`, `desktop`, `laptop`,
+`phone`, `cloud-vm`, `domotique`). **`domotique` is the one aggregate
+class** — household appliances are emitted one entry per family with a
+`count`, so the drawing shows that surface exists without enumerating a
+living room. **No addresses of any kind** — a diagram does not need them,
+and their absence removes the largest class of leak by construction.
+`iacDeclared` says whether the device also appears in `architecture.json`,
+so the author does not draw it twice.
+
+An empty `devices` array is valid and means "the seed has not run yet" —
+the site must build either way.
+
+---
+
 # topology.json — the contract between the IaC snapshots and this site
 
 The `/architecture` live view is generated from the four **public sanitized

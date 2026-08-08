@@ -1,236 +1,128 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ArchGenerated from "../components/ArchGenerated.astro";
-import { INVENTORY } from "../lib/inventory";
+import FrigateDetectorDiagram from "../components/FrigateDetectorDiagram.astro";
+import CloudflareTunnelDiagram from "../components/CloudflareTunnelDiagram.astro";
+import WebdavProxyDiagram from "../components/WebdavProxyDiagram.astro";
+import WireGuardFtpDiagram from "../components/WireGuardFtpDiagram.astro";
+import VoiceAssistantDiagram from "../components/VoiceAssistantDiagram.astro";
+import ConsoleLayersDiagram from "../components/ConsoleLayersDiagram.astro";
+import BastionConsoleSplitDiagram from "../components/BastionConsoleSplitDiagram.astro";
+import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
+import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
+import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
+import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
 
-// The generated half of this page is staging-only for now: it renders
-// only when the build sets SHOW_LIVE_ARCH=1 (staging deploy + the
-// nightly regeneration job). Prod gets the conceptual half and the
-// roles — same file everywhere, no dev/main drift.
+// Two halves, on purpose. The top is ONE drawing, authored every night by
+// a headless Claude Code session from seeds it may read (the four public
+// IaC snapshots and the sanitized fleet list) — never by hand; the
+// hand-drawn OVERVIEW that used to live here is gone, because a whole-lab
+// drawing maintained by discipline is wrong the moment anything changes.
+//
+// The bottom is the opposite case and that is why it survives: each of
+// these eleven diagrams explains one MECHANISM, was drawn for its article,
+// and describes a decision rather than an inventory. Nothing generated can
+// replace them, and they do not rot when a host is renamed.
+//
+// Still gated: the generated view renders only when the build sets
+// SHOW_LIVE_ARCH=1 (staging + the nightly job). Prod gets the honest note
+// below until the flag flips in deploy.yml — one line, whenever.
 const showLiveArch = process.env.SHOW_LIVE_ARCH === "1";
-const roles = Object.entries(INVENTORY);
 ---
 
 <BaseLayout
   title="Architecture — Le labo de Ludo"
-  description="Vue d'ensemble du homelab : réseau, tunnel chiffré, VLANs et rôles des serveurs."
+  description="La forme du labo, redessinée chaque nuit à partir des dépôts IaC publics et de l'inventaire matériel — pas à la main."
 >
   <a class="back" href="/">&larr; tous les articles</a>
 
   <header class="page-header">
     <h1>Architecture</h1>
     <p class="subtitle">
-      Trois façons de regarder le même labo, de la plus fraîche à la plus
-      expliquée — noms et adresses fictifs (préfixe de documentation
-      <code>2001:db8:.../64</code>, RFC 3849). Chaque boîte mène au rôle
-      qu'elle occupe, et chaque rôle aux articles qui en parlent.
+      Un seul schéma, redessiné chaque nuit à partir de ce que les dépôts
+      déclarent et de l'inventaire du matériel — jamais à la main. Noms et
+      adresses fictifs (préfixe de documentation <code>2001:db8:.../64</code>,
+      RFC 3849). Ce que chaque morceau <em>fait</em>, et ce que j'ai écrit
+      dessus, vit dans <a href="/inventaire/">l'inventaire</a>.
     </p>
   </header>
 
-  {showLiveArch && <ArchGenerated />}
+  {
+    showLiveArch ? (
+      <ArchGenerated />
+    ) : (
+      <p class="pending">
+        Le schéma généré n'est pas encore publié ici — il tourne chaque nuit
+        et se regarde en préversion le temps que je lui fasse confiance.
+        D'ici là, <a href="/inventaire/">l'inventaire</a> décrit chaque rôle
+        du réseau et pointe vers les articles qui en parlent.
+      </p>
+    )
+  }
 
-  <section id="dessin" class="hub-section">
-    <h2># la vue expliquée</h2>
-    <p class="section-note">
-      Dessinée à la main, celle-ci : elle montre ce que les dépôts ne
-      décrivent pas — VLANs, adressage, chemins de secours.{" "}
-      {showLiveArch
-        ? "Elle vieillit à la vitesse de ma discipline, contrairement à la vue générée ci-haut."
-        : "Elle vieillit à la vitesse de ma discipline — c'est sa faiblesse assumée."}
-    </p>
-  <div class="diagram-wrap">
-    <svg
-      class="diagram"
-      viewBox="0 0 1100 870"
-      role="img"
-      aria-label="Diagramme d'architecture : deux fournisseurs Internet reliés respectivement à un pare-feu domicile et à une VM cloud, connectés entre eux par un tunnel chiffré ; le pare-feu domicile distribue vers deux VLANs (Serveurs, Réseau local) et vers des clients mobiles en VPN. La VM cloud achemine par proxy inverse vers des services précis à l'intérieur du réseau domicile."
-    >
-      <defs>
-        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
-        </marker>
-        <marker id="arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
-        </marker>
-      </defs>
-
-      <!-- structural connectors (orthogonal: straight where the target lines up, right-angle jogs otherwise) -->
-      <g class="conn" fill="none" stroke="var(--text-faint)" stroke-width="1.5">
-        <path d="M200,80 V360 H290 V390" marker-end="url(#arrow)" />
-        <path d="M820,80 V110" marker-end="url(#arrow)" />
-        <path d="M220,450 V490" marker-end="url(#arrow)" />
-        <path d="M220,450 V470 H750 V490" marker-end="url(#arrow)" />
-      </g>
-
-      <!-- live / encrypted connectors (routed clear of the Cloud VM's routing note and the tunnel label) -->
-      <g class="conn-live" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4">
-        <path d="M700,335 V345 H610 V382 H350 V390" marker-end="url(#arrow-live)" />
-        <path d="M350,420 H390" marker-end="url(#arrow-live)" />
-      </g>
-
-      <!-- connector labels -->
-      <g class="conn-label" font-family="var(--font-mono)" font-size="12" fill="var(--text-faint)">
-        <text x="150" y="240">WAN</text>
-        <text x="835" y="98">IP publique</text>
-      </g>
-      <g class="conn-label" font-family="var(--font-mono)" font-size="12">
-        <a class="node-link" href="/inventaire/pare-feu/">
-          <text x="352" y="371" fill="var(--accent-live)">tunnel chiffré (VPN site-à-site)</text>
-        </a>
-        <a class="node-link" href="/inventaire/clients-mobiles/">
-          <text x="95" y="382" font-size="11" fill="var(--accent-live)">VPN clients distants</text>
-        </a>
-      </g>
-
-      <!-- Internet nodes -->
-      <g font-family="var(--font-mono)" font-size="13" text-anchor="middle">
-        <ellipse cx="200" cy="45" rx="140" ry="35" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="200" y="41" fill="var(--text)">Internet</text>
-        <text x="200" y="58" fill="var(--text-faint)" font-size="11">(FAI résidentiel)</text>
-
-        <ellipse cx="820" cy="45" rx="150" ry="35" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="820" y="41" fill="var(--text)">Internet</text>
-        <text x="820" y="58" fill="var(--text-faint)" font-size="11">(fournisseur cloud)</text>
-      </g>
-
-      <!-- Cloud VM -->
-      <g>
-        <rect x="620" y="110" width="380" height="225" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
-        <text x="640" y="132" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VM cloud — relais.exemple.net</text>
-
-        <a class="node-link" href="/inventaire/proxy-inverse/">
-          <rect x="640" y="150" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="660" y="176" font-family="var(--font-mono)" font-size="13" fill="var(--text)">proxy inverse (TLS)</text>
-        </a>
-
-        <a class="node-link" href="/inventaire/site-web/">
-          <rect x="640" y="205" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="660" y="231" font-family="var(--font-mono)" font-size="13" fill="var(--text)">site web statique</text>
-        </a>
-
-        <a class="node-link" href="/inventaire/surveillance/">
-          <rect x="640" y="260" width="340" height="44" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="660" y="286" font-family="var(--font-mono)" font-size="13" fill="var(--text)">surveillance + alertes</text>
-        </a>
-      </g>
-
-      <!-- Proxy routing note (avoids drawing long crossing lines across the whole diagram) -->
-      <g font-family="var(--font-mono)" font-size="12">
-        <text x="640" y="365" fill="var(--text-faint)">acheminement (proxy inverse) :</text>
-        <text x="650" y="384" fill="var(--accent-live)">labo.exemple.net &#8594; hôte conteneurs</text>
-        <text x="650" y="402" fill="var(--accent-live)">media.exemple.net &#8594; pipeline média</text>
-        <text x="650" y="420" fill="var(--accent-live)">assistant.exemple.net &#8594; domotique</text>
-      </g>
-
-      <!-- Home gateway -->
-      <a class="node-link" href="/inventaire/pare-feu/">
-        <rect x="90" y="390" width="260" height="60" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-        <text x="220" y="414" text-anchor="middle" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">pare-feu domicile</text>
-        <text x="220" y="431" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">portail.exemple.net</text>
-      </a>
-
-      <!-- Mobile clients -->
-      <a class="node-link" href="/inventaire/clients-mobiles/" font-family="var(--font-mono)" font-size="13" text-anchor="middle">
-        <ellipse cx="480" cy="420" rx="90" ry="30" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="480" y="416" fill="var(--text)">clients mobiles</text>
-        <text x="480" y="432" fill="var(--text-faint)" font-size="11">(VPN)</text>
-      </a>
-
-      <!-- VLAN Serveurs -->
-      <g>
-        <rect x="40" y="490" width="460" height="330" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
-        <text x="60" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Serveurs</text>
-
-        <a class="node-link" href="/inventaire/bastion/">
-          <rect x="60" y="530" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="80" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">bastion / console</text>
-        </a>
-
-        <a class="node-link" href="/inventaire/stockage/">
-          <rect x="60" y="580" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="80" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">stockage (NAS)</text>
-        </a>
-
-        <a class="node-link" href="/inventaire/pipeline-media/">
-          <rect x="60" y="630" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="80" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">pipeline média</text>
-        </a>
-
-        <a class="node-link" href="/inventaire/calcul-gpu/">
-          <rect x="60" y="680" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="80" y="705" font-family="var(--font-mono)" font-size="13" fill="var(--text)">calcul GPU</text>
-        </a>
-
-        <a class="node-link" href="/inventaire/hote-conteneurs/">
-          <rect x="60" y="730" width="420" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="80" y="755" font-family="var(--font-mono)" font-size="13" fill="var(--text)">grappe conteneurs (k3s)</text>
-        </a>
-      </g>
-
-      <!-- VLAN Réseau local -->
-      <g>
-        <rect x="560" y="490" width="380" height="210" rx="6" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
-        <text x="580" y="514" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--text)">VLAN — Réseau local</text>
-
-        <a class="node-link" href="/inventaire/postes-personnels/">
-          <rect x="580" y="530" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="600" y="555" font-family="var(--font-mono)" font-size="13" fill="var(--text)">postes personnels</text>
-        </a>
-
-        <a class="node-link" href="/inventaire/domotique/">
-          <rect x="580" y="580" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="600" y="605" font-family="var(--font-mono)" font-size="13" fill="var(--text)">domotique</text>
-        </a>
-
-        <a class="node-link" href="/inventaire/cameras-peripheriques/">
-          <rect x="580" y="630" width="340" height="40" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-          <text x="600" y="655" font-family="var(--font-mono)" font-size="13" fill="var(--text)">caméras / périphériques</text>
-        </a>
-      </g>
-    </svg>
-  </div>
-
-  <div class="legend">
-    <span class="legend-item"><span class="swatch structural" /> liaison réseau</span>
-    <span class="legend-item"><span class="swatch live" /> tunnel chiffré / routage applicatif</span>
-    <span class="legend-item">les éléments soulignés au survol pointent vers leur rôle</span>
-  </div>
-  </section>
-
-  <section id="roles" class="hub-section">
-    <h2># les rôles</h2>
-    <p class="section-note">
-      Ce que chaque morceau fait, et ce que j'ai écrit dessus. C'est la
-      couche que rien ne peut générer à ma place.
-    </p>
-    <ul class="roles">
-      {
-        roles.map(([key, item]) => (
-          <li>
-            <a class="role-card" href={`/inventaire/${key}/`}>
-              <p class="role-name">{item.name}</p>
-              <p class="role-desc">{item.description}</p>
-              {item.articles.length > 0 && (
-                <p class="role-count">
-                  {item.articles.length} article{item.articles.length > 1 ? "s" : ""}
-                </p>
-              )}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-  </section>
-
-  <section class="hub-section">
+  <section class="details">
     <h2># les pièces, en détail</h2>
     <p class="section-note">
-      Onze schémas rapprochés — détection vidéo, tunnels, pipeline de
-      numérisation, grappe k3s, reprise après panne électrique :
-      <a href="/architecture/details/">l'architecture en détail</a>.
+      Onze schémas rapprochés, dessinés à la main pour leurs articles : ce
+      que le schéma généré ne peut pas raconter, parce qu'ils expliquent un
+      mécanisme plutôt qu'un inventaire.
     </p>
+
+  <section class="detail">
+    <h2>Détail : détection vidéo (Frigate)</h2>
+    <FrigateDetectorDiagram context="architecture" />
   </section>
 
+  <section class="detail">
+    <h2>Détail : accès public (tunnel Cloudflare)</h2>
+    <CloudflareTunnelDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : requête WebDAV (proxy et en-tête Destination)</h2>
+    <WebdavProxyDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : accès privé (tunnel WireGuard)</h2>
+    <WireGuardFtpDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : pipeline de numérisation (SFTP → S3 → Lambda → Drive)</h2>
+    <ScanPipelineDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : assistant vocal (Home Assistant + Ollama)</h2>
+    <VoiceAssistantDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : console conteneurisée (bastion)</h2>
+    <ConsoleLayersDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : la séparation bastion / console</h2>
+    <BastionConsoleSplitDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : grappe conteneurs (k3s)</h2>
+    <K3sClusterDiagram context="architecture" />
+  </section>
+
+  <section class="detail">
+    <h2>Détail : stockage NFS de la grappe (chemin d'export)</h2>
+    <NfsShareMoveDiagram context="architecture" />
+  </section>
+
+    <section class="detail">
+      <h2>Détail : l'île du survivant (reprise après panne électrique)</h2>
+      <SurvivorIslandDiagram context="architecture" />
+    </section>
+  </section>
 </BaseLayout>
 
 <style>
@@ -251,47 +143,29 @@ const roles = Object.entries(INVENTORY);
     font-family: var(--font-display);
     font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
     font-weight: 600;
-    line-height: 1.25;
-    letter-spacing: -0.01em;
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.5rem;
   }
 
   .subtitle {
-    max-width: var(--measure);
     color: var(--text-muted);
-    font-size: 0.9375rem;
-    line-height: 1.6;
-    margin: 0 0 2rem;
+    max-width: var(--measure);
+    margin: 0 0 2.5rem;
   }
 
-  .subtitle code {
-    font-family: var(--font-mono);
-    font-size: 0.875em;
-    background: var(--panel);
-    padding: 0.1em 0.35em;
-    border-radius: 3px;
+  .pending {
+    color: var(--text-muted);
+    max-width: var(--measure);
+    border-left: 2px solid var(--panel-border);
+    padding-left: 1rem;
   }
 
-  .diagram-wrap {
-    overflow-x: auto;
-    border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    background: var(--bg);
-    padding: 1rem;
+  .details {
+    margin: 4rem 0 0;
+    border-top: 1px solid var(--panel-border);
+    padding-top: 2rem;
   }
 
-  .diagram {
-    display: block;
-    width: 100%;
-    min-width: 640px;
-    height: auto;
-  }
-
-  .hub-section {
-    margin: 3.5rem 0;
-  }
-
-  .hub-section h2 {
+  .details > h2 {
     font-family: var(--font-mono);
     font-size: 0.9rem;
     font-weight: normal;
@@ -303,126 +177,17 @@ const roles = Object.entries(INVENTORY);
     color: var(--text-faint);
     font-size: 0.85rem;
     max-width: var(--measure);
-    margin: 0 0 1.25rem;
-  }
-
-  .roles {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: 0.75rem;
-    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
-  }
-
-  .role-card {
-    display: block;
-    height: 100%;
-    border: 1px solid var(--panel-border);
-    padding: 0.75rem 0.9rem;
-    text-decoration: none;
-    color: var(--text);
-  }
-
-  .role-card:hover {
-    border-color: var(--accent-live);
-  }
-
-  .role-name {
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin: 0 0 0.35rem;
-  }
-
-  .role-desc {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .role-count {
-    color: var(--text-faint);
-    font-size: 0.75rem;
-    margin: 0.4rem 0 0;
-  }
-
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1.5rem;
-    margin-top: 1rem;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    color: var(--text-faint);
-  }
-
-  .legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5em;
-  }
-
-  .legend-item a {
-    color: var(--accent-live);
-  }
-
-  .swatch {
-    width: 18px;
-    height: 2px;
-    display: inline-block;
-  }
-
-  .swatch.structural {
-    background: var(--text-faint);
-  }
-
-  .swatch.live {
-    background: repeating-linear-gradient(
-      to right,
-      var(--accent-live) 0 4px,
-      transparent 4px 7px
-    );
-  }
-
-  .diagram :global(.node-link) {
-    cursor: pointer;
-  }
-
-  .diagram :global(.node-link rect) {
-    transition: stroke 0.15s ease;
-  }
-
-  .diagram :global(.node-link:hover rect),
-  .diagram :global(.node-link:focus-visible rect) {
-    stroke: var(--accent-live);
-  }
-
-  .diagram :global(.node-link:hover text),
-  .diagram :global(.node-link:focus-visible text) {
-    fill: var(--accent-live);
-    text-decoration: underline;
-  }
-
-  .diagram :global(.node-link:focus-visible) {
-    outline: none;
+    margin: 0 0 1.5rem;
   }
 
   .detail {
-    margin-top: 3rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--panel-border);
+    margin: 2.5rem 0;
   }
 
   .detail h2 {
     font-family: var(--font-display);
-    font-size: 1.125rem;
+    font-size: 1.05rem;
     font-weight: 600;
-    letter-spacing: -0.01em;
     margin: 0 0 1rem;
   }
 </style>

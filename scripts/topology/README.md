@@ -72,7 +72,7 @@ Ids are `namespace:rest`, lowercase, matching `[a-z0-9.:/@_-]+`.
 | `routes-to` | dns → tunnel; tunnel → cluster; route → workload |
 | `is` | identity across layers (`instance:...` → `host:cloud-01`) |
 | `protects` | access app → dns hostname |
-| `uses` | app/host → external hardware it leans on (NFS, plex backend) |
+| `uses` | app/host → external hardware it leans on (NFS, plex backend), or app → an S3 bucket its manifests name (`meta.s3Refs` on the app node, captured by the k3s emitter; the join promotes a ref to an edge only when the aws layer declares that bucket) |
 | `powered-by` | host → its UPS |
 
 ## Rules (enforced by the emitters, re-checked by the join)

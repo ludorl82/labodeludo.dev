@@ -72,13 +72,13 @@
     },
     {
       "from": "app:cronicle",
-      "kind": "part-of",
-      "to": "cluster:k3s"
+      "kind": "uses",
+      "to": "bucket:cronicle-data-example-com"
     },
     {
       "from": "app:cronicle",
-      "kind": "uses",
-      "to": "external:nas"
+      "kind": "part-of",
+      "to": "cluster:k3s"
     },
     {
       "from": "app:frigate",
@@ -92,6 +92,16 @@
     },
     {
       "from": "app:kuma",
+      "kind": "uses",
+      "to": "bucket:deadman-example-com"
+    },
+    {
+      "from": "app:kuma",
+      "kind": "uses",
+      "to": "bucket:homelab-backups-example-com"
+    },
+    {
+      "from": "app:kuma",
       "kind": "part-of",
       "to": "cluster:k3s"
     },
@@ -102,6 +112,16 @@
     },
     {
       "from": "app:logging",
+      "kind": "uses",
+      "to": "bucket:homelab-backups-example-com"
+    },
+    {
+      "from": "app:logging",
+      "kind": "uses",
+      "to": "bucket:loki-logs-example-com"
+    },
+    {
+      "from": "app:logging",
       "kind": "part-of",
       "to": "cluster:k3s"
     },
@@ -109,6 +129,11 @@
       "from": "app:logging",
       "kind": "uses",
       "to": "external:nas"
+    },
+    {
+      "from": "app:n8n",
+      "kind": "uses",
+      "to": "bucket:homelab-backups-example-com"
     },
     {
       "from": "app:n8n",
@@ -122,8 +147,18 @@
     },
     {
       "from": "app:ntfy",
+      "kind": "uses",
+      "to": "bucket:homelab-backups-example-com"
+    },
+    {
+      "from": "app:ntfy",
       "kind": "part-of",
       "to": "cluster:k3s"
+    },
+    {
+      "from": "app:numeriseur",
+      "kind": "uses",
+      "to": "bucket:numeriseur-scans-example-com"
     },
     {
       "from": "app:numeriseur",
@@ -144,6 +179,11 @@
       "from": "app:traefik",
       "kind": "part-of",
       "to": "cluster:k3s"
+    },
+    {
+      "from": "app:unifi",
+      "kind": "uses",
+      "to": "bucket:homelab-backups-example-com"
     },
     {
       "from": "app:unifi",
@@ -626,7 +666,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-08-08T02:13:21+00:00",
+  "generated": "2026-08-08T09:24:30+00:00",
   "nodes": [
     {
       "id": "access:cronicle",
@@ -793,7 +833,10 @@
       "layer": "cluster",
       "meta": {
         "namespace": "cronicle",
-        "path": "cronicle"
+        "path": "cronicle",
+        "s3Refs": [
+          "cronicle-data-example-com"
+        ]
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/cronicle.yaml"
@@ -829,7 +872,11 @@
       "layer": "cluster",
       "meta": {
         "namespace": "kuma",
-        "path": "kuma"
+        "path": "kuma",
+        "s3Refs": [
+          "deadman-example-com",
+          "homelab-backups-example-com"
+        ]
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/kuma.yaml"
@@ -853,7 +900,11 @@
       "layer": "cluster",
       "meta": {
         "namespace": "logging",
-        "path": "logging"
+        "path": "logging",
+        "s3Refs": [
+          "homelab-backups-example-com",
+          "loki-logs-example-com"
+        ]
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/logging.yaml"
@@ -865,7 +916,10 @@
       "layer": "cluster",
       "meta": {
         "namespace": "n8n",
-        "path": "n8n"
+        "path": "n8n",
+        "s3Refs": [
+          "homelab-backups-example-com"
+        ]
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/n8n.yaml"
@@ -877,7 +931,10 @@
       "layer": "cluster",
       "meta": {
         "namespace": "ntfy",
-        "path": "ntfy"
+        "path": "ntfy",
+        "s3Refs": [
+          "homelab-backups-example-com"
+        ]
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/ntfy.yaml"
@@ -889,7 +946,10 @@
       "layer": "cluster",
       "meta": {
         "namespace": "numeriseur",
-        "path": "numeriseur"
+        "path": "numeriseur",
+        "s3Refs": [
+          "numeriseur-scans-example-com"
+        ]
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/numeriseur.yaml"
@@ -925,7 +985,10 @@
       "layer": "cluster",
       "meta": {
         "namespace": "unifi",
-        "path": "unifi"
+        "path": "unifi",
+        "s3Refs": [
+          "homelab-backups-example-com"
+        ]
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/unifi.yaml"
@@ -2066,8 +2129,8 @@
       "date": "2026-08-07T22:11:50-04:00"
     },
     "k3s-iac-public": {
-      "commit": "149801c",
-      "date": "2026-08-07T22:11:49-04:00"
+      "commit": "11cfdad",
+      "date": "2026-08-08T05:24:17-04:00"
     },
     "nixos-iac-public": {
       "commit": "f4b2559",
@@ -2076,7 +2139,7 @@
   },
   "topologyVersion": 1,
   "verified": {
-    "checkedAt": "2026-08-08T02:13:21+00:00",
+    "checkedAt": "2026-08-08T09:24:31+00:00",
     "monitors": [
       {
         "name": "aws-iac drift",

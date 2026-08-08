@@ -297,7 +297,15 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
     const edges = JSON.parse(
       document.getElementById("topo-edges")!.textContent!,
     ) as [string, string][];
-    const TERMINAL = new Set(["tunnel", "host", "cluster", "external"]);
+    // buckets included: homelab-backups has five apps writing to it — a
+    // click on any of them must light the bucket, not every co-tenant
+    const TERMINAL = new Set([
+      "tunnel",
+      "host",
+      "cluster",
+      "external",
+      "bucket",
+    ]);
     const ns = (id: string) => id.slice(0, id.indexOf(":"));
     const adj = new Map<string, string[]>();
     for (const [a, b] of edges) {

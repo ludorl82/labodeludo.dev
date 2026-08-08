@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { INVENTORY, roleForNode, type InventoryKey } from "../../lib/inventory";
 import arch from "../../data/architecture.json";
+import RackDiagram from "../../components/RackDiagram.astro";
 
 // The hand-maintained half of the site's self-description: what each part
 // of the lab DOES, and what I have written about it. Updated when I write,
@@ -46,6 +47,8 @@ const unclaimed = nodes
       <a href="/architecture/">l'architecture</a>.
     </p>
   </header>
+
+  {showLiveArch && <RackDiagram />}
 
   <ul class="items">
     {

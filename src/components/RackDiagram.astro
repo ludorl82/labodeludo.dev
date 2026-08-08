@@ -1,0 +1,167 @@
+---
+// The two racks, drawn from the fleet seed — not from a hand-kept picture.
+//
+// AUTOMATED-AUTHOR CONTRACT: refreshed by the nightly diagram job (prompt:
+// scripts/topology/prompts/rack-diagram.md) from src/data/fleet.json, which
+// itself comes from a private document a sibling session reconciles every
+// night. Every box, label and count here is read from that file: nothing
+// about the racks is written by hand, which is the whole point — the SVG
+// this replaces had drifted to showing a machine that no longer existed,
+// hosts on the wrong OS, and the cloud instance in the wrong region.
+//
+// Anything written here must pass scripts/topology/scan-public.py.
+// rackOrder is a STACKING order, not a U position: the source document does
+// not record U positions, so the drawing must not imply any.
+import fleet from "../data/fleet.json";
+
+type Device = {
+  name: string;
+  class: string;
+  network?: string;
+  role?: string;
+  iacDeclared?: boolean;
+  location?: string;
+  rackOrder?: number;
+  power?: string;
+  count?: number;
+};
+const devices = (fleet.devices ?? []) as Device[];
+
+// Only things that occupy a slot get a row. VMs and BMCs carry their
+// host's location but no rackOrder, because they are not rack units —
+// they live inside a machine that already has a row. They are counted
+// under the rack instead of drawn as phantom shelves.
+const inRack = (loc: string) =>
+  devices
+    .filter((d) => d.location === loc && typeof d.rackOrder === "number")
+    .sort((a, b) => (a.rackOrder ?? 99) - (b.rackOrder ?? 99));
+
+const hostedIn = (loc: string) =>
+  devices.filter(
+    (d) => d.location === loc && typeof d.rackOrder !== "number",
+  );
+
+const wall = inRack("wall-rack");
+const rolling = inRack("rolling-rack");
+const hasRacks = wall.length > 0 || rolling.length > 0;
+
+// each rack's own UPSes, so the power note can name them without inventing
+const upsIn = (list: Device[]) => list.filter((d) => d.class === "ups");
+
+const ROW_H = 26;
+const ROW_GAP = 4;
+const PAD_TOP = 52;
+const rackHeight = (list: Device[]) =>
+  PAD_TOP + list.length * (ROW_H + ROW_GAP) + 16;
+const height = Math.max(rackHeight(wall), rackHeight(rolling)) + 40;
+
+const label = (d: Device) => (d.count && d.count > 1 ? `${d.name} ×${d.count}` : d.name);
+
+const ariaLabel = hasRacks
+  ? `Élévation des deux baies : la baie murale contient ${wall.length} ` +
+    `équipements, la baie roulante ${rolling.length}. Chaque rangée nomme ` +
+    `l'appareil et son rôle; les appareils protégés par un onduleur sont ` +
+    `marqués. Tout vient de l'inventaire matériel régénéré chaque nuit.`
+  : "Élévation des baies — l'inventaire matériel n'a pas encore été généré.";
+---
+
+{
+  hasRacks && (
+    <figure class="racks">
+      <div class="diagram-wrap">
+        <svg viewBox={`0 0 760 ${height}`} role="img" aria-label={ariaLabel}>
+          {[
+            { list: wall, x: 20, title: "baie murale — sous-sol" },
+            { list: rolling, x: 390, title: "baie roulante — bureau" },
+          ].map(({ list, x, title }) => (
+            <Fragment>
+              <rect
+                x={x}
+                y="20"
+                width="350"
+                height={rackHeight(list)}
+                rx="6"
+                fill="none"
+                stroke="var(--panel-border)"
+                stroke-width="1.5"
+              />
+              <text x={x + 16} y="42" font-family="var(--font-mono)" font-size="11.5" fill="var(--text-muted)">
+                {title}
+              </text>
+              <text x={x + 16} y="56" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">
+                {list.length} équipements · {upsIn(list).length > 0 ? `${upsIn(list).length} onduleur${upsIn(list).length > 1 ? "s" : ""}` : "pas d'onduleur"}
+                {hostedIn(title.startsWith("baie murale") ? "wall-rack" : "rolling-rack").length > 0
+                  ? ` · ${hostedIn(title.startsWith("baie murale") ? "wall-rack" : "rolling-rack").length} hébergés (VM, BMC)`
+                  : ""}
+              </text>
+              {list.map((d, i) => (
+                <Fragment>
+                  <rect
+                    x={x + 16}
+                    y={PAD_TOP + 14 + i * (ROW_H + ROW_GAP)}
+                    width="318"
+                    height={ROW_H}
+                    rx="3"
+                    fill={d.class === "ups" ? "none" : "var(--panel)"}
+                    stroke={d.class === "ups" ? "var(--accent-live)" : "var(--panel-border)"}
+                    stroke-dasharray={d.iacDeclared ? undefined : "4 3"}
+                  />
+                  <text
+                    x={x + 26}
+                    y={PAD_TOP + 31 + i * (ROW_H + ROW_GAP)}
+                    font-family="var(--font-mono)"
+                    font-size="10.5"
+                    fill={d.class === "ups" ? "var(--accent-live)" : "var(--text)"}
+                  >
+                    {label(d)}
+                  </text>
+                  <text
+                    x={x + 326}
+                    y={PAD_TOP + 31 + i * (ROW_H + ROW_GAP)}
+                    text-anchor="end"
+                    font-family="var(--font-mono)"
+                    font-size="8.5"
+                    fill="var(--text-faint)"
+                  >
+                    {d.class}
+                    {d.power ? ` · ${d.power}` : ""}
+                  </text>
+                </Fragment>
+              ))}
+            </Fragment>
+          ))}
+        </svg>
+      </div>
+      <figcaption>
+        Les deux baies, dessinées à partir de l'inventaire matériel régénéré
+        chaque nuit — trait plein pour ce que les dépôts IaC déclarent,
+        pointillé pour le reste, vert pour les onduleurs. L'ordre est celui
+        de l'inventaire, pas une position en U : le document source ne note
+        pas les U, alors le dessin ne prétend pas les connaître.
+      </figcaption>
+    </figure>
+  )
+}
+
+<style>
+  .racks {
+    margin: 2rem 0 3rem;
+  }
+  .diagram-wrap {
+    overflow-x: auto;
+  }
+  .diagram-wrap svg {
+    display: block;
+    min-width: 700px;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    margin-inline: auto;
+  }
+  figcaption {
+    color: var(--text-faint);
+    font-size: 0.8rem;
+    max-width: 70ch;
+    margin: 0.6rem auto 0;
+  }
+</style>

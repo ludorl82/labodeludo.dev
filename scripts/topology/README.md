@@ -24,12 +24,15 @@ Two files feed the nightly author, and they answer different questions:
 }
 ```
 
-`class` is free-form but conventional (`server`, `sbc`, `vm`, `nas`,
-`router`, `switch`, `access-point`, `printer`, `camera`, `ups`, `bmc`,
-`laptop`, `phone`, `cloud-vm`). **No addresses of any kind** — a diagram
-does not need them, and their absence removes the largest class of leak by
-construction. `iacDeclared` says whether the device also appears in
-`architecture.json`, so the author does not draw it twice.
+`class` is conventional (`server`, `sbc`, `vm`, `nas`, `router`, `switch`,
+`access-point`, `printer`, `camera`, `ups`, `bmc`, `desktop`, `laptop`,
+`phone`, `cloud-vm`, `domotique`). **`domotique` is the one aggregate
+class** — household appliances are emitted one entry per family with a
+`count`, so the drawing shows that surface exists without enumerating a
+living room. **No addresses of any kind** — a diagram does not need them,
+and their absence removes the largest class of leak by construction.
+`iacDeclared` says whether the device also appears in `architecture.json`,
+so the author does not draw it twice.
 
 An empty `devices` array is valid and means "the seed has not run yet" —
 the site must build either way.

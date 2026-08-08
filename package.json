@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "astro dev",
     "generate-og-images": "node scripts/generate-og-images.mjs",
-    "build": "npm run generate-og-images && astro build && node scripts/emit-nested-404.mjs",
+    "build": "npm run generate-og-images && astro build && node scripts/emit-nested-404.mjs && node scripts/check-prose-spacing.mjs dist",
     "preview": "astro preview",
     "astro": "astro"
   },

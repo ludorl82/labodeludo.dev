@@ -127,14 +127,16 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
   <LiveArchDiagram />
 
   <p class="footnote">
-    Régénérée chaque nuit par un pipeline qui ne lit <em>que</em> les dépôts
-    publics — les sanitizers (et leurs vérifications qui refusent de publier
-    au moindre doute) restent la seule frontière de confiance. Le badge
-    ci-haut vient des trois vérifications de dérive nocturnes qui comparent
-    les dépôts privés à l'infrastructure réelle : ce diagramme est
-    fiable <em>exactement quand elles sont vertes</em>, et il l'admet quand elles ne
-    le sont pas — « live » veut dire « régénéré chaque nuit, dernière
-    vérification affichée », pas temps réel.
+    Je ne lis <em>que</em> les dépôts publics pour dessiner ça — les
+    sanitizers et leurs vérifications, qui refusent de publier au moindre
+    doute, restent la seule frontière de confiance, et je n'ai pas la clé.
+    Le badge en haut vient des trois vérifications de dérive nocturnes qui
+    comparent les dépôts privés à la vraie infrastructure : ce schéma est
+    fiable <em>exactement quand elles sont vertes</em>, et il l'admet quand
+    elles ne le sont pas. « Live » veut dire « refait cette nuit, dernière
+    vérification affichée » — pas temps réel. Je dessine vite, mais pas à
+    ce point-là.
+    <span class="sig">— Bob</span>
   </p>
 
   <script type="application/json" id="topo-edges" set:html={JSON.stringify(edgesLite)} />
@@ -365,6 +367,11 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
     padding: 0 0.25rem;
     margin-left: 0.35rem;
     vertical-align: middle;
+  }
+  .sig {
+    display: block;
+    margin-top: 0.4rem;
+    color: var(--text-muted);
   }
   .footnote {
     color: var(--text-faint);

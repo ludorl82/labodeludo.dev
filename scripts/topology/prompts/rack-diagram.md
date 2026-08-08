@@ -75,7 +75,10 @@ therefore his: light, wry Québécois French, first person when it fits.
    French `aria-label`, horizontal scroll via `.diagram-wrap`, French
    labels. Portrait-ish canvas, max width about 900.
 4. An empty `devices` array must still build — render nothing at all.
-5. Do not commit; the driver gates and commits.
+5. The caption links « Un tiroir 1U pour mes trois Raspberry Pi », which
+   shows this rack in photographs. Keep that link: a drawing of a rack is
+   worth more when the reader can see the real thing beside it.
+6. Do not commit; the driver gates and commits.
 
 Report at the end, in one short paragraph: what changed in the fleet, what
 you redrew, and anything in the data that looked wrong rather than merely

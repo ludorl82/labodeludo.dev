@@ -84,11 +84,46 @@ type Verified = {
   monitors?: { name: string; up: boolean }[];
 };
 const verified: Verified = (arch as any).verified ?? { status: "unknown" };
-const vStatus = verified.status ?? "unknown";
 const vDate = verified.checkedAt
   ? verified.checkedAt.replace("T", " ").slice(0, 16) + " UTC"
   : null;
 const vDown = (verified.monitors ?? []).filter((m) => !m.up);
+
+// The badge attests that the private repos match reality — that is what the
+// three drift monitors compare. It says nothing about whether the PUBLIC
+// snapshots this page is built from still match the private repos, and
+// publishing those snapshots is a manual step (sanitize-public.sh has no
+// scheduler). So a green badge could sit above a drawing joined from a
+// week-old snapshot: true about the question it asks, misleading about the
+// one a reader hears. Age is the only proxy available here — the build
+// deliberately cannot see the private repos, that separation being the whole
+// trust boundary — so past this threshold the green claim is withdrawn
+// rather than qualified. Same direction as fetch-drift.py's rule: fail to
+// unverified, never to green.
+const STALE_AFTER_DAYS = 7;
+const snapshotDates = Object.values(
+  arch.sources as Record<string, { commit: string; date: string }>,
+).map((s) => s.date);
+// join-topology.py writes "unknown" when it cannot read a snapshot's git
+// metadata; an unreadable date is treated as stale, not as fresh
+const snapshotAges = snapshotDates.map((d) => {
+  const t = Date.parse(d);
+  return Number.isNaN(t) ? Infinity : (Date.now() - t) / 86_400_000;
+});
+const oldestAge = snapshotAges.length ? Math.max(...snapshotAges) : Infinity;
+const snapshotsStale = oldestAge > STALE_AFTER_DAYS;
+const staleDays = Number.isFinite(oldestAge) ? Math.floor(oldestAge) : null;
+// a detected drift is the stronger signal and keeps its own wording; only
+// the green claim is downgraded
+const vStatus =
+  (verified.status ?? "unknown") === "ok" && snapshotsStale
+    ? "unknown"
+    : (verified.status ?? "unknown");
+const staleTitle = Object.entries(
+  arch.sources as Record<string, { commit: string; date: string }>,
+)
+  .map(([repo, s]) => `${repo.replace("-iac-public", "")}: ${s.date}`)
+  .join(", ");
 
 // the client-side highlighter only needs the edge list
 const edgesLite = edges.map((e) => [e.from, e.to]);
@@ -107,6 +142,10 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
           title={vDown.map((m) => m.name).join(", ") || "dérive détectée"}
         >
           ✗ dérive détectée — ce diagramme peut être en retard
+        </span>
+      ) : snapshotsStale ? (
+        <span class="drift unk" title={staleTitle}>
+          instantané public vieux de {staleDays ?? "?"} j — non vérifié
         </span>
       ) : (
         <span class="drift unk">vérification indisponible — non vérifié</span>

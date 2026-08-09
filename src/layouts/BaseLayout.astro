@@ -28,7 +28,18 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
 // byline that make the claim true.
 const isArticle = Boolean(pubDate);
 const ogType = isArticle ? "article" : "website";
-const publishedISO = pubDate ? new Date(pubDate).toISOString() : undefined;
+// Frontmatter dates are calendar dates, and Astro parses them to UTC
+// midnight. Emitting that verbatim made LinkedIn's Post Inspector show
+// "30/07/2026 20:00" for an article dated the 31st: it renders in the
+// reader's zone, and anything west of UTC lands on the previous day.
+// Midday UTC keeps the intended calendar date from UTC-11 to UTC+11.
+const publishedISO = pubDate
+  ? (() => {
+      const d = new Date(pubDate);
+      d.setUTCHours(12, 0, 0, 0);
+      return d.toISOString();
+    })()
+  : undefined;
 const ogLocale = lang === "en" ? "en_CA" : "fr_CA";
 
 const homeHref = lang === "en" ? "/en/" : "/";

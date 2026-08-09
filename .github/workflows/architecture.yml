@@ -24,8 +24,21 @@
 name: Architecture
 
 on:
-  schedule:
-    - cron: "15 9 * * *" # nightly, after the 07:1x drift checks have run
+  # Triggered by Cronicle (event "Architecture Refresh (prod)", 05:30
+  # America/Montreal) since 2026-08-09, not by a cron here.
+  #
+  # The cron this replaces claimed to run "after the 07:1x drift checks". It
+  # did not: "15 9 * * *" is 09:15 UTC, which is 05:15 LOCAL — before the
+  # drift checks and before the Nightly Diagram Sync. So every morning this
+  # job sealed prod with the previous day's drift result and re-rendered
+  # components the sync had not produced yet. Nothing was broken by it; the
+  # order was simply backwards, and it stayed backwards because a UTC cron
+  # here and a local-time schedule there were never going to agree by
+  # themselves. Cronicle now runs the whole chain in order: drift checks
+  # 04:30-04:40, sync 04:45, this at 05:30, done well before 06:00.
+  #
+  # The Kuma heartbeat below is unchanged and still absence-shaped, so it now
+  # also covers "Cronicle never fired".
   workflow_dispatch:
 
 jobs:

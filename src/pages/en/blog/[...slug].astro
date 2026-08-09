@@ -31,6 +31,10 @@ const hasFrench = frenchPosts.some((p) => p.id === post.id);
   heroImage={post.data.heroImage}
   pubDate={post.data.pubDate}
   authorName={AUTHORS[author].name}
+  translations={{
+    en: `/en/blog/${post.id}/`,
+    ...(hasFrench ? { fr: `/blog/${post.id}/` } : {}),
+  }}
 >
   <a class="back" href="/en/">&larr; all posts</a>
 

@@ -12,6 +12,7 @@ const posts = (await getCollection("blog")).sort(
 <BaseLayout
   title="Le labo de Ludo"
   description="Journal d'incidents et de bricolages d'un homelab réel — réseau, self-hosting, automatisation."
+  translations={{ fr: "/", en: "/en/" }}
 >
   <TopologyStrip posts={posts} />
   <PostList posts={posts} />

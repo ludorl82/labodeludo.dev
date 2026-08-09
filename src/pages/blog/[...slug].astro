@@ -33,6 +33,10 @@ const relatedInventory = inventoryForArticle(post.id);
   heroImage={post.data.heroImage}
   pubDate={post.data.pubDate}
   authorName={AUTHORS[author].name}
+  translations={{
+    fr: `/blog/${post.id}/`,
+    ...(hasEnglish ? { en: `/en/blog/${post.id}/` } : {}),
+  }}
 >
   <a class="back" href="/">&larr; tous les articles</a>
 

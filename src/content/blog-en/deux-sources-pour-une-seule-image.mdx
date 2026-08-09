@@ -13,7 +13,7 @@ import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 > -   **The experiment**: an architecture page redrawn every night by an unattended AI session, seeded by two sources that do not overlap. It is running right now; the drawing below is this morning's.
 > -   **The number that redirected everything**: the four IaC repositories declare **11 devices**. The lab holds **37**. The gap is everything no declarative tool touches.
 > -   **Two seeds**: the four sanitized public snapshots give what is *declared* (116 nodes, 133 edges); a private document gives what is *there*. Neither draws the lab on its own.
-> -   **The inversion**: the deterministic pipeline I built rendered a page that *was* an inventory. It became the seed, and a Claude Code session became the draughtsman.
+> -   **The inversion**: the deterministic pipeline I built rendered a page that *was* an inventory. It was never published — it stayed on staging. The pipeline became the seed, and a Claude Code session became the draughtsman.
 > -   **The night shift**: one scheduler runs the chain — drift checks 04:30, five headless sessions 04:45, publication 05:30, finished before 06:00. The step that carries material across the private→public boundary has no schedule at all: that one is a human gesture.
 > -   **The models**: each session pins its own. **Opus 5** for the three where the judgment is not machine-checkable (both reconciliations, the architecture drawing); **Sonnet 5** for the two whose output is (the hardware seed, the rack elevation). The split follows the judgment, not the volume.
 > -   **What the page promises**: not "this is live", but "redrawn last night, and here is when the checks last confirmed the repositories matched reality". The badge falls back to "unknown", **never to green**.
@@ -22,7 +22,9 @@ import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 
 This blog is a lab notebook. I try things in my basement, I break them, and I write down what I learned — not finished recipes. The latest one is the experiment you can watch running: **an architecture page I no longer draw.**
 
-There is a sentence I wrote here a week ago, at the end of the article on [letting the pipeline press apply](/en/blog/laisser-le-pipeline-appuyer-sur-apply/): "an architecture view of the lab, generated every night from the four public repositories". That is what I had built. It is already not what runs, and the path between the two is far more interesting than the destination I had planned.
+A little context, if you arrive here without having read the rest. My home lab — a dozen machines, a cluster, a slice of cloud — is described entirely in code, spread across four private repositories. Each one publishes a sanitized copy of itself, where hostnames and addresses are replaced by fictional equivalents. It is from those public copies that the site draws its data: nothing secret crosses.
+
+My plan was simple: generate an architecture view of the lab every night from those four copies. I built it. It was never published, and what runs in its place today is different enough to be worth an article. The path between the two turned out to be far more interesting than the destination I had planned.
 
 ## Two artifacts that had fallen behind
 
@@ -44,7 +46,7 @@ A drawing showing only the eleven is therefore accurate and incomplete: it faith
 
 Hence two seeds rather than one.
 
-**The first seed, public.** Each of the four private repositories already produces a sanitized public snapshot — a mechanism covered in detail in [four repositories for a whole lab](/en/blog/quatre-depots-pour-un-labo-au-complet/). Each sanitizer now also emits a `topology.json`, computed **on the already-sanitized tree**: what it contains is fictional by construction. The site joins the four into a single graph — 116 nodes, 133 edges — keyed on the name map the sanitizers impose. That map was a publishing convenience; it has become a load-bearing interface, exactly as I suspected while writing the previous article.
+**The first seed, public.** Each of the four private repositories already produces a sanitized public snapshot: a copy of the repository in which every hostname, domain and address has been replaced by a fictional equivalent, with an automatic check that refuses to publish if a real name survives. The full mechanism is covered in [four repositories for a whole lab](/en/blog/quatre-depots-pour-un-labo-au-complet/), but this paragraph is enough for what follows. Each sanitizer now also emits a `topology.json`, computed **on the already-sanitized tree**: what it contains is fictional by construction. The site joins the four into a single graph — 116 nodes, 133 edges — keyed on the name map the sanitizers impose. That map had only ever been a publishing convenience; it has become a load-bearing interface, and the whole graph now rests on it.
 
 **The second seed, private.** A nightly session reads the physical-layout document — the one that knows all thirty-seven boxes — and renders a sanitized `fleet.json` using **the same name map**. No addresses of any kind: a drawing does not need them, and their absence removes a whole category of problem rather than filtering it. It carries the hardware model, its class, its rack, the UPS feeding it, and where applicable the machine hosting it.
 
@@ -54,9 +56,11 @@ That second seed is what makes the drawing habitable. Without it, the page shows
 
 The first version rendered the joined graph directly: four bands, one per repository, each enumerating its resources, a diagram on top. Technically faultless. Entirely derived.
 
-And looking at it, the critique landed on its own: it read like an inventory, because it was one. A page enumerating four repositories is a listing with a drawing on top. Architecture is the **judgment** you apply to that listing: what to group, what to leave out, what to put at the centre.
+**It never went live.** It sat on my staging site, I looked at it for a few days, and nobody else ever saw it. That is the only reason I can talk about it this freely: it is not a public reversal, it is a draft that failed its own review.
 
-Judgment is precisely what a deterministic renderer cannot supply. So the pipeline changed roles: it no longer renders the page, it **seeds** an author — and the author is a Claude Code session that redraws the SVG every night. It is the same headless mode as in [automating the lab from the bastion](/en/blog/claude-code-headless-bastion/), applied to a task of a different nature: not an operation, a piece of writing.
+Because looking at it, the critique landed on its own: it read like an inventory, because it was one. A page enumerating four repositories is a listing with a drawing on top. Architecture is the **judgment** you apply to that listing: what to group, what to leave out, what to put at the centre.
+
+Judgment is precisely what a deterministic renderer cannot supply. So the pipeline changed roles: it no longer renders the page, it **seeds** an author — and the author is a Claude Code session that redraws the SVG every night. "Unattended" is meant literally: the session starts on its own, works, and nobody reads its output at the moment it writes it. I already used that headless mode for administration tasks ([covered here](/en/blog/claude-code-headless-bastion/)); what changes is the nature of the work handed over — not an operation, a piece of writing.
 
 That is where the experiment got interesting. I am no longer automating a task I know how to do — I am delegating a judgment, every night, to something that has never seen my basement.
 
@@ -92,7 +96,7 @@ There is a comfortable shortcut I do not want to take: a generated diagram is no
 
 And the source here is the infrastructure repositories — and infrastructure code can fall behind just as a document can. Somebody changes a setting by hand in the provider's console, and the repository quietly describes yesterday's world, with all the credibility a version-controlled file confers.
 
-That is exactly what the nightly drift checks measure, and they existed before this experiment. Three of them query their respective provider and compare the real state against the plan computed from the repository. The fourth layer no longer needs one: since [closing the GitOps loop](/en/blog/laisser-le-pipeline-appuyer-sur-apply/), the cluster is continuously reconciled, which asks the same question permanently rather than once a night.
+That is exactly what the nightly drift checks measure, and they existed before this experiment. Three of them query their respective provider and compare the real state against the plan computed from the repository. The fourth layer no longer needs one: the cluster runs on GitOps — an agent permanently compares its real state against the repository and corrects the gaps itself ([how I got there](/en/blog/laisser-le-pipeline-appuyer-sur-apply/)). It therefore asks the same question continuously rather than once a night.
 
 So the drawing carries its verification result beside it. The page does not claim to be live — that would be unverifiable. It claims something more modest and demonstrable: **redrawn last night, and here is when the checks last confirmed the repositories matched reality**.
 

@@ -13,7 +13,7 @@ import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 > -   **L'expérience** : une page d'architecture redessinée chaque nuit par une session d'IA sans surveillance, semée par deux sources qui ne se recoupent pas. Elle roule en ce moment ; le dessin plus bas est celui de ce matin.
 > -   **Le chiffre qui a tout réorienté** : les quatre dépôts IaC déclarent **11 appareils**. Le labo en compte **37**. L'écart, c'est tout ce qu'aucun outil déclaratif ne touche.
 > -   **Deux semences** : les quatre instantanés publics assainis donnent ce qui est *déclaré* (116 nœuds, 133 liens) ; un document privé donne ce qui est *là*. Aucune des deux ne dessine le labo toute seule.
-> -   **L'inversion** : le pipeline déterministe que j'avais construit rendait une page qui *était* un inventaire. Il est devenu la semence, et une session Claude Code est devenue le dessinateur.
+> -   **L'inversion** : le pipeline déterministe que j'avais construit rendait une page qui *était* un inventaire. Elle n'a jamais été publiée — elle est restée en préproduction. Le pipeline est devenu la semence, et une session Claude Code est devenue le dessinateur.
 > -   **Le quart de nuit** : un seul ordonnanceur mène la chaîne — vérifications de dérive 04:30, cinq sessions headless 04:45, publication 05:30, terminé avant 06:00. L'étape qui fait traverser la frontière privé→public n'a, elle, aucun horaire : c'est un geste humain.
 > -   **Les modèles** : chaque session épingle le sien. **Opus 5** pour les trois où le jugement n'est pas vérifiable par une machine (les deux réconciliations, le dessin d'architecture) ; **Sonnet 5** pour les deux dont la sortie l'est (la semence de matériel, l'élévation des baies). Le partage suit le jugement, pas le volume.
 > -   **Ce que la page promet** : pas « ceci est en direct », mais « redessiné cette nuit, et voici quand les contrôles ont confirmé que les dépôts correspondaient au réel ». Le badge tombe vers « inconnu », **jamais vers le vert**.
@@ -22,7 +22,9 @@ import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 
 Ce blogue est un carnet d'expériences. J'y essaie des choses dans mon labo, je les casse, et j'écris ce que j'ai appris — pas des recettes finies. La dernière en date est celle que vous pouvez regarder tourner : **une page d'architecture que je ne dessine plus.**
 
-Il y a une phrase que j'ai écrite ici il y a une semaine, à la fin de l'article sur le [pipeline qui appuie sur apply](/blog/laisser-le-pipeline-appuyer-sur-apply/) : « une vue d'architecture du labo, générée chaque nuit depuis les quatre dépôts publics ». C'est ce que j'avais construit. Ce n'est déjà plus ce qui roule, et le chemin entre les deux est bien plus intéressant que la destination que j'avais prévue.
+Un peu de contexte, si vous arrivez ici sans avoir lu le reste. Mon labo maison — une dizaine de machines, un cluster, un bout d'infonuagique — est entièrement décrit en code, réparti dans quatre dépôts privés. Chacun publie une copie assainie de lui-même, où les noms d'hôtes et les adresses sont remplacés par des équivalents fictifs. C'est de ces copies publiques que le site tire ses données : rien de secret ne traverse.
+
+Mon plan était simple : générer chaque nuit, à partir de ces quatre copies, une vue d'architecture du labo. Je l'ai construite. Elle n'a jamais été publiée, et ce qui roule aujourd'hui à sa place est assez différent pour valoir un article. Le chemin entre les deux s'est avéré bien plus intéressant que la destination prévue.
 
 ## Deux artefacts qui avaient pris du retard
 
@@ -44,7 +46,7 @@ Un dessin qui ne montre que les onze est donc exact et incomplet : il décrit fi
 
 D'où deux semences plutôt qu'une.
 
-**La première semence, publique.** Chacun des quatre dépôts privés produit déjà un instantané public assaini — mécanisme raconté en détail dans [quatre dépôts pour un labo au complet](/blog/quatre-depots-pour-un-labo-au-complet/). Chaque assainisseur émet maintenant en plus un fichier `topology.json`, calculé **sur l'arbre déjà assaini** : ce qu'il contient est fictif par construction. Le site joint les quatre en un graphe unique — 116 nœuds, 133 liens — dont la clé de jointure est la carte de noms que les assainisseurs imposent. Cette carte était une commodité de publication ; elle est devenue une interface porteuse, exactement comme je le soupçonnais en écrivant l'article précédent.
+**La première semence, publique.** Chacun des quatre dépôts privés produit déjà un instantané public assaini : une copie du dépôt où chaque nom d'hôte, domaine et adresse a été remplacé par un équivalent fictif, avec une vérification automatique qui refuse de publier si un vrai nom subsiste. Le mécanisme complet est raconté dans [quatre dépôts pour un labo au complet](/blog/quatre-depots-pour-un-labo-au-complet/), mais ce paragraphe suffit pour la suite. Chaque assainisseur émet maintenant en plus un fichier `topology.json`, calculé **sur l'arbre déjà assaini** : ce qu'il contient est fictif par construction. Le site joint les quatre en un graphe unique — 116 nœuds, 133 liens — dont la clé de jointure est la carte de noms que les assainisseurs imposent. Cette carte n'avait été qu'une commodité de publication ; elle est devenue une interface porteuse, sur laquelle repose maintenant tout le graphe.
 
 **La deuxième semence, privée.** Une session nocturne lit le document de disposition physique — celui qui connaît les trente-sept boîtes — et en rend un `fleet.json` assaini avec **la même carte de noms**. Aucune adresse, d'aucune sorte : un dessin n'en a pas besoin, et leur absence supprime toute une catégorie de problème plutôt que de la filtrer. Il porte le modèle du matériel, sa classe, son rack, l'onduleur qui l'alimente, et le cas échéant la machine qui l'héberge.
 
@@ -54,9 +56,11 @@ C'est cette deuxième semence qui rend le dessin habitable. Sans elle, la page m
 
 La première version rendait le graphe joint directement : quatre bandes, une par dépôt, chacune énumérant ses ressources, un diagramme au-dessus. Techniquement irréprochable. Entièrement dérivé.
 
-Et en la regardant, la critique est tombée toute seule : ça ressemblait à un inventaire, parce que c'en était un. Une page qui énumère quatre dépôts est une liste avec un dessin en haut. L'architecture, c'est le **jugement** qu'on porte sur cette liste : quoi regrouper, quoi taire, quoi mettre au centre.
+**Elle n'a jamais été mise en ligne.** Elle a vécu sur ma préproduction, je l'ai regardée quelques jours, et personne d'autre ne l'a jamais vue. C'est la seule raison pour laquelle je peux en parler aussi librement : ce n'est pas un revirement public, c'est un brouillon qui n'a pas passé sa propre relecture.
 
-Le jugement est précisément ce qu'un rendu déterministe ne peut pas fournir. Alors le pipeline a changé de rôle : il ne rend plus la page, il **sème** un auteur — et l'auteur est une session Claude Code qui redessine le SVG chaque nuit. C'est le même mode headless que dans [automatiser le labo depuis le bastion](/blog/claude-code-headless-bastion/), appliqué à une tâche d'une autre nature : pas une manipulation, une rédaction.
+Parce qu'en la regardant, la critique est tombée toute seule : ça ressemblait à un inventaire, parce que c'en était un. Une page qui énumère quatre dépôts est une liste avec un dessin en haut. L'architecture, c'est le **jugement** qu'on porte sur cette liste : quoi regrouper, quoi taire, quoi mettre au centre.
+
+Le jugement est précisément ce qu'un rendu déterministe ne peut pas fournir. Alors le pipeline a changé de rôle : il ne rend plus la page, il **sème** un auteur — et l'auteur est une session Claude Code qui redessine le SVG chaque nuit. « Sans surveillance » est à prendre au pied de la lettre : la session démarre seule, travaille, et personne ne lit ses réponses au moment où elle les écrit. J'utilisais déjà ce mode headless pour des tâches d'administration ([raconté ici](/blog/claude-code-headless-bastion/)) ; ce qui change, c'est la nature du travail confié — pas une manipulation, une rédaction.
 
 C'est là que l'expérience est devenue intéressante. Je n'automatise plus une tâche que je sais faire — je délègue un jugement, chaque nuit, à quelque chose qui n'a jamais vu mon sous-sol.
 
@@ -92,7 +96,7 @@ Il y a un raccourci confortable dans lequel je ne veux pas tomber : un diagramme
 
 Or la source, ici, ce sont les dépôts d'infrastructure — et du code d'infrastructure peut prendre du retard aussi bien qu'un document. Quelqu'un change un paramètre à la main sur la console du fournisseur, et le dépôt décrit tranquillement un monde d'hier, avec toute la crédibilité que confère un fichier versionné.
 
-C'est exactement ce que les vérifications de dérive nocturnes mesurent, et elles existaient avant cette expérience. Trois d'entre elles interrogent leur fournisseur respectif et comparent l'état réel au plan calculé depuis le dépôt. La quatrième couche n'en a plus besoin : depuis la [fermeture de la boucle GitOps](/blog/laisser-le-pipeline-appuyer-sur-apply/), le cluster est réconcilié en continu, ce qui pose la même question en permanence plutôt qu'une fois par nuit.
+C'est exactement ce que les vérifications de dérive nocturnes mesurent, et elles existaient avant cette expérience. Trois d'entre elles interrogent leur fournisseur respectif et comparent l'état réel au plan calculé depuis le dépôt. La quatrième couche n'en a plus besoin : le cluster tourne en GitOps — un agent y compare en permanence l'état réel au dépôt et corrige les écarts de lui-même ([comment j'en suis arrivé là](/blog/laisser-le-pipeline-appuyer-sur-apply/)). Il pose donc la même question en continu plutôt qu'une fois par nuit.
 
 Le dessin porte donc son résultat de vérification à côté de lui. La page ne prétend pas être en direct — ce serait invérifiable. Elle affirme quelque chose de plus modeste et de démontrable : **redessiné cette nuit, et voici quand les contrôles ont confirmé pour la dernière fois que les dépôts correspondaient au réel**.
 

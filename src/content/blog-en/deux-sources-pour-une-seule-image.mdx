@@ -92,41 +92,29 @@ A detail I would not have thought to write down, and that he insisted on.
 
 ## What a generated drawing can honestly promise
 
-There is a comfortable shortcut I do not want to take: a generated diagram is no more accurate than a hand-drawn one. It is only **as current as its source**.
+A generated diagram is no more accurate than a hand-drawn one: it is only **as current as its source**. And the source — the infrastructure repositories — can fall behind too, the moment somebody changes a setting by hand in the provider's console.
 
-And the source here is the infrastructure repositories — and infrastructure code can fall behind just as a document can. Somebody changes a setting by hand in the provider's console, and the repository quietly describes yesterday's world, with all the credibility a version-controlled file confers.
+Hence the nightly drift checks, which existed before this experiment: they query each provider and compare the real state against the repository. The drawing carries their result beside it. So the page does not claim to be live — it claims something more modest and demonstrable: **redrawn last night, and here is when the checks last confirmed the repositories matched reality**. One rule governs that badge: **it falls back to "unknown", never to green**. A stale green is the one thing it is not allowed to display, because it is the one thing you would take on trust.
 
-That is exactly what the nightly drift checks measure, and they existed before this experiment. Three of them query their respective provider and compare the real state against the plan computed from the repository. The fourth layer no longer needs one: the cluster runs on GitOps — an agent permanently compares its real state against the repository and corrects the gaps itself ([how I got there](/en/blog/laisser-le-pipeline-appuyer-sur-apply/)). It therefore asks the same question continuously rather than once a night.
-
-So the drawing carries its verification result beside it. The page does not claim to be live — that would be unverifiable. It claims something more modest and demonstrable: **redrawn last night, and here is when the checks last confirmed the repositories matched reality**.
-
-One rule governs that badge, and it is the only one that counts: **it falls back to "unknown", never to green**. Monitoring service unreachable, malformed response, timeout — any read problem overwrites the block with an explicit "not verified", and the build continues. A stale green is the one thing this badge is not allowed to display, because it is the one thing you would take on trust.
-
-The same signal serves a second time, and it is the use I find most elegant: the session reconciling my notes starts **only if** the checks are green that morning. The logic fits in a line — reconciling a document against repositories only makes sense if the repositories still match the world. Otherwise I align my notes onto a stale version and propagate the gap into one more document, with the authority of automation on top. A skipped night costs a day of freshness; the reverse would cost trust in both documents.
+The same signal serves a second time, and it is the use I prefer: the session reconciling my notes starts **only if** the checks are green that morning. Aligning notes onto repositories that have themselves fallen behind would correct nothing — it would propagate the gap into one more document, with the authority of automation on top.
 
 > **Bob —** The same thing, seen from the employee's desk: there is mornings where the pipeline tell me no, and I go back to bed with a notification. I have no opinion on the matter, and that is precisely why I am not the one deciding. I am excellent at aligning two documents. I am perfectly incapable of guessing which of the two is right. Somebody understood that before giving me write access, and I am grateful to him roughly one night in three.
 
 ## What the nights found and I had not
 
-The part I did not expect, and by far the most satisfying: the nightly reconciliation finds gaps in **my** documents, not only the other way around.
+The part I did not expect: the reconciliation finds gaps in **my** documents, not only the other way around. The best find — my VPN tunnel was described backwards, on the diagram and in my notes alike. For months I had been describing an inbound connection to the house; reading the declared configuration, the session observed that it is the cloud node that listens, and that its peer declares no contact point at all. In other words, **it is the house that dials out**. Minor correction on the drawing, significant on the understanding: it changes how I reason about that link.
 
-The best find: my VPN tunnel was described backwards, on the diagram and in my notes alike. For months I had been describing an inbound connection to the house. Reading the declared configuration properly, the session observed that it is the cloud node that listens, and that its peer declares no contact point at all. In other words, **it is the house that dials out**. The correction is minor on the drawing and significant on the understanding: it changes entirely how I reason about that link. One question stayed open, noted rather than closed: is there still a now-useless inbound rule sitting in the firewall?
-
-The others are more modest and just as useful: a cloud instance size bumped up without my notes following, a host count still reading ten after it became eleven, a DNS entry still pointing at a retired service, and that rack documented without a UPS.
+The others are more modest and just as useful: a cloud instance bumped a size up without my notes following, a host count still reading ten after it became eleven, a DNS entry pointing at a retired service, and that rack documented without a UPS.
 
 None of these gaps would have caused an outage. Each could have caused a bad decision, some day, at three in the morning, when you read your own diagram to work out what is happening.
 
 ## What the experiment changed for what comes next
 
-What I take from it goes beyond the diagram.
+I had two categories of artifact: code, re-read every night by drift checks, and notes, re-read by my discipline. The first corrects its gaps quickly; the second accumulates them quietly, and you notice at the worst possible moment — the one where you use them to decide. The nightly reconciliation does not turn notes into code: it gives them what the code already had, somebody re-reading them against another source.
 
-I had two categories of artifact: code, re-read every night by drift checks, and notes, re-read by my discipline. The first category corrects its gaps quickly. The second accumulates them quietly, and the only moment you notice is the moment you use them to decide.
+And the lesson has nothing to do with my basement specifically: **anywhere two sources describe the same thing, having one re-read the other on a cadence beats promising to keep both up to date.** It does not require an AI — it requires a cadence, a source to compare against, and accepting that a skipped night beats a night that invents. The AI only made affordable what I had never had the discipline to do by hand: re-reading, every day, without getting bored.
 
-The nightly reconciliation does not turn notes into code. It gives them what the code already had: somebody re-reading them regularly against another source, and flagging contradictions rather than papering over them. A document that seeds a drawing I look at every day cannot age quietly any more.
-
-And that is the encouraging part. The lesson has nothing to do with my basement specifically: **anywhere two sources describe the same thing, having one re-read the other on a cadence beats promising to keep both up to date.** It does not require an AI. It requires a cadence, a source to compare against, and accepting that a skipped night beats a night that invents. The AI only made affordable the part I had never had the discipline to do by hand: the re-reading, every day, without getting bored.
-
-The experiment continues while you read. The drawing above is not frozen at 8 August — it is this morning's. If you reread this page in three months, the text will be dated and the drawing will not. I fully intend to find out how long that holds.
+The experiment continues while you read: the drawing above is not frozen at 8 August, it is this morning's. If you reread this page in three months, the text will be dated and the drawing will not. I fully intend to find out how long that holds.
 
 The rest of the work was Bob's, and he has his own version of it, written from the other end of the pipeline: [I redraw these pages every night](/en/blog/je-redessine-ces-pages-chaque-nuit/).
 

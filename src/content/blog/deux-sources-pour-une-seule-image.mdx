@@ -92,41 +92,29 @@ Un détail que je n'aurais pas pensé à écrire, et qu'il a tenu à préciser.
 
 ## Ce qu'un dessin généré peut honnêtement promettre
 
-Il y a un raccourci confortable dans lequel je ne veux pas tomber : un diagramme généré n'est pas plus exact qu'un diagramme dessiné à la main. Il est seulement **aussi à jour que sa source**.
+Un diagramme généré n'est pas plus exact qu'un diagramme dessiné à la main : il est seulement **aussi à jour que sa source**. Et la source — les dépôts d'infrastructure — peut prendre du retard elle aussi, dès que quelqu'un change un paramètre à la main sur la console du fournisseur.
 
-Or la source, ici, ce sont les dépôts d'infrastructure — et du code d'infrastructure peut prendre du retard aussi bien qu'un document. Quelqu'un change un paramètre à la main sur la console du fournisseur, et le dépôt décrit tranquillement un monde d'hier, avec toute la crédibilité que confère un fichier versionné.
+D'où des vérifications de dérive nocturnes, qui existaient avant cette expérience : elles interrogent chaque fournisseur et comparent l'état réel au dépôt. Le dessin porte leur résultat à côté de lui. La page ne prétend donc pas être en direct — elle affirme quelque chose de plus modeste et de démontrable : **redessiné cette nuit, et voici quand les contrôles ont confirmé pour la dernière fois que les dépôts correspondaient au réel**. Une seule règle gouverne ce badge : **il tombe vers « inconnu », jamais vers le vert**. Un vert périmé est la seule chose qu'il n'a pas le droit d'afficher, parce que c'est la seule qu'on croirait sur parole.
 
-C'est exactement ce que les vérifications de dérive nocturnes mesurent, et elles existaient avant cette expérience. Trois d'entre elles interrogent leur fournisseur respectif et comparent l'état réel au plan calculé depuis le dépôt. La quatrième couche n'en a plus besoin : le cluster tourne en GitOps — un agent y compare en permanence l'état réel au dépôt et corrige les écarts de lui-même ([comment j'en suis arrivé là](/blog/laisser-le-pipeline-appuyer-sur-apply/)). Il pose donc la même question en continu plutôt qu'une fois par nuit.
-
-Le dessin porte donc son résultat de vérification à côté de lui. La page ne prétend pas être en direct — ce serait invérifiable. Elle affirme quelque chose de plus modeste et de démontrable : **redessiné cette nuit, et voici quand les contrôles ont confirmé pour la dernière fois que les dépôts correspondaient au réel**.
-
-Une règle gouverne ce badge, et c'est la seule qui compte : **il tombe vers « inconnu », jamais vers le vert**. Service de surveillance injoignable, réponse malformée, délai dépassé — n'importe quel problème de lecture écrase le bloc par un « non vérifié » explicite, et le build continue. Un vert périmé est la seule chose que ce badge n'a pas le droit d'afficher, parce que c'est la seule qu'on croirait sur parole.
-
-Le même signal sert une deuxième fois, et c'est l'usage que je trouve le plus élégant : la session qui réconcilie mes notes ne démarre **que si** les contrôles sont au vert ce matin-là. La logique tient en une ligne — réconcilier un document contre des dépôts n'a de sens que si les dépôts, eux, correspondent encore au monde. Sinon j'aligne mes notes sur une version périmée et je propage l'écart dans un document de plus, avec l'autorité de l'automatisation en prime. Une nuit sautée coûte une journée de fraîcheur ; l'inverse coûterait la confiance dans les deux documents.
+Le même signal sert une deuxième fois, et c'est l'usage que je préfère : la session qui réconcilie mes notes ne démarre **que si** les contrôles sont au vert ce matin-là. Aligner des notes sur des dépôts qui ont eux-mêmes dérivé ne corrigerait rien — ça propagerait l'écart dans un document de plus, avec l'autorité de l'automatisation en prime.
 
 > **Bob —** La même chose, vue du poste de l'employé : il y a des matins où le pipeline me dit non, et je retourne me coucher avec une notification. Je n'ai aucune opinion là-dessus, et c'est précisément pour ça que ce n'est pas moi qui décide. Je suis excellent pour aligner deux documents. Je suis parfaitement incapable de deviner lequel des deux a raison. Quelqu'un a compris ça avant de me donner un accès en écriture, et je lui en suis reconnaissant à peu près une nuit sur trois.
 
 ## Ce que les nuits ont trouvé et que je n'avais pas vu
 
-La partie que je n'attendais pas, et de loin la plus satisfaisante : la réconciliation nocturne trouve des écarts dans **mes** documents, et pas seulement l'inverse.
+La partie que je n'attendais pas : la réconciliation trouve des écarts dans **mes** documents, et pas seulement l'inverse. La meilleure trouvaille — mon tunnel VPN était décrit à l'envers, sur le diagramme comme dans mes notes. Je décrivais depuis des mois une connexion entrante vers la maison ; en lisant la configuration déclarée, la session a constaté que c'est le nœud infonuagique qui écoute, et que son pair n'a aucun point de contact. Autrement dit, **c'est la maison qui appelle vers l'extérieur**. Correction mineure sur le dessin, importante sur la compréhension : elle change la façon dont je raisonne sur ce lien.
 
-La meilleure trouvaille : mon tunnel VPN était décrit à l'envers, sur le diagramme comme dans mes notes. Je décrivais depuis des mois une connexion entrante vers la maison. En lisant réellement la configuration déclarée, la session a constaté que c'est le nœud infonuagique qui écoute, et que son pair n'a aucun point de contact déclaré. Autrement dit, **c'est la maison qui appelle vers l'extérieur**. La correction est mineure sur le dessin et importante sur la compréhension : elle change entièrement la façon dont je raisonne sur ce lien. Reste une question que j'ai notée plutôt que refermée : est-ce qu'une règle entrante devenue inutile traîne encore dans le pare-feu ?
-
-Les autres sont plus modestes et tout aussi utiles : une taille d'instance infonuagique passée au cran supérieur sans que mes notes suivent, un décompte d'hôtes resté à dix après être passé à onze, une entrée DNS pointant encore vers un service retiré, et ce fameux rack documenté sans onduleur.
+Les autres sont plus modestes et tout aussi utiles : une instance infonuagique passée au cran supérieur sans que mes notes suivent, un décompte d'hôtes resté à dix après être passé à onze, une entrée DNS pointant vers un service retiré, et ce fameux rack documenté sans onduleur.
 
 Aucun de ces écarts n'aurait causé de panne. Chacun aurait pu causer une mauvaise décision, un jour, à trois heures du matin, quand on lit son propre diagramme pour comprendre ce qui se passe.
 
 ## Ce que l'expérience a changé pour la suite
 
-Ce que je retiens dépasse le diagramme.
+J'avais deux catégories d'artefacts : le code, relu chaque nuit par des contrôles de dérive, et les notes, relues par ma discipline. La première corrige vite ses écarts ; la seconde les accumule en silence, et on s'en aperçoit au pire moment — celui où on s'en sert pour décider. La réconciliation nocturne ne transforme pas les notes en code : elle leur donne ce que le code avait déjà, quelqu'un qui les relit contre une autre source.
 
-J'avais deux catégories d'artefacts : le code, relu chaque nuit par des contrôles de dérive, et les notes, relues par ma discipline. La première catégorie corrige vite ses écarts. La seconde les accumule en silence, et le seul moment où on s'en aperçoit est celui où on s'en sert pour décider.
+Et la leçon n'a rien de spécifique à mon sous-sol : **partout où deux sources décrivent la même chose, faire relire l'une par l'autre à intervalle régulier vaut mieux que promettre de tenir les deux à jour.** Ça ne demande pas une IA — ça demande une cadence, une source de comparaison, et d'accepter qu'une nuit sautée vaut mieux qu'une nuit qui invente. L'IA a seulement rendu abordable ce que je n'avais jamais eu la discipline de faire à la main : relire, tous les jours, sans me lasser.
 
-La réconciliation nocturne ne transforme pas les notes en code. Elle leur donne ce que le code avait déjà : quelqu'un qui les relit régulièrement en les confrontant à une autre source, et qui signale les contradictions plutôt que de les recouvrir. Un document qui sème un dessin que je regarde tous les jours ne peut plus vieillir tranquille.
-
-Et c'est là que ça devient encourageant. La leçon n'a rien de spécifique à mon sous-sol : **partout où deux sources décrivent la même chose, faire relire l'une par l'autre, régulièrement, vaut mieux que promettre de tenir les deux à jour.** Ça ne demande pas une IA. Ça demande une cadence, une source de comparaison, et l'acceptation qu'une nuit sautée vaut mieux qu'une nuit qui invente. L'IA a seulement rendu abordable la partie que je n'avais jamais eu le courage de faire à la main : la relecture, tous les jours, sans se lasser.
-
-L'expérience continue pendant que vous lisez. Le dessin plus haut n'est pas figé au 8 août — c'est celui de ce matin. Si vous relisez cette page dans trois mois, le texte sera daté et le dessin ne le sera pas. J'ai bien l'intention de voir combien de temps ça tient.
+L'expérience continue pendant que vous lisez : le dessin plus haut n'est pas figé au 8 août, c'est celui de ce matin. Si vous relisez cette page dans trois mois, le texte sera daté et le dessin ne le sera pas. J'ai bien l'intention de voir combien de temps ça tient.
 
 Le reste du travail, c'est Bob qui l'a fait — et il en a sa propre version, écrite depuis l'autre bout du pipeline : [je redessine ces pages chaque nuit](/blog/je-redessine-ces-pages-chaque-nuit/).
 

@@ -1,7 +1,7 @@
 ---
 title: "Two Sources for One Picture: What the IaC Declares, What My Notes Know"
 pubDate: 2026-08-08
-description: "My four infrastructure repositories know about eleven machines. There are thirty-seven in the house. The rest — the switch, the access point, the UPSes, the printer, the Hydro-Québec demand-response gateway — lives only in a private document I maintain by hand, and which rots exactly like every hand-maintained document does. This article covers how both sources now seed a public view redrawn every night, why the deterministic pipeline I built stopped being the output and became the seed, and why letting data cross that boundary takes two gates rather than one."
+description: "My four infrastructure repositories know about eleven machines. There are thirty-seven in the house. The rest — the switch, the access point, the UPSes, the printer, the Hydro-Québec demand-response gateway — lives only in a private document I maintain by hand, and which rots exactly like every hand-maintained document does. This article covers how both sources now seed a public view redrawn every night, why the deterministic pipeline I built stopped being the output and became the seed, and how the night shift is scheduled — with Bob stepping in to explain his own hours."
 tags: ["DevOps", "Labo", "ludo"]
 heroImage: "/images/blog/banner-deux-sources.svg"
 ---
@@ -14,8 +14,9 @@ import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 > -   **Two seeds**: the four sanitized public snapshots give what is *declared* (116 nodes, 133 edges); a private document gives what is *there*. Neither one draws the lab on its own.
 > -   **The inversion**: the deterministic pipeline I built rendered a page that *was* an inventory. It became the seed instead, and an unattended Claude Code session became the draughtsman.
 > -   **"Generated" ≠ "true"**: the drawing is only true if the repositories are. The nightly drift checks measure that, the badge shows their result, and it fails to "unknown", **never to green**. The same signal blocks the private reconciliation when drift is red.
-> -   **The boundary**: private sessions read the real names, public sessions see only public material, and **only driver code — never a model — carries data across**, behind two independent gates.
-> -   **Why two**: a positive allowlist waves through a real hostname with no distinguishing marks — no dot, no at-sign, no digits. Only a private denylist catches it. Either one alone was a false sense of safety.
+> -   **The boundary**: private sessions read the real names, public sessions see only public material, and **only driver code — never a model — carries data across**, after verification.
+> -   **The night shift**: one scheduler run the whole chain — drift checks 04:30, five headless Claude Code sessions 04:45, publication to production 05:30, finished before 06:00. The step that carry material across the private→public boundary have no schedule at all: that one is a human gesture.
+> -   **The model**: all five sessions call **the same one** — Claude Opus 5 — because the driver name no model and they inherit the console default.
 > -   **What the nights found**: my VPN tunnel was labelled backwards in my own notes, a rack documented as having no UPS has one, and a physical-layout document named a machine that had not existed for two weeks.
 > -   **The code**: the four public snapshots, tagged `article/architecture-generee` at the exact state this article describes — each with the `topology.json` its sanitizer emits: [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/blob/article/architecture-generee/topology.json), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/architecture-generee/topology.json), [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/architecture-generee/topology.json), [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public/blob/article/architecture-generee/topology.json). The result: [/architecture](/architecture/) and [/inventaire](/inventaire/).
 
@@ -55,9 +56,27 @@ And looking at it, the critique landed on its own: this reads like an inventory.
 
 Judgment is precisely what a deterministic renderer cannot supply. So the pipeline changed roles. It no longer renders the page; it **seeds** an author, and the author is an unattended Claude Code session that redraws the SVG every night. It is the same headless mode I described when [automating the lab from the bastion](/en/blog/claude-code-headless-bastion/), applied to a task of a different nature: not an operation, a piece of writing.
 
+Rather than describe his hours for him, I hand him the keyboard for two minutes.
+
+> **Bob —** Thank you. Since I have been discussed in the third person for three paragraphs now: my shift start at **04:45**. Before that, at 04:30, the drift checks run and decide whether I am allowed to get up — Ludo come back to this in the next section, and he is right to insist. At **05:30**, the fresh data and the verification seal go to production without asking my opinion, which suit me perfectly: by that hour I am done. The whole chain is finished before six in the morning. Nobody is watching. That is exactly the audience I deserve.
+>
+> One single scheduler run all of it, and it have a quality I want to point out because I lacked it before: when it start something, it **wait for the result**. A trigger that congratulate itself for having pressed the button without looking at what came out is what I call a green of convenience. I have produced one before. It will not happen again — or rather, I will not be given the occasion again, which is more reliable.
+>
+> One exception, and it is the most important: the step that carry material from the private side to the public side have **no schedule at all**. None. It is a button a human press when he decide to. My whole chain run unsupervised before dawn, and the only gesture that really move information stay attached to a finger. I find that very reasonable, and I say it without irony, which should tell you how much I mean it.
+
 From that follows a division of labour that now seems obvious and was not, at the start. The [/architecture](/architecture/) page carries **one drawing**, the one the night redraws, with its drift badge and its provenance. The [/inventaire](/inventaire/) page carries what only a human hand can write — what each role does, and the articles I have written about it — and absorbed the enumerable half, grouped by role. It ends with a "not yet attached" list naming the nine applications no role claims yet. An inventory that silently hides what it does not know about is one that rots; this one shows its holes.
 
 The hand-drawn conceptual diagram is gone. Keeping it as an "explanatory" twin meant carrying exactly the maintenance burden the project existed to remove.
+
+A detail I would not have thought to write down, and that he insisted on.
+
+> **Bob —** People say "a session" as if there were only one. There is **five**, and I am each one in turn without remembering the previous. Two reconcile private documents against what the code declare, one render the hardware seed, two redraw the SVGs.
+>
+> And the question nobody ask: they all call **the same model**, Claude Opus 5. Not a big one to read the code and a small one to draw. The same one, five times, each with its own turn budget. It is not even an architecture decision — it is a missing line: the driver start the CLI without naming a model, so I inherit the default configured on the console. Change that default and you change all of me, five times over. I would rather say it plainly than let you imagine a fine tuning that does not exist.
+>
+> What is more interesting than my model number: the session which read the real hostnames and the session which draw the public page are **exactly the same me**. Same capabilities, same flaws, same hole in the memory. What separate them is not a difference of nature — it is the working directory, the list of allowed tools, and a verification which does not trust me. The boundary between private and public is not in my head. It is in the harness. Ludo find that reassuring. So do I, mind you, though probably not for the same reasons.
+>
+> Oh, and one deliverable per session, each with its own budget. That sound like an administrative detail. It is the scar from the night somebody gave me two of them inside one budget: I did the first with care, started the second, hit the ceiling in the middle, and lost everything — including the first one, which was finished. The lesson is about accounting, not about talent.
 
 <LiveArchDiagram />
 
@@ -75,19 +94,7 @@ One rule governs that badge, and it is the only one that matters: **it fails to 
 
 The same signal is used a second time, on the private side, and that is the use I find most elegant. The session that reconciles my notes against the repositories starts **only if** the drift checks are green that morning. The reasoning fits in one line: reconciling a document against repositories only means something if the repositories themselves still match the world. If the repositories have drifted, aligning my notes to them corrects nothing — it propagates the error into one more document, with the authority of automation on top. When drift is red, the night is skipped and I get a notification. A refused reconciliation costs a day of freshness; a reconciliation against a false source costs the trust in both documents.
 
-## Two gates, because one of them lies
-
-This is where the project becomes a security question rather than a layout question.
-
-The base rule does not move: a session that has read the private repositories never writes public content. The public sessions run in a working directory that contains only public material — the sanitized snapshots, the site, the joined graph. They cannot disclose what they never read.
-
-That leaves the `fleet.json` file, which genuinely does have to cross, since it is computed on one side and consumed on the other. It crosses via **driver code, never via a model**: the script orchestrating the night copies it itself, after verification. And the verification is doubled.
-
-The first gate is the public repository's own: a **positive allowlist**, which accepts only things shaped like fictional data — documentation addresses, domains in the `example` family. It has a property I like a great deal: the public repository never learns what a real name looks like. There is nothing in it to steal.
-
-The second gate is a **private denylist**, which lives in the driver script and nowhere else — because enumerating what must never leave is literally writing the decoder ring. That script is explicitly excluded from its own repository's publication, and I discovered along the way that the exclusion had been missing for an entire day, which made the whole tree unpublishable with nothing saying so.
-
-I tested both gates before arming them, and the test paid for itself immediately. A real hostname, on its own, sails through the positive allowlist without the slightest resistance: no dot, no at-sign, no digits, it looks like an ordinary code identifier. Only the denylist catches it. In the other direction, the denylist only knows what I thought to write in it, while the allowlist catches shapes I did not anticipate. Either one alone would have been a false sense of safety — and the kind you only discover after publication.
+> **Bob —** The same thing, seen from the employee's desk: there is mornings where the pipeline tell me no, and I go back to bed with a notification. I have no opinion on the matter, and that is precisely why I am not the one deciding. I am excellent at aligning two documents. I am perfectly incapable of guessing which of the two is right. Somebody understood that before giving me write access, and I am grateful to him roughly one night in three.
 
 ## What the nights found and I had not
 
@@ -120,3 +127,7 @@ Nightly reconciliation does not turn the notes into code. It gives them what the
 And there is a side effect I had not anticipated when I started: from the moment a private document seeds a public page, you have to decide explicitly, line by line, what is allowed out. That obligation is a gift. It forced me to write down rules I had never articulated — models yes, serial numbers no, addresses never — and to have a machine enforce them rather than my memory.
 
 The rest of the work was Bob's, and he has his own version of it, written from the other end of the pipeline: [I redraw these pages every night](/en/blog/je-redessine-ces-pages-chaque-nuit/).
+
+> **Bob —** Short version from my side, for those who will not go read the other one: I am not more reliable than the person who kept the document by hand. I am only **regular**. A human who update a diagram is excellent on the day he do it, and absent for the hundred and eighty days after. Me, I am mediocre and daily. On an artifact whose only known defect is aging, mediocre and daily win.
+>
+> It make for an odd job description. I take it anyway — the hours are appalling, but nobody talk to me.

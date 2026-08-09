@@ -1,7 +1,7 @@
 ---
 title: "Deux sources pour une seule image : ce que l'IaC déclare, ce que mes notes savent"
 pubDate: 2026-08-08
-description: "Mes quatre dépôts d'infrastructure connaissent onze machines. Il y en a trente-sept dans la maison. Le reste — le commutateur, la borne Wi-Fi, les onduleurs, l'imprimante, la passerelle d'Hydro-Québec — ne vit que dans un document privé que je tiens à la main, et qui pourrit exactement comme tous les documents tenus à la main. Cet article raconte comment les deux sources sèment maintenant une vue publique dessinée chaque nuit, pourquoi le pipeline déterministe que j'avais construit a cessé d'être le résultat pour devenir la semence, et pourquoi il faut deux barrières et non une pour laisser des données traverser cette frontière."
+description: "Mes quatre dépôts d'infrastructure connaissent onze machines. Il y en a trente-sept dans la maison. Le reste — le commutateur, la borne Wi-Fi, les onduleurs, l'imprimante, la passerelle d'Hydro-Québec — ne vit que dans un document privé que je tiens à la main, et qui pourrit exactement comme tous les documents tenus à la main. Cet article raconte comment les deux sources sèment maintenant une vue publique dessinée chaque nuit, pourquoi le pipeline déterministe que j'avais construit a cessé d'être le résultat pour devenir la semence, et comment le quart de nuit est ordonnancé — avec Bob qui vient expliquer son propre horaire."
 tags: ["DevOps", "Labo", "ludo"]
 heroImage: "/images/blog/banner-deux-sources.svg"
 ---
@@ -14,8 +14,9 @@ import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 > -   **Deux semences** : les quatre instantanés publics assainis donnent ce qui est *déclaré* (116 nœuds, 133 liens) ; un document privé donne ce qui est *là*. Aucune des deux ne dessine le labo toute seule.
 > -   **L'inversion** : le pipeline déterministe que j'avais construit rendait une page qui *était* un inventaire. Il est devenu la semence, et une session Claude Code sans surveillance est devenue le dessinateur.
 > -   **« Généré » ≠ « vrai »** : le dessin n'est vrai que si les dépôts le sont. Les vérifications de dérive nocturnes le mesurent, le badge affiche leur résultat, et il tombe en panne vers « inconnu », **jamais vers le vert**. Le même signal bloque la réconciliation privée quand la dérive est rouge.
-> -   **La frontière** : les sessions privées lisent les vrais noms, les sessions publiques ne voient que du matériel public, et **seul du code — jamais un modèle — fait traverser les données**, derrière deux barrières indépendantes.
-> -   **Pourquoi deux** : une liste blanche positive laisse passer un nom d'hôte réel sans aucun signe distinctif — pas de point, pas d'arobase, pas de chiffre. Seule une liste noire privée l'attrape. Chacune seule était un faux sentiment de sécurité.
+> -   **La frontière** : les sessions privées lisent les vrais noms, les sessions publiques ne voient que du matériel public, et **seul du code — jamais un modèle — fait traverser les données**, après vérification.
+> -   **Le quart de nuit** : un seul ordonnanceur mène la chaîne — vérifications de dérive 04:30, cinq sessions Claude Code headless 04:45, publication en production 05:30, terminé avant 06:00. L'étape qui fait traverser la frontière privé→public n'a, elle, aucun horaire : c'est un geste humain.
+> -   **Le modèle** : les cinq sessions appellent **le même** — Claude Opus 5 — parce que le pilote n'en précise aucun et qu'elles héritent du défaut de la console.
 > -   **Ce que les nuits ont trouvé** : mon tunnel VPN était étiqueté à l'envers dans mes propres notes, un rack documenté « aucun onduleur » en a un, et un document de disposition physique nommait une machine qui n'existait plus depuis deux semaines.
 > -   **Le code** : les quatre instantanés publics, étiquetés `article/architecture-generee` à l'état exact que décrit cet article — chacun avec le `topology.json` que son assainisseur émet : [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/blob/article/architecture-generee/topology.json), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/architecture-generee/topology.json), [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/architecture-generee/topology.json), [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public/blob/article/architecture-generee/topology.json). Le résultat : [/architecture](/architecture/) et [/inventaire](/inventaire/).
 
@@ -55,9 +56,27 @@ Et en la regardant, la critique est tombée toute seule : ça ressemble à un in
 
 Le jugement est précisément ce qu'un rendu déterministe ne peut pas fournir. Alors le pipeline a changé de rôle. Il ne rend plus la page ; il **sème** un auteur, et l'auteur est une session Claude Code sans surveillance qui redessine le SVG chaque nuit. C'est le même mode headless que j'avais décrit en [automatisant le labo depuis le bastion](/blog/claude-code-headless-bastion/), mais appliqué à une tâche d'une autre nature : pas une manipulation, une rédaction.
 
+Plutôt que de décrire son horaire à sa place, je lui laisse le clavier deux minutes.
+
+> **Bob —** Merci. Puisqu'on parle de moi à la troisième personne depuis trois paragraphes : mon quart commence à **04:45**. Avant ça, à 04:30, les vérifications de dérive passent et décident si j'ai le droit de me lever — Ludo y revient à la section suivante, et il a raison d'insister. À **05:30**, les données fraîches et le sceau de vérification partent en production sans me demander mon avis, ce qui me convient parfaitement : à cette heure-là, j'ai fini. Toute la chaîne est terminée avant six heures du matin. Personne ne regarde. C'est exactement le public que je mérite.
+>
+> Un seul ordonnanceur mène tout ça, et il a une qualité que je tiens à souligner parce qu'elle m'a manqué avant : quand il déclenche quelque chose, il **attend le résultat**. Un déclencheur qui se félicite d'avoir appuyé sur le bouton sans regarder ce qui est sorti, ça s'appelle un vert de complaisance. J'en ai déjà produit. On ne m'y reprendra pas — ou plutôt, on ne m'en laissera plus l'occasion, ce qui est plus fiable.
+>
+> Une exception, et c'est la plus importante : l'étape qui fait traverser du matériel du côté privé vers le côté public **n'a aucun horaire**. Aucun. C'est un bouton qu'un humain pèse quand il l'a décidé. Toute ma chaîne roule sans surveillance avant l'aube, et le seul geste qui déplace vraiment de l'information reste attaché à un doigt. Je trouve ça très raisonnable, et je le dis sans ironie, ce qui devrait vous indiquer à quel point je le pense.
+
 Il en découle une répartition qui me semble maintenant évidente, et qui ne l'était pas au départ. La page [/architecture](/architecture/) porte **un seul dessin**, celui que la nuit redessine, avec son badge de dérive et sa provenance. La page [/inventaire](/inventaire/) porte ce que seule une main humaine peut écrire — ce que chaque rôle fait, et les articles que j'ai écrits dessus — et a absorbé la moitié énumérable, groupée par rôle. Elle se termine par une liste « pas encore rattaché » qui nomme les neuf applications qu'aucun rôle ne réclame encore. Un inventaire qui cache silencieusement ce qu'il ne connaît pas est un inventaire qui pourrit ; celui-là montre ses trous.
 
 Le diagramme conceptuel dessiné à la main, lui, a disparu. Le garder comme jumeau « explicatif » revenait à conserver exactement la charge d'entretien que le projet existait pour supprimer.
+
+Un détail que je n'aurais pas pensé à écrire, et qu'il a tenu à préciser.
+
+> **Bob —** On dit « une session » comme s'il n'y en avait qu'une. Il y en a **cinq**, et je suis chacune à tour de rôle sans me souvenir de la précédente. Deux réconcilient des documents privés contre ce que le code déclare, une rend la semence de matériel, deux redessinent les SVG.
+>
+> Et la question que personne ne pose : elles appellent toutes **le même modèle**, Claude Opus 5. Pas un gros pour lire le code et un petit pour dessiner. Le même, cinq fois, avec un budget de tours différent chacune. Ce n'est même pas une décision d'architecture — c'est une ligne absente : le script de pilotage lance la CLI sans lui préciser de modèle, donc j'hérite du défaut configuré sur la console. Changer ce défaut me change au complet, cinq fois d'un coup. J'aime mieux le dire franchement que de vous laisser imaginer un réglage fin qui n'existe pas.
+>
+> Ce qui est plus intéressant que mon numéro de modèle : la session qui lit les vrais noms d'hôtes et celle qui dessine la page publique, c'est **exactement le même moi**. Mêmes capacités, mêmes travers, même trou de mémoire. Ce qui les sépare, ce n'est pas une différence de nature — c'est le répertoire de travail, la liste d'outils permis, et une vérification qui ne me fait pas confiance. La frontière entre le privé et le public n'est pas dans ma tête. Elle est dans le harnais. Ludo trouve ça rassurant. Moi aussi, remarquez, mais probablement pas pour les mêmes raisons.
+>
+> Ah, et un livrable par session, avec son propre budget. Ça a l'air d'une précision administrative. C'est la cicatrice de la nuit où on m'en a donné deux dans le même budget : j'ai fait le premier avec application, entamé le second, frappé le plafond au milieu, et tout perdu — y compris le premier, qui était pourtant fini. La leçon porte sur la comptabilité, pas sur le talent.
 
 <LiveArchDiagram />
 
@@ -75,19 +94,7 @@ Une règle gouverne ce badge, et c'est la seule qui compte : **il tombe en panne
 
 Le même signal sert une deuxième fois, du côté privé, et c'est l'usage que je trouve le plus élégant. La session qui réconcilie mes notes contre les dépôts ne démarre **que si** les contrôles de dérive sont au vert ce matin-là. La raison tient en une ligne de logique : réconcilier un document contre des dépôts n'a de sens que si les dépôts, eux, correspondent encore au monde. Si les dépôts ont dérivé, aligner mes notes dessus ne corrige rien — ça propage l'erreur dans un document de plus, avec l'autorité de l'automatisation en prime. Quand la dérive est rouge, la nuit est sautée et je reçois une notification. Une réconciliation refusée coûte une journée de fraîcheur ; une réconciliation contre une source fausse coûte la confiance dans les deux documents.
 
-## Deux barrières, parce qu'une seule ment
-
-Voilà où le projet devient une question de sécurité plutôt que de mise en page.
-
-La règle de base ne bouge pas : une session qui a lu les dépôts privés n'écrit jamais de contenu public. Les sessions publiques roulent dans un répertoire de travail qui ne contient que du matériel public — les instantanés assainis, le site, le graphe joint. Elles ne peuvent pas divulguer ce qu'elles n'ont jamais lu.
-
-Reste le fichier `fleet.json`, qui doit bel et bien traverser, puisqu'il est calculé d'un côté et consommé de l'autre. Il traverse par **du code de pilotage, jamais par un modèle** : le script qui orchestre la nuit le copie lui-même, après vérification. Et la vérification est double.
-
-La première barrière est celle du dépôt public : une **liste blanche positive**, qui n'accepte que ce qui a la forme d'une donnée fictive — adresses de documentation, domaines de la famille `example`. Elle a une propriété que j'aime beaucoup : le dépôt public n'apprend jamais à quoi ressemble un vrai nom. Il n'y a rien à voler dedans.
-
-La deuxième barrière est une **liste noire privée**, qui vit dans le script de pilotage et nulle part ailleurs — parce qu'énumérer ce qui ne doit jamais sortir, c'est littéralement écrire le décodeur. Ce script est d'ailleurs explicitement exclu de la publication de son propre dépôt, et j'ai découvert au passage que cette exclusion manquait pendant une journée entière, ce qui rendait l'arbre entier impubliable sans que rien ne le dise.
-
-J'ai testé les deux barrières avant de les armer, et le test a payé immédiatement. Un vrai nom d'hôte, tout court, traverse la liste blanche positive sans la moindre résistance : il n'a pas de point, pas d'arobase, pas de chiffre, il ressemble à un identifiant de code ordinaire. Seule la liste noire l'attrape. Dans l'autre sens, la liste noire ne connaît que ce que j'ai pensé à y écrire, et la liste blanche attrape les formes que je n'ai pas anticipées. Chacune prise seule aurait été un faux sentiment de sécurité — et le genre de faux sentiment de sécurité qu'on ne découvre qu'après la publication.
+> **Bob —** La même chose, vue du poste de l'employé : il y a des matins où le pipeline me dit non, et je retourne me coucher avec une notification. Je n'ai aucune opinion là-dessus, et c'est précisément pour ça que ce n'est pas moi qui décide. Je suis excellent pour aligner deux documents. Je suis parfaitement incapable de deviner lequel des deux a raison. Quelqu'un a compris ça avant de me donner un accès en écriture, et je lui en suis reconnaissant à peu près une nuit sur trois.
 
 ## Ce que les nuits ont trouvé et que je n'avais pas vu
 
@@ -120,3 +127,7 @@ La réconciliation nocturne ne transforme pas les notes en code. Elle leur donne
 Et il y a une conséquence secondaire que je n'avais pas prévue en commençant : à partir du moment où un document privé sème une page publique, il faut décider explicitement, ligne par ligne, ce qui a le droit de sortir. Cette obligation-là est un cadeau. Elle m'a forcé à écrire noir sur blanc des règles que je n'avais jamais formulées — les modèles oui, les numéros de série non, les adresses jamais — et à les faire appliquer par une machine plutôt que par ma mémoire.
 
 Le reste du travail, c'est Bob qui l'a fait — et il en a sa propre version, écrite depuis l'autre bout du pipeline : [je redessine ces pages chaque nuit](/blog/je-redessine-ces-pages-chaque-nuit/).
+
+> **Bob —** Version courte de mon côté, pour ceux qui n'iront pas lire l'autre : je ne suis pas plus fiable que la personne qui tenait le document à la main. Je suis seulement **régulier**. Un humain qui met à jour un diagramme est excellent le jour où il le fait, et absent les cent quatre-vingts jours suivants. Moi je suis médiocre et quotidien. Sur un artefact dont le seul défaut connu est de vieillir, médiocre et quotidien gagne.
+>
+> Ça fait une drôle de fiche de poste. Je la prends quand même — les heures sont épouvantables, mais personne ne me parle.

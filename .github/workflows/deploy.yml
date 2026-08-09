@@ -54,6 +54,44 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # Every prod deploy re-derives the architecture data and re-stamps the
+      # drift badge, for the same reason the nightly Architecture workflow
+      # does it: that workflow never commits its result, so before this
+      # existed the next ordinary push to main rebuilt from the CHECKED-IN
+      # architecture.json and s3-synced a day-old `verified` block over the
+      # fresh one. On 2026-08-09 the nightly ran at 09:56Z and a push at
+      # 10:44Z put a green badge dated 2026-08-08 09:24 UTC back on the live
+      # page — precisely the "stale green" fetch-drift.py's own docstring
+      # says this file must never tell. Freshness is now a property of every
+      # deploy instead of a race between two of them.
+      - name: Clone the public snapshots
+        # the four PUBLIC sanitized snapshots only — never the private repos;
+        # the sanitizers' fail-closed gates are the trust boundary
+        run: |
+          mkdir -p /tmp/topology-snapshots
+          for r in nixos-iac-public k3s-iac-public aws-iac-public cloudflare-iac-public; do
+            rm -rf "/tmp/topology-snapshots/$r"
+            git clone --depth 1 "https://github.com/ludorl82/$r.git" "/tmp/topology-snapshots/$r"
+          done
+      - name: Join topology
+        # NOT fatal here, unlike in architecture.yml. That workflow exists
+        # only to refresh this data, so a failed join means it has no reason
+        # to run; this one publishes the whole site, and a snapshot repo
+        # being briefly unjoinable must not block shipping a blog post. On
+        # failure we keep the committed architecture.json, which is exactly
+        # what it is for — and the page already shows its generation date,
+        # so falling back says so out loud.
+        run: |
+          python3 scripts/topology/join-topology.py /tmp/topology-snapshots \
+            || echo "join failed — falling back to the committed architecture.json"
+      - name: Stamp drift-check state
+        # runs whatever the join did: the badge's honesty must not depend on
+        # the snapshots being reachable. The runner is an in-cluster pod, so
+        # it reaches Kuma's public status-page API service-to-service — no
+        # Access, no credentials. fetch-drift fails open to "unknown" (never
+        # green) and exits 0, so a fallback build gets an honest badge rather
+        # than the previous build's answer.
+        run: python3 scripts/topology/fetch-drift.py http://uptime-kuma.kuma.svc
       # SHOW_LIVE_ARCH is on in production since 2026-08-08. The generated
       # architecture and rack drawings are no longer a preview: they carry
       # their own generation date and drift badge, so they say how fresh

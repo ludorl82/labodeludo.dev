@@ -10,9 +10,14 @@
 # topology.json files into src/data/architecture.json, stamps the drift-check
 # state from Kuma's public status page, rebuilds and deploys. No commit: the
 # freshly generated data only exists inside the build. The checked-in
-# architecture.json is the fallback that keeps ordinary pushes building
-# without network access to the snapshots; it goes stale by design and the
-# page shows its generation date.
+# architecture.json is the fallback for a build that cannot reach the
+# snapshots; it goes stale by design and the page shows its generation date.
+#
+# Since 2026-08-09 deploy.yml's prod job runs the same three steps, so an
+# ordinary push to main republishes fresh data too — it used to rebuild from
+# the committed file and put a day-old drift badge back on the live page.
+# This job is what still covers a day with no push at all; the two are
+# deliberately redundant, and the nightly is the stricter of the pair.
 #
 # A failed join (validation or allowlist) fails the run — a wrong diagram is
 # worse than yesterday's.

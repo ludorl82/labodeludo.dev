@@ -8,7 +8,7 @@
       "name": "router",
       "network": "vlan10",
       "rackOrder": 1,
-      "role": "pare-feu/routeur — passerelle Internet et inter-VLAN"
+      "role": "pare-feu/routeur, accès Internet"
     },
     {
       "class": "switch",
@@ -16,9 +16,9 @@
       "location": "wall-rack",
       "model": "Netgear GS348",
       "name": "switch-01",
-      "network": "vlan10",
+      "network": "out-of-band",
       "rackOrder": 2,
-      "role": "commutateur réseau (infrastructure)",
+      "role": "commutateur non géré du rack mural",
       "spec": "48 ports, sans ventilateur"
     },
     {
@@ -40,8 +40,8 @@
       "name": "sbc-01",
       "network": "vlan10",
       "rackOrder": 4,
-      "role": "registre de conteneurs privé",
-      "spec": "aarch64, 2 Go"
+      "role": "registre de conteneurs privé, hors cluster k3s",
+      "spec": "arm64, 2 Go"
     },
     {
       "class": "sbc",
@@ -52,7 +52,7 @@
       "network": "vlan10",
       "rackOrder": 5,
       "role": "agent k3s",
-      "spec": "aarch64"
+      "spec": "arm64"
     },
     {
       "class": "sbc",
@@ -62,8 +62,8 @@
       "name": "pi-02",
       "network": "vlan10",
       "rackOrder": 6,
-      "role": "agent k3s, bastion (accès distant), console d'urgence",
-      "spec": "aarch64"
+      "role": "agent k3s, point de rebond SSH de la ferme",
+      "spec": "arm64"
     },
     {
       "class": "server",
@@ -73,8 +73,7 @@
       "name": "ha-01",
       "network": "vlan10",
       "rackOrder": 7,
-      "role": "domotique — Home Assistant",
-      "spec": "aarch64"
+      "role": "domotique — Home Assistant, monté seul sur son propre VLAN"
     },
     {
       "class": "domotique",
@@ -84,14 +83,14 @@
       "name": "hilo",
       "network": "vlan50",
       "rackOrder": 8,
-      "role": "passerelle domestique du programme Hilo (Hydro-Québec) — le distributeur d'électricité déclenche des événements de délestage de pointe l'hiver et rémunère les participants pour la charge effacée"
+      "role": "passerelle du programme Hilo d'Hydro-Québec — le distributeur d'électricité paie les ménages participants pour réduire leur consommation en période de pointe, et le fait via ce boîtier"
     },
     {
-      "class": "domotique",
-      "count": 1,
+      "class": "phone",
       "iacDeclared": false,
       "location": "wall-rack",
-      "name": "telephone-sip",
+      "model": "DP750",
+      "name": "sip-phone-01",
       "network": "vlan50",
       "rackOrder": 9,
       "role": "base téléphonique SIP"
@@ -104,7 +103,7 @@
       "name": "nas",
       "network": "vlan10",
       "rackOrder": 10,
-      "role": "NAS — stockage, médiathèque, export réseau pour le cluster"
+      "role": "NAS, export NFS du cluster et diffusion multimédia"
     },
     {
       "class": "ups",
@@ -114,7 +113,7 @@
       "name": "ups-01",
       "network": "out-of-band",
       "rackOrder": 11,
-      "role": "onduleur (baie murale)",
+      "role": "onduleur du rack mural",
       "spec": "700 VA, 1U"
     },
     {
@@ -125,7 +124,7 @@
       "name": "ups-02",
       "network": "out-of-band",
       "rackOrder": 12,
-      "role": "onduleur (baie murale)",
+      "role": "onduleur du rack mural",
       "spec": "700 VA, 1U"
     },
     {
@@ -149,7 +148,7 @@
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 2,
-      "role": "hôte de virtualisation, inférence LLM locale, poste de jeu",
+      "role": "hôte de virtualisation, jeux/IA locale",
       "spec": "RTX 3060"
     },
     {
@@ -161,7 +160,7 @@
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 3,
-      "role": "agent k3s, transcodage vidéo, GPU dédié à la vidéosurveillance"
+      "role": "agent k3s, GPU, transcodage vidéo"
     },
     {
       "class": "server",
@@ -172,7 +171,7 @@
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 4,
-      "role": "agent k3s, hôte de virtualisation, capture optique"
+      "role": "agent k3s, hôte de virtualisation, numérisation de disques"
     },
     {
       "class": "switch",
@@ -180,10 +179,11 @@
       "location": "rolling-rack",
       "model": "Netgear GS324",
       "name": "switch-02",
-      "network": "vlan10",
+      "network": "out-of-band",
+      "power": "ups-03",
       "rackOrder": 5,
-      "role": "commutateur réseau (infrastructure)",
-      "spec": "24 ports, sans ventilateur"
+      "role": "commutateur non géré du rack sur roulettes",
+      "spec": "24 ports"
     },
     {
       "class": "ups",
@@ -193,7 +193,7 @@
       "name": "ups-03",
       "network": "out-of-band",
       "rackOrder": 6,
-      "role": "onduleur (baie mobile), maître de coupure pour les hôtes de la baie",
+      "role": "onduleur du rack sur roulettes, maître NUT",
       "spec": "1500 VA, tour"
     },
     {
@@ -202,7 +202,7 @@
       "iacDeclared": true,
       "name": "vm-01",
       "network": "vlan10",
-      "role": "agent k3s"
+      "role": "agent k3s (VM)"
     },
     {
       "class": "vm",
@@ -210,7 +210,7 @@
       "iacDeclared": true,
       "name": "vm-02",
       "network": "vlan10",
-      "role": "agent k3s"
+      "role": "agent k3s (VM)"
     },
     {
       "class": "vm",
@@ -218,7 +218,7 @@
       "iacDeclared": true,
       "name": "vm-03",
       "network": "vlan10",
-      "role": "agent k3s"
+      "role": "agent k3s (VM)"
     },
     {
       "class": "vm",
@@ -226,8 +226,7 @@
       "iacDeclared": true,
       "name": "console-vm",
       "network": "vlan10",
-      "role": "console d'administration du cluster — pas un nœud k3s",
-      "spec": "6 vCPU, 16 Gio, 100 Go"
+      "role": "VM console — sessions d'agents IA, hors cluster k3s"
     },
     {
       "class": "cloud-vm",
@@ -235,52 +234,48 @@
       "location": "off-site",
       "name": "cloud-01",
       "network": "aws",
-      "role": "nœud de contrôle k3s (unique), etcd",
-      "spec": "t3a.medium"
+      "role": "nœud de contrôle unique du cluster k3s (control-plane)",
+      "spec": "t3a.medium, ca-central-1a"
     },
     {
       "class": "bmc",
       "hostedBy": "gpu-01",
       "iacDeclared": false,
+      "location": "rolling-rack",
       "model": "Supermicro X11SRA-RF",
-      "name": "gpu-01-bmc",
+      "name": "bmc-01",
       "network": "out-of-band",
-      "role": "gestion hors-bande (IPMI/iKVM)"
+      "role": "gestion hors bande (BMC) de la machine hôte"
     },
     {
       "class": "bmc",
       "hostedBy": "hyperv-host",
       "iacDeclared": false,
+      "location": "rolling-rack",
       "model": "Supermicro X11SRA-RF",
-      "name": "hyperv-host-bmc",
+      "name": "bmc-02",
       "network": "out-of-band",
-      "role": "gestion hors-bande (IPMI/iKVM)"
+      "role": "gestion hors bande (BMC) de la machine hôte"
     },
     {
       "class": "bmc",
       "hostedBy": "srv-01",
       "iacDeclared": false,
+      "location": "rolling-rack",
       "model": "Supermicro X9SCL/X9SCM",
-      "name": "srv-01-bmc",
+      "name": "bmc-03",
       "network": "out-of-band",
-      "role": "gestion hors-bande (IPMI/iKVM)"
+      "role": "gestion hors bande (BMC) de la machine hôte"
     },
     {
       "class": "bmc",
       "hostedBy": "gpu-02",
       "iacDeclared": false,
+      "location": "rolling-rack",
       "model": "Supermicro X9SCL/X9SCM",
-      "name": "gpu-02-bmc",
+      "name": "bmc-04",
       "network": "out-of-band",
-      "role": "gestion hors-bande (IPMI/iKVM)"
-    },
-    {
-      "class": "camera",
-      "iacDeclared": false,
-      "location": "not-racked",
-      "name": "cam-01",
-      "network": "vlan50",
-      "role": "caméra extérieure de surveillance"
+      "role": "gestion hors bande (BMC) de la machine hôte"
     },
     {
       "class": "printer",
@@ -297,7 +292,8 @@
       "location": "not-racked",
       "name": "laptop-01",
       "network": "vlan50",
-      "role": "poste personnel (portable)"
+      "role": "ordinateur portable personnel",
+      "spec": "Windows 11"
     },
     {
       "class": "desktop",
@@ -305,7 +301,7 @@
       "location": "not-racked",
       "name": "desktop-01",
       "network": "vlan50",
-      "role": "poste personnel (bureau)"
+      "role": "ordinateur de bureau personnel"
     },
     {
       "class": "phone",
@@ -317,53 +313,67 @@
       "role": "téléphone personnel"
     },
     {
+      "class": "camera",
+      "iacDeclared": false,
+      "location": "not-racked",
+      "model": "AD410",
+      "name": "camera-01",
+      "network": "vlan50",
+      "role": "caméra de surveillance extérieure, enregistrée par Frigate"
+    },
+    {
       "class": "domotique",
       "count": 6,
       "iacDeclared": false,
       "location": "not-racked",
+      "model": "TP-Link Kasa HS103 / KP303 / HS300",
       "name": "prises-intelligentes",
       "network": "vlan50",
-      "role": "prises et multiprises connectées"
-    },
-    {
-      "class": "domotique",
-      "count": 1,
-      "iacDeclared": false,
-      "location": "not-racked",
-      "name": "satellites-vocaux",
-      "network": "vlan50",
-      "role": "assistant vocal domestique"
+      "role": "prises et multiprises connectées (Home Assistant)"
     },
     {
       "class": "domotique",
       "count": 2,
       "iacDeclared": false,
       "location": "not-racked",
-      "name": "enceintes-connectees",
+      "model": "Google Home Mini",
+      "name": "assistants-google",
       "network": "vlan50",
-      "role": "haut-parleurs connectés"
+      "role": "haut-parleurs / assistants vocaux"
     },
     {
       "class": "domotique",
       "count": 1,
       "iacDeclared": false,
       "location": "not-racked",
-      "name": "sonnette-carillon",
+      "model": "Home Assistant Voice Preview Edition",
+      "name": "satellite-vocal-ha",
       "network": "vlan50",
-      "role": "carillon de sonnette connecté"
+      "role": "satellite vocal Home Assistant (salle à manger)"
     },
     {
       "class": "domotique",
       "count": 1,
       "iacDeclared": false,
       "location": "not-racked",
+      "model": "Home Assistant ChimePro",
+      "name": "carillon-porte",
+      "network": "vlan50",
+      "role": "carillon de porte connecté (Home Assistant)"
+    },
+    {
+      "class": "domotique",
+      "count": 1,
+      "iacDeclared": false,
+      "location": "not-racked",
+      "model": "D1MAX",
       "name": "projecteur",
       "network": "vlan50",
-      "role": "projecteur connecté"
+      "role": "projecteur Android"
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-08-09T20:50:49Z",
+  "generated": "2026-08-10T04:37:15Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

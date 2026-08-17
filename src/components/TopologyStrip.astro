@@ -2,27 +2,35 @@
 import { primaryCategory, categoryColorVar } from "../lib/category";
 
 interface Props {
-  posts: { data: { title: string; tags: string[] } }[];
+  posts: { id: string; data: { title: string; tags: string[] } }[];
+  basePath?: string;
 }
 
-const { posts } = Astro.props;
+const { posts, basePath = "/blog" } = Astro.props;
+
+// The lit port is the newest article — Bob claims credit for plugging it in.
+const litTitle = (title: string) =>
+  `Le dernier branché : « ${title} ». C'est moi qui l'ai câblé, évidemment.`;
 ---
 
-<div class="strip" role="img" aria-label={`${posts.length} articles publiés, chacun représenté par un port coloré selon sa catégorie`}>
+<nav class="strip" aria-label={`${posts.length} articles publiés, chacun représenté par un port coloré selon sa catégorie`}>
   {
     posts.map((post, i) => {
       const color = categoryColorVar(primaryCategory(post.data.tags));
+      const lit = i === 0;
       return (
-        <span
+        <a
           class="port"
-          class:list={[{ lit: i === 0 }]}
+          class:list={[{ lit }]}
           style={`--port-color: var(${color})`}
-          title={post.data.title}
+          href={`${basePath}/${post.id}/`}
+          title={lit ? litTitle(post.data.title) : post.data.title}
+          aria-label={post.data.title}
         />
       );
     })
   }
-</div>
+</nav>
 
 <style>
   .strip {
@@ -33,11 +41,21 @@ const { posts } = Astro.props;
   }
 
   .port {
+    display: block;
     width: 10px;
     height: 10px;
     border-radius: 2px;
     background: var(--port-color);
     opacity: 0.45;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .port:hover,
+  .port:focus-visible {
+    opacity: 1;
+    transform: scale(1.4);
+    outline: none;
+    box-shadow: 0 0 6px 1px var(--port-color);
   }
 
   .port.lit {

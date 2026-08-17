@@ -1,0 +1,53 @@
+---
+/**
+ * One rotating Bob status line for the footer.
+ *
+ * Same doctrine as bob-humor.ts: the server renders one pick as the no-JS
+ * fallback, the inline script re-rolls on load (a static build pushed to S3
+ * would otherwise freeze one line until the next deploy), and a click cycles.
+ * FR-only — the quip pool is French and the EN pages keep their plain footer.
+ */
+import { BOB_QUIPS } from "../lib/bob-humor";
+
+const initial = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
+---
+
+<p class="bob-status" title="Cliquer pour une autre">
+  <span class="prompt">$ bob --status</span>
+  <span id="bob-status-quip">{initial}</span>
+</p>
+
+<style>
+  .bob-status {
+    margin: 0.75rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .prompt {
+    color: var(--accent-live);
+    margin-right: 0.5rem;
+    user-select: none;
+  }
+</style>
+
+<script define:vars={{ quips: BOB_QUIPS }}>
+  const el = document.getElementById("bob-status-quip");
+  const line = el?.closest(".bob-status");
+
+  function roll() {
+    const current = el.textContent;
+    let next = current;
+    for (let i = 0; i < 2 && next === current; i++) {
+      next = quips[Math.floor(Math.random() * quips.length)];
+    }
+    el.textContent = next;
+  }
+
+  if (el && line) {
+    roll();
+    line.addEventListener("click", roll);
+  }
+</script>

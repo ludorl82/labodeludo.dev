@@ -1,4 +1,6 @@
 ---
+import { BOB_QUIPS } from "../lib/bob-humor";
+
 interface NavItem {
   href: string;
   label: string;
@@ -24,6 +26,7 @@ const shortcuts =
         ["gn / gp", "next / previous nav page"],
         ["g1-g9", "jump straight to nav page N"],
         ["Enter", "open focused post"],
+        [":bob", "summon Bob (one quip at a time)"],
         ["Esc", "clear focus / close this"],
         ["?", "toggle this cheat sheet"],
       ]
@@ -35,9 +38,17 @@ const shortcuts =
         ["gn / gp", "page de nav suivante / précédente"],
         ["g1-g9", "aller directement à la page de nav N"],
         ["Entrée", "ouvrir l'article ciblé"],
+        [":bob", "invoquer Bob (une réplique à la fois)"],
         ["Échap", "annuler le focus / fermer ceci"],
         ["?", "afficher / masquer cette aide"],
       ];
+
+const bobHint =
+  lang === "en" ? "n: another one · Esc: close" : "n : une autre · Échap : fermer";
+// Server-rendered pick as the initial quip; the script re-rolls on open so a
+// cached page doesn't always greet with the same line (same doctrine as
+// bob-humor.ts: never freeze a build-time pick as the only outcome).
+const initialQuip = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 
 const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
 ---
@@ -59,6 +70,18 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
 </div>
 
 <div id="sudo-toast" class="sudo-toast" hidden></div>
+
+<div id="bob-overlay" class="keyboard-help" hidden>
+  <div class="keyboard-help-panel">
+    <p class="keyboard-help-title">$ bob --quip</p>
+    <p id="bob-quip" class="bob-quip">{initialQuip}</p>
+    <p class="bob-hint">{bobHint}</p>
+  </div>
+</div>
+
+<div id="cmdline" class="cmdline" hidden aria-hidden="true">
+  <span id="cmdline-text">:</span><span class="cmdline-cursor"></span>
+</div>
 
 <style>
   .keyboard-help {
@@ -142,6 +165,53 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
     display: none;
   }
 
+  .bob-quip {
+    margin: 0 0 1rem;
+    color: var(--text);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .bob-hint {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+  }
+
+  .cmdline {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 300;
+    padding: 0.35rem 0.75rem;
+    background: var(--panel);
+    border-top: 1px solid var(--panel-border);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text);
+  }
+
+  .cmdline[hidden] {
+    display: none;
+  }
+
+  .cmdline-cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1em;
+    margin-left: 1px;
+    vertical-align: text-bottom;
+    background: var(--accent-live);
+    animation: cmdline-blink 1.1s steps(1, end) infinite;
+  }
+
+  @keyframes cmdline-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
   @keyframes sudo-glitch {
     0%,
     100% {
@@ -158,9 +228,13 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
   }
 </style>
 
-<script define:vars={{ lang, homeHref, pages }}>
+<script define:vars={{ lang, homeHref, pages, quips: BOB_QUIPS }}>
   const help = document.getElementById("keyboard-help");
   const toast = document.getElementById("sudo-toast");
+  const bobOverlay = document.getElementById("bob-overlay");
+  const bobQuip = document.getElementById("bob-quip");
+  const cmdline = document.getElementById("cmdline");
+  const cmdlineText = document.getElementById("cmdline-text");
   const links = Array.from(
     document.querySelectorAll(
       ".list .row-link, .authors .author-link, .items .item-link, .diagram .node-link"
@@ -169,6 +243,92 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
 
   function toggleHelp() {
     help.hidden = !help.hidden;
+  }
+
+  // --- vim-style command line (`:` … Enter) -------------------------------
+  let cmdBuffer = "";
+  let toastTimer;
+
+  function showToast(message, ms) {
+    toast.textContent = message;
+    toast.hidden = false;
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      toast.hidden = true;
+    }, ms);
+  }
+
+  function rollQuip() {
+    const current = bobQuip.textContent;
+    let next = current;
+    // Two draws is enough: pools this size collide rarely, and a repeat is
+    // in character anyway ("j'ai déjà dit ça ? ça reste vrai").
+    for (let i = 0; i < 2 && next === current; i++) {
+      next = quips[Math.floor(Math.random() * quips.length)];
+    }
+    bobQuip.textContent = next;
+  }
+
+  function openCmdline() {
+    cmdBuffer = "";
+    cmdlineText.textContent = ":";
+    cmdline.hidden = false;
+  }
+
+  function closeCmdline() {
+    cmdline.hidden = true;
+  }
+
+  function runCommand(cmd) {
+    if (cmd === "bob") {
+      rollQuip();
+      bobOverlay.hidden = false;
+      return;
+    }
+    if (cmd === "q" || cmd === "q!" || cmd === "wq") {
+      const msg =
+        lang === "en"
+          ? "E37: you cannot quit a homepage (this is not vim, sorry)"
+          : "E37 : on ne quitte pas une page d'accueil (ce n'est pas vim, désolé)";
+      showToast(msg, 4000);
+      return;
+    }
+    if (cmd !== "") {
+      const msg =
+        lang === "en"
+          ? `E492: Not an editor command: ${cmd}`
+          : `E492 : commande inconnue : ${cmd}`;
+      showToast(msg, 4000);
+    }
+  }
+
+  function handleCmdlineKey(e) {
+    if (e.key === "Escape") {
+      closeCmdline();
+    } else if (e.key === "Enter") {
+      closeCmdline();
+      runCommand(cmdBuffer);
+    } else if (e.key === "Backspace") {
+      if (cmdBuffer === "") {
+        closeCmdline();
+      } else {
+        cmdBuffer = cmdBuffer.slice(0, -1);
+        cmdlineText.textContent = ":" + cmdBuffer;
+      }
+    } else if (e.key.length === 1) {
+      cmdBuffer += e.key;
+      cmdlineText.textContent = ":" + cmdBuffer;
+    }
+    e.preventDefault();
+  }
+
+  function handleBobOverlayKey(e) {
+    if (e.key === "Escape" || e.key === "q") {
+      bobOverlay.hidden = true;
+    } else if (e.key === "n" || e.key === "j" || e.key === " " || e.key === "Enter") {
+      rollQuip();
+    }
+    e.preventDefault();
   }
 
   function focusAt(index) {
@@ -197,6 +357,25 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const tag = document.activeElement?.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    // Modal layers first: the command line and Bob's overlay swallow keys so
+    // the nav bindings below never fire underneath them.
+    if (!cmdline.hidden) {
+      handleCmdlineKey(e);
+      pendingG = false;
+      return;
+    }
+    if (!bobOverlay.hidden) {
+      handleBobOverlayKey(e);
+      pendingG = false;
+      return;
+    }
+    if (e.key === ":") {
+      e.preventDefault();
+      openCmdline();
+      pendingG = false;
+      return;
+    }
 
     if (e.key === "?") {
       e.preventDefault();
@@ -303,6 +482,14 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
     if (e.target === help) help.hidden = true;
   });
 
+  bobOverlay.addEventListener("click", (e) => {
+    if (e.target === bobOverlay) {
+      bobOverlay.hidden = true;
+    } else {
+      rollQuip();
+    }
+  });
+
   const KONAMI = [
     "arrowup",
     "arrowup",
@@ -316,7 +503,6 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
     "a",
   ];
   let progress = 0;
-  let toastTimer;
 
   document.addEventListener("keydown", (e) => {
     const key = e.key.toLowerCase();
@@ -328,14 +514,9 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
         lang === "en"
           ? "$ sudo su -\n[sudo] password for ludo: ********\nroot access granted (5s, don't tell ludo)"
           : "$ sudo su -\n[sudo] mot de passe pour ludo : ********\nAccès root accordé (5s, ne le dites pas à ludo)";
-      toast.textContent = message;
-      toast.hidden = false;
+      showToast(message, 5000);
       document.body.classList.add("sudo-glitch");
-      window.clearTimeout(toastTimer);
       window.setTimeout(() => document.body.classList.remove("sudo-glitch"), 500);
-      toastTimer = window.setTimeout(() => {
-        toast.hidden = true;
-      }, 5000);
     }
   });
 </script>

@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import Lightbox from "../components/Lightbox.astro";
 import EasterEggs from "../components/EasterEggs.astro";
+import BobStatusLine from "../components/BobStatusLine.astro";
 import { resolveOgImage, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT } from "../lib/ogImage";
 
 interface Props {
@@ -214,6 +215,7 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
             ))
           }
         </nav>
+        {lang === "fr" && <BobStatusLine />}
         <p class="kbd-hint">
           {lang === "en"
             ? "Tip: press ? for keyboard shortcuts."

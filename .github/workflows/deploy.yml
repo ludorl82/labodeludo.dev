@@ -7,19 +7,44 @@ jobs:
   # Staging publishes to Cloudflare Pages (project `labodeludo-dev`, custom
   # domain dev.labodeludo.dev). It used to `kubectl cp` a build into an nginx
   # pod backed by the cluster's only RWX NFS claim; static content needed
-  # neither the volume nor the pod, so both are gone. Nothing here touches
-  # k3s any more, which is why this runs on a GitHub-hosted runner rather
-  # than the in-cluster one — a public repo gets those minutes free, and
-  # staging no longer needs the cluster to be up to deploy.
+  # neither the volume nor the pod, so both are gone.
+  #
+  # It then ran on a GitHub-hosted runner for a while, because nothing here
+  # touched k3s: a public repo gets those minutes free, and staging could
+  # deploy while the cluster was down. That came back to bite on 2026-08-17 —
+  # dev.labodeludo.dev was serving an architecture diagram generated
+  # 2026-08-08 while prod served that morning's. Only deploy-prod re-derived
+  # the data, so staging rendered the CHECKED-IN architecture.json and lagged
+  # by days. Backwards, too: /architecture/live was built staging-first, yet
+  # staging was the one environment that could not refresh it.
+  #
+  # The derive step cannot run on a hosted runner: fetch-drift.py dials
+  # http://uptime-kuma.kuma.svc, an in-cluster Service. Kuma's public twin is
+  # behind Cloudflare Access, which is exactly why the stamping was put on an
+  # in-cluster runner with no credentials. So staging runs here now, and
+  # deliberately trades the free minutes and the deploy-while-cluster-is-down
+  # property for a preview that tells the truth.
   deploy-staging:
     if: github.ref != 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, k3s]
+    # One runner, shared with deploy-prod and the nightly Architecture
+    # workflow, and this job fires on EVERY non-main push — including the
+    # nightly sync's pushes to dev. Superseded staging builds are cancelled
+    # rather than queued behind each other; only the newest preview is worth
+    # anything. Job-level on purpose: at workflow level this would also cancel
+    # prod deploys, which must never be interrupted.
+    concurrency:
+      group: staging-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm ci
+      # The same fresh data and the same drift stamp as prod — that is what a
+      # preview is for. Join failures are non-fatal (the action's default).
+      - uses: ./.github/actions/derive-architecture
       # SHOW_LIVE_ARCH: /architecture/live is staging-only for now — its
       # getStaticPaths emits the page only when this is set, so the prod
       # job below builds the same tree without it.
@@ -64,34 +89,12 @@ jobs:
       # page — precisely the "stale green" fetch-drift.py's own docstring
       # says this file must never tell. Freshness is now a property of every
       # deploy instead of a race between two of them.
-      - name: Clone the public snapshots
-        # the four PUBLIC sanitized snapshots only — never the private repos;
-        # the sanitizers' fail-closed gates are the trust boundary
-        run: |
-          mkdir -p /tmp/topology-snapshots
-          for r in nixos-iac-public k3s-iac-public aws-iac-public cloudflare-iac-public; do
-            rm -rf "/tmp/topology-snapshots/$r"
-            git clone --depth 1 "https://github.com/ludorl82/$r.git" "/tmp/topology-snapshots/$r"
-          done
-      - name: Join topology
-        # NOT fatal here, unlike in architecture.yml. That workflow exists
-        # only to refresh this data, so a failed join means it has no reason
-        # to run; this one publishes the whole site, and a snapshot repo
-        # being briefly unjoinable must not block shipping a blog post. On
-        # failure we keep the committed architecture.json, which is exactly
-        # what it is for — and the page already shows its generation date,
-        # so falling back says so out loud.
-        run: |
-          python3 scripts/topology/join-topology.py /tmp/topology-snapshots \
-            || echo "join failed — falling back to the committed architecture.json"
-      - name: Stamp drift-check state
-        # runs whatever the join did: the badge's honesty must not depend on
-        # the snapshots being reachable. The runner is an in-cluster pod, so
-        # it reaches Kuma's public status-page API service-to-service — no
-        # Access, no credentials. fetch-drift fails open to "unknown" (never
-        # green) and exits 0, so a fallback build gets an honest badge rather
-        # than the previous build's answer.
-        run: python3 scripts/topology/fetch-drift.py http://uptime-kuma.kuma.svc
+      # Join failures are non-fatal here (the action's default), unlike in
+      # architecture.yml: that workflow exists only to refresh this data, so a
+      # failed join means it has no reason to continue, while this one
+      # publishes the whole site and a briefly unjoinable snapshot repo must
+      # not block shipping a blog post.
+      - uses: ./.github/actions/derive-architecture
       # SHOW_LIVE_ARCH is on in production since 2026-08-08. The generated
       # architecture and rack drawings are no longer a preview: they carry
       # their own generation date and drift badge, so they say how fresh

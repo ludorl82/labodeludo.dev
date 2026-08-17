@@ -1,0 +1,61 @@
+name: Derive architecture data
+description: >-
+  Rebuild src/data/architecture.json from the four PUBLIC sanitized snapshots
+  and stamp it with the current drift-check state.
+
+# Three workflows need this and used to carry their own copy of it: the two
+# deploy jobs and the nightly Architecture workflow. The copies were identical
+# except for one deliberate difference (see fail-on-join-error below), and the
+# thing most likely to drift between them was the repo list — add a fifth
+# snapshot repo and you would have to find all three. Now it is one list.
+#
+# Requires: actions/checkout to have run (this action is referenced by path),
+# python3, and git. All three callers run on [self-hosted, k3s], which is not
+# incidental — the drift stamp below dials an in-cluster Service address.
+
+inputs:
+  fail-on-join-error:
+    description: >-
+      Whether a failed join should fail the step. "true" for the nightly
+      Architecture workflow, which exists only to refresh this data and has no
+      reason to continue without it. "false" for the deploy jobs, which publish
+      the whole site: an unreachable snapshot repo must not block shipping a
+      blog post, and falling back to the committed architecture.json is exactly
+      what that file is for — the page renders its own generation date, so the
+      fallback says so out loud rather than pretending to be fresh.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Clone the public snapshots
+      # the four PUBLIC sanitized snapshots only — never the private repos;
+      # the sanitizers' fail-closed gates are the trust boundary
+      shell: bash
+      run: |
+        mkdir -p /tmp/topology-snapshots
+        for r in nixos-iac-public k3s-iac-public aws-iac-public cloudflare-iac-public; do
+          rm -rf "/tmp/topology-snapshots/$r"
+          git clone --depth 1 "https://github.com/ludorl82/$r.git" "/tmp/topology-snapshots/$r"
+        done
+
+    - name: Join topology
+      shell: bash
+      run: |
+        if [ "${{ inputs.fail-on-join-error }}" = "true" ]; then
+          python3 scripts/topology/join-topology.py /tmp/topology-snapshots
+        else
+          python3 scripts/topology/join-topology.py /tmp/topology-snapshots \
+            || echo "join failed — falling back to the committed architecture.json"
+        fi
+
+    - name: Stamp drift-check state
+      # runs whatever the join did: the badge's honesty must not depend on the
+      # snapshots being reachable. The runner is an in-cluster pod, so it
+      # reaches Kuma's public status-page API service-to-service — no Access,
+      # no credentials. fetch-drift fails open to "unknown" (never green) and
+      # exits 0, so a fallback build gets an honest badge rather than the
+      # previous build's answer.
+      shell: bash
+      run: python3 scripts/topology/fetch-drift.py http://uptime-kuma.kuma.svc

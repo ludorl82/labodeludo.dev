@@ -53,20 +53,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Clone the public snapshots
-        run: |
-          mkdir -p /tmp/topology-snapshots
-          for r in nixos-iac-public k3s-iac-public aws-iac-public cloudflare-iac-public; do
-            rm -rf "/tmp/topology-snapshots/$r"
-            git clone --depth 1 "https://github.com/ludorl82/$r.git" "/tmp/topology-snapshots/$r"
-          done
-      - name: Join topology
-        run: python3 scripts/topology/join-topology.py /tmp/topology-snapshots
-      - name: Stamp drift-check state
-        # the runner is an in-cluster pod, so it reaches Kuma's public
-        # status-page API service-to-service — no Access, no credentials.
-        # fetch-drift fails open to "unknown" (never green) and exits 0.
-        run: python3 scripts/topology/fetch-drift.py http://uptime-kuma.kuma.svc
+      # fail-on-join-error, unlike the deploy jobs: this workflow exists ONLY
+      # to refresh this data, so a failed join leaves it nothing to publish —
+      # better to go red and let the absence-shaped Kuma monitor say so than
+      # to re-ship yesterday's file as if it were tonight's.
+      - uses: ./.github/actions/derive-architecture
+        with:
+          fail-on-join-error: "true"
       - run: npm ci
       - run: npm run build
         env:

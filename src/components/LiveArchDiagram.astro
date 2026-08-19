@@ -105,11 +105,11 @@ const servedAtEdge = dnsNodes.filter(
 // ---- le parc, hors IaC -------------------------------------------------
 // fleet.json carries the boxes no repo declares: the switches, the AP, the
 // BMCs, the printer, the personal machines, the domotique. A device is
-// drawn ONCE: iacDeclared devices already have a box above (they come from
-// architecture.json), and so do the hors-IaC nodes the IaC references by
-// name — plus the onduleurs, which the UPS aggregate already stands for.
-// An empty devices array simply means the seed has not run: nothing is
-// drawn and nothing is said.
+// drawn ONCE: anything architecture.json already names has a box above —
+// hosts and the hors-IaC nodes the IaC references by name — plus the
+// onduleurs, which the UPS aggregate already stands for. An empty devices
+// array simply means the seed has not run: nothing is drawn and nothing is
+// said.
 type FDevice = {
   class: string;
   count?: number;
@@ -126,11 +126,19 @@ const drawnNames = new Set(
     .filter((n) => n.kind === "host" || n.kind === "external")
     .map((n) => n.label),
 );
+// Le dédoublonnage se fait sur ce qu'architecture.json contient VRAIMENT, pas
+// sur le drapeau iacDeclared du parc : le drapeau dit « déjà dessiné plus
+// haut », et il se trompe dès qu'une machine sort de l'IaC entre deux passes
+// du seed. S'y fier ferait disparaître l'appareil des deux bandes à la fois —
+// exactement l'angle mort que cette bande existe pour éclairer.
 const fleetExtras = fleetDevices.filter(
-  (d) =>
-    !d.iacDeclared &&
-    !drawnNames.has(d.name) &&
-    !(d.class === "ups" && upsCount > 0),
+  (d) => !drawnNames.has(d.name) && !(d.class === "ups" && upsCount > 0),
+);
+// La dérive dans l'autre sens : le parc les croit déclarés, l'IaC ne les nomme
+// plus. Ils restent branchés, ils tirent du courant, et plus aucun repo ne
+// répond d'eux — ça se dit.
+const orphans = fleetDevices.filter(
+  (d) => d.iacDeclared === true && !drawnNames.has(d.name),
 );
 const fleetUnits = fleetExtras.reduce((n, d) => n + (d.count ?? 1), 0);
 // the seam worth naming: an undeclared machine that nonetheless carries a
@@ -165,7 +173,13 @@ const CLASS_FR: Record<string, string> = {
   server: "serveur",
   switch: "commutateur",
   ups: "onduleur",
+  vm: "machine virtuelle",
 };
+// dit à voix haute dans l'aria-label plutôt qu'énuméré à la main : la liste
+// suit le parc au lieu de vieillir avec lui
+const fleetClasses = [
+  ...new Set(fleetExtras.map((d) => CLASS_FR[d.class] ?? d.class)),
+];
 const NET_ORDER = ["vlan10", "vlan50", "out-of-band"];
 const netOf = (d: FDevice) => d.network ?? "—";
 // known networks first, then anything the map has never heard of, so a new
@@ -197,8 +211,27 @@ const fleetBands = netKeys.map((net) => {
   return { net, label: NET_FR[net] ?? net, items };
 });
 const fleetBottom = fCursor;
+// les coutures que seul le croisement des deux graines voit
+const fleetNotes = [
+  ...carriers.map(
+    (c) =>
+      `↑ ${c.d.name} n'est déclaré nulle part et porte pourtant ` +
+      `${c.carried.join(", ")} — le cluster déborde de son IaC.`,
+  ),
+  ...(orphans.length
+    ? [
+        `↑ ${orphans.map((d) => d.name).join(", ")} : le parc les croit ` +
+          `déclarés, l'IaC ne les nomme plus — plus personne pour signer.`,
+      ]
+    : []),
+];
+// « jamais déclarés » serait faux dès qu'un orphelin est dans la bande : lui,
+// il l'a été.
+const fleetSubtitle = orphans.length
+  ? "bien branchés, pas (ou plus) déclarés : rien à allumer, aucune source à ouvrir"
+  : "bien branchés, jamais déclarés : rien à allumer, aucune source à ouvrir";
 const svgH = fleetExtras.length
-  ? fleetBottom + 26 + carriers.length * 14
+  ? fleetBottom + 26 + fleetNotes.length * 14
   : 1000;
 
 const appIds = kind("app").map((n) => n.id).join(" ");
@@ -234,10 +267,15 @@ const ariaLabel =
   ` Chaque boîte est cliquable et allume ce qui en dépend.` +
   (fleetExtras.length
     ? ` Une dernière bande montre le reste du parc : ${fleetUnits} ` +
-      `appareils bien réels — commutateurs, borne Wi-Fi, cartes de gestion ` +
-      `hors bande, imprimante, caméra, domotique, machines personnelles — ` +
-      `qu'aucun repo ne déclare, répartis sur ${netKeys.length} segments ` +
-      `réseau. Ceux-là n'ont pas de source à ouvrir, donc pas de clic.` +
+      `appareils bien réels — ${fleetClasses.join(", ")} — qu'aucun repo ne ` +
+      `déclare, répartis sur ${netKeys.length} segments réseau. Ceux-là ` +
+      `n'ont pas de source à ouvrir, donc pas de clic.` +
+      (orphans.length
+        ? ` ${orphans.length} d'entre eux ` +
+          `(${orphans.map((d) => d.name).join(", ")}) y figurent parce que ` +
+          `l'IaC a cessé de les nommer : le parc les croit encore déclarés, ` +
+          `plus aucun repo ne répond d'eux.`
+        : "") +
       (carriers.length
         ? ` ${carriers.length > 1 ? "Certains d'entre eux portent" : "L'un d'eux porte"} ` +
           `pourtant ${carriers.flatMap((c) => c.carried).join(", ")} : ` +
@@ -451,7 +489,7 @@ const ariaLabel =
           <path d={`M250,980 L250,${F_TOP}`} fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
           <rect x="40" y={F_TOP} width="680" height={fleetBottom - F_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" stroke-dasharray="4 3" />
           <text x="58" y={F_TOP + 26} font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">le reste du parc — {fleetUnits} appareils, zéro ligne d'IaC</text>
-          <text x="58" y={F_TOP + 43} font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">bien branchés, jamais déclarés : rien à allumer, aucune source à ouvrir</text>
+          <text x="58" y={F_TOP + 43} font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{fleetSubtitle}</text>
           {fleetBands.map((band) => (
             <g>
               <text x="58" y={band.items[0].y - 6} font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{band.label} — {band.items.length}</text>
@@ -465,8 +503,8 @@ const ariaLabel =
               ))}
             </g>
           ))}
-          {carriers.map((c, i) => (
-            <text x="58" y={fleetBottom + 18 + i * 14} font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">↑ {c.d.name} n'est déclaré nulle part et porte pourtant {c.carried.join(", ")} — le cluster déborde de son IaC.</text>
+          {fleetNotes.map((note, i) => (
+            <text x="58" y={fleetBottom + 18 + i * 14} font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">{note}</text>
           ))}
         </g>
       )}
@@ -478,7 +516,10 @@ const ariaLabel =
     ici et dans l'inventaire; un deuxième clic ouvre son fichier source.
     {fleetExtras.length > 0 &&
       " La bande du bas, elle, ne clique pas : c'est le reste du parc, qui " +
-        "existe, qui tire du courant, et qu'aucun commit n'a jamais vu passer."}
+        "existe, qui tire du courant, et " +
+        (orphans.length
+          ? "que plus aucun commit ne regarde."
+          : "qu'aucun commit n'a jamais vu passer.")}
   </figcaption>
 </figure>
 

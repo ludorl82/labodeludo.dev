@@ -49,6 +49,18 @@ const homeHosts = hosts.filter((h) => h.meta.class !== "cloud-vm");
 const cloudHost = hosts.find((h) => h.meta.class === "cloud-vm");
 const agents = hosts.filter((h) => h.meta.k3sRole === "agent");
 const k3sAgents = agents.length;
+// Machine NixOS ≠ nœud du cluster. La maison en héberge maintenant plusieurs
+// qui sont gérées par l'IaC sans jamais joindre k3s — le repère se lit sur
+// les arêtes member-of, pas sur l'appartenance à la bande « maison ».
+const clusterNode = kind("cluster")[0];
+const memberIds = new Set(
+  (arch.edges as any[])
+    .filter((e) => e.kind === "member-of" && e.to === clusterNode?.id)
+    .map((e) => e.from),
+);
+const inK3s = (h: TNode) => memberIds.has(h.id);
+const homeMembers = homeHosts.filter(inK3s);
+const homeOutside = homeHosts.filter((h) => !inK3s(h));
 const pinCount = (arch.edges as any[]).filter(
   (e) => e.kind === "pinned-to",
 ).length;
@@ -211,8 +223,15 @@ const ariaLabel =
   `maison compose — côté maison la liaison se termine sur le pare-feu hors ` +
   `IaC et aucun port n'y est ouvert — et qui héberge aussi un connecteur de ` +
   `tunnel. ${appCount} applications y tournent, dont ${pinCount} workloads ` +
-  `épinglés à une machine précise. Chaque boîte est cliquable et allume ce ` +
-  `qui en dépend.` +
+  `épinglés à une machine précise.` +
+  (homeOutside.length
+    ? ` Côté maison, être une machine NixOS ne veut pas dire être un nœud du ` +
+      `cluster : ${homeMembers.length} des ${homeHosts.length} en sont, les ` +
+      `${homeOutside.length} autres ` +
+      `(${homeOutside.map((h) => h.label).join(", ")}) sont gérées par l'IaC ` +
+      `sans jamais joindre k3s.`
+    : "") +
+  ` Chaque boîte est cliquable et allume ce qui en dépend.` +
   (fleetExtras.length
     ? ` Une dernière bande montre le reste du parc : ${fleetUnits} ` +
       `appareils bien réels — commutateurs, borne Wi-Fi, cartes de gestion ` +
@@ -356,10 +375,10 @@ const ariaLabel =
       {
         homeHosts.map((h, i) => (
           <a class="svg-node" data-node={h.id} href={src(h)}>
-            <title>{h.label} — {h.meta.class} · cliquer pour voir ce qui en dépend</title>
+            <title>{h.label} — {h.meta.class} · {inK3s(h) ? "nœud du cluster" : "gérée par l'IaC, hors cluster"} · cliquer pour voir ce qui en dépend</title>
             <rect x={64 + (i % 3) * 128} y={660 + Math.floor(i / 3) * 44} width="116" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
             <text x={122 + (i % 3) * 128} y={678 + Math.floor(i / 3) * 44} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{h.label}</text>
-            <text x={122 + (i % 3) * 128} y={690 + Math.floor(i / 3) * 44} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{h.meta.class}</text>
+            <text x={122 + (i % 3) * 128} y={690 + Math.floor(i / 3) * 44} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{h.meta.class}{inK3s(h) ? " · k3s" : ""}</text>
           </a>
         ))
       }
@@ -397,7 +416,10 @@ const ariaLabel =
           <text x="122" y="930" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">domotique · hors IaC</text>
         </a>
       )}
-      <text x="64" y="955" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — dessinés parce que l'IaC les référence, donc cliquables</text>
+      {homeOutside.length > 0 && (
+        <text x="64" y="944" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">« · k3s » : dans le cluster — {homeMembers.length} des {homeHosts.length} ; les autres : NixOS, zéro pod</text>
+      )}
+      <text x="64" y="957" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — dessinés parce que l'IaC les référence, donc cliquables</text>
 
       <!-- AWS -->
       <rect x="490" y="620" width="230" height="360" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />

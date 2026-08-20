@@ -69,9 +69,25 @@ def rule():
 
 def prompt(text, second=None):
     rule()
-    typed(f"{FG}{text}{R}", prefix=f"{GREEN}❯{R} ", d=0.6 if second else 1.8)
-    if second:
-        typed(f"{FG}{second}{R}", prefix=f"{GREEN}❯{R} ", d=1.8)
+    if second is None:
+        typed(f"{FG}{text}{R}", prefix=f"{GREEN}❯{R} ", d=1.8)
+    else:
+        # One continuous typing flow across the wrap: no end-of-line pause, no
+        # second prompt char — the composer just wraps, like the real TUI.
+        global t
+        out(f"{GREEN}❯{R} ")
+        pause(0.7)
+        out(FG)
+        for ch in text:
+            out(ch)
+            t += random.uniform(0.045, 0.115)
+        out(R + "\r\n  ")
+        out(FG)
+        for ch in second:
+            out(ch)
+            t += random.uniform(0.045, 0.115)
+        out(R + "\r\n")
+        pause(1.8)
     line()
 
 

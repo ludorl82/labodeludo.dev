@@ -174,15 +174,15 @@ cont(f"{FG}button.claude_window_ajouter{R}  opens window claude-N, Remote Contro
 cont(f"{FG}button.claude_window_enlever{R}  kills the highest-indexed window", 0.7)
 cont(f"{FG}sensor.claude_windows{R}         current window count, 60 s poll", 1.4)
 
-# --- 4. the payoff question ------------------------------------------------
-prompt("can i resume a session from remote control Claude app ?")
-says("Yes — that's the core of what Remote Control is for, and it works in")
-cont("both directions. Each window the button opens prints a session URL and")
-cont("registers with your account.", 1.1)
-says("Open that session in the app and you're driving the same session — same")
-cont("conversation, same working directory, same tmux window. It isn't a")
-cont("copy: type in the app and the tmux pane updates; type in the pane and")
-cont("the app follows.", 1.4)
+# --- 4. closing ----------------------------------------------------------
+# The session's final Q&A ("can i resume a session from remote control Claude
+# app?") is deliberately CUT: the real answer covered attaching to live
+# sessions and never actually answered the question as meant (resuming a
+# previously *closed* session from the app — which doesn't work; that still
+# takes /resume over ssh in the tmux pane). The page prose carries the honest
+# limitation instead. Condense by cutting, never by rewriting.
+says("Each window the button opens prints a session URL and registers with")
+cont("your account — open it in the app and you're driving the same session.", 1.4)
 line()
 line(f"  {DIM}A smart-home button that hires another Claude.{R}", 2.6)
 

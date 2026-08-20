@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the asciicast for the blind-BIOS saga (la Borne's conversion).
+"""Build the asciicast for the blind-BIOS saga (le poste's conversion).
 
 Condensed from the real session transcript of the gaming tower's migration
 (2026-08). The prompts and Claude's messages come from that session; timing is
@@ -7,7 +7,7 @@ compressed, the long waits and several detours (an HA cutover, a credential
 rotation) are cut.
 
 Hostnames are sanitized to match the article's fictional naming: the tower is
-`borne`, its BMC `borne-bmc`, and the fleet's build box is `gpu-01`. The
+`poste`, its BMC `poste-bmc`, and the fleet's build box is `gpu-01`. The
 technical narrative — Setup that renders nothing over serial, keystrokes that
 were never arriving, the MEBx wrong turn, Load Optimized Defaults bricking the
 boot, and the virtual-media escape hatch — is unchanged.
@@ -34,7 +34,7 @@ PINK = "\x1b[38;5;217m"  # logo
 BOLD = "\x1b[1m"
 R = "\x1b[0m"
 
-BRANCH = "nixos-borne"
+BRANCH = "nixos-poste"
 
 events, t = [], 0.0
 
@@ -126,7 +126,7 @@ cont("under Security. But the serial console shows nothing when Setup is open.",
 says("First a zero-risk input test: enter Setup and send Save & Exit. Nothing")
 cont("has been changed, so saving is a no-op — but if the machine reboots")
 cont("promptly, that proves BIOS is receiving serial input.", 1.2)
-running("Bash  ipmitool -H borne-bmc chassis bootdev bios && … sol activate")
+running("Bash  ipmitool -H poste-bmc chassis bootdev bios && … sol activate")
 spinner("Testing", "1m 12s", "1.4k")
 
 says(f"{GREEN}Breakthrough: BIOS is receiving serial input.{R} It was sitting in Setup,")
@@ -144,7 +144,7 @@ cont("suggests my model is wrong, not just the count.", 1.2)
 says("Three failures, and I'm searching blind in a space I can't observe —")
 cont("getting a feedback signal before spending more attempts. Windows can")
 cont("read the UEFI variables directly:", 1.0)
-running("Bash  ssh borne powershell -c \"Confirm-SecureBootUEFI; Get-UEFIVariable …\"")
+running("Bash  ssh poste powershell -c \"Confirm-SecureBootUEFI; Get-UEFIVariable …\"")
 spinner("Checking", "24s", "0.9k")
 says(f"SetupMode=0, SecureBoot=1, boot order untouched — {YELLOW}none of my three")
 cont(f"{YELLOW}attempts changed anything at all.{R}", 1.2)
@@ -173,7 +173,7 @@ prompt("yes load optimized defaults")
 running("Bash  ipmitool … sol activate   # ESC 3, then save")
 spinner("Resetting", "4m 40s", "2.6k")
 stop(
-    "I need to tell you plainly: the Load Optimized Defaults left borne",
+    "I need to tell you plainly: the Load Optimized Defaults left poste",
     "in a boot loop, and it is currently down.",
 )
 says("POST reaches code 72, goes dark, and restarts at code 32 roughly every")
@@ -204,7 +204,7 @@ cont("and use this same F11 machinery to pick the UEFI virtual CD.", 1.3)
 running("Bash  ipmitool … raw  # mount installer ISO over SMB, boot the virtual CD")
 spinner("Booting installer", "6m 20s", "4.1k")
 
-says(f"{GREEN}Root shell on borne{R} — booted the installer off virtual media, added")
+says(f"{GREEN}Root shell on poste{R} — booted the installer off virtual media, added")
 cont("gpu-01's key, SSH'd in. And a real diagnosis at last: the installer")
 cont(f"came up {YELLOW}LEGACY-BOOTED{R} while the NVMe holds a UEFI install.", 1.1)
 says("Load Optimized Defaults flipped the firmware to legacy/CSM — that's the")
@@ -217,7 +217,7 @@ cont("can strand this machine again.", 1.3)
 spinner("Installing", "11m 03s", "6.8k")
 
 # --- 7. payoff -----------------------------------------------------------
-says(f"{GREEN}borne is up on NixOS{R}, healthy, GitOps-managed — and no longer")
+says(f"{GREEN}poste is up on NixOS{R}, healthy, GitOps-managed — and no longer")
 cont("invisible: GRUB and the Linux console both render over the serial")
 cont("link now, so there is a real recovery channel.", 1.2)
 line()

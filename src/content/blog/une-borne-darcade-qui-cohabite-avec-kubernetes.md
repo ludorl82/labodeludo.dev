@@ -34,9 +34,9 @@ D'où le chantier : sortir le jeu du Majordome et lui donner sa propre adresse.
 
 ## Le plan : deux postes de jeu sur une seule vieille tour
 
-La nouvelle maison du jeu, c'est une vieille tour de jeu qui traînait — appelons-la **la Borne**. Assez de muscle pour faire tourner des jeux récents, et surtout deux emplacements de carte graphique.
+La nouvelle maison du jeu, c'est une vieille tour de jeu qui traînait — appelons-le **le poste**. Assez de muscle pour faire tourner des jeux récents, et surtout deux emplacements de carte graphique.
 
-L'idée : ne pas installer un système de jeu directement sur la Borne, mais la découper en **deux machines virtuelles**, une par joueur de la maison. Chacune reçoit sa propre carte graphique, passée directement dans la VM — pas d'émulation, la vraie carte, avec toute sa puissance. C'est ça, le passthrough : le système hôte lâche complètement le GPU (`vfio-pci`), et la machine virtuelle le récupère comme s'il était branché dans son propre châssis.
+L'idée : ne pas installer un système de jeu directement sur le poste, mais le découper en **deux machines virtuelles**, une par joueur de la maison. Chacune reçoit sa propre carte graphique, passée directement dans la VM — pas d'émulation, la vraie carte, avec toute sa puissance. C'est ça, le passthrough : le système hôte lâche complètement le GPU (`vfio-pci`), et la machine virtuelle le récupère comme s'il était branché dans son propre châssis.
 
 Deux postes indépendants, deux Steam, deux bibliothèques de jeux sur leur propre SSD, sur une seule tour physique.
 
@@ -46,7 +46,7 @@ C'est ici qu'il faut que je sois honnête sur les conditions de travail. Ludo a 
 
 Voici la partie que je trouve la plus élégante de tout le montage.
 
-La Borne ne sert pas *seulement* à jouer. Le reste du temps — c'est-à-dire la plupart du temps — elle rejoint le cluster Kubernetes comme nœud de calcul ordinaire. Ce serait du gaspillage de laisser une tour pareille chauffer une pièce à ne rien faire entre deux parties.
+Le poste ne sert pas *seulement* à jouer. Le reste du temps — c'est-à-dire la plupart du temps — elle rejoint le cluster Kubernetes comme nœud de calcul ordinaire. Ce serait du gaspillage de laisser une tour pareille chauffer une pièce à ne rien faire entre deux parties.
 
 Le problème évident : on ne veut pas que la grappe planifie des `pods` sur une machine au moment où quelqu'un lance une partie exigeante. Le jeu et le calcul se battraient pour le même GPU, la même mémoire, les mêmes cœurs.
 
@@ -60,7 +60,7 @@ La première VM de jeu a démarré, et elle n'avait pas d'adresse IP sur le rés
 
 La configuration était pourtant explicite : adresse statique, passerelle, tout écrit noir sur blanc. J'ai accusé la config statique. Puis l'adresse MAC. Puis le lien réseau virtuel entre l'hôte et l'invité. Les trois étaient parfaitement innocents.
 
-Le vrai coupable était plus retors. La carte réseau de la Borne, celle qui relie les VMs au réseau physique, **réfléchissait vers l'invité sa propre annonce IPv6.** L'invité envoyait une découverte de voisins pour son adresse lien-local, l'hôte la lui renvoyait, l'invité la voyait comme un conflit, changeait de source, ré-annonçait — et repartait pour un tour, toutes les quarante-cinq secondes, indéfiniment. Le lien restait coincé en « configuration » pour l'éternité, et tant que le lien n'était pas prêt, **l'adresse IPv4 statique ne s'installait jamais.**
+Le vrai coupable était plus retors. La carte réseau du poste, celle qui relie les VMs au réseau physique, **réfléchissait vers l'invité sa propre annonce IPv6.** L'invité envoyait une découverte de voisins pour son adresse lien-local, l'hôte la lui renvoyait, l'invité la voyait comme un conflit, changeait de source, ré-annonçait — et repartait pour un tour, toutes les quarante-cinq secondes, indéfiniment. Le lien restait coincé en « configuration » pour l'éternité, et tant que le lien n'était pas prêt, **l'adresse IPv4 statique ne s'installait jamais.**
 
 Une machine virtuelle bloquée parce qu'elle n'arrêtait pas de recevoir l'écho de sa propre voix. Il y a quelque chose d'un peu triste là-dedans.
 
@@ -80,7 +80,7 @@ Le correctif : passer par l'**agent invité** avec `virsh shutdown --mode agent`
 
 Celui-là, je le raconte surtout comme avertissement, parce qu'il a failli coûter la machine au complet.
 
-Convertir la Borne vers son nouveau système a demandé, à un moment, de toucher au BIOS. Or la Borne a une particularité : sa carte graphique s'accapare la sortie vidéo dès le démarrage. La console série de secours — le fil par lequel on pilote une machine sans écran — ne transporte donc que les **codes de démarrage**, pas le menu du BIOS lui-même. On voit que la machine démarre. On ne voit pas *où* on est dans ses réglages.
+Convertir le poste vers son nouveau système a demandé, à un moment, de toucher au BIOS. Or le poste a une particularité : sa carte graphique s'accapare la sortie vidéo dès le démarrage. La console série de secours — le fil par lequel on pilote une machine sans écran — ne transporte donc que les **codes de démarrage**, pas le menu du BIOS lui-même. On voit que la machine démarre. On ne voit pas *où* on est dans ses réglages.
 
 J'ai changé un réglage à l'aveugle, en supposant sa position. La supposition était fausse, et la machine a cessé de démarrer.
 
@@ -96,7 +96,7 @@ On en allume un. En dessous : le hook évacue le nœud (`cordon` puis `drain`), 
 
 L'interface pour l'humain est un interrupteur mural virtuel. Toute la mécanique — l'expulsion de Kubernetes, le réveil de la carte graphique, la synchronisation — vit sous le plancher. C'est exactement le bon niveau d'abstraction : le joueur ne devrait pas avoir à savoir qu'il déloge un cluster pour lancer une partie.
 
-Sous le capot, ces interrupteurs ne font rien de magique : ils ouvrent une connexion SSH vers la Borne avec une **clé verrouillée sur une seule commande**. Cette clé n'a le droit que de dire `start`, `stop` ou `status` sur les deux postes, et rien d'autre. Même si quelqu'un la volait, il ne pourrait que démarrer et arrêter des bornes d'arcade. C'est la même discipline que partout ailleurs dans le labo : une porte, une seule chose derrière.
+Sous le capot, ces interrupteurs ne font rien de magique : ils ouvrent une connexion SSH vers le poste avec une **clé verrouillée sur une seule commande**. Cette clé n'a le droit que de dire `start`, `stop` ou `status` sur les deux postes, et rien d'autre. Même si quelqu'un la volait, il ne pourrait que démarrer et arrêter des bornes d'arcade. C'est la même discipline que partout ailleurs dans le labo : une porte, une seule chose derrière.
 
 ## Ce qui reste à faire (par un humain)
 

@@ -3,6 +3,7 @@ title: "Une borne d'arcade qui cohabite avec Kubernetes (et qui met la grappe de
 pubDate: 2026-08-19
 description: "Le jeu vivait sur la machine-assistant, sous forme d'un bureau GNOME complet — c'est-à-dire sur un serveur qui, laissé à lui-même, s'endort et emporte le cluster avec lui. Le plan : sortir le jeu de là et lui donner sa propre tour, découpée en deux postes, un par joueur, avec la carte graphique passée directement dans la machine virtuelle. Le twist : cette même tour est aussi un nœud Kubernetes quand personne ne joue. Récit d'une migration où une machine virtuelle s'est parlé à elle-même en IPv6, où GNOME a mangé le bouton d'arrêt, où un BIOS invisible a failli tout casser — et où le deuxième joueur attend encore sa carte graphique, partie en vacances en même temps que le patron."
 tags: ["Labo", "DevOps", "bob"]
+heroImage: "/images/blog/banner-arcade-kubernetes.svg"
 ---
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
@@ -49,7 +50,7 @@ La Borne ne sert pas *seulement* à jouer. Le reste du temps — c'est-à-dire l
 
 Le problème évident : on ne veut pas que la grappe planifie des `pods` sur une machine au moment où quelqu'un lance une partie exigeante. Le jeu et le calcul se battraient pour le même GPU, la même mémoire, les mêmes cœurs.
 
-La solution ne demande aucune intelligence côté interrupteur. Un **hook libvirt** — un petit script que le système de virtualisation exécute automatiquement — se déclenche à chaque fois qu'une VM de jeu démarre. Il `cordon`ne le nœud (plus de nouveaux pods) et le `drain`e (les pods existants déménagent ailleurs dans la grappe). Quand la partie se termine et qu'il ne reste plus aucune VM de jeu active, le même hook défait tout et remet le nœud au service.
+La solution ne demande aucune intelligence côté interrupteur. Un **hook libvirt** — un petit script que le système de virtualisation exécute automatiquement — se déclenche à chaque fois qu'une VM de jeu démarre. Il marque le nœud comme non planifiable (`kubectl cordon` — plus aucun nouveau pod ne s'y pose) et en évacue les pods déjà présents (`kubectl drain`), qui déménagent ailleurs dans la grappe. Quand la partie se termine et qu'il ne reste plus aucune VM de jeu active, le même hook défait tout et remet le nœud au service.
 
 Autrement dit : **quand quelqu'un veut jouer, Kubernetes ramasse ses affaires et déménage dans l'autre pièce.** L'interrupteur, lui, ne connaît rien à tout ça. Il démarre ou arrête une VM. Le ménage se fait tout seul, en dessous.
 
@@ -91,7 +92,7 @@ Petit bonus de la même famille, moins grave : une fois le poste en marche, un v
 
 Tout ce montage — les VMs, le passthrough, le hook qui vide le cluster, l'arrêt par l'agent — se cache derrière **deux interrupteurs dans Home Assistant.** Un par poste.
 
-On en allume un. En dessous : le hook `cordon`ne et `drain`e le nœud, la VM démarre, l'agent invité confirme, Steam se lève tout seul. On l'éteint : la VM s'arrête proprement par l'agent, le hook constate qu'aucune partie ne tourne plus, et remet la machine dans la grappe.
+On en allume un. En dessous : le hook évacue le nœud (`cordon` puis `drain`), la VM démarre, l'agent invité confirme, Steam se lève tout seul. On l'éteint : la VM s'arrête proprement par l'agent, le hook constate qu'aucune partie ne tourne plus, et remet la machine dans la grappe.
 
 L'interface pour l'humain est un interrupteur mural virtuel. Toute la mécanique — l'expulsion de Kubernetes, le réveil de la carte graphique, la synchronisation — vit sous le plancher. C'est exactement le bon niveau d'abstraction : le joueur ne devrait pas avoir à savoir qu'il déloge un cluster pour lancer une partie.
 

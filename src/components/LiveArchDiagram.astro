@@ -65,11 +65,12 @@ const pinCount = (arch.edges as any[]).filter(
   (e) => e.kind === "pinned-to",
 ).length;
 const externals = kind("external");
+// Les onduleurs ont déjà quitté cette liste une fois : l'IaC les pilote
+// toujours (modules NUT), mais plus aucun nœud de topologie ne les nomme, donc
+// ils redescendent dans la bande du parc plus bas. upsCount reste le témoin de
+// ce va-et-vient — il décide dans quelle bande ils sont dessinés.
 const upsNodes = externals.filter((n) => n.id.startsWith("external:ups"));
 const upsCount = upsNodes.length;
-const nas = byId("external:nas");
-const router = byId("external:router");
-const ha01 = byId("external:ha-01");
 const tunnel = kind("tunnel")[0];
 const traefik = byId("app:traefik");
 const blogBucket = byId("bucket:labodeludo.dev");
@@ -102,14 +103,72 @@ const servedAtEdge = dnsNodes.filter(
   (n) => !routesTo.some((e) => e.from === n.id),
 );
 
+// ---- la bande « maison » ------------------------------------------------
+// Les machines ET les boîtes hors IaC se placent à partir des données. Elles
+// étaient énumérées à la main, ce qui a fini par se voir : le jour où les
+// onduleurs ont disparu de la topologie, leur case est restée vide au milieu
+// de la rangée. Une rangée qui se compte toute seule ne garde pas le trou de
+// celle qui s'en va — et accueille sans rien casser celle qui arrive.
+const SITE_TOP = 620;
+const H_X0 = 64;
+const H_COLS = 3;
+const H_PITCH_X = 128;
+const H_PITCH_Y = 44;
+const H_W = 116;
+const H_H = 34;
+const HOST_Y0 = 660;
+const cell = (i: number, y0: number) => ({
+  x: H_X0 + (i % H_COLS) * H_PITCH_X,
+  y: y0 + Math.floor(i / H_COLS) * H_PITCH_Y,
+});
+const hostRows = Math.ceil(homeHosts.length / H_COLS);
+// la rangée hors IaC descend avec la grille des machines : une machine de plus
+// pousse le reste vers le bas au lieu de lui rentrer dedans
+const EXT_Y0 = HOST_Y0 + hostRows * H_PITCH_Y + 26;
+const usesCount = (id: string) =>
+  (arch.edges as any[]).filter((e) => e.kind === "uses" && e.to === id).length;
+// les hors-IaC que le connecteur compose directement : c'est ce qui rend le
+// trait « origines hors cluster » vrai, et il vise maintenant les vraies cases
+const originIds = new Set(
+  routesTo.filter((e) => externalIds.has(e.to)).map((e) => e.to),
+);
+const extBoxes = externals.map((n, i) => {
+  const c = cell(i, EXT_Y0);
+  const uses = usesCount(n.id);
+  return {
+    n,
+    ...c,
+    row: Math.floor(i / H_COLS),
+    origin: originIds.has(n.id),
+    note: originIds.has(n.id)
+      ? "origine de tunnel"
+      : uses > 0
+        ? `${uses} usages déclarés`
+        : "référencé par l'IaC",
+  };
+});
+const extOrigins = extBoxes.filter((b) => b.origin);
+const railY = (row: number) => EXT_Y0 + row * H_PITCH_Y - 16;
+const railBottom = railY(
+  extOrigins.length ? Math.max(...extOrigins.map((b) => b.row)) : 0,
+);
+const extRows = Math.ceil(externals.length / H_COLS);
+const extBottom = EXT_Y0 + extRows * H_PITCH_Y - (H_PITCH_Y - H_H);
+const noteY1 = extBottom + 22;
+const noteY2 = noteY1 + 13;
+// le cadre des deux sites ne rétrécit jamais sous sa taille dessinée, mais il
+// grandit si le contenu le dépasse
+const SITE_BOTTOM = Math.max(980, noteY2 + 14);
+
 // ---- le parc, hors IaC -------------------------------------------------
 // fleet.json carries the boxes no repo declares: the switches, the AP, the
 // BMCs, the printer, the personal machines, the domotique. A device is
 // drawn ONCE: anything architecture.json already names has a box above —
 // hosts and the hors-IaC nodes the IaC references by name — plus the
-// onduleurs, which the UPS aggregate already stands for. An empty devices
-// array simply means the seed has not run: nothing is drawn and nothing is
-// said.
+// onduleurs, but ONLY while the topology still carries them. It no longer
+// does, so they land here instead of vanishing between the two bands. An
+// empty devices array simply means the seed has not run: nothing is drawn
+// and nothing is said.
 type FDevice = {
   class: string;
   count?: number;
@@ -191,7 +250,7 @@ const netKeys = [
 
 // laid out here rather than in the markup: the band grows DOWNWARD with the
 // fleet, and the viewBox grows with it
-const F_TOP = 1000;
+const F_TOP = SITE_BOTTOM + 20;
 const F_COLS = 5;
 const F_PITCH_X = 132;
 const F_CHIP_W = 124;
@@ -232,13 +291,12 @@ const fleetSubtitle = orphans.length
   : "bien branchés, jamais déclarés : rien à allumer, aucune source à ouvrir";
 const svgH = fleetExtras.length
   ? fleetBottom + 26 + fleetNotes.length * 14
-  : 1000;
+  : SITE_BOTTOM + 20;
 
 const appIds = kind("app").map((n) => n.id).join(" ");
 const agentIds = agents.map((n) => n.id).join(" ");
 const lambdaIds = kind("lambda").map((n) => n.id).join(" ");
 const bucketIds = kind("bucket").map((n) => n.id).join(" ");
-const upsIds = upsNodes.map((n) => n.id).join(" ");
 
 const ariaLabel =
   `Schéma d'architecture : les visiteurs entrent par Cloudflare (${dnsCount} ` +
@@ -263,6 +321,12 @@ const ariaLabel =
       `${homeOutside.length} autres ` +
       `(${homeOutside.map((h) => h.label).join(", ")}) sont gérées par l'IaC ` +
       `sans jamais joindre k3s.`
+    : "") +
+  (externals.length
+    ? ` Toujours côté maison, ${externals.length} boîtes en pointillés ` +
+      `(${externals.map((n) => n.label).join(", ")}) sont du matériel ` +
+      `qu'aucun repo ne déclare : elles ne sont là que parce que l'IaC les ` +
+      `nomme en passant, et c'est ce qui les rend cliquables.`
     : "") +
   ` Chaque boîte est cliquable et allume ce qui en dépend.` +
   (fleetExtras.length
@@ -333,10 +397,12 @@ const ariaLabel =
       <!-- les noms dont l'origine n'est PAS dans le cluster : le connecteur
            atteint une adresse LAN, le cluster n'est pas sur le chemin
            (décoratif — les boîtes hors IaC portent les nœuds) -->
-      {toExternal.length > 0 && (
+      {toExternal.length > 0 && extOrigins.length > 0 && (
         <g>
-          <path d="M100,200 L100,206 L22,206 L22,869 L58,869" fill="none" stroke="var(--accent-live)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
-          <path d="M22,869 L22,917 L58,917" fill="none" stroke="var(--accent-live)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
+          <path d={`M100,200 L100,206 L22,206 L22,${railBottom}`} fill="none" stroke="var(--accent-live)" stroke-width="1.4" stroke-dasharray="5 4" />
+          {extOrigins.map((b) => (
+            <path d={`M22,${railY(b.row)} L${b.x + H_W / 2},${railY(b.row)} L${b.x + H_W / 2},${b.y - 2}`} fill="none" stroke="var(--accent-live)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
+          ))}
           <text x="32" y="224" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{toExternal.length} noms publics → origines hors cluster,</text>
           <text x="32" y="237" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">atteintes en LAN par le connecteur</text>
         </g>
@@ -408,59 +474,39 @@ const ariaLabel =
       <path d="M565,550 L565,618" fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
 
       <!-- maison -->
-      <rect x="40" y="620" width="420" height="360" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
+      <rect x="40" y={SITE_TOP} width="420" height={SITE_BOTTOM - SITE_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
       <text x="58" y="644" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">maison — {homeHosts.length} machines NixOS</text>
       {
-        homeHosts.map((h, i) => (
-          <a class="svg-node" data-node={h.id} href={src(h)}>
-            <title>{h.label} — {h.meta.class} · {inK3s(h) ? "nœud du cluster" : "gérée par l'IaC, hors cluster"} · cliquer pour voir ce qui en dépend</title>
-            <rect x={64 + (i % 3) * 128} y={660 + Math.floor(i / 3) * 44} width="116" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-            <text x={122 + (i % 3) * 128} y={678 + Math.floor(i / 3) * 44} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{h.label}</text>
-            <text x={122 + (i % 3) * 128} y={690 + Math.floor(i / 3) * 44} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{h.meta.class}{inK3s(h) ? " · k3s" : ""}</text>
-          </a>
-        ))
+        homeHosts.map((h, i) => {
+          const c = cell(i, HOST_Y0);
+          return (
+            <a class="svg-node" data-node={h.id} href={src(h)}>
+              <title>{h.label} — {h.meta.class} · {inK3s(h) ? "nœud du cluster" : "gérée par l'IaC, hors cluster"} · cliquer pour voir ce qui en dépend</title>
+              <rect x={c.x} y={c.y} width={H_W} height={H_H} rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+              <text x={c.x + H_W / 2} y={c.y + 18} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{h.label}</text>
+              <text x={c.x + H_W / 2} y={c.y + 30} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{h.meta.class}{inK3s(h) ? " · k3s" : ""}</text>
+            </a>
+          );
+        })
       }
 
-      <!-- hors IaC, vu depuis ses bords : router / NAS / UPS / ha-01 -->
-      {router && (
-        <a class="svg-node" data-node={router.id} href={src(router)}>
-          <title>le pare-feu — hors IaC, origine de tunnel et terminaison WireGuard côté maison</title>
-          <rect x="64" y="852" width="116" height="34" rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
-          <text x="122" y="870" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">router</text>
-          <text x="122" y="882" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">pare-feu · hors IaC</text>
+      <!-- hors IaC, vu depuis ses bords : la rangée suit `externals`, elle
+           n'énumère plus personne à la main -->
+      {extBoxes.map(({ n, x, y, note }) => (
+        <a class="svg-node" data-node={n.id} href={src(n)}>
+          <title>{n.label} — hors IaC, {note}{n.meta.via ? ` · ${n.meta.via}` : ""} · cliquer pour voir ce qui s'y accroche</title>
+          <rect x={x} y={y} width={H_W} height={H_H} rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
+          <text x={x + H_W / 2} y={y + 18} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{n.label}</text>
+          <text x={x + H_W / 2} y={y + 30} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{note}</text>
         </a>
-      )}
-      {nas && (
-        <a class="svg-node" data-node={nas.id} href={src(nas)}>
-          <title>le NAS — hors IaC, référencé par NFS et plex</title>
-          <rect x="192" y="852" width="116" height="34" rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
-          <text x="250" y="870" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">nas</text>
-          <text x="250" y="882" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">NFS · plex · hors IaC</text>
-        </a>
-      )}
-      {upsCount > 0 && (
-        <g class="svg-node" data-nodes={upsIds}>
-          <title>les UPS — hors IaC, une par hôte maître NUT</title>
-          <rect x="320" y="852" width="116" height="34" rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
-          <text x="378" y="870" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{upsCount} UPS</text>
-          <text x="378" y="882" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">hors IaC</text>
-        </g>
-      )}
-      {ha01 && (
-        <a class="svg-node" data-node={ha01.id} href={src(ha01)}>
-          <title>la domotique — hors IaC, origine de tunnel</title>
-          <rect x="64" y="900" width="116" height="34" rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
-          <text x="122" y="918" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{ha01.label}</text>
-          <text x="122" y="930" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">domotique · hors IaC</text>
-        </a>
-      )}
+      ))}
       {homeOutside.length > 0 && (
-        <text x="64" y="944" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">« · k3s » : dans le cluster — {homeMembers.length} des {homeHosts.length} ; les autres : NixOS, zéro pod</text>
+        <text x="64" y={noteY1} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">« · k3s » : dans le cluster — {homeMembers.length} des {homeHosts.length} ; les autres : NixOS, zéro pod</text>
       )}
-      <text x="64" y="957" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — dessinés parce que l'IaC les référence, donc cliquables</text>
+      <text x="64" y={noteY2} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — dessinés parce que l'IaC les référence, donc cliquables</text>
 
       <!-- AWS -->
-      <rect x="490" y="620" width="230" height="360" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
+      <rect x="490" y={SITE_TOP} width="230" height={SITE_BOTTOM - SITE_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
       <text x="508" y="644" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">AWS ca-central</text>
       <a class="svg-node" data-node={cloudHost?.id} href={cloudHost && src(cloudHost)}>
         <title>cloud-01, côté matériel</title>
@@ -486,7 +532,7 @@ const ariaLabel =
            donc ni data-node ni data-nodes.) -->
       {fleetExtras.length > 0 && (
         <g>
-          <path d={`M250,980 L250,${F_TOP}`} fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
+          <path d={`M250,${SITE_BOTTOM} L250,${F_TOP}`} fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
           <rect x="40" y={F_TOP} width="680" height={fleetBottom - F_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" stroke-dasharray="4 3" />
           <text x="58" y={F_TOP + 26} font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">le reste du parc — {fleetUnits} appareils, zéro ligne d'IaC</text>
           <text x="58" y={F_TOP + 43} font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{fleetSubtitle}</text>

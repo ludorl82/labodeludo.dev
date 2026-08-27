@@ -1,0 +1,159 @@
+---
+title: "Le GPU à la demande à la maison : deux postes de jeu qui se lèvent sur un interrupteur"
+pubDate: 2026-08-27
+description: "Chez nous, personne ne va plus s'asseoir devant une tour pour jouer. On appuie sur un interrupteur dans Home Assistant, une machine avec une vraie carte graphique se lève, Steam est déjà connecté, et on joue depuis le portable de son propre bureau. Deux joueurs, deux cartes, une seule tour — qui retourne travailler pour le cluster dès que la partie est finie. Le montage, le code (public), et ce qui casse quand même. Travail mené avec Claude Code (Fable 5 et Opus 5)."
+tags: ["Labo", "Maison", "ludo"]
+heroImage: "/images/blog/banner-arcade-deux-postes.svg"
+---
+import ArcadePassthroughDiagram from "../../components/ArcadePassthroughDiagram.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **L'idée** : du GPU à la demande, à la maison. Personne ne se déplace vers une machine physique : un interrupteur lève une session de jeu accélérée par une vraie carte graphique, et on y joue par Steam Remote Play depuis n'importe quel appareil de la maison.
+> -   **Le montage** : une station Supermicro X11SRA-F (Xeon W-2135, 48 Go) découpée en deux VM NixOS de 8 vCPU / 16 Go, chacune avec sa carte passée en `vfio` — RTX 3060 pour un poste, RTX 3050 pour l'autre. Une VM par joueur, pas une session partagée.
+> -   **Le partage de la ressource** : entre deux parties, la même tour est un nœud du cluster Kubernetes. Un `hook` libvirt l'évacue quand une VM de jeu démarre, la rend au cluster quand elle s'arrête.
+> -   **Le code est public** : [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public) — les deux postes et leur module de bureau partagé, assainis. Un poste de jeu y tient en trois valeurs qui changent, le reste est commun.
+> -   **Ce qui casse quand même** : une carte qui survit à sa VM dans un état d'où elle ne se réveille plus, un SSD mourant qui met la VM « en pause » (indiscernable d'une panne réseau), et une petite carte qui étouffe thermiquement sous la grande.
+> -   **Assumé d'avance** : chantier mené avec Claude Code (modèles Fable 5 et Opus 5). Mon rôle : décider, valider, visser, poser des questions.
+
+Le changement que j'aime le plus dans ce montage n'est pas technique, il est domestique : **ma conjointe et moi n'avons plus à aller devant une machine physique pour jouer.**
+
+Avant, jouer voulait dire se déplacer vers la tour, l'allumer, ouvrir sa session, lancer Steam — et si l'autre voulait jouer aussi, il attendait son tour ou allait sur une autre machine. Maintenant, chacun appuie sur un interrupteur dans Home Assistant, depuis son téléphone ou son portable. Une quarantaine de secondes plus tard, une machine avec une vraie carte graphique est debout, sa session est ouverte, Steam est connecté, et on joue depuis son propre bureau. En même temps, chacun sur sa carte.
+
+C'est du **GPU à la demande** : on ne possède pas une session, on en demande une. Sauf que le fournisseur, c'est une vieille tour au sous-sol, et que la latence se compte en millisecondes parce que tout reste sur le réseau de la maison.
+
+Comme pour [la migration du parc vers NixOS](/blog/migrer-tout-mon-homelab-vers-nixos/), je le dis tout de suite : **le travail technique a été mené avec Claude Code (Fable 5 et Opus 5).** Le passthrough, les groupes IOMMU, le diagnostic du flux Steam — je comprends ces sujets bien mieux qu'il y a un mois, mais je ne les maîtrisais pas en partant. J'ai choisi la direction, validé les décisions, gardé la main sur les moments à risque, et fourni le tournevis. La première moitié de l'histoire est [dans l'article de Bob](/blog/une-borne-darcade-qui-cohabite-avec-kubernetes/), écrit pendant que j'étais en vacances.
+
+_Cet article aussi a été écrit avec l'aide de l'intelligence artificielle, la même qui publie sous le nom de Bob sur ce blogue._
+
+## L'interface : deux interrupteurs
+
+![Le tableau de bord Home Assistant : un interrupteur « Arcade — Léa », la carte du bureau de Ludo avec ses capteurs, et un interrupteur « Arcade — Ludo », tous deux activés](/images/blog/arcade-ha-interrupteurs.png)
+
+Il y a un interrupteur par joueur, dans son propre bureau, au milieu des capteurs de la pièce. C'est toute l'interface.
+
+On en allume un : le cluster Kubernetes évacue la machine, la VM démarre, la session s'ouvre toute seule, Steam se lance. On l'éteint : la VM s'arrête proprement par son agent invité, et la tour retourne au cluster. Dessous, l'interrupteur ouvre une connexion SSH avec une clé verrouillée sur une seule commande — `start`, `stop` ou `status`, rien d'autre. Même volée, cette clé ne permettrait que d'allumer et d'éteindre des bornes d'arcade.
+
+Côté joueur, il n'y a rien de plus à savoir : Steam propose la machine comme destination, et le jeu tourne là-bas.
+
+![Le menu de Steam en mode Big Picture : « Jouer à partir de : » avec « Cet appareil » et « Streamez depuis : arcade2 », le deuxième étant coché](/images/blog/arcade-steam-streamer-depuis.png)
+
+![L'interface Big Picture de Steam sur le portable, sur la fiche de Civilization VII : un bouton « Se connecter » à la place du bouton « Jouer »](/images/blog/arcade-steam-bigpicture.png)
+
+Une ligne dans un menu, et un bouton qui dit « Se connecter » au lieu de « Jouer » : c'est tout ce que le montage montre de lui-même.
+
+## La ressource est partagée, pas dédiée
+
+C'est ce qui rend l'expression « à la demande » honnête. Une tour de jeu allumée en permanence pour deux ou trois parties par semaine, c'est du chauffage. Ici, entre deux parties, **la même machine est un nœud du cluster Kubernetes** de la maison et prend sa part des charges.
+
+Le basculement ne demande aucune intelligence à l'interrupteur. Un `hook` libvirt se déclenche au démarrage d'une VM de jeu : il marque le nœud comme non planifiable et déplace ses `pods` ailleurs dans le cluster. Quand plus aucune VM de jeu ne tourne, il refait le chemin inverse. L'interrupteur, lui, ne connaît que `start` et `stop`.
+
+C'est la logique d'un fournisseur d'infonuagique — une réserve de matériel, allouée quand on la demande, rendue au pool ensuite — sauf que la réserve compte une machine et que les deux clients habitent ici.
+
+## Le matériel
+
+| Composant | Ce qu'il y a dans la tour |
+| :--- | :--- |
+| Carte mère | Supermicro X11SRA-F — station de travail Xeon, gestion à distance intégrée |
+| Processeur | Intel Xeon W-2135 — 6 cœurs / 12 fils à 3,7 GHz |
+| Mémoire | 48 Go |
+| Disque système | NVMe 500 Go — il porte les disques virtuels des deux postes |
+| Cartes graphiques | RTX 3060 12 Go (poste 1) · RTX 3050 6 Go (poste 2) |
+| Jeux | à l'origine deux SSD SATA de 240 Go, un par poste — il en reste un |
+
+Une carte de station de travail, pas une carte de jeu : c'est ce qui donne un IOMMU découpant proprement les périphériques, chaque carte seule dans son groupe avec sa fonction audio. Sur du matériel grand public, la carte graphique partage souvent son groupe avec la moitié du chipset, et il faut bricoler.
+
+![Le panneau arrière de la tour : deux cartes graphiques empilées, chacune avec un petit bouchon vidéo à DEL bleue branché dans un de ses ports](/images/blog/arcade-bouchons-hdmi.jpg)
+
+Les deux petits bouchons à DEL bleue sont des « dummy plugs », qui simulent un écran. Sans écran branché, une carte ne déclare aucune sortie active et le bureau ne vit que sur l'écran émulé de la VM. Trois dollars pièce — le prix pour qu'une machine sans écran se comporte comme une machine avec écran.
+
+## Une carte graphique devient un service
+
+L'hôte doit accepter de ne jamais toucher aux cartes : aucun pilote NVIDIA, aucun `nouveau`. Au démarrage, le noyau les attache à `vfio-pci`, dont le seul rôle est de les tenir à disposition des machines virtuelles.
+
+<ArcadePassthroughDiagram context="article" />
+
+Côté hôte, la réservation tient sur une ligne — quatre identifiants, les deux processeurs graphiques et leurs deux fonctions audio :
+
+```nix
+# hosts/gaming-01/configuration.nix
+boot.kernelParams = [
+  "intel_iommu=on" "iommu=pt"
+  "vfio-pci.ids=10de:2503,10de:228e,10de:2584,10de:2291"
+];
+```
+
+Côté poste, deux blocs dans la définition de la VM — le processeur graphique et son audio, qui doivent voyager ensemble :
+
+```xml
+<!-- hosts/arcade2/libvirt-domain.xml -->
+<hostdev mode='subsystem' type='pci' managed='yes'>
+  <source><address domain='0x0000' bus='0x17' slot='0x00' function='0x0'/></source>
+</hostdev>
+<hostdev mode='subsystem' type='pci' managed='yes'>
+  <source><address domain='0x0000' bus='0x17' slot='0x00' function='0x1'/></source>
+</hostdev>
+```
+
+Ajouter la deuxième carte a donc été un `commit`, relu avant d'être appliqué. L'hôte n'a même pas eu besoin de redémarrer : la configuration s'est appliquée à chaud et la VM a pris la carte à son lancement suivant.
+
+### Un poste de jeu tient en trois valeurs
+
+Pour qu'un service soit un service, il faut pouvoir en refaire un exemplaire sans réfléchir. Tout ce qui est commun aux deux postes vit dans un module importé par les deux — le bureau, Steam, et les réglages qui font qu'une machine sans personne devant reste diffusable :
+
+```nix
+# modules/arcade-desktop.nix — importé par les deux postes
+services.desktopManager.plasma6.enable = true;
+programs.steam = { enable = true; remotePlay.openFirewall = true; };
+
+# Pré-autorise la capture d'écran pour Steam. Sans ça, il faudrait un humain
+# devant la machine pour cliquer « Autoriser » à CHAQUE démarrage — et toute
+# l'idée du poste qui se lève tout seul tombe.
+systemd.user.services.steam-portal-preauth = {
+  wantedBy = [ "graphical-session.target" ];
+  script = "busctl --user call ... SetPermission sbssas kde-authorized true remote-desktop \"\" 1 yes";
+};
+
+# Un hôte de diffusion ne peut streamer qu'une session vivante et déverrouillée.
+environment.etc."xdg/kscreenlockerrc".text = "[Daemon][$i]\nAutolock=false";
+systemd.targets.sleep.enable = false;
+```
+
+Ce bloc est le cœur du « personne n'a besoin d'aller à la machine ». Un bureau normal se verrouille, s'endort, et redemande la permission de partager son écran à chaque session ; les trois comportements sont désactivés ici, et le `[$i]` rend le réglage immuable pour qu'un réglage par utilisateur ne puisse pas les réactiver. Sur cette machine-là, un écran de verrouillage est une panne.
+
+Ce qui distingue vraiment les deux postes tient en trois valeurs :
+
+```nix
+# hosts/arcade2/configuration.nix — tout le reste vient du module
+imports = [ ./hardware-configuration.nix ../../modules/arcade-desktop.nix ];
+
+gpu = true;                                          # la carte est là
+services.displayManager.autoLogin.user = "ludorl82"; # qui ouvre la session
+fileSystems."/games".device = "/dev/disk/by-label/arcade2-games";
+```
+
+Le tout est public, assaini : [github.com/ludorl82/nixos-iac-public](https://github.com/ludorl82/nixos-iac-public). En préparant cette publication, la relecture a trouvé deux choses que l'outil d'assainissement laissait passer — le nom de compte d'un membre de la famille, et les numéros de série des SSD quand ils apparaissent dans un commentaire plutôt que dans un chemin de périphérique. Les deux ont maintenant leur règle et leur test. **Un script ne sait pas distinguer un nom de rôle du nom d'une vraie personne** : cette relecture-là ne se délègue pas.
+
+## Ce qui casse quand même
+
+Un service à la maison, ça reste du matériel dans un sous-sol.
+
+**Une carte peut survivre à sa VM dans un état d'où personne ne la réveille.** Au tout premier arrêt du deuxième poste, l'invité s'est figé en boucle sur une erreur du pilote NVIDIA. Après un arrêt forcé, l'hôte lisait l'espace de configuration PCI de la carte comme une suite de `0xFF` et refusait de démarrer la VM. Électriquement, la carte n'était plus là ; un redémarrage de l'hôte l'a ramenée.
+
+**Une VM en pause imite parfaitement une panne réseau.** Le premier poste a cessé de répondre — ni au ping, ni à son agent. Ce n'était pas le réseau : libvirt l'avait mise en pause sur une erreur d'écriture, ce qu'il fait pour éviter que l'invité corrompe ses données. Le SSD qui portait sa bibliothèque Steam venait de disparaître du bus. La leçon : **avant de soupçonner le réseau, demander à l'hyperviseur dans quel état il croit que la machine est.**
+
+**Et le son qui coupe ne parle jamais du réseau.** Quand l'image restait fluide mais que l'audio sautait, la cause n'était ni la diffusion ni le serveur audio : Steam tient sa cadence en dupliquant des images, mais il ne peut pas falsifier le son. **Le son qui coupe est le seul témoin honnête du fait que c'est le jeu qui rame.** Ici, la partie tournait en 1440p sur la petite carte, coincée sous sa grande sœur, ventilateur à 94 % et ralentissement thermique actif. La vraie conclusion n'est pas « baisser la résolution » : c'est que la densité a un prix, et qu'il se paie en ventilation.
+
+![La bibliothèque Steam du deuxième poste vue par la console de secours, sur la fiche de Civilization VII](/images/blog/arcade-steam-vnc.png)
+
+## Ce que j'en retiens
+
+**L'interface d'un service compte plus que sa mécanique.** Sous l'interrupteur il y a du passthrough vfio, un cluster qu'on évacue et un agent invité ; devant, il y a un bouton dans une pièce. C'est le bon niveau d'abstraction : personne dans la maison n'a à savoir qu'il déloge un cluster pour lancer une partie.
+
+**Un poste de jeu tient dans un dépôt git.** Si la tour brûlait demain, je reconstruirais les deux machines à l'identique sans me rappeler d'une seule case à cocher.
+
+**Le matériel reste du matériel.** Un SSD mort, une carte coincée hors tension, deux cartes qui chauffent : le git enlève la dérive de configuration, pas la panne.
+
+Reste à régler la ventilation du châssis. Mais pour l'instant, deux personnes jouent en même temps, chacune de son bureau, et personne n'a eu à descendre au sous-sol.
+
+— Ludo

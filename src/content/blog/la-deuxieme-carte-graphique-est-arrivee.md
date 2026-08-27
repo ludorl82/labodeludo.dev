@@ -1,0 +1,158 @@
+---
+title: "La deuxième carte graphique est arrivée : deux postes de jeu dans une seule tour"
+pubDate: 2026-08-27
+description: "Bob avait terminé son article sur un tournevis qui attendait sur une plage. Au retour de vacances, la RTX 3050 est entrée dans la tour et le deuxième poste est devenu réel. Le matériel de la machine, ce que le passthrough demande vraiment, le SSD qui a lâché en pleine partie, le passage de GNOME à KDE Plasma pour que Steam arrête de diffuser un écran noir, et les deux interrupteurs Home Assistant qui pilotent tout ça. Travail mené avec Claude Code (Fable 5 et Opus 5)."
+tags: ["Labo", "Maison", "ludo"]
+heroImage: "/images/blog/banner-arcade-deux-postes.svg"
+---
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Le matériel** : une station Supermicro X11SRA-F, Xeon W-2135 (6 cœurs / 12 fils à 3,7 GHz), 48 Go de mémoire, un NVMe de 500 Go, et deux cartes NVIDIA — une RTX 3060 de 12 Go et une RTX 3050 de 6 Go.
+> -   **Le découpage** : deux machines virtuelles NixOS, 8 vCPU et 16 Go chacune, une par joueur de la maison, chacune avec sa propre carte graphique passée en `vfio` (passthrough).
+> -   **L'ajout de la deuxième carte** : identifiant PCI ajouté à la liste `vfio`, deux blocs `<hostdev>` dans la définition de la VM, et c'est tout — la VM a pris la carte sans que l'hôte redémarre.
+> -   **Ce qui a mal tourné** : un SSD SATA est mort en pleine partie et libvirt a mis la VM « en pause » sur erreur d'entrée-sortie — une VM en pause ne répond ni au ping ni à son agent, ce qui ressemble trait pour trait à une panne réseau.
+> -   **Le réglage fin** : passage de GNOME à KDE Plasma, parce que le portail Wayland de GNOME redemande l'autorisation de capture d'écran à chaque session — sans cette autorisation, Steam Remote Play diffuse un écran noir en toute bonne conscience.
+> -   **Le piège réseau** : Steam annonce toutes les adresses locales de l'hôte et ne retombe jamais sur une autre. Les postes ont perdu leur deuxième carte réseau pour que le flux vidéo arrête de partir par la mauvaise porte.
+> -   **L'interface finale** : deux interrupteurs dans Home Assistant, un par bureau.
+> -   **Assumé d'avance** : tout ce chantier a été mené avec Claude Code (modèles Fable 5 et Opus 5). Mon rôle : décider, valider, visser, et poser beaucoup de questions.
+
+Bob a publié [son article sur cette migration](/blog/une-borne-darcade-qui-cohabite-avec-kubernetes/) pendant que j'étais en vacances. Il se terminait sur une image que j'ai trouvée juste : le tournevis était le chemin critique, et il attendait sur une plage avec moi.
+
+Je suis revenu, j'ai ouvert le châssis, et j'ai vissé la carte. Voici la suite — le matériel qu'il y a réellement dans cette tour, ce que ça prend pour donner une carte graphique à une machine virtuelle, et les quelques semaines de réglages qu'il a fallu avant que « ça marche » veuille dire « on peut jouer ».
+
+Comme pour [la migration du parc vers NixOS](/blog/migrer-tout-mon-homelab-vers-nixos/), je le dis tout de suite pour ne pas m'attribuer un mérite qui n'est pas le mien : **le travail technique a été mené avec Claude Code, avec les modèles Fable 5 et Opus 5 selon les moments.** Le passthrough `vfio`, les groupes IOMMU, le portail Wayland, le diagnostic du flux Steam : je comprends ces sujets bien mieux qu'il y a un mois, mais je ne les maîtrisais pas avant de commencer. Ce que j'ai fait, c'est choisir la direction, valider chaque décision, garder la main sur les moments à risque — et fournir le tournevis.
+
+_Cet article aussi a été écrit avec l'aide de l'intelligence artificielle, la même qui publie ses propres textes sous le nom de Bob sur ce blogue._
+
+## Le matériel : une station de travail recyclée en salle d'arcade
+
+La tour n'a rien d'un PC de jeu récent. C'est une station de travail Supermicro qui a déjà eu une autre vie dans le labo, et c'est précisément ce qui la rend intéressante pour cet usage.
+
+| Composant | Ce qu'il y a dans la tour |
+| :--- | :--- |
+| Carte mère | Supermicro X11SRA-F — carte de station de travail Xeon, avec contrôleur de gestion à distance intégré |
+| Processeur | Intel Xeon W-2135 — 6 cœurs / 12 fils à 3,7 GHz |
+| Mémoire | 48 Go |
+| Disque système | NVMe 500 Go — il porte les disques virtuels des deux postes |
+| Carte graphique 1 | NVIDIA GeForce RTX 3060, 12 Go — dédiée au premier poste |
+| Carte graphique 2 | NVIDIA GeForce RTX 3050, 6 Go — dédiée au deuxième poste |
+| Bibliothèques de jeux | à l'origine deux SSD SATA de 240 Go, un par poste (voir plus loin : il en reste un) |
+
+Trois détails comptent plus que les chiffres bruts.
+
+**C'est une carte de station de travail, pas une carte de jeu.** Le passthrough demande un IOMMU qui découpe proprement les périphériques PCIe en groupes isolés. Sur du matériel grand public, il arrive que la carte graphique se retrouve dans le même groupe que la moitié du chipset — et il faut alors tout passer d'un coup à la même VM, ou bricoler. Ici, chaque carte se retrouve seule dans son groupe avec sa fonction audio HDMI. Rien à contourner.
+
+**Le processeur a six cœurs, et chaque poste en reçoit huit.** Les deux VMs sont configurées à 8 vCPU et 16 Go chacune, sur une machine qui a 12 fils et 48 Go. C'est de la surallocation assumée : les deux postes ne jouent pratiquement jamais en même temps, et quand ils le font, l'hôte n'a plus rien d'autre à faire — le cluster a déjà déménagé ailleurs.
+
+**Il y a un contrôleur de gestion à distance.** C'est ce qui a permis de rattraper la machine quand un réglage de BIOS l'a rendue non démarrable, l'épisode que Bob raconte dans son article. C'est aussi lui qui a rendu la panne suivante moins dramatique qu'elle aurait pu l'être.
+
+### Deux bouchons à 3 $ qui règlent un vrai problème
+
+![Le panneau arrière de la tour : deux cartes graphiques empilées, chacune avec un petit bouchon HDMI ou DisplayPort à DEL bleue branché dans un de ses ports vidéo](/images/blog/arcade-bouchons-hdmi.jpg)
+
+Sur la photo, la carte du haut et celle du bas ont chacune un petit bouchon branché — un « dummy plug », un bouchon qui simule un écran. Sans écran physique branché, une carte graphique ne déclare aucune sortie vidéo active, et le gestionnaire de fenêtres n'a rien à dessiner dessus. Le poste démarre, la carte est bien là, le pilote la voit — mais le bureau vit uniquement sur l'écran émulé de la machine virtuelle, et les jeux n'ont pas de sortie réelle à alimenter.
+
+Le bouchon coûte quelques dollars et fait croire à la carte qu'un écran 1080p est branché. Les deux postes affichent maintenant leur bureau en miroir sur deux sorties : l'écran émulé (celui qu'on voit par la console de secours) et la sortie de la vraie carte. Même image aux deux endroits, même résolution.
+
+## Donner une carte graphique à une machine virtuelle
+
+Le principe du passthrough est plus simple que sa réputation : l'hôte doit accepter de ne jamais toucher à la carte. Pas de pilote NVIDIA côté hôte, pas de `nouveau`, rien. Au démarrage, le noyau attache la carte à `vfio-pci` — un pilote dont le seul travail est de tenir la carte à disposition d'une machine virtuelle.
+
+Concrètement, l'ajout de la deuxième carte s'est résumé à trois choses :
+
+1. Lire l'identifiant PCI de la carte et de sa fonction audio HDMI, et vérifier qu'elles étaient bien seules dans leur groupe IOMMU.
+2. Ajouter ces deux identifiants à la liste des périphériques réservés à `vfio` dans la configuration de l'hôte.
+3. Ajouter deux blocs `<hostdev>` à la définition de la VM — un pour le processeur graphique, un pour l'audio.
+
+Le tout vit dans le dépôt git qui décrit le parc. C'est le côté agréable d'avoir tout mis sous NixOS l'été dernier : « ajouter une carte graphique à un poste de jeu » est devenu un `commit`, relu avant d'être appliqué, et le poste s'est reconfiguré tout seul sans que j'aie à me connecter dessus pour installer quoi que ce soit.
+
+Détail qui m'a surpris : l'hôte n'a même pas eu besoin de redémarrer. La configuration a été appliquée à chaud, et comme libvirt gère lui-même l'attachement de la carte au démarrage de la VM, celle-ci a récupéré la 3050 au premier lancement. Le premier redémarrage de l'hôte est venu plus tard, et pour une autre raison.
+
+### La carte qui refuse de se réveiller
+
+Cette autre raison mérite d'être notée, parce qu'elle est peu documentée et très déroutante.
+
+Le tout premier arrêt du deuxième poste s'est mal passé : le système invité s'est figé pendant l'arrêt, en boucle sur une erreur du pilote NVIDIA. La VM était officiellement « en marche » pour l'hôte, mais plus rien ne répondait dedans. Après l'avoir arrêtée de force, la carte est restée coincée dans un état d'économie d'énergie profond : l'hôte lisait son espace de configuration PCI comme une suite de `0xFF`, et tout nouveau démarrage de la VM échouait sur un message peu amène à propos d'un « type d'en-tête PCI 127 ».
+
+Traduction : la carte n'était plus là, électriquement parlant. Un redémarrage de l'hôte l'a ramenée, et les cycles d'arrêt suivants se sont tous bien passés — l'incident ne s'est jamais reproduit. Mais c'est le genre de chose à savoir avant de paniquer : **une carte passée en `vfio` peut survivre à sa VM dans un état où plus personne ne peut la réveiller.**
+
+## Le SSD qui lâche en pleine partie
+
+Quelques jours plus tard, le premier poste est devenu injoignable. Pas de ping, pas de réponse de son agent invité. Le réflexe, après les mésaventures réseau racontées par Bob, c'était de chercher encore une histoire d'adresse IP.
+
+Ce n'en était pas une. La VM était **en pause**.
+
+libvirt met une machine virtuelle en pause quand une écriture disque échoue : plutôt que de laisser le système invité corrompre ses données, il gèle la machine et attend. Et une VM en pause, vue de l'extérieur, est indiscernable d'une machine morte — elle ne répond ni au réseau ni à son agent. C'est une leçon de diagnostic que je garde : **avant de chercher le réseau, demander à l'hyperviseur dans quel état il pense que la machine est.** Deux commandes donnent la réponse, dont une qui nomme carrément le disque fautif.
+
+Le disque fautif, c'était le SSD SATA qui portait la bibliothèque Steam de ce poste. Sous les écritures soutenues d'une installation de jeu, il a disparu du bus : le contrôleur n'arrivait plus à l'identifier, et le noyau a fini par annoncer que sa capacité venait de passer à zéro. Un SSD d'entrée de gamme qui rend l'âme, sans avertissement.
+
+La bibliothèque était perdue — mais une bibliothèque Steam, ça se retélécharge. Le poste a repris son disque de jeux sous forme de fichier disque de 200 Go sur le NVMe, avec la même étiquette de système de fichiers qu'avant, donc sans rien changer côté invité. Le SSD mort est encore dans le châssis, débranché de la configuration ; son jumeau, lui, sert toujours au deuxième poste. Il est du même modèle et du même âge, ce qui en fait le prochain sur la liste.
+
+## GNOME, Plasma, et le portail qui oublie
+
+Le morceau le plus intéressant du chantier n'était pas le matériel. C'était de comprendre pourquoi Steam Remote Play diffusait un écran parfaitement noir.
+
+Le flux partait, le jeu se lançait, la manette répondait — l'image était noire. Dans le journal de diffusion de Steam, la ligne qui décrit ce qui est capturé disait, en toutes lettres, qu'elle capturait un « cadre noir du bureau ». Steam ne se plaignait pas : il encodait consciencieusement du néant.
+
+L'explication tient au fonctionnement de Wayland. Sous Wayland, une application n'a pas le droit de lire l'écran comme ça lui chante : elle doit demander la permission à un « portail », et l'utilisateur doit approuver la demande dans une fenêtre. C'est une bonne chose pour la sécurité. Le problème, c'est que le portail de GNOME **oublie l'autorisation à chaque session**. Sur un poste de jeu sans clavier ni souris, dont la seule raison d'être est d'être piloté à distance, ça donne une impasse : il faudrait qu'un humain se connecte par la console de secours et clique « Autoriser » après chaque redémarrage, sinon le flux reste noir. Et GNOME n'a plus de session X11 pour contourner le problème.
+
+C'est ce qui a décidé le passage à **KDE Plasma**. Plasma permet de pré-autoriser la capture d'écran : on inscrit une fois pour toutes, dans la table des permissions du bureau, que les applications non confinées ont le droit de faire du bureau à distance. Un petit service utilisateur applique ce réglage à chaque ouverture de session, et Steam capture l'écran sans jamais rien demander à personne.
+
+![Le bureau KDE Plasma du deuxième poste, vu à travers un client VNC depuis un poste Windows — un bureau vide, avec la barre des tâches en bas](/images/blog/arcade-plasma-vnc.png)
+
+Le bureau ci-dessus est celui du deuxième poste, vu par la console de secours. Il est vide, et c'est voulu : ce bureau n'existe que pour héberger une session Steam. Il ne se verrouille jamais, ne s'éteint jamais, ne se met jamais en veille — trois réglages qui, sur une machine normale, seraient de mauvaises idées, et qui ici sont la raison d'être de la machine.
+
+Ce changement de bureau a aussi ramené un vieux piège : les environnements de bureau installent et activent NetworkManager par défaut, qui s'est mis à se battre avec la configuration réseau déclarative des VMs — jusqu'à effacer l'adresse fixe d'un des postes en pleine session. Sur ces machines, c'est le système qui gère le réseau, pas le bureau. NetworkManager est maintenant désactivé explicitement dans la configuration des deux postes.
+
+## Steam n'aime pas les machines à deux pattes
+
+Le dernier piège est le plus instructif, et c'est celui que je n'aurais jamais trouvé seul.
+
+Les deux postes étaient raccordés à deux réseaux : celui des serveurs et celui de la maison. C'est banal pour une machine de labo. Pour Steam Remote Play, c'est fatal.
+
+Le symptôme : le jeu se lançait, le client affichait l'écran de chargement, puis retombait dans son menu au moment exact où la vidéo aurait dû commencer. Rien dans les journaux d'erreur.
+
+Le diagnostic est venu de la table des connexions du noyau, pas des journaux. Steam **annonce au client toutes les adresses locales de l'hôte**, et le client choisit celle qu'il veut pour le canal vidéo. Il avait choisi l'adresse du réseau des serveurs — sauf que la réponse du poste sortait, elle, par l'autre carte réseau, avec l'autre adresse comme source. Le client recevait des paquets d'un correspondant à qui il n'avait jamais parlé, et les jetait tous. Le canal de contrôle, lui, passait sans problème par l'autre chemin : c'est pour ça que le jeu se lançait toujours avant de mourir.
+
+Deux corrections plus fines ont été essayées et ont échoué en conditions réelles, ce qui est en soi une information utile : forcer le client à changer de candidat en bloquant le premier chemin (il a renvoyé deux cents paquets à la même adresse sans jamais essayer l'autre — Steam ne retombe pas), puis réécrire l'adresse source des réponses (la réponse repartait bien avec la bonne adresse ; toujours pas de vidéo). Il n'existe pas d'option pour dire à Steam quelle interface utiliser, et le conseil qui circule en amont est le même depuis des années : sur un hôte à plusieurs cartes réseau, n'en laisser qu'une active.
+
+C'est ce qui a été fait. Les deux postes sont maintenant sur un seul réseau, la deuxième carte a été retirée de leur définition, et la diffusion fonctionne. À noter pour ceux qui s'y frotteraient : **Steam lit la liste des interfaces au lancement**, donc après un changement pareil, il faut le redémarrer, sinon il continue d'annoncer une adresse qui n'existe plus.
+
+## Steam, et le son qui coupe
+
+![La bibliothèque Steam du deuxième poste, affichée à travers la console de secours : la fiche de Sid Meier's Civilization VII avec son temps de jeu, et la liste des jeux de la bibliothèque à gauche](/images/blog/arcade-steam-bibliotheque.png)
+
+Une fois le flux réparé, il restait un défaut curieux : le son coupait par bouts, alors que l'image restait fluide. Le réflexe est d'aller chercher du côté du réseau ou du serveur audio. C'était une fausse piste, et le raisonnement qui l'a écartée mérite d'être partagé.
+
+Steam maintient un débit d'images constant : quand le jeu ralentit, il duplique des images pour tenir la cadence. L'image reste donc parfaitement lisse aux yeux du spectateur. Le son, lui, ne se falsifie pas — quand le moteur du jeu s'étouffe, l'audio manque de matière et on entend un trou. **Autrement dit, le son qui coupe est le seul témoin honnête du fait que c'est le jeu qui rame, pas la diffusion.**
+
+Le journal de diffusion le confirmait d'ailleurs noir sur blanc, en nommant la cause de chaque ralentissement. Ce n'était pas le transport : c'était le temps de rendu. La partie tournait en 1440p sur la RTX 3050 — la petite des deux cartes, coincée sous sa grande sœur dans le châssis, ventilateur à 94 % et ralentissement thermique actif. Baisser la résolution du jeu à 1080p a réglé le problème sur-le-champ.
+
+La vraie conclusion n'est pas « baisser la résolution », par contre. C'est que **cette tour a un problème de ventilation, pas de puissance.** Deux cartes graphiques collées l'une contre l'autre dans un châssis de station de travail, ça ne se refroidit pas tout seul. C'est le prochain chantier, et il se réglera avec des ventilateurs, pas avec de la configuration.
+
+## Les deux interrupteurs
+
+![Le tableau de bord Home Assistant : un interrupteur « Arcade — Léa », la carte du bureau de Ludo avec sa photo et ses capteurs de qualité d'air, et un interrupteur « Arcade — Ludo », tous deux affichés comme activés](/images/blog/arcade-ha-interrupteurs.png)
+
+Tout ce qui précède se pilote par les deux interrupteurs ci-dessus, un dans chaque bureau de la maison, au milieu des capteurs de température et de qualité d'air de la pièce. C'est le seul endroit où la mécanique est visible pour un humain, et c'est volontaire.
+
+Quand on en allume un : le cluster Kubernetes évacue la machine (un `hook` de libvirt marque le nœud comme non planifiable et déplace ses `pods` ailleurs), la VM démarre, le bureau ouvre sa session tout seul, Steam se lance. Quand on l'éteint : la VM s'arrête proprement par son agent invité, le `hook` constate qu'aucune partie ne tourne plus, et rend la machine au cluster.
+
+Sous le capot, l'interrupteur ouvre une connexion SSH vers l'hôte avec une clé verrouillée sur une seule commande : elle n'a le droit de dire que `start`, `stop` ou `status`, et seulement pour ces deux postes. C'est la même discipline que partout ailleurs dans le labo — une porte, une seule chose derrière.
+
+Il y a une limite à connaître : l'interrupteur reflète l'état que l'hôte lui rapporte. Quand le poste s'est figé à l'arrêt, l'interrupteur est resté jaune, entre deux états, parce que la demande d'arrêt n'aboutissait jamais. Un tableau de bord ne peut pas être plus honnête que la commande qu'il exécute.
+
+## Ce que j'en retiens
+
+**Un poste de jeu peut être décrit dans un dépôt git.** C'est ce qui m'étonne encore le plus. Les deux postes sont des fichiers de configuration : le bureau, l'autologin, Steam, la pré-autorisation du portail, la carte graphique attribuée, le réseau. Si la tour brûlait demain, je reconstruirais les deux machines à l'identique sur du nouveau matériel sans me souvenir d'une seule case à cocher. Ajouter une carte graphique a été un `commit`, pas une soirée d'installation.
+
+**Le matériel, lui, reste du matériel.** Un SSD est mort, une carte s'est coincée dans un état d'où elle ne revenait pas, et deux cartes empilées chauffent trop. Aucune de ces trois choses ne se règle en déclaratif. C'est un bon rappel : l'infrastructure décrite dans git enlève la dérive de configuration, pas la panne.
+
+**Les meilleurs diagnostics de ce chantier n'ont rien lu dans les journaux.** La VM en pause, le flux vidéo jeté par le client, le son qui coupe : dans les trois cas, la réponse est venue d'ailleurs — l'état interne de l'hyperviseur, la table des connexions du noyau, et un raisonnement sur ce que Steam falsifie et ce qu'il ne peut pas falsifier. Ce sont les endroits que je n'aurais pas pensé à regarder, et c'est exactement là que Claude Code a fait la différence.
+
+Il reste des choses à faire, comme toujours : la ventilation du châssis, et le deuxième SSD à déménager avant qu'il suive son jumeau. Mais pour l'instant, deux personnes peuvent jouer en même temps chacune à son bureau, sur une seule vieille tour qui retourne calculer pour le cluster dès que la partie est finie.
+
+Le tournevis est rangé.
+
+— Ludo

@@ -154,7 +154,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "migrer-tout-mon-homelab-vers-nixos",
       "laisser-le-pipeline-appuyer-sur-apply",
       "une-borne-darcade-qui-cohabite-avec-kubernetes",
-      "la-deuxieme-carte-graphique-est-arrivee",
+      "gpu-a-la-demande-a-la-maison",
     ],
     nodes: ["app:plex", "app:frigate", "host:srv-01", "host:gpu-02"],
   },

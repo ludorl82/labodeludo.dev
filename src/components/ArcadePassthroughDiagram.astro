@@ -1,0 +1,211 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+  lang?: "fr" | "en";
+}
+
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma : dans la tour, deux cartes graphiques sont réservées au démarrage par leur identifiant PCI et attachées au pilote vfio-pci — l'hôte ne les utilise jamais. Chaque carte est ensuite attachée à une machine virtuelle de jeu par un bloc hostdev. Les deux machines virtuelles importent le même module de configuration, qui déclare une seule fois le bureau Plasma, la pré-autorisation du portail de capture, Steam et Remote Play, et l'interdiction de se verrouiller ou de se mettre en veille. Ne diffèrent d'une machine à l'autre que trois choses : la carte attribuée, l'utilisateur qui ouvre la session, et le disque de jeux.",
+    host: "la tour (hôte)",
+    hostSub: "boot.kernelParams : vfio-pci.ids=…",
+    hostNote: "l'hôte ne charge aucun pilote NVIDIA",
+    gpu1: "RTX 3060 · 12 Go",
+    gpu2: "RTX 3050 · 6 Go",
+    vfio: "vfio-pci",
+    hostdev: "<hostdev>",
+    vm1: "poste 1",
+    vm2: "poste 2",
+    vmSub: "VM NixOS · 8 vCPU · 16 Go",
+    shared: "modules/arcade-desktop.nix",
+    sharedSub: "déclaré une fois, importé deux fois",
+    s1: "Plasma 6 (Wayland) + SDDM",
+    s2: "pré-autorisation du portail",
+    s3: "Steam + Remote Play",
+    s4: "jamais de verrouillage ni de veille",
+    perHost: "par machine",
+    p1a: "carte : 3060",
+    p1b: "session : joueuse",
+    p1c: "jeux : qcow2 (NVMe)",
+    p2a: "carte : 3050",
+    p2b: "session : joueur",
+    p2c: "jeux : SSD SATA",
+  },
+  en: {
+    ariaLabel:
+      "Diagram: inside the tower, two graphics cards are claimed at boot by their PCI id and bound to the vfio-pci driver — the host never uses them. Each card is then attached to a gaming virtual machine through a hostdev block. Both virtual machines import the same configuration module, which declares the Plasma desktop, the capture-portal pre-authorization, Steam and Remote Play, and the ban on locking or sleeping, exactly once. Only three things differ between the machines: the card assigned to it, the user whose session opens, and the games disk.",
+    host: "the tower (host)",
+    hostSub: "boot.kernelParams: vfio-pci.ids=…",
+    hostNote: "the host loads no NVIDIA driver",
+    gpu1: "RTX 3060 · 12 GB",
+    gpu2: "RTX 3050 · 6 GB",
+    vfio: "vfio-pci",
+    hostdev: "<hostdev>",
+    vm1: "station 1",
+    vm2: "station 2",
+    vmSub: "NixOS VM · 8 vCPU · 16 GB",
+    shared: "modules/arcade-desktop.nix",
+    sharedSub: "declared once, imported twice",
+    s1: "Plasma 6 (Wayland) + SDDM",
+    s2: "portal pre-authorization",
+    s3: "Steam + Remote Play",
+    s4: "never locks, never sleeps",
+    perHost: "per machine",
+    p1a: "card: 3060",
+    p1b: "session: player one",
+    p1c: "games: qcow2 (NVMe)",
+    p2a: "card: 3050",
+    p2b: "session: player two",
+    p2c: "games: SATA SSD",
+  },
+} as const;
+
+const t = copy[lang];
+---
+
+<figure class="arcade-passthrough-diagram">
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 420" role="img" aria-label={t.ariaLabel}>
+      <defs>
+        <marker id="arc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="arc-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- l'hôte et ses deux cartes réservées -->
+      <rect x="20" y="40" width="250" height="200" rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="38" y="64" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.host}</text>
+      <text x="38" y="80" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.hostSub}</text>
+
+      <rect x="40" y="95" width="210" height="52" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="145" y="115" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">{t.gpu1}</text>
+      <text x="145" y="132" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.vfio}</text>
+
+      <rect x="40" y="157" width="210" height="52" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="145" y="177" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--text)">{t.gpu2}</text>
+      <text x="145" y="194" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.vfio}</text>
+
+      <text x="145" y="228" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.hostNote}</text>
+
+      <!-- attachement des cartes aux VMs -->
+      <path d="M252,121 L338,121" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#arc-arrow)" />
+      <path d="M252,183 L338,183" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#arc-arrow)" />
+      <text x="295" y="112" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.hostdev}</text>
+      <text x="295" y="174" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.hostdev}</text>
+
+      <!-- les deux postes -->
+      <rect x="340" y="88" width="230" height="66" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="455" y="112" text-anchor="middle" font-family="var(--font-display)" font-size="12.5" font-weight="600" fill="var(--text)">{t.vm1}</text>
+      <text x="455" y="130" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.vmSub}</text>
+
+      <rect x="340" y="150" width="230" height="66" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="455" y="174" text-anchor="middle" font-family="var(--font-display)" font-size="12.5" font-weight="600" fill="var(--text)">{t.vm2}</text>
+      <text x="455" y="192" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.vmSub}</text>
+
+
+      <!-- le module partagé -->
+      <rect x="620" y="60" width="258" height="184" rx="8" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="5 4" />
+      <text x="749" y="86" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent-live)">{t.shared}</text>
+      <text x="749" y="103" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">{t.sharedSub}</text>
+      <text x="640" y="132" font-family="var(--font-mono)" font-size="10" fill="var(--text)">— {t.s1}</text>
+      <text x="640" y="156" font-family="var(--font-mono)" font-size="10" fill="var(--text)">— {t.s2}</text>
+      <text x="640" y="180" font-family="var(--font-mono)" font-size="10" fill="var(--text)">— {t.s3}</text>
+      <text x="640" y="204" font-family="var(--font-mono)" font-size="10" fill="var(--text)">— {t.s4}</text>
+
+      <path d="M618,120 L592,120 L592,121 L574,121" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arc-arrow-live)" />
+      <path d="M618,184 L592,184 L592,183 L574,183" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arc-arrow-live)" />
+
+      <!-- le seul écart entre les deux machines -->
+      <rect x="340" y="286" width="538" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="360" y="308" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.perHost}</text>
+      <text x="360" y="332" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.vm1} :</text>
+      <text x="440" y="332" font-family="var(--font-mono)" font-size="10" fill="var(--text)">{t.p1a} · {t.p1b} · {t.p1c}</text>
+      <text x="360" y="356" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.vm2} :</text>
+      <text x="440" y="356" font-family="var(--font-mono)" font-size="10" fill="var(--text)">{t.p2a} · {t.p2b} · {t.p2c}</text>
+      <path d="M455,242 L455,288" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#arc-arrow)" />
+    </svg>
+  </div>
+  <figcaption>
+    {
+      context === "architecture" ? (
+        lang === "en" ? (
+          <>
+            Detail of the gaming tower in <a href="/inventaire/calcul-gpu/">GPU compute</a>: both cards are held by{" "}
+            <code>vfio-pci</code> so the host never touches them, and each is handed to one gaming VM. The desktop
+            those two machines share — Plasma, the capture-portal pre-authorization, Steam, the ban on sleeping —
+            is declared once in a module; only the card, the session user and the games disk differ. See the
+            article:{" "}
+            <a href="/en/blog/la-deuxieme-carte-graphique-est-arrivee/">the second graphics card arrived</a>.
+          </>
+        ) : (
+          <>
+            Détail de la tour de jeu dans le <a href="/inventaire/calcul-gpu/">calcul GPU</a> : les deux cartes
+            appartiennent à <code>vfio-pci</code>, donc l'hôte n'y touche jamais, et chacune est confiée à une VM de
+            jeu. Le bureau que ces deux machines partagent — Plasma, la pré-autorisation du portail de capture,
+            Steam, l'interdiction de dormir — est déclaré une seule fois dans un module ; seuls la carte,
+            l'utilisateur de la session et le disque de jeux diffèrent. Voir l'article :{" "}
+            <a href="/blog/la-deuxieme-carte-graphique-est-arrivee/">la deuxième carte graphique est arrivée</a>.
+          </>
+        )
+      ) : lang === "en" ? (
+        <>
+          The interesting line is the dashed one: two machines, one desktop declaration. What differs between them
+          is three values, not three configurations. See the <a href="/architecture/">architecture overview</a>.
+        </>
+      ) : (
+        <>
+          La ligne intéressante est la pointillée : deux machines, une seule déclaration de bureau. Ce qui les
+          distingue tient en trois valeurs, pas en trois configurations. Voir la{" "}
+          <a href="/architecture/">vue d'ensemble de l'architecture</a>.
+        </>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .arcade-passthrough-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+
+  figcaption code {
+    font-family: var(--font-mono);
+    background: var(--panel);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+</style>

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration: a server tower holding two graphics cards, each passed through to a gaming virtual machine; both stations stream to two players over Steam Remote Play, and two Home Assistant switches turn them on"><defs><linearGradient id="bgdp" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2a1f3d"></stop><stop offset="100%" stop-color="#1f3f6e"></stop></linearGradient><marker id="arrowdp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#ffb3ea"></path></marker><g id="gpudp"><rect x="0" y="0" width="26" height="15" rx="2" fill="#1d3350" stroke="#8fe3b0" stroke-width="1.2"></rect><rect x="3" y="3" width="9" height="9" rx="1" fill="#8fe3b0" opacity="0.8"></rect><path d="M 16 3 L 16 12 M 20 3 L 20 12 M 24 3 L 24 12" stroke="#8fe3b0" stroke-width="1" opacity="0.6"></path></g><g id="padd"><rect x="0" y="0" width="26" height="17" rx="6" fill="#1d3350" stroke="#8fe3b0" stroke-width="1.2"></rect><circle cx="8" cy="8.5" r="2.2" fill="#8fe3b0"></circle><circle cx="19" cy="8.5" r="2.2" fill="#8fe3b0"></circle></g></defs>
+
+<rect x="0" y="0" width="1024" height="320" fill="url(#bgdp)"></rect>
+<g fill="#ffffff" opacity="0.05"><ellipse cx="200" cy="54" rx="150" ry="40"></ellipse><ellipse cx="860" cy="70" rx="140" ry="40"></ellipse></g>
+<text x="512" y="52" text-anchor="middle" font-size="27" fill="#ffffff" font-weight="bold">One tower, two cards, two players</text>
+
+<rect x="66" y="96" width="344" height="196" rx="12" fill="#0d1b2a" stroke="#8fe3b0" stroke-width="2"></rect>
+<text x="238" y="126" text-anchor="middle" font-size="15" fill="#8fe3b0" font-weight="bold">one single tower</text>
+<rect x="88" y="142" width="300" height="52" rx="7" fill="#14243a" stroke="#4a6b8a" stroke-width="1"></rect>
+<use href="#gpudp" x="104" y="160"></use>
+<text x="144" y="164" font-size="13" fill="#d8f5e2" font-weight="bold">RTX 3060 · 12 GB</text>
+<text x="144" y="182" font-size="11.5" fill="#8aa7c4">passed to station 1</text>
+<rect x="88" y="204" width="300" height="52" rx="7" fill="#14243a" stroke="#4a6b8a" stroke-width="1"></rect>
+<use href="#gpudp" x="104" y="222"></use>
+<text x="144" y="226" font-size="13" fill="#d8f5e2" font-weight="bold">RTX 3050 · 6 GB</text>
+<text x="144" y="244" font-size="11.5" fill="#8aa7c4">passed to station 2</text>
+<text x="238" y="278" text-anchor="middle" font-size="11" fill="#6f8fb0">6-core Xeon · 48 GB · cluster node between games</text>
+
+<g stroke="#ffb3ea" stroke-width="3" fill="none" marker-end="url(#arrowdp)"><path d="M 424 168 L 516 168"></path><path d="M 424 230 L 516 230"></path></g>
+<text x="470" y="152" text-anchor="middle" font-size="11.5" fill="#ffb3ea" font-weight="bold">Remote Play</text>
+
+<rect x="540" y="142" width="212" height="52" rx="9" fill="#14243a" stroke="#8fe3b0" stroke-width="2"></rect>
+<use href="#padd" x="558" y="159"></use>
+<text x="598" y="164" font-size="13" fill="#d8f5e2" font-weight="bold">station 1</text>
+<text x="598" y="182" font-size="11.5" fill="#8aa7c4">player one's office</text>
+<rect x="540" y="204" width="212" height="52" rx="9" fill="#14243a" stroke="#8fe3b0" stroke-width="2"></rect>
+<use href="#padd" x="558" y="221"></use>
+<text x="598" y="226" font-size="13" fill="#d8f5e2" font-weight="bold">station 2</text>
+<text x="598" y="244" font-size="11.5" fill="#8aa7c4">player two's office</text>
+
+<rect x="792" y="96" width="196" height="196" rx="12" fill="#3a2a1f" stroke="#ffd27f" stroke-width="2"></rect>
+<text x="890" y="126" text-anchor="middle" font-size="14" fill="#ffe9c2" font-weight="bold">Home Assistant</text>
+<rect x="812" y="142" width="156" height="46" rx="7" fill="#2a1d13" stroke="#c9a45f" stroke-width="1"></rect>
+<rect x="826" y="157" width="16" height="16" rx="4" fill="#ffd27f"></rect>
+<text x="852" y="170" font-size="12.5" fill="#ffe9c2" font-weight="bold">Arcade — Léa</text>
+<rect x="812" y="200" width="156" height="46" rx="7" fill="#2a1d13" stroke="#c9a45f" stroke-width="1"></rect>
+<rect x="826" y="215" width="16" height="16" rx="4" fill="#ffd27f"></rect>
+<text x="852" y="228" font-size="12.5" fill="#ffe9c2" font-weight="bold">Arcade — Ludo</text>
+<text x="890" y="272" text-anchor="middle" font-size="11" fill="#c9a45f">two switches, nothing else</text>
+</svg>

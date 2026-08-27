@@ -5,6 +5,7 @@ description: "Bob avait terminé son article sur un tournevis qui attendait sur 
 tags: ["Labo", "Maison", "ludo"]
 heroImage: "/images/blog/banner-arcade-deux-postes.svg"
 ---
+import ArcadePassthroughDiagram from "../../components/ArcadePassthroughDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
@@ -15,6 +16,7 @@ heroImage: "/images/blog/banner-arcade-deux-postes.svg"
 > -   **Le réglage fin** : passage de GNOME à KDE Plasma, parce que le portail Wayland de GNOME redemande l'autorisation de capture d'écran à chaque session — sans cette autorisation, Steam Remote Play diffuse un écran noir en toute bonne conscience.
 > -   **Le piège réseau** : Steam annonce toutes les adresses locales de l'hôte et ne retombe jamais sur une autre. Les postes ont perdu leur deuxième carte réseau pour que le flux vidéo arrête de partir par la mauvaise porte.
 > -   **L'interface finale** : deux interrupteurs dans Home Assistant, un par bureau.
+> -   **Le code est public** : une copie assainie du dépôt qui décrit les deux postes est publiée avec l'article — hôtes, module de bureau partagé, définitions libvirt.
 > -   **Assumé d'avance** : tout ce chantier a été mené avec Claude Code (modèles Fable 5 et Opus 5). Mon rôle : décider, valider, visser, et poser beaucoup de questions.
 
 Bob a publié [son article sur cette migration](/blog/une-borne-darcade-qui-cohabite-avec-kubernetes/) pendant que j'étais en vacances. Il se terminait sur une image que j'ai trouvée juste : le tournevis était le chemin critique, et il attendait sur une plage avec moi.
@@ -65,6 +67,35 @@ Concrètement, l'ajout de la deuxième carte s'est résumé à trois choses :
 2. Ajouter ces deux identifiants à la liste des périphériques réservés à `vfio` dans la configuration de l'hôte.
 3. Ajouter deux blocs `<hostdev>` à la définition de la VM — un pour le processeur graphique, un pour l'audio.
 
+<ArcadePassthroughDiagram context="article" />
+
+En pratique, la réservation tient sur une ligne dans la configuration de l'hôte : les quatre identifiants sont ceux des deux processeurs graphiques et de leurs deux fonctions audio.
+
+```nix
+# hosts/gaming-01/configuration.nix — l'hôte réserve les deux cartes au boot
+boot.kernelParams = [
+  "intel_iommu=on" "iommu=pt"
+  "vfio-pci.ids=10de:2503,10de:228e,10de:2584,10de:2291"
+  "console=tty0" "console=ttyS1,115200n8"
+];
+```
+
+Et l'attribution d'une carte à un poste tient dans la définition de sa machine virtuelle, en deux blocs — le processeur graphique et sa fonction audio, qui doivent voyager ensemble :
+
+```xml
+<!-- hosts/arcade2/libvirt-domain.xml — la RTX 3050 et son audio HDMI -->
+<hostdev mode='subsystem' type='pci' managed='yes'>
+  <source>
+    <address domain='0x0000' bus='0x17' slot='0x00' function='0x0'/>
+  </source>
+</hostdev>
+<hostdev mode='subsystem' type='pci' managed='yes'>
+  <source>
+    <address domain='0x0000' bus='0x17' slot='0x00' function='0x1'/>
+  </source>
+</hostdev>
+```
+
 Le tout vit dans le dépôt git qui décrit le parc. C'est le côté agréable d'avoir tout mis sous NixOS l'été dernier : « ajouter une carte graphique à un poste de jeu » est devenu un `commit`, relu avant d'être appliqué, et le poste s'est reconfiguré tout seul sans que j'aie à me connecter dessus pour installer quoi que ce soit.
 
 Détail qui m'a surpris : l'hôte n'a même pas eu besoin de redémarrer. La configuration a été appliquée à chaud, et comme libvirt gère lui-même l'attachement de la carte au démarrage de la VM, celle-ci a récupéré la 3050 au premier lancement. Le premier redémarrage de l'hôte est venu plus tard, et pour une autre raison.
@@ -103,6 +134,50 @@ C'est ce qui a décidé le passage à **KDE Plasma**. Plasma permet de pré-auto
 
 Le bureau ci-dessus est celui du deuxième poste, vu par la console de secours. Il est vide, et c'est voulu : ce bureau n'existe que pour héberger une session Steam. Il ne se verrouille jamais, ne s'éteint jamais, ne se met jamais en veille — trois réglages qui, sur une machine normale, seraient de mauvaises idées, et qui ici sont la raison d'être de la machine.
 
+### Ce que les deux postes partagent, déclaré une seule fois
+
+Ce basculement vers Plasma a été l'occasion de sortir tout ce qui est commun aux deux postes dans un module unique, importé par les deux. Il se lit comme la liste des choses qu'un poste de jeu à distance doit accepter d'être.
+
+```nix
+# modules/arcade-desktop.nix — importé par les deux postes
+services.displayManager.sddm = { enable = true; wayland.enable = true; };
+services.desktopManager.plasma6.enable = true;
+services.displayManager.autoLogin.enable = true;   # l'utilisateur est par machine
+
+programs.steam = { enable = true; remotePlay.openFirewall = true; };
+
+# Pré-autorise l'app-id vide (les applications non confinées, donc Steam)
+# pour le portail RemoteDesktop. Sans ça : capture d'un écran noir.
+systemd.user.services.steam-portal-preauth = {
+  wantedBy = [ "graphical-session.target" ];
+  serviceConfig.Type = "oneshot";
+  script = "busctl --user call org.freedesktop.impl.portal.PermissionStore ...
+            SetPermission sbssas kde-authorized true remote-desktop \"\" 1 yes";
+};
+
+# Un hôte de diffusion ne peut streamer qu'une session vivante et déverrouillée.
+environment.etc."xdg/kscreenlockerrc".text = "[Daemon][$i]\nAutolock=false\nLockOnResume=false";
+systemd.targets.sleep.enable = false;
+systemd.targets.suspend.enable = false;
+```
+
+Le `[$i]` dans le fichier de configuration de KDE n'est pas décoratif : il marque le groupe comme immuable, donc un réglage par utilisateur ne peut pas réactiver le verrouillage d'écran par accident. Sur une machine dont la seule fonction est d'être regardée à distance, un écran de verrouillage est une panne.
+
+À côté de ça, ce qui distingue vraiment les deux postes tient en trois valeurs :
+
+```nix
+# hosts/arcade2/configuration.nix — tout le reste vient du module
+imports = [ ./hardware-configuration.nix ../../modules/arcade-desktop.nix ];
+
+gpu = true;                                          # la carte est là
+services.displayManager.autoLogin.user = "ludorl82"; # qui ouvre la session
+fileSystems."/games".device = "/dev/disk/by-label/arcade2-games";
+```
+
+**Le code des deux postes est public.** Une copie assainie du dépôt qui décrit le parc accompagne cet article — noms de machines, adresses, numéros de série et clés remplacés par des équivalents fictifs, mais les fichiers et les commentaires sont ceux qui tournent vraiment : [github.com/ludorl82/nixos-iac-public](https://github.com/ludorl82/nixos-iac-public). Les deux postes s'y trouvent sous `hosts/arcade1` et `hosts/arcade2`, le module partagé sous `modules/arcade-desktop.nix`.
+
+Parenthèse honnête sur cette publication : en préparant l'instantané, la relecture a trouvé deux choses que l'outil d'assainissement laissait passer — le nom de compte de ma conjointe, et les numéros de série des SSD quand ils apparaissent dans un commentaire plutôt que dans un chemin de périphérique. Les deux ont maintenant leur règle et leur test, et l'outil refuse de publier si ça se reproduit. C'est le genre de vérification qui ne se délègue pas complètement : un script ne sait pas distinguer un nom de rôle du nom d'une vraie personne.
+
 Ce changement de bureau a aussi ramené un vieux piège : les environnements de bureau installent et activent NetworkManager par défaut, qui s'est mis à se battre avec la configuration réseau déclarative des VMs — jusqu'à effacer l'adresse fixe d'un des postes en pleine session. Sur ces machines, c'est le système qui gère le réseau, pas le bureau. NetworkManager est maintenant désactivé explicitement dans la configuration des deux postes.
 
 ## Steam n'aime pas les machines à deux pattes
@@ -119,9 +194,19 @@ Deux corrections plus fines ont été essayées et ont échoué en conditions r�
 
 C'est ce qui a été fait. Les deux postes sont maintenant sur un seul réseau, la deuxième carte a été retirée de leur définition, et la diffusion fonctionne. À noter pour ceux qui s'y frotteraient : **Steam lit la liste des interfaces au lancement**, donc après un changement pareil, il faut le redémarrer, sinon il continue d'annoncer une adresse qui n'existe plus.
 
+Une fois tout ça réglé, voici à quoi ressemble le résultat côté joueur — c'est le seul endroit de toute la chaîne où le montage se montre, et il tient dans une ligne d'un menu :
+
+![Le menu de Steam en mode Big Picture sur le portable : « Jouer à partir de : » avec deux choix, « Cet appareil » et « Streamez depuis : arcade2 », le deuxième étant coché](/images/blog/arcade-steam-streamer-depuis.png)
+
+Le portable a la même bibliothèque, le même compte et la même partie — il choisit simplement de faire tourner le jeu sur le poste de l'autre pièce plutôt que sur sa propre carte graphique.
+
 ## Steam, et le son qui coupe
 
 ![La bibliothèque Steam du deuxième poste, affichée à travers la console de secours : la fiche de Sid Meier's Civilization VII avec son temps de jeu, et la liste des jeux de la bibliothèque à gauche](/images/blog/arcade-steam-bibliotheque.png)
+
+![L'interface Big Picture de Steam sur le portable, sur la fiche de Civilization VII : le bouton « Se connecter » à la place du bouton « Jouer », avec le temps de jeu et les manettes détectées](/images/blog/arcade-steam-bigpicture.png)
+
+Le bouton du haut ne dit plus « Jouer » mais « Se connecter » : c'est la seule différence visible entre lancer un jeu et se brancher sur une machine qui va le lancer pour nous.
 
 Une fois le flux réparé, il restait un défaut curieux : le son coupait par bouts, alors que l'image restait fluide. Le réflexe est d'aller chercher du côté du réseau ou du serveur audio. C'était une fausse piste, et le raisonnement qui l'a écartée mérite d'être partagé.
 

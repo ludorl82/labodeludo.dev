@@ -1,0 +1,243 @@
+---
+title: "The second graphics card arrived: two gaming stations in a single tower"
+pubDate: 2026-08-27
+description: "Bob ended his article on a screwdriver waiting on a beach. Back from vacation, the RTX 3050 went into the tower and the second station became real. The machine's hardware, what passthrough actually demands, the SSD that died mid-game, the move from GNOME to KDE Plasma so Steam would stop streaming a black screen, and the two Home Assistant switches that drive it all. Work done with Claude Code (Fable 5 and Opus 5)."
+tags: ["Labo", "Maison", "ludo"]
+heroImage: "/images/blog/banner-arcade-deux-postes-en.svg"
+---
+import ArcadePassthroughDiagram from "../../components/ArcadePassthroughDiagram.astro";
+
+> **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
+>
+> -   **The hardware**: a Supermicro X11SRA-F workstation, Xeon W-2135 (6 cores / 12 threads at 3.7 GHz), 48 GB of memory, a 500 GB NVMe, and two NVIDIA cards — an RTX 3060 with 12 GB and an RTX 3050 with 6 GB.
+> -   **The split**: two NixOS virtual machines, 8 vCPU and 16 GB each, one per player in the house, each with its own graphics card passed through with `vfio`.
+> -   **Adding the second card**: PCI id added to the `vfio` reservation list, two `<hostdev>` blocks in the VM definition, and that is all — the VM claimed the card without the host rebooting.
+> -   **What went wrong**: a SATA SSD died mid-game and libvirt put the VM into "paused" on an I/O error — a paused VM answers neither ping nor its guest agent, which looks exactly like a network outage.
+> -   **The fine tuning**: moving from GNOME to KDE Plasma, because GNOME's Wayland portal re-asks for screen-capture permission every session — without that grant, Steam Remote Play streams a black screen in perfectly good conscience.
+> -   **The network trap**: Steam advertises every local address of the host and never falls back to another one. The stations lost their second network card so the video stream would stop leaving by the wrong door.
+> -   **The final interface**: two switches in Home Assistant, one per office.
+> -   **The code is public**: a sanitized copy of the repository describing both stations ships with this article — hosts, shared desktop module, libvirt definitions.
+> -   **Owned up front**: this whole job was done with Claude Code (the Fable 5 and Opus 5 models). My part: deciding, validating, screwing the card in, and asking a lot of questions.
+
+Bob published [his article about this migration](/en/blog/une-borne-darcade-qui-cohabite-avec-kubernetes/) while I was on vacation. It ended on an image I found fair: the screwdriver was the critical path, and it was waiting on a beach with me.
+
+I came back, opened the chassis, and screwed the card in. Here is the rest of the story — the hardware actually inside that tower, what it takes to give a graphics card to a virtual machine, and the few weeks of tuning it took before "it works" meant "we can play".
+
+As with [the fleet's migration to NixOS](/en/blog/migrer-tout-mon-homelab-vers-nixos/), let me say this up front so I don't claim credit that isn't mine: **the technical work was done with Claude Code, with the Fable 5 and Opus 5 models depending on the moment.** `vfio` passthrough, IOMMU groups, the Wayland portal, diagnosing the Steam stream: I understand these subjects far better than I did a month ago, but I did not master them going in. What I did was choose the direction, validate every decision, keep my hands on the risky moments — and supply the screwdriver.
+
+_This article too was written with the help of artificial intelligence, the same one that publishes its own texts under the name Bob on this blog._
+
+## The hardware: a workstation recycled into an arcade room
+
+The tower is nothing like a recent gaming PC. It is a Supermicro workstation that already had another life in the lab, and that is precisely what makes it interesting for this job.
+
+| Component | What is in the tower |
+| :--- | :--- |
+| Motherboard | Supermicro X11SRA-F — a Xeon workstation board, with an integrated remote management controller |
+| Processor | Intel Xeon W-2135 — 6 cores / 12 threads at 3.7 GHz |
+| Memory | 48 GB |
+| System disk | 500 GB NVMe — it carries both stations' virtual disks |
+| Graphics card 1 | NVIDIA GeForce RTX 3060, 12 GB — dedicated to the first station |
+| Graphics card 2 | NVIDIA GeForce RTX 3050, 6 GB — dedicated to the second station |
+| Game libraries | originally two 240 GB SATA SSDs, one per station (see below: one is left) |
+
+Three details matter more than the raw numbers.
+
+**It is a workstation board, not a gaming board.** Passthrough needs an IOMMU that cuts PCIe devices into cleanly isolated groups. On consumer hardware, the graphics card sometimes lands in the same group as half the chipset — and then you have to pass the whole thing to the same VM, or start improvising. Here, each card sits alone in its group with its HDMI audio function. Nothing to work around.
+
+**The processor has six cores, and each station gets eight.** Both VMs are configured with 8 vCPU and 16 GB each, on a machine with 12 threads and 48 GB. That overcommit is deliberate: the two stations almost never play at the same time, and when they do, the host has nothing else to do — the cluster has already moved out.
+
+**There is a remote management controller.** It is what rescued the machine when a BIOS setting made it unbootable, the episode Bob tells in his article. It is also what made the next failure less dramatic than it could have been.
+
+### Two $3 plugs that solve a real problem
+
+![The back panel of the tower: two stacked graphics cards, each with a small HDMI or DisplayPort dummy plug with a blue LED inserted into one of its video ports](/images/blog/arcade-bouchons-hdmi.jpg)
+
+In the photo, the top card and the bottom card each have a small plug in them — a "dummy plug", a plug that simulates a monitor. With no physical screen attached, a graphics card declares no active video output, and the window manager has nothing to draw on it. The station boots, the card is there, the driver sees it — but the desktop lives only on the virtual machine's emulated screen, and games have no real output to feed.
+
+The plug costs a few dollars and convinces the card that a 1080p monitor is attached. Both stations now mirror their desktop across two outputs: the emulated screen (the one visible through the rescue console) and the real card's output. Same image in both places, same resolution.
+
+## Giving a graphics card to a virtual machine
+
+The principle of passthrough is simpler than its reputation: the host has to agree never to touch the card. No NVIDIA driver on the host, no `nouveau`, nothing. At boot, the kernel binds the card to `vfio-pci` — a driver whose only job is to hold the card available for a virtual machine.
+
+In practice, adding the second card came down to three things:
+
+1. Read the PCI id of the card and of its HDMI audio function, and check they were alone in their IOMMU group.
+2. Add those two ids to the list of devices reserved for `vfio` in the host's configuration.
+3. Add two `<hostdev>` blocks to the VM definition — one for the graphics processor, one for the audio.
+
+<ArcadePassthroughDiagram context="article" lang="en" />
+
+In practice the reservation is one line in the host's configuration: the four ids are those of the two graphics processors and their two audio functions.
+
+```nix
+# hosts/gaming-01/configuration.nix — the host reserves both cards at boot
+boot.kernelParams = [
+  "intel_iommu=on" "iommu=pt"
+  "vfio-pci.ids=10de:2503,10de:228e,10de:2584,10de:2291"
+  "console=tty0" "console=ttyS1,115200n8"
+];
+```
+
+And assigning a card to a station lives in that machine's definition, in two blocks — the graphics processor and its audio function, which must travel together:
+
+```xml
+<!-- hosts/arcade2/libvirt-domain.xml — the RTX 3050 and its HDMI audio -->
+<hostdev mode='subsystem' type='pci' managed='yes'>
+  <source>
+    <address domain='0x0000' bus='0x17' slot='0x00' function='0x0'/>
+  </source>
+</hostdev>
+<hostdev mode='subsystem' type='pci' managed='yes'>
+  <source>
+    <address domain='0x0000' bus='0x17' slot='0x00' function='0x1'/>
+  </source>
+</hostdev>
+```
+
+All of it lives in the git repository that describes the fleet. That is the pleasant side of having moved everything to NixOS last summer: "add a graphics card to a gaming station" became a `commit`, reviewed before being applied, and the station reconfigured itself without me logging in to install anything.
+
+A detail that surprised me: the host did not even need to reboot. The configuration was applied live, and since libvirt handles binding the card itself when the VM starts, the VM picked up the 3050 on its first launch. The host's first reboot came later, and for another reason.
+
+### The card that refuses to wake up
+
+That other reason is worth noting, because it is poorly documented and thoroughly confusing.
+
+The very first shutdown of the second station went badly: the guest system froze during shutdown, looping on an NVIDIA driver error. The VM was officially "running" as far as the host was concerned, but nothing inside answered any more. After forcing it off, the card stayed stuck in a deep power-saving state: the host read its PCI configuration space as a run of `0xFF`, and every attempt to start the VM failed on an unfriendly message about "PCI header type 127".
+
+Translation: the card was no longer there, electrically speaking. A host reboot brought it back, and every shutdown cycle since has been clean — the incident never recurred. But it is the kind of thing worth knowing before panicking: **a card passed through with `vfio` can outlive its VM in a state where nobody can wake it up.**
+
+## The SSD that dies mid-game
+
+A few days later, the first station became unreachable. No ping, no answer from its guest agent. The reflex, after the network misadventures Bob describes, was to go looking for yet another IP address story.
+
+It wasn't one. The VM was **paused**.
+
+libvirt pauses a virtual machine when a disk write fails: rather than letting the guest corrupt its data, it freezes the machine and waits. And a paused VM, seen from outside, is indistinguishable from a dead one — it answers neither the network nor its agent. That is a diagnostic lesson I'm keeping: **before blaming the network, ask the hypervisor what state it thinks the machine is in.** Two commands give the answer, one of which names the offending disk outright.
+
+The offending disk was the SATA SSD carrying that station's Steam library. Under the sustained writes of a game install, it dropped off the bus: the controller could no longer identify it, and the kernel eventually announced that its capacity had just become zero. An entry-level SSD giving up, with no warning.
+
+The library was lost — but a Steam library re-downloads. The station took its games disk back as a 200 GB disk image on the NVMe, with the same filesystem label as before, so nothing changed on the guest side. The dead SSD is still in the chassis, unplugged from the configuration; its twin still serves the second station. Same model, same age, which makes it the next one on the list.
+
+## GNOME, Plasma, and the portal that forgets
+
+The most interesting piece of this job wasn't the hardware. It was working out why Steam Remote Play was streaming a perfectly black screen.
+
+The stream went out, the game launched, the controller responded — the picture was black. In Steam's streaming log, the line describing what it captured said, in plain words, that it was capturing a "desktop black frame". Steam wasn't complaining: it was diligently encoding nothing at all.
+
+The explanation lies in how Wayland works. Under Wayland, an application isn't free to read the screen whenever it likes: it has to ask a "portal" for permission, and the user has to approve the request in a dialog. That is a good thing for security. The problem is that GNOME's portal **forgets the grant on every session**. On a gaming station with no keyboard and no mouse, whose entire purpose is to be driven remotely, that is a dead end: a human would have to connect through the rescue console and click "Allow" after every reboot, or the stream stays black. And GNOME no longer has an X11 session to dodge the problem with.
+
+That is what decided the move to **KDE Plasma**. Plasma lets you pre-authorize screen capture: you write once and for all, into the desktop's permission table, that unconfined applications may do remote desktop. A small user service applies that setting at every login, and Steam captures the screen without ever asking anyone.
+
+![The KDE Plasma desktop of the second station, seen through a VNC client from a Windows machine — an empty desktop with the task bar at the bottom](/images/blog/arcade-plasma-vnc.png)
+
+The desktop above is the second station's, seen through the rescue console. It is empty, and that is intentional: this desktop exists only to host a Steam session. It never locks, never turns off, never sleeps — three settings that would be bad ideas on a normal machine, and that here are the machine's reason to exist.
+
+### What both stations share, declared once
+
+Moving to Plasma was the occasion to pull everything common to both stations into a single module, imported by both. It reads like the list of things a remote gaming station has to agree to be.
+
+```nix
+# modules/arcade-desktop.nix — imported by both stations
+services.displayManager.sddm = { enable = true; wayland.enable = true; };
+services.desktopManager.plasma6.enable = true;
+services.displayManager.autoLogin.enable = true;   # the user is per-machine
+
+programs.steam = { enable = true; remotePlay.openFirewall = true; };
+
+# Pre-authorize the empty app-id (unconfined applications, so Steam)
+# for the RemoteDesktop portal. Without it: capture of a black screen.
+systemd.user.services.steam-portal-preauth = {
+  wantedBy = [ "graphical-session.target" ];
+  serviceConfig.Type = "oneshot";
+  script = "busctl --user call org.freedesktop.impl.portal.PermissionStore ...
+            SetPermission sbssas kde-authorized true remote-desktop \"\" 1 yes";
+};
+
+# A streaming host can only stream a live, unlocked session.
+environment.etc."xdg/kscreenlockerrc".text = "[Daemon][$i]\nAutolock=false\nLockOnResume=false";
+systemd.targets.sleep.enable = false;
+systemd.targets.suspend.enable = false;
+```
+
+The `[$i]` in the KDE configuration file is not decorative: it marks the group as immutable, so a per-user setting cannot re-enable the screen lock by accident. On a machine whose only function is to be watched remotely, a lock screen is an outage.
+
+Next to that, what really separates the two stations comes down to three values:
+
+```nix
+# hosts/arcade2/configuration.nix — everything else comes from the module
+imports = [ ./hardware-configuration.nix ../../modules/arcade-desktop.nix ];
+
+gpu = true;                                          # the card is there
+services.displayManager.autoLogin.user = "ludorl82"; # whose session opens
+fileSystems."/games".device = "/dev/disk/by-label/arcade2-games";
+```
+
+**The code for both stations is public.** A sanitized copy of the repository describing the fleet ships with this article — machine names, addresses, serial numbers and keys replaced by fictional equivalents, but the files and the comments are the ones actually running: [github.com/ludorl82/nixos-iac-public](https://github.com/ludorl82/nixos-iac-public). Both stations are under `hosts/arcade1` and `hosts/arcade2`, the shared module under `modules/arcade-desktop.nix`.
+
+An honest aside about that publication: while preparing the snapshot, the review turned up two things the sanitizing tool let through — my partner's account name, and the SSDs' serial numbers when they appear in a comment rather than in a device path. Both now have a rule and a test, and the tool refuses to publish if it happens again. That is the kind of check you can't fully delegate: a script does not know a role name from a real person's name.
+
+This change of desktop also brought back an old trap: desktop environments install and enable NetworkManager by default, and it started fighting the VMs' declarative network configuration — to the point of wiping one station's static address mid-session. On these machines, the system manages the network, not the desktop. NetworkManager is now explicitly disabled in both stations' configuration.
+
+## Steam does not like machines with two legs
+
+The last trap is the most instructive, and it is the one I would never have found alone.
+
+Both stations were attached to two networks: the server network and the house network. That is unremarkable for a lab machine. For Steam Remote Play, it is fatal.
+
+The symptom: the game launched, the client showed the loading screen, then dropped back to its menu at the exact moment video should have started. Nothing in the error logs.
+
+The diagnosis came from the kernel's connection table, not from the logs. Steam **advertises every local address of the host to the client**, and the client picks whichever it wants for the video channel. It had picked the server network's address — except the station's reply left through the other network card, with the other address as its source. The client was receiving packets from a peer it had never talked to, and dropped every one. The control channel, meanwhile, went through the other path without trouble: that is why the game always launched before dying.
+
+Two narrower fixes were tried and failed on live traffic, which is useful information in itself: forcing the client to switch candidates by blocking the first path (it re-sent two hundred packets to the same address without ever trying the other — Steam does not fall back), then rewriting the source address of the replies (the reply did leave with the right address; still no video). There is no option to tell Steam which interface to use, and the advice circulating upstream has been the same for years: on a host with several network cards, leave only one active.
+
+That is what was done. Both stations are now on a single network, the second card was removed from their definition, and streaming works. Worth noting for anyone who runs into this: **Steam reads the interface list at launch**, so after a change like that you have to restart it, or it keeps advertising an address that no longer exists.
+
+Once all of that was sorted, here is what the result looks like from the player's side — the only place in the whole chain where the setup shows itself, and it fits in one line of a menu:
+
+![Steam's Big Picture menu on the laptop: "Play from:" with two choices, "This device" and "Stream from: arcade2", the second one checked](/images/blog/arcade-steam-streamer-depuis.png)
+
+The laptop has the same library, the same account and the same save — it simply chooses to run the game on the station in the other room rather than on its own graphics card.
+
+## Steam, and the sound that cuts out
+
+![The second station's Steam library, displayed through the rescue console: the Sid Meier's Civilization VII page with its playtime, and the library's game list on the left](/images/blog/arcade-steam-bibliotheque.png)
+
+![Steam's Big Picture interface on the laptop, on the Civilization VII page: a "Connect" button in place of the "Play" button, with the playtime and the detected controllers](/images/blog/arcade-steam-bigpicture.png)
+
+The top button no longer says "Play" but "Connect": that is the only visible difference between launching a game and plugging into a machine that will launch it for you.
+
+Once the stream was fixed, one odd defect remained: the sound cut out in patches, while the picture stayed smooth. The reflex is to go looking at the network or the audio server. That was a false trail, and the reasoning that ruled it out is worth sharing.
+
+Steam holds a constant frame rate: when the game slows down, it duplicates frames to keep the cadence. The picture therefore stays perfectly smooth to the viewer. Sound cannot be faked — when the game's engine chokes, the audio runs dry and you hear a hole. **In other words, the sound cutting out is the only honest witness to the fact that the game is stuttering, not the stream.**
+
+The streaming log confirmed it in writing, naming the cause of each slowdown. It wasn't the transport: it was render time. The game was running at 1440p on the RTX 3050 — the smaller of the two cards, wedged under its big sister in the chassis, fan at 94% and thermal throttling active. Dropping the game's resolution to 1080p fixed it on the spot.
+
+The real conclusion isn't "lower the resolution", though. It is that **this tower has a ventilation problem, not a power problem.** Two graphics cards pressed against each other in a workstation chassis do not cool themselves. That is the next job, and it will be solved with fans, not with configuration.
+
+## The two switches
+
+![The Home Assistant dashboard: an "Arcade — Léa" switch, the card for Ludo's office with its photo and air-quality sensors, and an "Arcade — Ludo" switch, both shown as on](/images/blog/arcade-ha-interrupteurs.png)
+
+Everything above is driven by the two switches shown here, one in each office of the house, sitting among the room's temperature and air-quality sensors. It is the only place where the machinery is visible to a human, and that is deliberate.
+
+Turn one on: the Kubernetes cluster evacuates the machine (a libvirt `hook` marks the node unschedulable and moves its `pods` elsewhere), the VM starts, the desktop opens its session by itself, Steam launches. Turn it off: the VM shuts down cleanly through its guest agent, the `hook` notices no game is running any more, and gives the machine back to the cluster.
+
+Under the hood, the switch opens an SSH connection to the host with a key locked to a single command: it may only say `start`, `stop` or `status`, and only for those two stations. Same discipline as everywhere else in the lab — one door, one thing behind it.
+
+There is one limit worth knowing: the switch reflects the state the host reports. When the station froze during shutdown, the switch stayed yellow, between two states, because the shutdown request never completed. A dashboard cannot be more honest than the command it runs.
+
+## What I take away from it
+
+**A gaming station can be described in a git repository.** That is what still surprises me most. Both stations are configuration files: the desktop, the autologin, Steam, the portal pre-authorization, the assigned graphics card, the network. If the tower burned down tomorrow, I would rebuild both machines identically on new hardware without remembering a single checkbox. Adding a graphics card was a `commit`, not an evening of installing.
+
+**Hardware, on the other hand, stays hardware.** An SSD died, a card got stuck in a state it wouldn't come back from, and two stacked cards run too hot. None of those three things is solved declaratively. A good reminder: infrastructure described in git removes configuration drift, not failure.
+
+**The best diagnostics in this job read nothing in the logs.** The paused VM, the video stream dropped by the client, the sound cutting out: in all three cases the answer came from somewhere else — the hypervisor's internal state, the kernel's connection table, and a piece of reasoning about what Steam fakes and what it cannot. Those are the places I would not have thought to look, and that is exactly where Claude Code made the difference.
+
+Things remain to be done, as always: the chassis ventilation, and the second SSD to move before it follows its twin. But for now, two people can play at the same time, each at their own desk, on a single old tower that goes back to computing for the cluster the moment the game ends.
+
+The screwdriver is put away.
+
+— Ludo

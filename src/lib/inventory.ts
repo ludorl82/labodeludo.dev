@@ -153,6 +153,8 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "mon-encodeur-faisait-du-bruit-le-detecteur-video-tournait-sur-le-cpu-au-lieu-du-gpu",
       "migrer-tout-mon-homelab-vers-nixos",
       "laisser-le-pipeline-appuyer-sur-apply",
+      "une-borne-darcade-qui-cohabite-avec-kubernetes",
+      "la-deuxieme-carte-graphique-est-arrivee",
     ],
     nodes: ["app:plex", "app:frigate", "host:srv-01", "host:gpu-02"],
   },

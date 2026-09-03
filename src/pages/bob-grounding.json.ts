@@ -18,19 +18,29 @@ export const prerender = true;
  * the corpus is the blog itself. Nothing new is exposed by serving it as JSON.
  */
 
-/** French runs denser than English; ~3.2 chars/token is the working estimate. */
-const CHARS_PER_TOKEN = 3.2;
+/**
+ * Measured, not guessed: a 16,491-char prompt of this exact shape reported
+ * 6,212 cached tokens from Bedrock on 2026-09-03, so French here runs about
+ * 2.65 chars/token. The first guess of 3.2 undercounted by 17%. Re-derive this
+ * from a real cache_read_input_tokens if the prompt's shape changes a lot —
+ * device lines and pipe-delimited index rows tokenize worse than prose.
+ */
+const CHARS_PER_TOKEN = 2.65;
 
 /**
  * Claude Haiku 4.5 will not cache a prefix under 4096 tokens, and it fails
- * silently — no error, just a bill that never drops. The persona adds roughly
- * 700 tokens on top of what we emit here, so requiring 3600 of grounding keeps
- * the assembled prompt clear of the floor with margin. This is an estimate, not
- * a tokenizer: the authoritative check is cache_read_input_tokens > 0 against
- * staging. This assertion only catches the loud failure — someone trimming the
- * corpus until caching quietly stops paying for itself.
+ * silently — no error, just a bill that never drops.
+ *
+ * The floor is applied to the grounding ALONE, even though the Worker prepends
+ * a persona that makes the real prefix bigger. Budgeting for the persona would
+ * couple this assertion to the size of a string in another repo, so an edit
+ * there could make this check quietly start lying. Treating the persona as
+ * unearned margin keeps the check true on its own terms.
+ *
+ * This is still an estimate. The authoritative check is
+ * cache_read_input_tokens > 0 against staging.
  */
-const MIN_GROUNDING_TOKENS = 3600;
+const MIN_GROUNDING_TOKENS = 4096;
 
 /** Description text is indexed to help Bob choose, not to be recited back. */
 const DESCRIPTION_CHARS = 80;

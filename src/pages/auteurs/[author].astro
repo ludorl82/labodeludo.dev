@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostList from "../../components/PostList.astro";
 import { AUTHORS, authorFromTags, pickQuip, type Author } from "../../lib/author";
+import BobTerminal from "../../components/BobTerminal.astro";
 
 export async function getStaticPaths() {
   return (Object.keys(AUTHORS) as Author[]).map((author) => ({
@@ -18,6 +19,12 @@ const info = AUTHORS[author];
 // static build until the next deploy.
 const quip = pickQuip(info);
 const quips = info.quips ?? [];
+
+// Staging-only for now, same env-flag pattern as SHOW_LIVE_ARCH: the Worker's
+// prod route does not exist yet, so on labodeludo.dev the widget would post to
+// a 404 and show every visitor a broken box. Flip this on in deploy.yml's prod
+// job at the same time as the route.
+const showBobChat = author === "bob" && process.env.SHOW_BOB_CHAT === "1";
 
 const posts = (await getCollection("blog"))
   .filter((post) => authorFromTags(post.data.tags) === author)
@@ -53,6 +60,8 @@ const posts = (await getCollection("blog"))
       </p>
     )
   }
+
+  {showBobChat && <BobTerminal />}
 
   <PostList posts={posts} />
 

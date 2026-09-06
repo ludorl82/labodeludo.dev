@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
 import fleet from "../data/fleet.json";
+import architecture from "../data/architecture.json";
 
 export const prerender = true;
 
@@ -64,6 +65,37 @@ export const GET: APIRoute = async () => {
     return parts.join(" | ");
   });
 
+  // Counts, computed rather than left for the model to derive.
+  //
+  // Asked "combien de nœuds ?", every model tested guessed — Haiku said 37 of
+  // 38 devices and invented a node list, two local models disagreed with both.
+  // None of them was being stupid: nothing in fleet.json marks cluster
+  // membership, so they were inferring it from French role prose. The cluster
+  // edges in architecture.json say it exactly, so state it and stop asking a
+  // language model to count.
+  const k3sNodes = architecture.edges
+    .filter((e: { kind: string; to: string }) => e.kind === "member-of" && e.to === "cluster:k3s")
+    .map((e: { from: string }) => e.from.replace(/^host:/, ""))
+    .sort();
+
+  const byClass = new Map<string, number>();
+  for (const d of fleet.devices as { class: string }[]) {
+    byClass.set(d.class, (byClass.get(d.class) ?? 0) + 1);
+  }
+  const classCounts = [...byClass]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([k, n]) => `${k} ${n}`)
+    .join(", ");
+
+  const summary = [
+    `Appareils au parc : ${fleet.devices.length}`,
+    k3sNodes.length
+      ? `Nœuds du cluster k3s : ${k3sNodes.length} — ${k3sNodes.join(", ")}`
+      : `Nœuds du cluster k3s : inconnu (architecture.json sans arêtes member-of)`,
+    `Par classe : ${classCounts}`,
+    `Publications : ${(await getCollection("blog")).length} articles, ${(await getCollection("casts")).length} casts`,
+  ].join("\n");
+
   const [posts, casts] = await Promise.all([
     getCollection("blog"),
     getCollection("casts"),
@@ -110,6 +142,7 @@ export const GET: APIRoute = async () => {
     approxTokens,
     // Field order in each corpus line, so the Worker's prompt can name it.
     corpusFields: "kind|slug|date|tags|title|description",
+    summary,
     fleet: fleetText,
     corpus: corpusText,
   };

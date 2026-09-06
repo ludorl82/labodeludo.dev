@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
 import fleet from "../data/fleet.json";
+import { BOB_LOCAL_INTROS } from "../lib/bob-humor";
 import architecture from "../data/architecture.json";
 
 export const prerender = true;
@@ -143,6 +144,10 @@ export const GET: APIRoute = async () => {
     // Field order in each corpus line, so the Worker's prompt can name it.
     corpusFields: "kind|slug|date|tags|title|description",
     summary,
+    // Voice for the Worker's local-fallback mode. Lives in bob-humor.ts with
+    // the other pools and rides along here so it is editable without a tofu
+    // apply in cloudflare-iac.
+    localIntros: BOB_LOCAL_INTROS,
     fleet: fleetText,
     corpus: corpusText,
   };

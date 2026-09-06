@@ -135,6 +135,15 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     border-color: var(--accent-live);
   }
 
+  .local-note {
+    margin: 0.2rem 0 0;
+    padding-left: 0.7rem;
+    border-left: 2px dashed var(--text-faint);
+    color: var(--text-faint);
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
   .who {
     font-size: 0.75rem;
     color: var(--text-faint);
@@ -353,6 +362,15 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         });
         const data = await res.json();
         const reply = data.reply ?? "Pas de réponse. Bizarre.";
+        // The Worker says which tier answered. When it is the local model on
+        // `bob`, Bob says so himself — the local answers are visibly weaker, so
+        // a silent downgrade would just read as Bob getting worse.
+        if (data.localNote) {
+          const note = document.createElement("p");
+          note.className = "local-note";
+          note.textContent = data.localNote;
+          answer.before(note);
+        }
         answer.textContent = "";
         reveal(answer, reply, data.links);
         history.push({ role: "assistant", content: reply });

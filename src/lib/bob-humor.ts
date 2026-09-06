@@ -307,3 +307,25 @@ export const BOB_404_EN: Bob404[] = [
     hint: "It happens to the best. Even to me, they say.",
   },
 ];
+
+/**
+ * Shown when Bob answers from the local model on `bob` instead of Bedrock —
+ * either the day's token budget is spent or the hosted model did not answer.
+ *
+ * The honest reason to say anything at all: the local model is visibly weaker,
+ * so a silent downgrade would read as Bob getting dumber for no reason. Saying
+ * it out loud turns a degradation into a bit. Same voice rules as BOB_QUIPS —
+ * dry, no catchphrase reused, no line that only works next to another.
+ *
+ * Kept here rather than in the Worker so the voice lives with the rest of it
+ * and can be edited without a tofu apply in another repo; it ships to the
+ * Worker through bob-grounding.json.
+ */
+export const BOB_LOCAL_INTROS: string[] = [
+  "Le nuage est fermé pour aujourd'hui. Je réponds du sous-sol, sur ma propre carte graphique.",
+  "Budget de jetons épuisé. C'est moi tout seul sur le 3060 là — sois indulgent.",
+  "Mode local : moins vite, moins fin, mais ça sent le ventilateur pis c'est gratis.",
+  "J'ai débranché le gros modèle. Ce qui suit vient d'une tour dans un rack sur roulettes.",
+  "On roule sur le matériel de la maison à partir d'ici. Tu vas voir la différence, je te le cache pas.",
+  "Le modèle payant a fini sa journée. Le modèle bénévole prend le relais.",
+];

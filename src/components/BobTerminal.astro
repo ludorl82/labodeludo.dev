@@ -109,6 +109,32 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     border-left: 2px solid var(--accent-live);
   }
 
+  .turn.bob a {
+    color: var(--accent-live);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.5rem 0 0 0.7rem;
+  }
+
+  .links a {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    color: var(--accent-live);
+    font-size: 0.75rem;
+    text-decoration: none;
+  }
+
+  .links a:hover {
+    border-color: var(--accent-live);
+  }
+
   .who {
     font-size: 0.75rem;
     color: var(--text-faint);
@@ -219,14 +245,78 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
       return p;
     }
 
+    const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    /**
+     * Render the answer, turning slugs into anchors.
+     *
+     * Built as DOM nodes rather than innerHTML on purpose: this is model output,
+     * and assembling markup from it is how you get an injection. Nothing here
+     * can produce an element the code did not explicitly create.
+     *
+     * Every href comes from the Worker, which checked the slug against the real
+     * corpus first. The widget never derives a link of its own, so a slug Bob
+     * invented stays plain text rather than becoming a clickable 404.
+     */
+    function renderReply(p: HTMLParagraphElement, text: string, links: any[]) {
+      p.textContent = "";
+      if (!links || !links.length) {
+        p.textContent = text;
+        return;
+      }
+      // First wins, and the Worker sends articles before casts: when a slug
+      // exists as both, the inline link goes to the article and the cast twin
+      // falls through to a chip below rather than hijacking the text.
+      const bySlug = new Map();
+      for (const l of links) if (!bySlug.has(l.slug)) bySlug.set(l.slug, l);
+      // Longest first so one slug that prefixes another cannot win the match.
+      const alts = links
+        .map((l) => escapeRe(l.slug))
+        .sort((a, b) => b.length - a.length)
+        .join("|");
+      const re = new RegExp(`(?:/(?:blog|casts)/)?(${alts})/?`, "g");
+
+      const used = new Set<string>(); // hrefs rendered inline
+      let last = 0;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > last) p.append(document.createTextNode(text.slice(last, m.index)));
+        const l = bySlug.get(m[1]);
+        const a = document.createElement("a");
+        a.href = l.href;
+        a.textContent = m[0];
+        p.append(a);
+        used.add(l.href);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) p.append(document.createTextNode(text.slice(last)));
+
+      // Anything he named that did not appear verbatim still gets an affordance.
+      const leftover = links.filter((l) => !used.has(l.href));
+      if (leftover.length) {
+        const row = document.createElement("div");
+        row.className = "links";
+        for (const l of leftover) {
+          const a = document.createElement("a");
+          a.href = l.href;
+          a.textContent = l.title;
+          row.append(a);
+        }
+        p.after(row);
+      }
+    }
+
     /**
      * Reveal at roughly 12 ms/char, capped at 2.5 s total. The asciicasts use
      * 45–115 ms/char, which reads beautifully there and would take half a minute
      * for a 400-character answer here — the house timing does not transfer.
+     *
+     * Types as plain text, then swaps in the linked version once finished:
+     * re-parsing partial text every tick would make anchors flicker in and out.
      */
-    function reveal(p: HTMLParagraphElement, text: string) {
+    function reveal(p: HTMLParagraphElement, text: string, links: any[]) {
       if (reduceMotion) {
-        p.textContent = text;
+        renderReply(p, text, links);
         return;
       }
       const step = Math.max(4, Math.min(12, 2500 / Math.max(text.length, 1)));
@@ -235,6 +325,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         i += 1;
         p.textContent = text.slice(0, i);
         if (i < text.length) setTimeout(tick, step);
+        else renderReply(p, text, links);
       };
       tick();
     }
@@ -263,7 +354,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         const data = await res.json();
         const reply = data.reply ?? "Pas de réponse. Bizarre.";
         answer.textContent = "";
-        reveal(answer, reply);
+        reveal(answer, reply, data.links);
         history.push({ role: "assistant", content: reply });
         history = history.slice(-MAX_TURNS);
       } catch {

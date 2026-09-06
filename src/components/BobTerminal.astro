@@ -1,0 +1,289 @@
+---
+/**
+ * "Parler à Bob" — the one stateful rectangle on an otherwise static site.
+ *
+ * Posts to /api/bob/chat, a Cloudflare Worker (ludorl82/cloudflare-iac,
+ * live/workers/bob-chat) that signs Bedrock calls. The transcript is held
+ * client-side and sent whole each turn: the Worker keeps no memory, so there is
+ * no session to leak and nothing to clean up.
+ *
+ * Visual grammar is lifted from ConversationExcerpt.astro rather than invented
+ * — mono, pre-wrap, and an accent left-border marking Bob's turns — so a live
+ * exchange looks like the reconstructed ones elsewhere on the site.
+ *
+ * The disclaimer is the INVERSE of the house rule. Casts and ConversationExcerpt
+ * must warn that they are reconstructions; this one has to warn that it is not.
+ */
+import { BOB_QUIPS } from "../lib/bob-humor";
+
+const OPENERS = [
+  "C'est quoi le setup ?",
+  "Montre-moi ta pire journée",
+  "Par où je commence ?",
+  "T'as écrit sur quoi récemment ?",
+];
+
+// No-JS fallback: one real quip, so the panel is never an empty box.
+const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
+---
+
+<section class="bob-chat" aria-labelledby="bob-chat-title">
+  <p class="prompt" id="bob-chat-title">$ bob --chat</p>
+
+  <p class="disclaimer">
+    Ceci n'est pas une reconstitution : c'est un vrai modèle qui répond, en
+    direct. Il ne connaît que ce qui est publié sur ce site et l'inventaire
+    (assaini) du parc. Il peut se tromper, et ce n'est pas Ludo qui parle.
+  </p>
+
+  <div class="log" id="bob-log" aria-live="polite" aria-atomic="false">
+    <div class="turn bob">
+      <span class="who">bob</span>
+      <p id="bob-fallback">{fallback}</p>
+    </div>
+  </div>
+
+  <div class="openers" id="bob-openers">
+    {OPENERS.map((o) => <button type="button" class="opener" data-q={o}>{o}</button>)}
+  </div>
+
+  <form class="ask" id="bob-form">
+    <label class="sr-only" for="bob-input">Poser une question à Bob</label>
+    <input
+      id="bob-input"
+      type="text"
+      maxlength="500"
+      autocomplete="off"
+      placeholder="Demande-lui quelque chose…"
+    />
+    <button type="submit" id="bob-send">Envoyer</button>
+  </form>
+
+  <noscript>
+    <p class="disclaimer">Il faut JavaScript pour lui parler. Les articles, eux, se lisent très bien sans.</p>
+  </noscript>
+</section>
+
+<style>
+  .bob-chat {
+    margin: 1.25rem 0 0;
+    max-width: var(--measure);
+    padding: 0.85rem 1rem 1rem;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .prompt {
+    margin: 0;
+    color: var(--accent-live);
+    user-select: none;
+  }
+
+  .disclaimer {
+    margin: 0.6rem 0 0;
+    padding-left: 0.7rem;
+    border-left: 2px solid var(--accent-live);
+    color: var(--text-faint);
+    line-height: 1.55;
+  }
+
+  .log {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 1rem;
+  }
+
+  .turn p {
+    margin: 0.2rem 0 0;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  .turn.bob p {
+    padding-left: 0.7rem;
+    border-left: 2px solid var(--accent-live);
+  }
+
+  .who {
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+
+  .turn.bob .who {
+    color: var(--accent-live);
+  }
+
+  .openers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1rem;
+  }
+
+  .opener {
+    padding: 0.3rem 0.6rem;
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .opener:hover {
+    border-color: var(--accent-live);
+    color: var(--accent-live);
+  }
+
+  .ask {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+  }
+
+  .ask input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.45rem 0.6rem;
+    background: var(--bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  .ask input:focus {
+    outline: none;
+    border-color: var(--accent-live);
+  }
+
+  .ask button {
+    padding: 0.45rem 0.8rem;
+    background: transparent;
+    border: 1px solid var(--accent-live);
+    border-radius: 4px;
+    color: var(--accent-live);
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+  }
+
+  .ask button[disabled] {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  const log = document.getElementById("bob-log");
+  const form = document.getElementById("bob-form") as HTMLFormElement | null;
+  const input = document.getElementById("bob-input") as HTMLInputElement | null;
+  const send = document.getElementById("bob-send") as HTMLButtonElement | null;
+  const openers = document.getElementById("bob-openers");
+  const fallbackTurn = document.getElementById("bob-fallback")?.parentElement;
+
+  if (log && form && input && send) {
+    // The Worker holds no memory, so the whole (short) transcript rides along.
+    // Six turns is the server's cap too; trimming here keeps the request honest.
+    const MAX_TURNS = 6;
+    let history: { role: string; content: string }[] = [];
+    let busy = false;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function addTurn(who: string, text: string) {
+      const div = document.createElement("div");
+      div.className = `turn ${who}`;
+      const label = document.createElement("span");
+      label.className = "who";
+      label.textContent = who === "bob" ? "bob" : "toi";
+      const p = document.createElement("p");
+      div.append(label, p);
+      log!.append(div);
+      return p;
+    }
+
+    /**
+     * Reveal at roughly 12 ms/char, capped at 2.5 s total. The asciicasts use
+     * 45–115 ms/char, which reads beautifully there and would take half a minute
+     * for a 400-character answer here — the house timing does not transfer.
+     */
+    function reveal(p: HTMLParagraphElement, text: string) {
+      if (reduceMotion) {
+        p.textContent = text;
+        return;
+      }
+      const step = Math.max(4, Math.min(12, 2500 / Math.max(text.length, 1)));
+      let i = 0;
+      const tick = () => {
+        i += 1;
+        p.textContent = text.slice(0, i);
+        if (i < text.length) setTimeout(tick, step);
+      };
+      tick();
+    }
+
+    async function ask(question: string) {
+      if (busy || !question.trim()) return;
+      busy = true;
+      send!.disabled = true;
+      input!.value = "";
+      fallbackTurn?.remove();
+      openers?.remove();
+
+      addTurn("toi", "").textContent = question;
+      const answer = addTurn("bob", "");
+      answer.textContent = "…";
+
+      history.push({ role: "user", content: question });
+      history = history.slice(-MAX_TURNS);
+
+      try {
+        const res = await fetch("/api/bob/chat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ messages: history }),
+        });
+        const data = await res.json();
+        const reply = data.reply ?? "Pas de réponse. Bizarre.";
+        answer.textContent = "";
+        reveal(answer, reply);
+        history.push({ role: "assistant", content: reply });
+        history = history.slice(-MAX_TURNS);
+      } catch {
+        answer.textContent = "Le fil est coupé. Réessaie tantôt.";
+      } finally {
+        busy = false;
+        send!.disabled = false;
+        input!.focus();
+      }
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      ask(input.value);
+    });
+
+    openers?.addEventListener("click", (e) => {
+      const t = e.target as HTMLElement;
+      const q = t?.dataset?.q;
+      if (q) ask(q);
+    });
+  }
+</script>

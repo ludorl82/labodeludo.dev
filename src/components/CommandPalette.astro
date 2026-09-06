@@ -1,0 +1,627 @@
+---
+/**
+ * The command palette — the site's navigation.
+ *
+ * One input, and the prefix is the mode, exactly as in vim and tmux:
+ *   `/` searches content, `:` issues commands, empty shows both.
+ *
+ * The governing principle is that subtlety is fine and only-subtlety is not:
+ * the keyboard idiom stays and gets more useful, while the header prompt and
+ * the hint line teach it to anyone who does not already know it.
+ *
+ * Navigation never depends on the LLM. Commands and search are local and
+ * instant; only the explicit "ask Bob" row touches the network, and it is a row
+ * you arrow onto rather than a guess about whether your text looked like a
+ * question. With Bob down, the budget spent or the lab offline, the palette
+ * still gets you around the site.
+ *
+ * Accessibility here deliberately exceeds the rest of the codebase: the older
+ * overlays are `<div hidden>` with no dialog role, no focus trap and no focus
+ * restoration. Borrow their look, not their semantics.
+ */
+interface NavItem {
+  href: string;
+  label: string;
+}
+
+interface Props {
+  lang?: "fr" | "en";
+  homeHref?: string;
+  navItems?: NavItem[];
+}
+
+const { lang = "fr", homeHref = "/", navItems = [] } = Astro.props;
+
+const t =
+  lang === "en"
+    ? {
+        label: "Search or run a command",
+        placeholder: "type to search, : for commands",
+        hint: "/ search · : commands · ↑↓ move · ⏎ open · esc close",
+        empty: "nothing here.",
+        askPrefix: "Ask Bob:",
+        groupCommands: "commands",
+        groupContent: "content",
+        groupAsk: "ask",
+        thinking: "Bob is thinking…",
+      }
+    : {
+        label: "Chercher ou lancer une commande",
+        placeholder: "tapez pour chercher, : pour les commandes",
+        hint: "/ chercher · : commandes · ↑↓ naviguer · ⏎ ouvrir · échap fermer",
+        empty: "rien ici.",
+        askPrefix: "Demander à Bob :",
+        groupCommands: "commandes",
+        groupContent: "contenu",
+        groupAsk: "demander",
+        thinking: "Bob réfléchit…",
+      };
+
+// Bob is French-only — persona, quips and openers all are. On EN pages the
+// palette is navigation and search, with no ask row, rather than a button that
+// would fail.
+const canAsk = lang === "fr";
+---
+
+<div
+  id="palette"
+  class="palette"
+  hidden
+  data-config={JSON.stringify({ lang, homeHref, navItems, canAsk, t })}
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="palette-label"
+>
+  <div class="palette-panel">
+    <p id="palette-label" class="visually-hidden">{t.label}</p>
+
+    <div class="palette-input-row">
+      <span class="palette-prompt" aria-hidden="true">$</span>
+      <input
+        id="palette-input"
+        type="text"
+        role="combobox"
+        aria-expanded="false"
+        aria-controls="palette-results"
+        aria-autocomplete="list"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder={t.placeholder}
+      />
+    </div>
+
+    <ul id="palette-results" class="palette-results" role="listbox" aria-label={t.label}></ul>
+
+    <p class="palette-hint">{t.hint}</p>
+    <p id="palette-status" class="visually-hidden" role="status" aria-live="polite"></p>
+  </div>
+</div>
+
+<style>
+  /* Visual grammar borrowed wholesale from .keyboard-help, but its panel is
+     capped at 24rem and shared with the ? sheet — hence a separate class here
+     rather than widening one that something else depends on. */
+  .palette {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10vh 4vw 4vh;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(2px);
+  }
+
+  .palette[hidden] {
+    display: none;
+  }
+
+  .palette-panel {
+    width: 100%;
+    max-width: 36rem;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 0.85rem 1rem 0.75rem;
+    font-family: var(--font-mono);
+  }
+
+  .palette-input-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .palette-prompt {
+    color: var(--accent-live);
+    user-select: none;
+  }
+
+  .palette-input-row input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    font-family: inherit;
+    /* 16px minimum: anything smaller makes iOS Safari zoom the whole page on
+       focus, which on a phone reads as the site breaking. */
+    font-size: 1rem;
+    padding: 0.35rem 0;
+  }
+
+  .palette-input-row input:focus {
+    outline: none;
+  }
+
+  .palette-results {
+    list-style: none;
+    margin: 0.6rem 0 0;
+    padding: 0;
+    overflow-y: auto;
+    flex: 1 1 auto;
+  }
+
+  .palette-group {
+    margin: 0.5rem 0 0.15rem;
+    padding: 0 0.35rem;
+    color: var(--text-faint);
+    font-size: 0.6875rem;
+    text-transform: lowercase;
+    user-select: none;
+  }
+
+  .palette-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.35rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  /* Green is reserved for interactive/active state across the site, so it marks
+     the selection and nothing decorative. */
+  .palette-row[aria-selected="true"] {
+    background: color-mix(in srgb, var(--accent-live) 14%, transparent);
+    box-shadow: inset 2px 0 0 var(--accent-live);
+  }
+
+  .palette-row .kind {
+    flex: 0 0 auto;
+    color: var(--text-faint);
+    font-size: 0.6875rem;
+  }
+
+  .palette-row .title {
+    flex: 1 1 auto;
+    color: var(--text);
+    font-size: 0.8125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .palette-row .meta {
+    flex: 0 0 auto;
+    color: var(--text-faint);
+    font-size: 0.6875rem;
+  }
+
+  .palette-answer {
+    margin: 0.5rem 0.35rem 0;
+    padding-left: 0.7rem;
+    border-left: 2px solid var(--accent-live);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .palette-answer a {
+    color: var(--accent-live);
+  }
+
+  .palette-note {
+    margin: 0.4rem 0.35rem 0;
+    color: var(--text-faint);
+    font-size: 0.75rem;
+  }
+
+  .palette-hint {
+    margin: 0.6rem 0 0;
+    color: var(--text-faint);
+    font-size: 0.6875rem;
+    user-select: none;
+  }
+
+  @media (max-width: 600px) {
+    .palette {
+      padding: 4vh 3vw;
+    }
+    .palette-panel {
+      max-height: 82vh;
+    }
+    .palette-hint {
+      /* The full hint is a desktop keyboard legend; on a phone it is noise. */
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // NOT define:vars: that makes the script inline, and inline scripts are not
+  // processed by the bundler, so `import` would silently be undefined at
+  // runtime. Config rides on a data attribute instead.
+  import { renderReply } from "../lib/bob-render";
+
+  const el = document.getElementById("palette");
+  const cfg = el ? JSON.parse(el.dataset.config || "{}") : {};
+  const { lang = "fr", homeHref = "/", navItems = [], canAsk = false, t = {} } = cfg;
+  const input = document.getElementById("palette-input");
+  const list = document.getElementById("palette-results");
+  const status = document.getElementById("palette-status");
+  if (el && input && list) {
+    const root = document.documentElement;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let entries = null; // lazily fetched corpus
+    let rows = []; // current results: { kind, label, meta, run }
+    let cursor = 0;
+    let lastFocused = null;
+    let asking = false;
+
+    /* ---------------------------------------------------------- matching --- */
+
+    // Diacritic-insensitive: this is a French site, and "reseau" must find
+    // "réseau". NFD splits the accent off, then the combining marks are dropped.
+    const fold = (s) =>
+      (s || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+
+    function score(entry, q) {
+      const t = fold(entry.title);
+      const g = fold(entry.tags.join(" "));
+      const d = fold(entry.desc);
+      const s = fold(entry.slug);
+      let n = 0;
+      if (t.includes(q)) n += 3;
+      if (g.includes(q)) n += 2;
+      if (s.includes(q)) n += 1;
+      if (d.includes(q)) n += 1;
+      // A prefix hit on the title is what people usually mean.
+      if (t.startsWith(q)) n += 2;
+      return n;
+    }
+
+    /* ---------------------------------------------------------- commands --- */
+
+    function show(msg) {
+      const p = document.createElement("p");
+      p.className = "palette-note";
+      p.textContent = msg;
+      list.after(p);
+      setTimeout(() => p.remove(), 4000);
+    }
+
+    function twinOf(path) {
+      // FR and EN pair by identical slug, so the twin is a path rewrite. Only
+      // offered when the entry actually exists in the other language.
+      const m = path.match(/^\/(?:en\/)?(blog|casts)\/([^/]+)\/?$/);
+      if (!m || !entries) return null;
+      const [, section, slug] = m;
+      const want = path.startsWith("/en/") ? "fr" : "en";
+      const hit = entries.find((e) => e.slug === slug && e.lang === want);
+      return hit ? hit.href : null;
+    }
+
+    const go = (href) => {
+      window.location.href = href;
+    };
+
+    function commands() {
+      const here = window.location.pathname;
+      const cmds = [
+        { id: "home", label: lang === "en" ? "home" : "accueil", run: () => go(homeHref) },
+        ...navItems.map((n) => ({
+          id: fold(n.label),
+          label: n.label.toLowerCase(),
+          run: () => go(n.href),
+        })),
+        {
+          id: "help",
+          label: lang === "en" ? "help — keyboard shortcuts" : "aide — raccourcis clavier",
+          run: () => {
+            close();
+            // EasterEggs owns the cheat sheet; both are mounted globally by
+            // BaseLayout, so reaching for it by id is the honest coupling.
+            const help = document.getElementById("keyboard-help");
+            if (help) help.hidden = false;
+          },
+        },
+        {
+          id: "bob",
+          label: lang === "en" ? "bob — one quip" : "bob — une réplique",
+          run: () => {
+            close();
+            // The quip overlay lost its only trigger when the fake command line
+            // went. Kept here so the easter egg survives *and* is finally
+            // discoverable — which was the whole complaint about it.
+            const o = document.getElementById("bob-overlay");
+            if (o) o.hidden = false;
+          },
+        },
+        {
+          id: "recent",
+          label: lang === "en" ? "recent — newest post" : "recent — le plus récent",
+          run: () => {
+            const first = (entries || []).find((e) => e.lang === lang);
+            if (first) go(first.href);
+            else show(t.empty);
+          },
+        },
+        {
+          id: "copy",
+          label: lang === "en" ? "copy — this page's URL" : "copy — l'adresse de cette page",
+          run: async () => {
+            try {
+              await navigator.clipboard.writeText(window.location.href);
+              show(lang === "en" ? "copied." : "copié.");
+            } catch {
+              show(lang === "en" ? "clipboard refused." : "le presse-papiers a refusé.");
+            }
+          },
+        },
+      ];
+
+      const twin = twinOf(here);
+      cmds.push({
+        id: lang === "en" ? "fr" : "en",
+        label:
+          lang === "en"
+            ? twin
+              ? "fr — this page in French"
+              : "fr — the French site"
+            : twin
+              ? "en — cette page en anglais"
+              : "en — le site anglais",
+        run: () => go(twin || (lang === "en" ? "/" : "/en/")),
+      });
+
+      // The joke survives, but inside something useful — which is where a joke
+      // belongs. It is no longer the only thing `:` does.
+      cmds.push({
+        id: "q",
+        label: "q — quit",
+        run: () =>
+          show(
+            lang === "en"
+              ? "E37: you cannot quit a homepage (this is not vim, sorry)"
+              : "E37 : on ne quitte pas une page d'accueil (ce n'est pas vim, désolé)",
+          ),
+      });
+      return cmds;
+    }
+
+    /* ----------------------------------------------------------- results --- */
+
+    function render(q) {
+      list.textContent = "";
+      rows = [];
+      document.querySelectorAll(".palette-note, .palette-answer").forEach((n) => n.remove());
+
+      const isCmd = q.startsWith(":");
+      const isSearch = q.startsWith("/");
+      const term = fold(q.replace(/^[:/]/, "").trim());
+
+      if (!isSearch) {
+        const matched = commands().filter((c) => !term || c.id.includes(term) || fold(c.label).includes(term));
+        if (matched.length) {
+          addGroup(t.groupCommands);
+          for (const c of matched) addRow(":", c.label, "", c.run);
+        }
+      }
+
+      if (!isCmd && term) {
+        const hits = (entries || [])
+          .filter((e) => e.lang === lang)
+          .map((e) => ({ e, n: score(e, term) }))
+          .filter((x) => x.n > 0)
+          .sort((a, b) => b.n - a.n || b.e.date.localeCompare(a.e.date))
+          .slice(0, 8);
+        if (hits.length) {
+          addGroup(t.groupContent);
+          for (const { e } of hits) {
+            addRow(e.kind === "cast" ? "cast" : "art.", e.title, e.date, () => go(e.href));
+          }
+        }
+      }
+
+      if (canAsk && !isCmd && term) {
+        addGroup(t.groupAsk);
+        addRow("bob", `${t.askPrefix} ${q.replace(/^\//, "")}`, "", () => ask(q.replace(/^\//, "")));
+      }
+
+      cursor = 0;
+      paint();
+      input.setAttribute("aria-expanded", rows.length ? "true" : "false");
+      if (status) status.textContent = `${rows.length}`;
+    }
+
+    function addGroup(label) {
+      const li = document.createElement("li");
+      li.className = "palette-group";
+      li.setAttribute("role", "presentation");
+      li.textContent = label;
+      list.append(li);
+    }
+
+    function addRow(kind, title, meta, run) {
+      const li = document.createElement("li");
+      li.className = "palette-row";
+      li.id = `palette-row-${rows.length}`;
+      li.setAttribute("role", "option");
+      li.setAttribute("aria-selected", "false");
+      const k = document.createElement("span");
+      k.className = "kind";
+      k.textContent = kind;
+      const ti = document.createElement("span");
+      ti.className = "title";
+      ti.textContent = title;
+      const m = document.createElement("span");
+      m.className = "meta";
+      m.textContent = meta;
+      li.append(k, ti, m);
+      const i = rows.length;
+      li.addEventListener("click", () => {
+        cursor = i;
+        activate();
+      });
+      list.append(li);
+      rows.push({ el: li, run });
+    }
+
+    function paint() {
+      rows.forEach((r, i) => r.el.setAttribute("aria-selected", i === cursor ? "true" : "false"));
+      const sel = rows[cursor];
+      if (sel) {
+        input.setAttribute("aria-activedescendant", sel.el.id);
+        sel.el.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+      } else {
+        input.removeAttribute("aria-activedescendant");
+      }
+    }
+
+    function activate() {
+      const r = rows[cursor];
+      if (r) r.run();
+    }
+
+    /* --------------------------------------------------------------- ask --- */
+
+    async function ask(question) {
+      if (asking || !question.trim()) return;
+      asking = true;
+      const p = document.createElement("p");
+      p.className = "palette-answer";
+      p.textContent = t.thinking;
+      list.after(p);
+      try {
+        const res = await fetch("/api/bob/chat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ messages: [{ role: "user", content: question }] }),
+        });
+        const data = await res.json();
+        if (data.localNote) {
+          const n = document.createElement("p");
+          n.className = "palette-note";
+          n.textContent = data.localNote;
+          p.before(n);
+        }
+        // Shared with the chat widget on purpose: DOM nodes not innerHTML, and
+        // never an href the Worker did not validate.
+        renderReply(p, data.reply || t.empty, data.links);
+        if (status) status.textContent = data.reply || "";
+      } catch {
+        p.textContent = lang === "en" ? "the line is down. try again." : "le fil est coupé. réessaie.";
+      } finally {
+        asking = false;
+      }
+    }
+
+    /* ------------------------------------------------------- open / close --- */
+
+    async function load() {
+      if (entries) return;
+      try {
+        const res = await fetch("/search-index.json");
+        entries = (await res.json()).entries || [];
+      } catch {
+        entries = []; // search degrades; commands still work
+      }
+    }
+
+    function open(prefix) {
+      if (!el.hidden) return;
+      lastFocused = document.activeElement;
+      el.hidden = false;
+      root.dataset.paletteOpen = "1";
+      input.value = prefix || "";
+      load().then(() => render(input.value));
+      render(input.value);
+      input.focus();
+    }
+
+    function close() {
+      if (el.hidden) return;
+      el.hidden = true;
+      delete root.dataset.paletteOpen;
+      document.querySelectorAll(".palette-note, .palette-answer").forEach((n) => n.remove());
+      input.setAttribute("aria-expanded", "false");
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+
+    document.addEventListener("palette:open", (e) => open(e.detail && e.detail.prefix));
+    // Prefetching on hover hides the round trip without costing anything for
+    // visitors who never open it.
+    document.addEventListener("palette:prefetch", load);
+
+    input.addEventListener("input", () => render(input.value));
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        cursor = Math.min(cursor + 1, Math.max(rows.length - 1, 0));
+        paint();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        cursor = Math.max(cursor - 1, 0);
+        paint();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        activate();
+      } else if (e.key === "Tab") {
+        // Focus trap: the panel holds exactly one focusable control, so the
+        // trap is simply "stay here".
+        e.preventDefault();
+      }
+    });
+
+    // Escape is answered by four uncoordinated listeners on this site (the
+    // keyboard layer, the lightbox, the architecture diagram, the modal
+    // handlers) and none of them stop propagation. Capture it and stop it dead,
+    // or closing the palette also closes the lightbox and clears the diagram.
+    document.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key === "Escape" && !el.hidden) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          close();
+        }
+      },
+      true,
+    );
+
+    // Registered outside EasterEggs' listener, which bails on modifiers.
+    document.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        open("");
+      }
+    });
+
+    el.addEventListener("click", (e) => {
+      if (e.target === el) close();
+    });
+  }
+</script>

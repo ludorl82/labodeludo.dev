@@ -226,6 +226,8 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 </style>
 
 <script>
+  import { renderReply } from "../lib/bob-render";
+
   const log = document.getElementById("bob-log");
   const form = document.getElementById("bob-form") as HTMLFormElement | null;
   const input = document.getElementById("bob-input") as HTMLInputElement | null;
@@ -252,67 +254,6 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
       div.append(label, p);
       log!.append(div);
       return p;
-    }
-
-    const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-    /**
-     * Render the answer, turning slugs into anchors.
-     *
-     * Built as DOM nodes rather than innerHTML on purpose: this is model output,
-     * and assembling markup from it is how you get an injection. Nothing here
-     * can produce an element the code did not explicitly create.
-     *
-     * Every href comes from the Worker, which checked the slug against the real
-     * corpus first. The widget never derives a link of its own, so a slug Bob
-     * invented stays plain text rather than becoming a clickable 404.
-     */
-    function renderReply(p: HTMLParagraphElement, text: string, links: any[]) {
-      p.textContent = "";
-      if (!links || !links.length) {
-        p.textContent = text;
-        return;
-      }
-      // First wins, and the Worker sends articles before casts: when a slug
-      // exists as both, the inline link goes to the article and the cast twin
-      // falls through to a chip below rather than hijacking the text.
-      const bySlug = new Map();
-      for (const l of links) if (!bySlug.has(l.slug)) bySlug.set(l.slug, l);
-      // Longest first so one slug that prefixes another cannot win the match.
-      const alts = links
-        .map((l) => escapeRe(l.slug))
-        .sort((a, b) => b.length - a.length)
-        .join("|");
-      const re = new RegExp(`(?:/(?:blog|casts)/)?(${alts})/?`, "g");
-
-      const used = new Set<string>(); // hrefs rendered inline
-      let last = 0;
-      let m: RegExpExecArray | null;
-      while ((m = re.exec(text)) !== null) {
-        if (m.index > last) p.append(document.createTextNode(text.slice(last, m.index)));
-        const l = bySlug.get(m[1]);
-        const a = document.createElement("a");
-        a.href = l.href;
-        a.textContent = m[0];
-        p.append(a);
-        used.add(l.href);
-        last = m.index + m[0].length;
-      }
-      if (last < text.length) p.append(document.createTextNode(text.slice(last)));
-
-      // Anything he named that did not appear verbatim still gets an affordance.
-      const leftover = links.filter((l) => !used.has(l.href));
-      if (leftover.length) {
-        const row = document.createElement("div");
-        row.className = "links";
-        for (const l of leftover) {
-          const a = document.createElement("a");
-          a.href = l.href;
-          a.textContent = l.title;
-          row.append(a);
-        }
-        p.after(row);
-      }
     }
 
     /**

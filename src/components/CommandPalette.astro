@@ -176,7 +176,16 @@ const canAsk = lang === "fr";
     padding: 0;
   }
 
-  .palette-group {
+  /* Everything below is created at runtime by the script, and Astro scopes
+     styles by stamping a data-astro-cid attribute onto markup it renders — an
+     element built with document.createElement never gets one, so a plain
+     scoped selector silently matches nothing. Verified in the browser: rows
+     came out display:list-item, gap:normal, no selection highlight.
+
+     :global() opts out of the scoping, and anchoring each rule under
+     .palette-body (which IS server-rendered, so it keeps its cid) stops these
+     from leaking anywhere else on the site. */
+  .palette-body :global(.palette-group) {
     margin: 0.5rem 0 0.15rem;
     padding: 0 0.35rem;
     color: var(--text-faint);
@@ -185,7 +194,7 @@ const canAsk = lang === "fr";
     user-select: none;
   }
 
-  .palette-row {
+  .palette-body :global(.palette-row) {
     display: flex;
     align-items: baseline;
     gap: 0.6rem;
@@ -196,18 +205,18 @@ const canAsk = lang === "fr";
 
   /* Green is reserved for interactive/active state across the site, so it marks
      the selection and nothing decorative. */
-  .palette-row[aria-selected="true"] {
+  .palette-body :global(.palette-row[aria-selected="true"]) {
     background: color-mix(in srgb, var(--accent-live) 14%, transparent);
     box-shadow: inset 2px 0 0 var(--accent-live);
   }
 
-  .palette-row .kind {
+  .palette-body :global(.palette-row .kind) {
     flex: 0 0 auto;
     color: var(--text-faint);
     font-size: 0.6875rem;
   }
 
-  .palette-row .title {
+  .palette-body :global(.palette-row .title) {
     flex: 1 1 auto;
     color: var(--text);
     font-size: 0.8125rem;
@@ -216,13 +225,13 @@ const canAsk = lang === "fr";
     white-space: nowrap;
   }
 
-  .palette-row .meta {
+  .palette-body :global(.palette-row .meta) {
     flex: 0 0 auto;
     color: var(--text-faint);
     font-size: 0.6875rem;
   }
 
-  .palette-answer {
+  .palette-body :global(.palette-answer) {
     margin: 0.5rem 0.35rem 0;
     padding-left: 0.7rem;
     border-left: 2px solid var(--accent-live);
@@ -232,14 +241,30 @@ const canAsk = lang === "fr";
     white-space: pre-wrap;
   }
 
-  .palette-answer a {
+  .palette-body :global(.palette-answer a) {
     color: var(--accent-live);
   }
 
-  .palette-note {
+  .palette-body :global(.palette-note) {
     margin: 0.4rem 0.35rem 0;
     color: var(--text-faint);
     font-size: 0.75rem;
+  }
+
+  .palette-body :global(.links) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.5rem 0 0 0.7rem;
+  }
+
+  .palette-body :global(.links a) {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    color: var(--accent-live);
+    font-size: 0.75rem;
+    text-decoration: none;
   }
 
   .palette-hint {
@@ -274,8 +299,12 @@ const canAsk = lang === "fr";
   const { lang = "fr", homeHref = "/", navItems = [], canAsk = false, t = {} } = cfg;
   const input = document.getElementById("palette-input");
   const list = document.getElementById("palette-results");
+  // The scroll container. Answers and notes are appended HERE, not after
+  // `list` — a sibling of the list sits outside the scrollable area and
+  // gets clipped by the panel height.
+  const body = document.getElementById("palette-body");
   const status = document.getElementById("palette-status");
-  if (el && input && list) {
+  if (el && input && list && body) {
     const root = document.documentElement;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 

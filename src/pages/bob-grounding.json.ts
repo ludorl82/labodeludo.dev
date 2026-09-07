@@ -4,6 +4,7 @@ import fleet from "../data/fleet.json";
 import { BOB_LOCAL_INTROS } from "../lib/bob-humor";
 import architecture from "../data/architecture.json";
 import dispatch from "../data/dispatch.json";
+import { SITE_SELF } from "../data/site-self";
 
 export const prerender = true;
 
@@ -157,6 +158,11 @@ export const GET: APIRoute = async () => {
     // Field order in each corpus line, so the Worker's prompt can name it.
     corpusFields: "kind|slug|date|tags|title|description|en",
     summary,
+    // How this site is built. Not derivable from the fleet — those are the
+    // machines in the basement, and the blog is a static artifact on someone
+    // else's edge — so without it the most-asked question had nothing behind
+    // it but improvisation. See src/data/site-self.ts.
+    site: SITE_SELF,
     // Voice for the Worker's local-fallback mode. Lives in bob-humor.ts with
     // the other pools and rides along here so it is editable without a tofu
     // apply in cloudflare-iac.

@@ -25,7 +25,18 @@ jobs:
   # deliberately trades the free minutes and the deploy-while-cluster-is-down
   # property for a preview that tells the truth.
   deploy-staging:
-    if: github.ref != 'refs/heads/main'
+    # `dev` only, not "anything that is not main" (changed 2026-09-07). The
+    # publish below pins --branch=staging, which IS the Pages production
+    # deployment behind dev.labodeludo.dev — so ANY feature branch pushed a
+    # build over the preview. It happened three times in one day while the
+    # command palette lived on `dev`: a branch cut from `main` deployed a
+    # palette-less site and the work looked like it had vanished.
+    #
+    # The cost is that feature branches no longer get a preview at all. That is
+    # deliberate: a non-production Pages branch would publish to its own
+    # <hash>.pages.dev URL, which the Access app on dev.labodeludo.dev does not
+    # cover, so the alternative to no preview is an unauthenticated one.
+    if: github.ref == 'refs/heads/dev'
     runs-on: [self-hosted, k3s]
     # One runner, shared with deploy-prod and the nightly Architecture
     # workflow, and this job fires on EVERY non-main push — including the

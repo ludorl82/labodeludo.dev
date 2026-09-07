@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import fleet from "../data/fleet.json";
 import { BOB_LOCAL_INTROS } from "../lib/bob-humor";
 import architecture from "../data/architecture.json";
+import dispatch from "../data/dispatch.json";
 
 export const prerender = true;
 
@@ -160,6 +161,14 @@ export const GET: APIRoute = async () => {
     // the other pools and rides along here so it is editable without a tofu
     // apply in cloudflare-iac.
     localIntros: BOB_LOCAL_INTROS,
+    // What moved in the fleet last night, in one line, written by the nightly
+    // job and gated before it lands (scripts/topology/check-dispatch.py holds
+    // it to a computed diff, so it cannot name a machine that did not change).
+    // Empty on a quiet night, which is most nights — the Worker omits the
+    // section entirely rather than telling Bob that nothing happened, because
+    // "nothing happened" is not something he should volunteer.
+    dispatch: dispatch.dispatch || undefined,
+    dispatchGenerated: dispatch.generated || undefined,
     fleet: fleetText,
     corpus: corpusText,
   };

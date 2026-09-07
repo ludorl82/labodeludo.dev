@@ -15,13 +15,21 @@
  * must warn that they are reconstructions; this one has to warn that it is not.
  */
 import { BOB_QUIPS } from "../lib/bob-humor";
+import popular from "../data/openers.json";
 
-const OPENERS = [
+// Written by hand, and still the fallback: an empty popular list is a normal
+// state — a quiet fortnight, or a night where nothing survived the gate — and
+// the panel must never be an empty row of nothing.
+const HAND_WRITTEN = [
   "C'est quoi le setup ?",
   "Montre-moi ta pire journée",
   "Par où je commence ?",
   "T'as écrit sur quoi récemment ?",
 ];
+
+// What people actually asked, selected nightly from real questions and cleared
+// by check-openers.py before it could land here. See scripts/topology/.
+const OPENERS = popular.openers?.length ? popular.openers : HAND_WRITTEN;
 
 // No-JS fallback: one real quip, so the panel is never an empty box.
 const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];

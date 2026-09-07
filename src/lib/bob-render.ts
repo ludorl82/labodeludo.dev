@@ -60,15 +60,22 @@ function makeLink(l: BobLink, lang: "fr" | "en"): HTMLAnchorElement {
   a.href = l.href;
   a.className = "bob-link";
   a.dataset.kind = l.kind === "cast" ? "cast" : "article";
+  a.title = l.title;
   // The glyph is decoration; a screen reader gets the word instead, so "article"
   // and "enregistrement" are announced rather than "black right-pointing small
   // triangle".
   a.setAttribute("aria-label", `${k[lang]} : ${l.title}`);
+  // Half the titles carry a subtitle after " : " or " — " and the head stands
+  // on its own: "Débrancher le NAS pour la science : pods zombies, sondes de
+  // vivacité, et le bogue NFS qui attendait au tournant" is 111 characters, and
+  // as a pill in the middle of a sentence it swallows the sentence. The head
+  // goes in the pill; the whole title stays in `title` and `aria-label`, so
+  // nothing is lost to a hover or a screen reader.
   const ico = document.createElement("span");
   ico.className = "bob-link-ico";
   ico.setAttribute("aria-hidden", "true");
   ico.textContent = k.icon;
-  a.append(ico, document.createTextNode(l.title));
+  a.append(ico, document.createTextNode(l.title.split(/ : | — /)[0]));
   return a;
 }
 
@@ -89,11 +96,24 @@ export function renderReply(
     return;
   }
 
-  // First wins, and the Worker sends articles before casts: when a slug exists
-  // as both, the inline link goes to the article and the cast twin falls
-  // through to a chip below rather than hijacking the text.
-  const bySlug = new Map<string, BobLink>();
-  for (const l of links) if (!bySlug.has(l.slug)) bySlug.set(l.slug, l);
+  // A slug can exist as both an article and a cast. Taking the first — the
+  // Worker sends articles first — made Bob write "Ouais, le cast <slug>" and
+  // link the article, glyph and all: the reader is told one thing and handed
+  // another. So the words just before the slug decide, and articles stay the
+  // default when nothing says otherwise. The twin that loses is not dropped;
+  // it falls through to a chip below.
+  const bySlug = new Map<string, BobLink[]>();
+  for (const l of links) {
+    if (!bySlug.has(l.slug)) bySlug.set(l.slug, []);
+    bySlug.get(l.slug)!.push(l);
+  }
+  const CAST_WORD = /\b(cast|casts|enregistrement|enregistrements|recording|recordings)\b[^.!?]{0,20}$/i;
+  const pick = (slug: string, before: string): BobLink | undefined => {
+    const all = bySlug.get(slug);
+    if (!all || !all.length) return undefined;
+    const wantCast = CAST_WORD.test(before);
+    return all.find((l) => (l.kind === "cast") === wantCast) ?? all[0];
+  };
 
   // Longest first so one slug that prefixes another cannot win the match.
   const alts = links
@@ -107,7 +127,7 @@ export function renderReply(
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) target.append(document.createTextNode(text.slice(last, m.index)));
-    const l = bySlug.get(m[1]);
+    const l = pick(m[1], text.slice(Math.max(0, m.index - 40), m.index));
     if (l) {
       target.append(makeLink(l, lang));
       used.add(l.href);

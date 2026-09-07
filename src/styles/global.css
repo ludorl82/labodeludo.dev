@@ -227,3 +227,92 @@ img {
   border-top: 1px solid var(--panel-border);
   margin: 2.5em 0;
 }
+
+/* Bob's links — the chip row and the ones inline in his answer.
+ *
+ * Global rather than scoped to BobTerminal or CommandPalette for two reasons:
+ * both components render them through the same `renderReply`, and those nodes
+ * are built at runtime, so they never carry the `data-astro-cid-*` attribute a
+ * scoped rule selects on. A scoped rule here would simply not apply.
+ *
+ * `box-decoration-break: clone` is what makes the pill survive a line break: a
+ * title like "Déplacer mes partages NFS sur un SSD sans toucher à Kubernetes"
+ * wraps on a phone, and without this the border draws once around the whole
+ * run, leaving an open-ended box on each line. `display: inline` is required
+ * for it to have any effect, which rules out inline-flex. */
+.bob-link {
+  display: inline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.1em 0.6em;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--accent-live);
+  font-size: 0.9em;
+  text-decoration: none;
+  /* The glyph should not drag the line height around in a paragraph. */
+  line-height: 1.9;
+}
+
+.bob-link:hover,
+.bob-link:focus-visible {
+  border-color: var(--accent-live);
+  background: color-mix(in srgb, var(--accent-live) 10%, transparent);
+}
+
+.bob-link-ico {
+  margin-right: 0.4em;
+  color: var(--text-faint);
+}
+
+/* The triangle reads as "play", so it earns the live accent on hover the way a
+   control does; the article rules stay quiet. */
+.bob-link[data-kind="cast"]:hover .bob-link-ico,
+.bob-link[data-kind="cast"]:focus-visible .bob-link-ico {
+  color: var(--accent-live);
+}
+
+/* Bob's thinking indicator. Global for the same reason .bob-link is: both the
+   palette and the author-page widget build these nodes at runtime, so they
+   never carry the data-astro-cid a scoped rule selects on. */
+.bob-thinking {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+/* The frames are different widths — "( •_•)>⌐■-■" is 11 characters and
+   "(⌐■_■)" is 6 — so the glyph gets a fixed box. Without it the verb beside it
+   jumps left and right five times a second.
+   Right-aligned inside that box so the face reaches toward the verb as the arm
+   comes out, instead of leaving a five-character hole on the narrow frames.
+   The verb, which is the part you actually read, never moves either way.
+   Not green: this is decoration, and the site reserves --accent-live for
+   interactive and active state. Brightness carries it instead. */
+.bob-thinking-glyph {
+  flex: 0 0 auto;
+  min-width: 11ch;
+  text-align: right;
+  white-space: pre;
+  color: var(--text);
+}
+
+.bob-thinking-label {
+  flex: 0 1 auto;
+}
+
+.bob-thinking-timer {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Under 26rem the glyph and a long verb no longer share a line comfortably;
+   stack rather than let the verb wrap under the reserved glyph box. */
+@media (max-width: 26rem) {
+  .bob-thinking {
+    flex-wrap: wrap;
+  }
+}

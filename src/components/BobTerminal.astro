@@ -110,7 +110,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     border-left: 2px solid var(--accent-live);
   }
 
-  .turn.bob a {
+  .turn.bob a:not(.bob-link) {
     color: var(--accent-live);
     text-decoration: underline;
     text-underline-offset: 2px;
@@ -123,18 +123,6 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     margin: 0.5rem 0 0 0.7rem;
   }
 
-  .links a {
-    padding: 0.2rem 0.55rem;
-    border: 1px solid var(--panel-border);
-    border-radius: 999px;
-    color: var(--accent-live);
-    font-size: 0.75rem;
-    text-decoration: none;
-  }
-
-  .links a:hover {
-    border-color: var(--accent-live);
-  }
 
   .local-note {
     margin: 0.2rem 0 0;
@@ -227,6 +215,9 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 </style>
 
 <script>
+  import { renderReply } from "../lib/bob-render";
+    import { startThinking } from "../lib/bob-thinking";
+
   const log = document.getElementById("bob-log");
   const form = document.getElementById("bob-form") as HTMLFormElement | null;
   const input = document.getElementById("bob-input") as HTMLInputElement | null;
@@ -253,67 +244,6 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
       div.append(label, p);
       log!.append(div);
       return p;
-    }
-
-    const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-    /**
-     * Render the answer, turning slugs into anchors.
-     *
-     * Built as DOM nodes rather than innerHTML on purpose: this is model output,
-     * and assembling markup from it is how you get an injection. Nothing here
-     * can produce an element the code did not explicitly create.
-     *
-     * Every href comes from the Worker, which checked the slug against the real
-     * corpus first. The widget never derives a link of its own, so a slug Bob
-     * invented stays plain text rather than becoming a clickable 404.
-     */
-    function renderReply(p: HTMLParagraphElement, text: string, links: any[]) {
-      p.textContent = "";
-      if (!links || !links.length) {
-        p.textContent = text;
-        return;
-      }
-      // First wins, and the Worker sends articles before casts: when a slug
-      // exists as both, the inline link goes to the article and the cast twin
-      // falls through to a chip below rather than hijacking the text.
-      const bySlug = new Map();
-      for (const l of links) if (!bySlug.has(l.slug)) bySlug.set(l.slug, l);
-      // Longest first so one slug that prefixes another cannot win the match.
-      const alts = links
-        .map((l) => escapeRe(l.slug))
-        .sort((a, b) => b.length - a.length)
-        .join("|");
-      const re = new RegExp(`(?:/(?:blog|casts)/)?(${alts})/?`, "g");
-
-      const used = new Set<string>(); // hrefs rendered inline
-      let last = 0;
-      let m: RegExpExecArray | null;
-      while ((m = re.exec(text)) !== null) {
-        if (m.index > last) p.append(document.createTextNode(text.slice(last, m.index)));
-        const l = bySlug.get(m[1]);
-        const a = document.createElement("a");
-        a.href = l.href;
-        a.textContent = m[0];
-        p.append(a);
-        used.add(l.href);
-        last = m.index + m[0].length;
-      }
-      if (last < text.length) p.append(document.createTextNode(text.slice(last)));
-
-      // Anything he named that did not appear verbatim still gets an affordance.
-      const leftover = links.filter((l) => !used.has(l.href));
-      if (leftover.length) {
-        const row = document.createElement("div");
-        row.className = "links";
-        for (const l of leftover) {
-          const a = document.createElement("a");
-          a.href = l.href;
-          a.textContent = l.title;
-          row.append(a);
-        }
-        p.after(row);
-      }
     }
 
     /**
@@ -350,7 +280,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 
       addTurn("toi", "").textContent = question;
       const answer = addTurn("bob", "");
-      answer.textContent = "…";
+      const stopThinking = startThinking(answer);
 
       history.push({ role: "user", content: question });
       history = history.slice(-MAX_TURNS);
@@ -372,13 +302,18 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
           note.textContent = data.localNote;
           answer.before(note);
         }
+        stopThinking();
         answer.textContent = "";
         reveal(answer, reply, data.links);
         history.push({ role: "assistant", content: reply });
         history = history.slice(-MAX_TURNS);
       } catch {
+        stopThinking();
         answer.textContent = "Le fil est coupé. Réessaie tantôt.";
       } finally {
+        // Belt and braces: a spinner left running after an early return would
+        // sit there forever, and the interval keeps a closure alive with it.
+        stopThinking();
         busy = false;
         send!.disabled = false;
         input!.focus();

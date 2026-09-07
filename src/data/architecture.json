@@ -271,19 +271,14 @@
       "to": "cluster:k3s"
     },
     {
-      "from": "host:docker",
-      "kind": "uses",
-      "to": "external:nas"
-    },
-    {
-      "from": "host:gpu-01",
+      "from": "host:gaming-01",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
       "from": "host:gpu-01",
-      "kind": "powered-by",
-      "to": "external:ups-gpu-01"
+      "kind": "member-of",
+      "to": "cluster:k3s"
     },
     {
       "from": "host:gpu-02",
@@ -301,19 +296,9 @@
       "to": "external:nas"
     },
     {
-      "from": "host:pi-01",
-      "kind": "powered-by",
-      "to": "external:ups-pi-01"
-    },
-    {
       "from": "host:pi-02",
       "kind": "member-of",
       "to": "cluster:k3s"
-    },
-    {
-      "from": "host:pi-02",
-      "kind": "powered-by",
-      "to": "external:ups-pi-02"
     },
     {
       "from": "host:srv-01",
@@ -327,11 +312,6 @@
     },
     {
       "from": "host:vm-02",
-      "kind": "member-of",
-      "to": "cluster:k3s"
-    },
-    {
-      "from": "host:vm-03",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
@@ -666,7 +646,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-08-08T09:24:30+00:00",
+  "generated": "2026-09-07T19:23:42+00:00",
   "nodes": [
     {
       "id": "access:cronicle",
@@ -1280,37 +1260,38 @@
       "source": "live/tunnels.tf"
     },
     {
-      "id": "external:ups-gpu-01",
-      "kind": "external",
-      "label": "ups (gpu-01)",
-      "layer": "external",
+      "id": "host:arcade1",
+      "kind": "host",
+      "label": "arcade1",
+      "layer": "hardware",
       "meta": {
-        "via": "ups-master"
+        "arch": "x86_64-linux",
+        "class": "server",
+        "modules": [
+          "arcade-desktop",
+          "private-ca"
+        ],
+        "networks": []
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/gpu-01/configuration.nix"
+      "source": "hosts/arcade1/configuration.nix"
     },
     {
-      "id": "external:ups-pi-01",
-      "kind": "external",
-      "label": "ups (pi-01)",
-      "layer": "external",
+      "id": "host:arcade2",
+      "kind": "host",
+      "label": "arcade2",
+      "layer": "hardware",
       "meta": {
-        "via": "ups-master"
+        "arch": "x86_64-linux",
+        "class": "server",
+        "modules": [
+          "arcade-desktop",
+          "private-ca"
+        ],
+        "networks": []
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/pi-01/configuration.nix"
-    },
-    {
-      "id": "external:ups-pi-02",
-      "kind": "external",
-      "label": "ups (pi-02)",
-      "layer": "external",
-      "meta": {
-        "via": "ups-master"
-      },
-      "repo": "nixos-iac-public",
-      "source": "hosts/pi-02/configuration.nix"
+      "source": "hosts/arcade2/configuration.nix"
     },
     {
       "id": "host:cloud-01",
@@ -1322,7 +1303,7 @@
         "class": "cloud-vm",
         "k3sRole": "server",
         "modules": [
-          "k3s-agent",
+          "k3s-upstream",
           "private-ca"
         ],
         "networks": [
@@ -1351,22 +1332,25 @@
       "source": "hosts/console-vm/configuration.nix"
     },
     {
-      "id": "host:docker",
+      "id": "host:gaming-01",
       "kind": "host",
-      "label": "docker",
+      "label": "gaming-01",
       "layer": "hardware",
       "meta": {
-        "arch": "aarch64-linux",
-        "class": "sbc",
+        "arch": "x86_64-linux",
+        "class": "server",
+        "k3sRole": "agent",
         "modules": [
-          "private-ca"
+          "k3s-agent",
+          "private-ca",
+          "ups-client"
         ],
         "networks": [
           "vlan10"
         ]
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/docker/configuration.nix"
+      "source": "hosts/gaming-01/configuration.nix"
     },
     {
       "id": "host:gpu-01",
@@ -1381,7 +1365,7 @@
           "k3s-agent",
           "private-ca",
           "rack-wake",
-          "ups-master"
+          "ups-cp-1"
         ],
         "networks": [
           "vlan10"
@@ -1422,9 +1406,10 @@
         "k3sRole": "agent",
         "modules": [
           "k3s-agent",
+          "k3s-upstream",
           "nas-wake",
           "private-ca",
-          "ups-master"
+          "ups-cp-1"
         ],
         "networks": [
           "vlan10"
@@ -1448,9 +1433,10 @@
           "house-heartbeat",
           "jumphost",
           "k3s-agent",
+          "k3s-upstream",
           "private-ca",
           "rack-wake",
-          "ups-master"
+          "ups-cp-1"
         ],
         "networks": [
           "vlan10"
@@ -1515,24 +1501,6 @@
       },
       "repo": "nixos-iac-public",
       "source": "hosts/vm-02/configuration.nix"
-    },
-    {
-      "id": "host:vm-03",
-      "kind": "host",
-      "label": "vm-03",
-      "layer": "hardware",
-      "meta": {
-        "arch": "x86_64-linux",
-        "class": "vm",
-        "k3sRole": "agent",
-        "modules": [
-          "k3s-agent",
-          "private-ca"
-        ],
-        "networks": []
-      },
-      "repo": "nixos-iac-public",
-      "source": "hosts/vm-03/configuration.nix"
     },
     {
       "id": "instance:aws_node",
@@ -2121,42 +2089,21 @@
   ],
   "sources": {
     "aws-iac-public": {
-      "commit": "ca2d5b9",
-      "date": "2026-08-07T17:58:37-04:00"
+      "commit": "4af01aa",
+      "date": "2026-08-27T18:04:57-04:00"
     },
     "cloudflare-iac-public": {
-      "commit": "53f4f03",
-      "date": "2026-08-07T22:11:50-04:00"
+      "commit": "0b46950",
+      "date": "2026-08-27T18:05:06-04:00"
     },
     "k3s-iac-public": {
-      "commit": "11cfdad",
-      "date": "2026-08-08T05:24:17-04:00"
+      "commit": "425f558",
+      "date": "2026-08-27T18:04:52-04:00"
     },
     "nixos-iac-public": {
-      "commit": "f4b2559",
-      "date": "2026-08-07T22:11:47-04:00"
+      "commit": "2a4d3fe",
+      "date": "2026-08-27T18:04:46-04:00"
     }
   },
-  "topologyVersion": 1,
-  "verified": {
-    "checkedAt": "2026-08-08T09:24:31+00:00",
-    "monitors": [
-      {
-        "name": "aws-iac drift",
-        "time": "2026-08-07 11:26:13.497",
-        "up": true
-      },
-      {
-        "name": "nixos-iac drift",
-        "time": "2026-08-07 21:32:57.912",
-        "up": true
-      },
-      {
-        "name": "cloudflare-iac drift",
-        "time": "2026-08-07 12:06:08.229",
-        "up": true
-      }
-    ],
-    "status": "ok"
-  }
+  "topologyVersion": 1
 }

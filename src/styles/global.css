@@ -271,3 +271,42 @@ img {
 .bob-link[data-kind="cast"]:focus-visible .bob-link-ico {
   color: var(--accent-live);
 }
+
+/* Bob's thinking indicator. Global for the same reason .bob-link is: both the
+   palette and the author-page widget build these nodes at runtime, so they
+   never carry the data-astro-cid a scoped rule selects on. */
+.bob-thinking {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+/* The frames are different widths — "( •_•)>⌐■-■" is 11 characters and
+   "(⌐■_■)" is 6 — so the glyph is reserved a fixed box. Without this the verb
+   beside it jumps left and right five times a second. */
+.bob-thinking-glyph {
+  flex: 0 0 auto;
+  min-width: 11ch;
+  white-space: pre;
+  color: var(--accent-live);
+}
+
+.bob-thinking-label {
+  flex: 0 1 auto;
+}
+
+.bob-thinking-timer {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Under 26rem the glyph and a long verb no longer share a line comfortably;
+   stack rather than let the verb wrap under the reserved glyph box. */
+@media (max-width: 26rem) {
+  .bob-thinking {
+    flex-wrap: wrap;
+  }
+}

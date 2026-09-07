@@ -216,6 +216,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 
 <script>
   import { renderReply } from "../lib/bob-render";
+    import { startThinking } from "../lib/bob-thinking";
 
   const log = document.getElementById("bob-log");
   const form = document.getElementById("bob-form") as HTMLFormElement | null;
@@ -279,7 +280,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 
       addTurn("toi", "").textContent = question;
       const answer = addTurn("bob", "");
-      answer.textContent = "…";
+      const stopThinking = startThinking(answer);
 
       history.push({ role: "user", content: question });
       history = history.slice(-MAX_TURNS);
@@ -301,13 +302,18 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
           note.textContent = data.localNote;
           answer.before(note);
         }
+        stopThinking();
         answer.textContent = "";
         reveal(answer, reply, data.links);
         history.push({ role: "assistant", content: reply });
         history = history.slice(-MAX_TURNS);
       } catch {
+        stopThinking();
         answer.textContent = "Le fil est coupé. Réessaie tantôt.";
       } finally {
+        // Belt and braces: a spinner left running after an early return would
+        // sit there forever, and the interval keeps a closure alive with it.
+        stopThinking();
         busy = false;
         send!.disabled = false;
         input!.focus();

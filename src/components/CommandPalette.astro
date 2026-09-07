@@ -43,7 +43,6 @@ const t =
         groupCommands: "commands",
         groupContent: "content",
         groupAsk: "ask",
-        thinking: "Bob is thinking…",
         answerHint: "type to search again · esc close",
       }
     : {
@@ -55,7 +54,6 @@ const t =
         groupCommands: "commandes",
         groupContent: "contenu",
         groupAsk: "demander",
-        thinking: "Bob réfléchit…",
         answerHint: "tapez pour chercher à nouveau · échap fermer",
       };
 
@@ -310,6 +308,7 @@ const canAsk = true;
   // processed by the bundler, so `import` would silently be undefined at
   // runtime. Config rides on a data attribute instead.
   import { renderReply } from "../lib/bob-render";
+  import { startThinking } from "../lib/bob-thinking";
 
   const el = document.getElementById("palette");
   const cfg = el ? JSON.parse(el.dataset.config || "{}") : {};
@@ -623,7 +622,7 @@ const canAsk = true;
       addYou(question);
       const p = document.createElement("p");
       p.className = "palette-answer";
-      p.textContent = t.thinking;
+      const stopThinking = startThinking(p, lang);
       body.append(p);
       // The results list stays above the answer, so on a phone the reply can
       // land below the fold of the scroll container. Bring it into view — the
@@ -648,12 +647,15 @@ const canAsk = true;
         }
         // Shared with the chat widget on purpose: DOM nodes not innerHTML, and
         // never an href the Worker did not validate.
+        stopThinking();
         renderReply(p, data.reply || t.empty, data.links, lang);
         reveal();
         if (status) status.textContent = data.reply || "";
       } catch {
+        stopThinking();
         p.textContent = lang === "en" ? "the line is down. try again." : "le fil est coupé. réessaie.";
       } finally {
+        stopThinking();
         asking = false;
       }
     }

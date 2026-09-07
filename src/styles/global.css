@@ -284,13 +284,19 @@ img {
 }
 
 /* The frames are different widths — "( •_•)>⌐■-■" is 11 characters and
-   "(⌐■_■)" is 6 — so the glyph is reserved a fixed box. Without this the verb
-   beside it jumps left and right five times a second. */
+   "(⌐■_■)" is 6 — so the glyph gets a fixed box. Without it the verb beside it
+   jumps left and right five times a second.
+   Right-aligned inside that box so the face reaches toward the verb as the arm
+   comes out, instead of leaving a five-character hole on the narrow frames.
+   The verb, which is the part you actually read, never moves either way.
+   Not green: this is decoration, and the site reserves --accent-live for
+   interactive and active state. Brightness carries it instead. */
 .bob-thinking-glyph {
   flex: 0 0 auto;
   min-width: 11ch;
+  text-align: right;
   white-space: pre;
-  color: var(--accent-live);
+  color: var(--text);
 }
 
 .bob-thinking-label {

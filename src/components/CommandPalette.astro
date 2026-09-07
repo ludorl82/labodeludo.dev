@@ -44,6 +44,7 @@ const t =
         groupContent: "content",
         groupAsk: "ask",
         answerHint: "type to search again · esc close",
+        continueBob: "keep talking to Bob on his page",
       }
     : {
         label: "Chercher ou lancer une commande",
@@ -55,6 +56,7 @@ const t =
         groupContent: "contenu",
         groupAsk: "demander",
         answerHint: "tapez pour chercher à nouveau · échap fermer",
+        continueBob: "continuer avec Bob sur sa page",
       };
 
 // Bob answers in the language he is addressed in — he writes the English
@@ -484,7 +486,7 @@ const canAsk = true;
       if (answerShown) return;
       list.textContent = "";
       rows = [];
-      document.querySelectorAll(".palette-note, .palette-answer").forEach((n) => n.remove());
+      document.querySelectorAll(".palette-note, .palette-answer, .palette-continue").forEach((n) => n.remove());
 
       const isCmd = q.startsWith(":");
       const isSearch = q.startsWith("/");
@@ -597,7 +599,7 @@ const canAsk = true;
       input.placeholder = t.placeholder;
       if (prompt) prompt.textContent = "$";
       if (hint) hint.textContent = t.hint;
-      body.querySelectorAll(".palette-you, .palette-answer, .palette-note, .links").forEach((n) => n.remove());
+      body.querySelectorAll(".palette-you, .palette-answer, .palette-note, .links, .palette-continue").forEach((n) => n.remove());
     }
 
     function addYou(text) {
@@ -649,6 +651,13 @@ const canAsk = true;
         // never an href the Worker did not validate.
         stopThinking();
         renderReply(p, data.reply || t.empty, data.links, lang);
+        // One question, one answer is the right shape for navigation — but a
+        // visitor who wants a conversation should not have to know that the
+        // author page exists. The exchange rides along in sessionStorage
+        // rather than the URL: it is same-origin, same-tab, survives exactly
+        // one navigation, and keeps a question the visitor typed out of their
+        // history and out of any link they might paste.
+        addContinueRow(question, data.reply || "", data.links || []);
         reveal();
         if (status) status.textContent = data.reply || "";
       } catch {
@@ -658,6 +667,29 @@ const canAsk = true;
         stopThinking();
         asking = false;
       }
+    }
+
+    // There is no /en/auteurs/ — the author pages exist in French only, and a
+    // language-mirrored href here would have been a confident 404. Bob answers
+    // in the question's language wherever he is, so the page being French
+    // chrome costs an English visitor nothing but the nav around it.
+    const BOB_PAGE = "/auteurs/bob/";
+    const HANDOFF_KEY = "bob:handoff";
+
+    function addContinueRow(question, reply, links) {
+      const a = document.createElement("a");
+      a.className = "palette-continue";
+      a.href = BOB_PAGE;
+      a.textContent = t.continueBob;
+      a.addEventListener("click", () => {
+        try {
+          sessionStorage.setItem(HANDOFF_KEY, JSON.stringify({ question, reply, links }));
+        } catch {
+          // Private mode, or storage disabled. The link still works; the
+          // visitor just re-asks on the other page instead of continuing.
+        }
+      });
+      body.append(a);
     }
 
     /* ------------------------------------------------------- open / close --- */
@@ -688,7 +720,7 @@ const canAsk = true;
       el.hidden = true;
       delete root.dataset.paletteOpen;
       clearAnswer();
-      document.querySelectorAll(".palette-note, .palette-answer").forEach((n) => n.remove());
+      document.querySelectorAll(".palette-note, .palette-answer, .palette-continue").forEach((n) => n.remove());
       input.setAttribute("aria-expanded", "false");
       if (lastFocused && lastFocused.focus) lastFocused.focus();
     }

@@ -316,3 +316,27 @@ img {
     flex-wrap: wrap;
   }
 }
+
+/* "Continue with Bob" — the way out of the palette's one-shot answer.
+   Global for the same reason the rest of Bob's runtime nodes are. */
+.palette-continue {
+  display: inline-block;
+  margin: 0.6rem 0 0 0.7rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--accent-live);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.palette-continue::after {
+  content: " →";
+}
+
+.palette-continue:hover,
+.palette-continue:focus-visible {
+  border-color: var(--accent-live);
+  background: color-mix(in srgb, var(--accent-live) 10%, transparent);
+}

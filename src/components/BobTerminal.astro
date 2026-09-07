@@ -320,6 +320,42 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
       }
     }
 
+    /* ------------------------------------------------------- handoff --- */
+    /* Arriving from the palette's "continue with Bob". The exchange is
+       replayed into the transcript and pushed into `history`, so the next
+       question is a genuine follow-up rather than a fresh start — asking the
+       model again would cost a call and, since it is not deterministic, would
+       answer differently than what the visitor just read.
+
+       sessionStorage, not the URL: same-origin, same-tab, gone after one read.
+       A question someone typed does not belong in their browser history or in
+       a link they might paste. */
+    (function resumeFromPalette() {
+      let handoff;
+      try {
+        const raw = sessionStorage.getItem("bob:handoff");
+        if (!raw) return;
+        sessionStorage.removeItem("bob:handoff");
+        handoff = JSON.parse(raw);
+      } catch {
+        return; // storage denied, or someone hand-edited it: start clean
+      }
+      if (!handoff || typeof handoff.question !== "string" || typeof handoff.reply !== "string") return;
+      if (!handoff.question.trim() || !handoff.reply.trim()) return;
+
+      fallbackTurn?.remove();
+      openers?.remove();
+      addTurn("toi", "").textContent = handoff.question;
+      const answer = addTurn("bob", "");
+      // The shared renderer, so a slug that arrived in the handoff is still
+      // subject to the same rule: only hrefs the Worker validated.
+      renderReply(answer, handoff.reply, Array.isArray(handoff.links) ? handoff.links : []);
+      history.push({ role: "user", content: handoff.question });
+      history.push({ role: "assistant", content: handoff.reply });
+      history = history.slice(-MAX_TURNS);
+      input?.focus();
+    })();
+
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       ask(input.value);

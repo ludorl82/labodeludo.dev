@@ -296,8 +296,18 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
   .prompt-line {
     display: flex;
     align-items: baseline;
-    flex-wrap: wrap;
+    /* Never wrap. The French placeholder is ~6 characters longer than the
+       English one, which was enough to push the caret onto its own line under
+       the wordmark on a narrow window — it read as broken rather than
+       responsive. The placeholder truncates instead, so no string in any
+       language can break the prompt line. */
+    flex-wrap: nowrap;
     gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .prompt-line .wordmark {
+    flex: 0 0 auto;
   }
 
   /* The site's logo is already a shell prompt, so the search affordance is the
@@ -308,6 +318,10 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
+    /* Shrinkable, so the truncation above actually has somewhere to happen. */
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
     min-height: 44px;
     padding: 0 0.25rem;
     background: transparent;
@@ -323,7 +337,14 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     color: var(--text-muted);
   }
 
+  .prompt-placeholder {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .prompt-caret {
+    flex: 0 0 auto;
     display: inline-block;
     width: 0.5rem;
     height: 1rem;

@@ -32,6 +32,10 @@ Une bonne question suggérée montre à un visiteur ce que Bob peut faire. Donc 
   rien à voir — ne montre rien d'utile même si elle est polie.
 - **Claire toute seule.** Elle apparaît sans contexte, sur un bouton. « Pis
   après ? » ne veut rien dire hors d'une conversation.
+- **Vraiment une question.** Elle se termine par un point d'interrogation. Les
+  candidates ne le sont pas toutes : « c quoi ton nom » est arrivé tel quel le
+  2026-09-07 et la garde l'a refusé, à raison. Tu ne peux pas ajouter le point
+  d'interrogation manquant — ce serait réécrire. Laisse-la de côté.
 - **Courte.** Entre 12 et 70 caractères, ça doit tenir sur un bouton.
 - **Variée.** Quatre formulations de la même question, c'est une question.
 

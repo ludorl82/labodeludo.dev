@@ -44,6 +44,8 @@ const t =
         groupContent: "content",
         groupAsk: "ask",
         thinking: "Bob is thinking…",
+        replyPlaceholder: "reply to Bob…",
+        chatHint: "⏎ send · ⌫ on an empty line goes back to search · esc close",
       }
     : {
         label: "Chercher ou lancer une commande",
@@ -55,6 +57,8 @@ const t =
         groupContent: "contenu",
         groupAsk: "demander",
         thinking: "Bob réfléchit…",
+        replyPlaceholder: "réponds à Bob…",
+        chatHint: "⏎ envoyer · ⌫ sur une ligne vide pour revenir à la recherche · échap fermer",
       };
 
 // Bob is French-only — persona, quips and openers all are. On EN pages the
@@ -76,7 +80,7 @@ const canAsk = lang === "fr";
     <p id="palette-label" class="visually-hidden">{t.label}</p>
 
     <div class="palette-input-row">
-      <span class="palette-prompt" aria-hidden="true">$</span>
+      <span id="palette-prompt" class="palette-prompt" aria-hidden="true">$</span>
       <input
         id="palette-input"
         type="text"
@@ -240,6 +244,18 @@ const canAsk = lang === "fr";
     font-size: 0.6875rem;
   }
 
+  .palette-body :global(.palette-you) {
+    margin: 0.7rem 0.35rem 0;
+    color: var(--text-faint);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .palette-body :global(.palette-you)::before {
+    content: "› ";
+    color: var(--accent-live);
+  }
+
   .palette-body :global(.palette-answer) {
     margin: 0.5rem 0.35rem 0;
     padding-left: 0.7rem;
@@ -314,6 +330,8 @@ const canAsk = lang === "fr";
   // gets clipped by the panel height.
   const body = document.getElementById("palette-body");
   const status = document.getElementById("palette-status");
+  const prompt = document.getElementById("palette-prompt");
+  const hint = document.querySelector(".palette-hint");
   if (el && input && list && body) {
     const root = document.documentElement;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -323,6 +341,12 @@ const canAsk = lang === "fr";
     let cursor = 0;
     let lastFocused = null;
     let asking = false;
+    // Once Bob has answered, the palette becomes a conversation: the widget on
+    // his author page always kept a transcript, and the palette is now the main
+    // way people reach him, so a one-shot question was the odd one out.
+    let chatMode = false;
+    let convo = [];
+    const MAX_TURNS = 6;
 
     /* ---------------------------------------------------------- matching --- */
 
@@ -461,6 +485,9 @@ const canAsk = lang === "fr";
     /* ----------------------------------------------------------- results --- */
 
     function render(q) {
+      // In conversation mode the input is a reply box, not a search field —
+      // re-rendering here would wipe the transcript on every keystroke.
+      if (chatMode) return;
       list.textContent = "";
       rows = [];
       document.querySelectorAll(".palette-note, .palette-answer").forEach((n) => n.remove());
@@ -552,6 +579,35 @@ const canAsk = lang === "fr";
       if (r) r.run();
     }
 
+    function enterChat() {
+      chatMode = true;
+      list.textContent = "";
+      input.value = "";
+      input.placeholder = t.replyPlaceholder;
+      if (prompt) prompt.textContent = "bob";
+      if (hint) hint.textContent = t.chatHint;
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+    }
+
+    function leaveChat() {
+      chatMode = false;
+      convo = [];
+      input.value = "";
+      input.placeholder = t.placeholder;
+      if (prompt) prompt.textContent = "$";
+      if (hint) hint.textContent = t.hint;
+      body.querySelectorAll(".palette-you, .palette-answer, .palette-note, .links").forEach((n) => n.remove());
+      render("");
+    }
+
+    function addYou(text) {
+      const p = document.createElement("p");
+      p.className = "palette-you";
+      p.textContent = text;
+      body.append(p);
+    }
+
     /* --------------------------------------------------------------- ask --- */
 
     async function ask(question) {
@@ -562,6 +618,10 @@ const canAsk = lang === "fr";
       // being typed. Dropping focus gives the answer the full height back.
       // Desktop keeps focus so you can keep typing.
       if (window.matchMedia("(max-width: 600px)").matches) input.blur();
+      if (!chatMode) enterChat();
+      addYou(question);
+      convo.push({ role: "user", content: question });
+      convo = convo.slice(-MAX_TURNS);
       const p = document.createElement("p");
       p.className = "palette-answer";
       p.textContent = t.thinking;
@@ -576,7 +636,9 @@ const canAsk = lang === "fr";
         const res = await fetch("/api/bob/chat", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ messages: [{ role: "user", content: question }] }),
+          // The whole (short) transcript rides along: the Worker is stateless
+          // and keeps no session, exactly as the author-page widget does.
+          body: JSON.stringify({ messages: convo }),
         });
         const data = await res.json();
         if (data.localNote) {
@@ -588,7 +650,10 @@ const canAsk = lang === "fr";
         // Shared with the chat widget on purpose: DOM nodes not innerHTML, and
         // never an href the Worker did not validate.
         renderReply(p, data.reply || t.empty, data.links);
+        convo.push({ role: "assistant", content: data.reply || "" });
+        convo = convo.slice(-MAX_TURNS);
         reveal();
+        input.placeholder = t.replyPlaceholder;
         if (status) status.textContent = data.reply || "";
       } catch {
         p.textContent = lang === "en" ? "the line is down. try again." : "le fil est coupé. réessaie.";
@@ -624,6 +689,7 @@ const canAsk = lang === "fr";
       if (el.hidden) return;
       el.hidden = true;
       delete root.dataset.paletteOpen;
+      if (chatMode) leaveChat();
       document.querySelectorAll(".palette-note, .palette-answer").forEach((n) => n.remove());
       input.setAttribute("aria-expanded", "false");
       if (lastFocused && lastFocused.focus) lastFocused.focus();
@@ -637,6 +703,21 @@ const canAsk = lang === "fr";
     input.addEventListener("input", () => render(input.value));
 
     input.addEventListener("keydown", (e) => {
+      if (chatMode) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const q = input.value.trim();
+          if (q) {
+            input.value = "";
+            ask(q);
+          }
+        } else if (e.key === "Backspace" && input.value === "") {
+          // Same gesture the old command line used to dismiss itself.
+          e.preventDefault();
+          leaveChat();
+        }
+        return;
+      }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         cursor = Math.min(cursor + 1, Math.max(rows.length - 1, 0));

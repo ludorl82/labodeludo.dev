@@ -756,14 +756,35 @@ const canAsk = true;
       input.focus();
     }
 
-    function close() {
+    /* Returning focus to whatever opened the palette is what a dialog owes a
+       keyboard user: press Escape and you are back where you were, not at the
+       top of the document. It owes a finger nothing. Tapping outside the panel
+       put focus back on the header's search button, and that button is a
+       <button>, so the global `button:focus-visible` rule drew a green ring
+       around the search bar — a keyboard affordance, on a screen with no
+       keyboard, after a gesture that meant "I am done here". Hence the
+       argument: keyboard closes restore, pointer closes do not, which is also
+       exactly what the browser does on its own when you click away from
+       something.
+
+       The default reads the modality rather than the call site, so the several
+       commands that close the panel on their way to doing something else do
+       not each have to remember. Escape passes `true` outright, because that
+       listener may run before the modality listener sees the same keystroke
+       and this is not a subtlety worth depending on. */
+    let pointerLast = false;
+    document.addEventListener("pointerdown", () => (pointerLast = true), true);
+    document.addEventListener("keydown", () => (pointerLast = false), true);
+
+    function close(restoreFocus = !pointerLast) {
       if (el.hidden) return;
       el.hidden = true;
       delete root.dataset.paletteOpen;
       clearAnswer();
       document.querySelectorAll(".palette-note, .palette-answer, .palette-continue").forEach((n) => n.remove());
       input.setAttribute("aria-expanded", "false");
-      if (lastFocused && lastFocused.focus) lastFocused.focus();
+      if (restoreFocus && lastFocused && lastFocused.focus) lastFocused.focus();
+      else input.blur();
     }
 
     document.addEventListener("palette:open", (e) => open(e.detail && e.detail.prefix));
@@ -829,7 +850,7 @@ const canAsk = true;
         if (e.key === "Escape" && !el.hidden) {
           e.preventDefault();
           e.stopImmediatePropagation();
-          close();
+          close(true);
         }
       },
       true,
@@ -843,8 +864,10 @@ const canAsk = true;
       }
     });
 
+    // Tapping or clicking the backdrop: a pointer gesture, so no focus ring
+    // afterwards. See the note on close().
     el.addEventListener("click", (e) => {
-      if (e.target === el) close();
+      if (e.target === el) close(false);
     });
   }
 </script>

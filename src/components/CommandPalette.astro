@@ -44,8 +44,7 @@ const t =
         groupContent: "content",
         groupAsk: "ask",
         thinking: "Bob is thinking…",
-        replyPlaceholder: "reply to Bob…",
-        chatHint: "⏎ send · ⌫ on an empty line goes back to search · esc close",
+        answerHint: "type to search again · esc close",
       }
     : {
         label: "Chercher ou lancer une commande",
@@ -57,8 +56,7 @@ const t =
         groupContent: "contenu",
         groupAsk: "demander",
         thinking: "Bob réfléchit…",
-        replyPlaceholder: "réponds à Bob…",
-        chatHint: "⏎ envoyer · ⌫ sur une ligne vide pour revenir à la recherche · échap fermer",
+        answerHint: "tapez pour chercher à nouveau · échap fermer",
       };
 
 // Bob answers in the language he is addressed in — he writes the English
@@ -337,9 +335,12 @@ const canAsk = true;
     // Once Bob has answered, the palette becomes a conversation: the widget on
     // his author page always kept a transcript, and the palette is now the main
     // way people reach him, so a one-shot question was the odd one out.
-    let chatMode = false;
-    let convo = [];
-    const MAX_TURNS = 6;
+    // The palette asks one question and shows one answer. It is the site's
+    // navigation first: you come here to get somewhere, and a transcript
+    // accumulating under the search box turns a way-finding tool into a chat
+    // window. Conversation lives on /auteurs/bob, where the widget keeps six
+    // turns and the whole page is about talking to him.
+    let answerShown = false;
 
     /* ---------------------------------------------------------- matching --- */
 
@@ -478,9 +479,10 @@ const canAsk = true;
     /* ----------------------------------------------------------- results --- */
 
     function render(q) {
-      // In conversation mode the input is a reply box, not a search field —
-      // re-rendering here would wipe the transcript on every keystroke.
-      if (chatMode) return;
+      // While an answer is on screen there are no rows to draw, and rendering
+      // would wipe it. Typing calls clearAnswer() first, so this only guards
+      // the calls that arrive from elsewhere.
+      if (answerShown) return;
       list.textContent = "";
       rows = [];
       document.querySelectorAll(".palette-note, .palette-answer").forEach((n) => n.remove());
@@ -572,26 +574,31 @@ const canAsk = true;
       if (r) r.run();
     }
 
-    function enterChat() {
-      chatMode = true;
+    function showAnswerPane() {
+      answerShown = true;
       list.textContent = "";
+      // The rows behind the answer are gone from the DOM; drop them from the
+      // model too, or Enter on the empty input would re-run whichever one the
+      // cursor was parked on — asking the same question twice.
+      rows = [];
+      cursor = 0;
       input.value = "";
-      input.placeholder = t.replyPlaceholder;
+      input.placeholder = t.placeholder;
       if (prompt) prompt.textContent = "bob";
-      if (hint) hint.textContent = t.chatHint;
+      if (hint) hint.textContent = t.answerHint;
       input.setAttribute("aria-expanded", "false");
       input.removeAttribute("aria-activedescendant");
     }
 
-    function leaveChat() {
-      chatMode = false;
-      convo = [];
-      input.value = "";
+    /* Typing anything at all puts the palette back to searching. One question,
+       one answer: the next question replaces this one rather than stacking
+       under it. */
+    function clearAnswer() {
+      answerShown = false;
       input.placeholder = t.placeholder;
       if (prompt) prompt.textContent = "$";
       if (hint) hint.textContent = t.hint;
       body.querySelectorAll(".palette-you, .palette-answer, .palette-note, .links").forEach((n) => n.remove());
-      render("");
     }
 
     function addYou(text) {
@@ -611,10 +618,9 @@ const canAsk = true;
       // being typed. Dropping focus gives the answer the full height back.
       // Desktop keeps focus so you can keep typing.
       if (window.matchMedia("(max-width: 600px)").matches) input.blur();
-      if (!chatMode) enterChat();
+      clearAnswer();
+      showAnswerPane();
       addYou(question);
-      convo.push({ role: "user", content: question });
-      convo = convo.slice(-MAX_TURNS);
       const p = document.createElement("p");
       p.className = "palette-answer";
       p.textContent = t.thinking;
@@ -629,9 +635,9 @@ const canAsk = true;
         const res = await fetch("/api/bob/chat", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          // The whole (short) transcript rides along: the Worker is stateless
-          // and keeps no session, exactly as the author-page widget does.
-          body: JSON.stringify({ messages: convo }),
+          // One question, no transcript. The Worker is stateless either way;
+          // the author-page widget is the one that sends history.
+          body: JSON.stringify({ messages: [{ role: "user", content: question }] }),
         });
         const data = await res.json();
         if (data.localNote) {
@@ -643,10 +649,7 @@ const canAsk = true;
         // Shared with the chat widget on purpose: DOM nodes not innerHTML, and
         // never an href the Worker did not validate.
         renderReply(p, data.reply || t.empty, data.links, lang);
-        convo.push({ role: "assistant", content: data.reply || "" });
-        convo = convo.slice(-MAX_TURNS);
         reveal();
-        input.placeholder = t.replyPlaceholder;
         if (status) status.textContent = data.reply || "";
       } catch {
         p.textContent = lang === "en" ? "the line is down. try again." : "le fil est coupé. réessaie.";
@@ -682,7 +685,7 @@ const canAsk = true;
       if (el.hidden) return;
       el.hidden = true;
       delete root.dataset.paletteOpen;
-      if (chatMode) leaveChat();
+      clearAnswer();
       document.querySelectorAll(".palette-note, .palette-answer").forEach((n) => n.remove());
       input.setAttribute("aria-expanded", "false");
       if (lastFocused && lastFocused.focus) lastFocused.focus();
@@ -693,24 +696,12 @@ const canAsk = true;
     // visitors who never open it.
     document.addEventListener("palette:prefetch", load);
 
-    input.addEventListener("input", () => render(input.value));
+    input.addEventListener("input", () => {
+      if (answerShown) clearAnswer();
+      render(input.value);
+    });
 
     input.addEventListener("keydown", (e) => {
-      if (chatMode) {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          const q = input.value.trim();
-          if (q) {
-            input.value = "";
-            ask(q);
-          }
-        } else if (e.key === "Backspace" && input.value === "") {
-          // Same gesture the old command line used to dismiss itself.
-          e.preventDefault();
-          leaveChat();
-        }
-        return;
-      }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         cursor = Math.min(cursor + 1, Math.max(rows.length - 1, 0));

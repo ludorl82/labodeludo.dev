@@ -348,19 +348,47 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
       } catch {
         return; // storage denied, or someone hand-edited it: start clean
       }
-      if (!handoff || typeof handoff.question !== "string" || typeof handoff.reply !== "string") return;
-      if (!handoff.question.trim() || !handoff.reply.trim()) return;
+      // The palette hands over its whole conversation, not just the last pair
+      // — it remembers follow-ups even though it only ever shows one exchange.
+      // The single-pair shape is what it used to write; a tab still running
+      // yesterday's bundle can hand one over for as long as its session lives,
+      // and re-typing the question is a poor punishment for that.
+      const turns = Array.isArray(handoff?.turns)
+        ? handoff.turns.filter(
+            (m) =>
+              m &&
+              (m.role === "user" || m.role === "assistant") &&
+              typeof m.content === "string" &&
+              m.content.trim(),
+          )
+        : typeof handoff?.question === "string" && typeof handoff?.reply === "string"
+          ? [
+              { role: "user", content: handoff.question },
+              { role: "assistant", content: handoff.reply },
+            ].filter((m) => m.content.trim())
+          : [];
+      if (turns.length < 2) return;
 
       fallbackTurn?.remove();
       openers?.remove();
-      addTurn("toi", "").textContent = handoff.question;
-      const answer = addTurn("bob", "");
-      // The shared renderer, so a slug that arrived in the handoff is still
-      // subject to the same rule: only hrefs the Worker validated.
-      renderReply(answer, handoff.reply, Array.isArray(handoff.links) ? handoff.links : []);
-      history.push({ role: "user", content: handoff.question });
-      history.push({ role: "assistant", content: handoff.reply });
-      history = history.slice(-MAX_TURNS);
+      // Only the final reply carries links: the earlier ones were clicked in
+      // the palette or deliberately passed over.
+      const lastAnswer = turns.reduce((n, m, i) => (m.role === "assistant" ? i : n), -1);
+      turns.forEach((m, i) => {
+        if (m.role === "user") {
+          addTurn("toi", "").textContent = m.content;
+          return;
+        }
+        const answer = addTurn("bob", "");
+        // The shared renderer, so a slug that arrived in the handoff is still
+        // subject to the same rule: only hrefs the Worker validated.
+        renderReply(
+          answer,
+          m.content,
+          i === lastAnswer && Array.isArray(handoff.links) ? handoff.links : [],
+        );
+      });
+      history = history.concat(turns).slice(-MAX_TURNS);
       input?.focus();
     })();
 

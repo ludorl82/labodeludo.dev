@@ -43,7 +43,7 @@ const t =
         groupCommands: "commands",
         groupContent: "content",
         groupAsk: "ask",
-        answerHint: "type to search again · esc close",
+        answerHint: "type to search or follow up · ⇥ links · esc close",
         continueBob: "keep talking to Bob on his page",
       }
     : {
@@ -55,7 +55,7 @@ const t =
         groupCommands: "commandes",
         groupContent: "contenu",
         groupAsk: "demander",
-        answerHint: "tapez pour chercher à nouveau · échap fermer",
+        answerHint: "tapez pour chercher ou poursuivre · ⇥ liens · échap fermer",
         continueBob: "continuer avec Bob sur sa page",
       };
 
@@ -333,15 +333,25 @@ const canAsk = true;
     let cursor = 0;
     let lastFocused = null;
     let asking = false;
-    // Once Bob has answered, the palette becomes a conversation: the widget on
-    // his author page always kept a transcript, and the palette is now the main
-    // way people reach him, so a one-shot question was the odd one out.
-    // The palette asks one question and shows one answer. It is the site's
+    // The palette shows one question and one answer. It is the site's
     // navigation first: you come here to get somewhere, and a transcript
     // accumulating under the search box turns a way-finding tool into a chat
-    // window. Conversation lives on /auteurs/bob, where the widget keeps six
-    // turns and the whole page is about talking to him.
+    // window. The full transcript lives on /auteurs/bob, where the widget
+    // keeps six turns and the whole page is about talking to him.
     let answerShown = false;
+
+    // What is *displayed* is one exchange; what is *remembered* is the whole
+    // conversation. Those were the same thing until someone typed "et le
+    // stockage là-dedans ?" and got an answer that had never heard the
+    // question before it — which reads as a bug rather than as a design
+    // decision, because every other chat box on earth remembers. Keeping the
+    // context while still replacing the visible pair costs nothing on screen
+    // and fixes the anaphora.
+    let turns = [];
+    // Three exchanges, the same budget the author-page widget keeps. The
+    // Worker is stateless, so this array *is* the memory; an unbounded one
+    // would quietly grow the prompt with every follow-up.
+    const MAX_TURNS = 6;
 
     /* ---------------------------------------------------------- matching --- */
 
@@ -632,13 +642,12 @@ const canAsk = true;
       const reveal = () =>
         p.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
       reveal();
+      const sent = [...turns, { role: "user", content: question }];
       try {
         const res = await fetch("/api/bob/chat", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          // One question, no transcript. The Worker is stateless either way;
-          // the author-page widget is the one that sends history.
-          body: JSON.stringify({ messages: [{ role: "user", content: question }] }),
+          body: JSON.stringify({ messages: sent }),
         });
         const data = await res.json();
         if (data.localNote) {
@@ -651,13 +660,18 @@ const canAsk = true;
         // never an href the Worker did not validate.
         stopThinking();
         renderReply(p, data.reply || t.empty, data.links, lang);
+        // Only a real answer joins the memory: an empty reply as context would
+        // teach the next turn that Bob sometimes says nothing.
+        if (data.reply) {
+          turns = [...sent, { role: "assistant", content: data.reply }].slice(-MAX_TURNS);
+        }
         // One question, one answer is the right shape for navigation — but a
         // visitor who wants a conversation should not have to know that the
         // author page exists. The exchange rides along in sessionStorage
         // rather than the URL: it is same-origin, same-tab, survives exactly
         // one navigation, and keeps a question the visitor typed out of their
         // history and out of any link they might paste.
-        addContinueRow(question, data.reply || "", data.links || []);
+        addContinueRow(turns, data.links || []);
         reveal();
         if (status) status.textContent = data.reply || "";
       } catch {
@@ -676,14 +690,19 @@ const canAsk = true;
     const BOB_PAGE = "/auteurs/bob/";
     const HANDOFF_KEY = "bob:handoff";
 
-    function addContinueRow(question, reply, links) {
+    // The whole exchange travels, not just the last pair: someone who asked
+    // three questions here and then wants the room with more space should
+    // arrive with all three already on the page, not re-explaining what "it"
+    // referred to. `links` belongs to the final reply — the earlier ones were
+    // already clicked or already ignored.
+    function addContinueRow(transcript, links) {
       const a = document.createElement("a");
       a.className = "palette-continue";
       a.href = BOB_PAGE;
       a.textContent = t.continueBob;
       a.addEventListener("click", () => {
         try {
-          sessionStorage.setItem(HANDOFF_KEY, JSON.stringify({ question, reply, links }));
+          sessionStorage.setItem(HANDOFF_KEY, JSON.stringify({ turns: transcript, links }));
         } catch {
           // Private mode, or storage disabled. The link still works; the
           // visitor just re-asks on the other page instead of continuing.
@@ -719,6 +738,10 @@ const canAsk = true;
       if (el.hidden) return;
       el.hidden = true;
       delete root.dataset.paletteOpen;
+      // Closing the palette ends the conversation. Anything longer belongs on
+      // Bob's page, and a memory that outlived the panel it was typed into
+      // would surprise the next person to hit ⌘K on a shared machine.
+      turns = [];
       clearAnswer();
       document.querySelectorAll(".palette-note, .palette-answer, .palette-continue").forEach((n) => n.remove());
       input.setAttribute("aria-expanded", "false");
@@ -747,11 +770,35 @@ const canAsk = true;
       } else if (e.key === "Enter") {
         e.preventDefault();
         activate();
-      } else if (e.key === "Tab") {
-        // Focus trap: the panel holds exactly one focusable control, so the
-        // trap is simply "stay here".
-        e.preventDefault();
       }
+    });
+
+    /* An answer brings focusable things with it — the link pills Bob cites and
+       the row that continues the conversation on his page — and until now Tab
+       reached none of them: the trap was written when the panel really did
+       hold exactly one control, and it kept preventing default long after that
+       stopped being true. So the only way to the continue row was the mouse.
+       Now Tab cycles the panel's own focusables and Shift+Tab walks back,
+       which is what a modal dialog is supposed to do; with no answer on
+       screen there is still only the input, so it still behaves as "stay
+       here". Listening on the panel rather than the input, because once focus
+       has moved to a link the input's handler no longer runs. */
+    const FOCUSABLE = 'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])';
+
+    el.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      e.preventDefault();
+      // Recomputed per keystroke: the answer, its links and the continue row
+      // are all created after this listener is registered.
+      const stops = [...el.querySelectorAll(FOCUSABLE)].filter(
+        (n) => n.offsetParent !== null || n === document.activeElement,
+      );
+      if (stops.length < 2) return;
+      const i = stops.indexOf(document.activeElement);
+      const next = e.shiftKey
+        ? (i <= 0 ? stops.length - 1 : i - 1)
+        : (i === -1 || i === stops.length - 1 ? 0 : i + 1);
+      stops[next].focus();
     });
 
     // Escape is answered by four uncoordinated listeners on this site (the

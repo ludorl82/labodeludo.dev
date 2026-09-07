@@ -112,7 +112,14 @@ const canAsk = lang === "fr";
     display: flex;
     align-items: flex-start;
     justify-content: center;
+    /* vh, then dvh. `vh` is the LARGE viewport: on a phone it ignores the
+       on-screen keyboard, so the panel ended up taller than the visible area —
+       its content was not overflowing (nothing to scroll) but the bottom of it
+       sat behind the keyboard. `dvh` shrinks as the keyboard opens, so the
+       scroll container is only ever as tall as what you can actually see. */
     padding: 10vh 4vw 4vh;
+    padding: 6dvh 4vw 4dvh;
+    max-height: 100dvh;
     background: color-mix(in srgb, var(--bg) 82%, transparent);
     backdrop-filter: blur(2px);
   }
@@ -125,6 +132,7 @@ const canAsk = lang === "fr";
     width: 100%;
     max-width: 36rem;
     max-height: 70vh;
+    max-height: 70dvh;
     display: flex;
     flex-direction: column;
     background: var(--panel);
@@ -168,6 +176,7 @@ const canAsk = lang === "fr";
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 
   .palette-results {
@@ -280,6 +289,7 @@ const canAsk = lang === "fr";
     }
     .palette-panel {
       max-height: 82vh;
+      max-height: 82dvh;
     }
     .palette-hint {
       /* The full hint is a desktop keyboard legend; on a phone it is noise. */
@@ -547,6 +557,11 @@ const canAsk = lang === "fr";
     async function ask(question) {
       if (asking || !question.trim()) return;
       asking = true;
+      // On a phone the keyboard is still covering half the panel at this
+      // point, and the question has already been submitted — nothing more is
+      // being typed. Dropping focus gives the answer the full height back.
+      // Desktop keeps focus so you can keep typing.
+      if (window.matchMedia("(max-width: 600px)").matches) input.blur();
       const p = document.createElement("p");
       p.className = "palette-answer";
       p.textContent = t.thinking;

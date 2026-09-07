@@ -1,4 +1,9 @@
 {
-  "generated": null,
-  "openers": []
+  "generated": "2026-09-07T19:26:50Z",
+  "openers": [
+    "cest quoi qui fait rouler le blogue ?",
+    "c'est quoi ton setup complet ?",
+    "c'est quoi qu'on utilise pour le stockage?",
+    "comment t'as monté le cluster k3s ?"
+  ]
 }

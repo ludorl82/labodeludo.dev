@@ -227,3 +227,47 @@ img {
   border-top: 1px solid var(--panel-border);
   margin: 2.5em 0;
 }
+
+/* Bob's links — the chip row and the ones inline in his answer.
+ *
+ * Global rather than scoped to BobTerminal or CommandPalette for two reasons:
+ * both components render them through the same `renderReply`, and those nodes
+ * are built at runtime, so they never carry the `data-astro-cid-*` attribute a
+ * scoped rule selects on. A scoped rule here would simply not apply.
+ *
+ * `box-decoration-break: clone` is what makes the pill survive a line break: a
+ * title like "Déplacer mes partages NFS sur un SSD sans toucher à Kubernetes"
+ * wraps on a phone, and without this the border draws once around the whole
+ * run, leaving an open-ended box on each line. `display: inline` is required
+ * for it to have any effect, which rules out inline-flex. */
+.bob-link {
+  display: inline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.1em 0.6em;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--accent-live);
+  font-size: 0.9em;
+  text-decoration: none;
+  /* The glyph should not drag the line height around in a paragraph. */
+  line-height: 1.9;
+}
+
+.bob-link:hover,
+.bob-link:focus-visible {
+  border-color: var(--accent-live);
+  background: color-mix(in srgb, var(--accent-live) 10%, transparent);
+}
+
+.bob-link-ico {
+  margin-right: 0.4em;
+  color: var(--text-faint);
+}
+
+/* The triangle reads as "play", so it earns the live accent on hover the way a
+   control does; the article rules stay quiet. */
+.bob-link[data-kind="cast"]:hover .bob-link-ico,
+.bob-link[data-kind="cast"]:focus-visible .bob-link-ico {
+  color: var(--accent-live);
+}

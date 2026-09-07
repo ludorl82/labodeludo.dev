@@ -109,7 +109,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     border-left: 2px solid var(--accent-live);
   }
 
-  .turn.bob a {
+  .turn.bob a:not(.bob-link) {
     color: var(--accent-live);
     text-decoration: underline;
     text-underline-offset: 2px;
@@ -122,18 +122,6 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     margin: 0.5rem 0 0 0.7rem;
   }
 
-  .links a {
-    padding: 0.2rem 0.55rem;
-    border: 1px solid var(--panel-border);
-    border-radius: 999px;
-    color: var(--accent-live);
-    font-size: 0.75rem;
-    text-decoration: none;
-  }
-
-  .links a:hover {
-    border-color: var(--accent-live);
-  }
 
   .local-note {
     margin: 0.2rem 0 0;

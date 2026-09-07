@@ -284,14 +284,6 @@ const canAsk = true;
     margin: 0.5rem 0 0 0.7rem;
   }
 
-  .palette-body :global(.links a) {
-    padding: 0.2rem 0.55rem;
-    border: 1px solid var(--panel-border);
-    border-radius: 999px;
-    color: var(--accent-live);
-    font-size: 0.75rem;
-    text-decoration: none;
-  }
 
   .palette-hint {
     margin: 0.6rem 0 0;
@@ -650,7 +642,7 @@ const canAsk = true;
         }
         // Shared with the chat widget on purpose: DOM nodes not innerHTML, and
         // never an href the Worker did not validate.
-        renderReply(p, data.reply || t.empty, data.links);
+        renderReply(p, data.reply || t.empty, data.links, lang);
         convo.push({ role: "assistant", content: data.reply || "" });
         convo = convo.slice(-MAX_TURNS);
         reveal();

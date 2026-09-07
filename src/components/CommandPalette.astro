@@ -92,7 +92,9 @@ const canAsk = lang === "fr";
       />
     </div>
 
-    <ul id="palette-results" class="palette-results" role="listbox" aria-label={t.label}></ul>
+    <div id="palette-body" class="palette-body">
+      <ul id="palette-results" class="palette-results" role="listbox" aria-label={t.label}></ul>
+    </div>
 
     <p class="palette-hint">{t.hint}</p>
     <p id="palette-status" class="visually-hidden" role="status" aria-live="polite"></p>
@@ -160,12 +162,18 @@ const canAsk = lang === "fr";
     outline: none;
   }
 
+  .palette-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .palette-results {
     list-style: none;
     margin: 0.6rem 0 0;
     padding: 0;
-    overflow-y: auto;
-    flex: 1 1 auto;
   }
 
   .palette-group {
@@ -308,7 +316,7 @@ const canAsk = lang === "fr";
       const p = document.createElement("p");
       p.className = "palette-note";
       p.textContent = msg;
-      list.after(p);
+      body.append(p);
       setTimeout(() => p.remove(), 4000);
     }
 
@@ -513,7 +521,13 @@ const canAsk = lang === "fr";
       const p = document.createElement("p");
       p.className = "palette-answer";
       p.textContent = t.thinking;
-      list.after(p);
+      body.append(p);
+      // The results list stays above the answer, so on a phone the reply can
+      // land below the fold of the scroll container. Bring it into view — the
+      // visitor just asked for it.
+      const reveal = () =>
+        p.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+      reveal();
       try {
         const res = await fetch("/api/bob/chat", {
           method: "POST",
@@ -530,6 +544,7 @@ const canAsk = lang === "fr";
         // Shared with the chat widget on purpose: DOM nodes not innerHTML, and
         // never an href the Worker did not validate.
         renderReply(p, data.reply || t.empty, data.links);
+        reveal();
         if (status) status.textContent = data.reply || "";
       } catch {
         p.textContent = lang === "en" ? "the line is down. try again." : "le fil est coupé. réessaie.";

@@ -225,6 +225,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 <script>
   import { renderReply } from "../lib/bob-render";
     import { startThinking } from "../lib/bob-thinking";
+  import { MAX_TURNS, loadConversation, saveConversation } from "../lib/bob-memory";
 
   const log = document.getElementById("bob-log");
   const form = document.getElementById("bob-form") as HTMLFormElement | null;
@@ -235,8 +236,10 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 
   if (log && form && input && send) {
     // The Worker holds no memory, so the whole (short) transcript rides along.
-    // Six turns is the server's cap too; trimming here keeps the request honest.
-    const MAX_TURNS = 6;
+    // Six turns is the server's cap too; trimming here keeps the request
+    // honest. It is also shared with the palette through sessionStorage, so
+    // arriving on this page mid-conversation continues it rather than
+    // restarting it — see lib/bob-memory.ts.
     let history: { role: string; content: string }[] = [];
     let busy = false;
 
@@ -315,6 +318,9 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         reveal(answer, reply, data.links);
         history.push({ role: "assistant", content: reply });
         history = history.slice(-MAX_TURNS);
+        // Written once the answer is real, so a failed turn does not leave a
+        // question hanging in storage with nothing after it.
+        saveConversation(history, data.links || []);
       } catch {
         stopThinking();
         answer.textContent = "Le fil est coupé. Réessaie tantôt.";
@@ -328,51 +334,21 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
       }
     }
 
-    /* ------------------------------------------------------- handoff --- */
-    /* Arriving from the palette's "continue with Bob". The exchange is
-       replayed into the transcript and pushed into `history`, so the next
-       question is a genuine follow-up rather than a fresh start — asking the
-       model again would cost a call and, since it is not deterministic, would
-       answer differently than what the visitor just read.
-
-       sessionStorage, not the URL: same-origin, same-tab, gone after one read.
-       A question someone typed does not belong in their browser history or in
-       a link they might paste. */
-    (function resumeFromPalette() {
-      let handoff;
-      try {
-        const raw = sessionStorage.getItem("bob:handoff");
-        if (!raw) return;
-        sessionStorage.removeItem("bob:handoff");
-        handoff = JSON.parse(raw);
-      } catch {
-        return; // storage denied, or someone hand-edited it: start clean
-      }
-      // The palette hands over its whole conversation, not just the last pair
-      // — it remembers follow-ups even though it only ever shows one exchange.
-      // The single-pair shape is what it used to write; a tab still running
-      // yesterday's bundle can hand one over for as long as its session lives,
-      // and re-typing the question is a poor punishment for that.
-      const turns = Array.isArray(handoff?.turns)
-        ? handoff.turns.filter(
-            (m) =>
-              m &&
-              (m.role === "user" || m.role === "assistant") &&
-              typeof m.content === "string" &&
-              m.content.trim(),
-          )
-        : typeof handoff?.question === "string" && typeof handoff?.reply === "string"
-          ? [
-              { role: "user", content: handoff.question },
-              { role: "assistant", content: handoff.reply },
-            ].filter((m) => m.content.trim())
-          : [];
+    /* --------------------------------------------------- reprise --- */
+    /* Whatever was said before landing here — in the palette on an article, or
+       on this page before you wandered off and came back — is replayed into
+       the transcript and into `history`, so the next question is a genuine
+       follow-up rather than a fresh start. Replayed, not re-asked: the model
+       is not deterministic, so asking again would cost a call and answer
+       something different from what the visitor already read. */
+    (function resumeConversation() {
+      const { turns, links } = loadConversation();
       if (turns.length < 2) return;
 
       fallbackTurn?.remove();
       openers?.remove();
-      // Only the final reply carries links: the earlier ones were clicked in
-      // the palette or deliberately passed over.
+      // Only the final reply carries links: the earlier ones were clicked
+      // already or deliberately passed over.
       const lastAnswer = turns.reduce((n, m, i) => (m.role === "assistant" ? i : n), -1);
       turns.forEach((m, i) => {
         if (m.role === "user") {
@@ -380,13 +356,9 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
           return;
         }
         const answer = addTurn("bob", "");
-        // The shared renderer, so a slug that arrived in the handoff is still
-        // subject to the same rule: only hrefs the Worker validated.
-        renderReply(
-          answer,
-          m.content,
-          i === lastAnswer && Array.isArray(handoff.links) ? handoff.links : [],
-        );
+        // The shared renderer, so a slug that came back out of storage is
+        // still subject to the same rule: only hrefs the Worker validated.
+        renderReply(answer, m.content, i === lastAnswer ? links : []);
       });
       history = history.concat(turns).slice(-MAX_TURNS);
       input?.focus();

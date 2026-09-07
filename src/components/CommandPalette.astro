@@ -311,6 +311,12 @@ const canAsk = true;
   // runtime. Config rides on a data attribute instead.
   import { renderReply } from "../lib/bob-render";
   import { startThinking } from "../lib/bob-thinking";
+  import {
+    MAX_TURNS,
+    clearConversation,
+    loadConversation,
+    saveConversation,
+  } from "../lib/bob-memory";
 
   const el = document.getElementById("palette");
   const cfg = el ? JSON.parse(el.dataset.config || "{}") : {};
@@ -347,11 +353,13 @@ const canAsk = true;
     // decision, because every other chat box on earth remembers. Keeping the
     // context while still replacing the visible pair costs nothing on screen
     // and fixes the anaphora.
-    let turns = [];
-    // Three exchanges, the same budget the author-page widget keeps. The
-    // Worker is stateless, so this array *is* the memory; an unbounded one
-    // would quietly grow the prompt with every follow-up.
-    const MAX_TURNS = 6;
+    //
+    // It now outlives the page, too: the same conversation is picked up by the
+    // widget on Bob's author page and by the palette on whatever article you
+    // read next, because it lives in sessionStorage rather than in this
+    // closure. See lib/bob-memory.ts for why that storage and not another.
+    let turns = loadConversation().turns;
+    let lastLinks = [];
 
     /* ---------------------------------------------------------- matching --- */
 
@@ -435,6 +443,24 @@ const canAsk = true;
             if (o) o.hidden = false;
           },
         },
+        // Offered only when there is something to forget. A memory that
+        // follows you from page to page needs a way out that is not "close
+        // every tab", and burying it in a help sheet would make the feature
+        // feel like something happening *to* you.
+        ...(turns.length
+          ? [
+              {
+                id: "forget",
+                label: lang === "en" ? "forget — clear the conversation" : "oublier — effacer la conversation",
+                run: () => {
+                  turns = [];
+                  clearConversation();
+                  clearAnswer();
+                  show(lang === "en" ? "forgotten." : "oublié.");
+                },
+              },
+            ]
+          : []),
         {
           id: "recent",
           label: lang === "en" ? "recent — newest post" : "recent — le plus récent",
@@ -664,6 +690,8 @@ const canAsk = true;
         // teach the next turn that Bob sometimes says nothing.
         if (data.reply) {
           turns = [...sent, { role: "assistant", content: data.reply }].slice(-MAX_TURNS);
+          lastLinks = data.links || [];
+          saveConversation(turns, lastLinks);
         }
         // One question, one answer is the right shape for navigation — but a
         // visitor who wants a conversation should not have to know that the
@@ -671,7 +699,7 @@ const canAsk = true;
         // rather than the URL: it is same-origin, same-tab, survives exactly
         // one navigation, and keeps a question the visitor typed out of their
         // history and out of any link they might paste.
-        addContinueRow(turns, data.links || []);
+        addContinueRow();
         reveal();
         if (status) status.textContent = data.reply || "";
       } catch {
@@ -688,26 +716,16 @@ const canAsk = true;
     // in the question's language wherever he is, so the page being French
     // chrome costs an English visitor nothing but the nav around it.
     const BOB_PAGE = "/auteurs/bob/";
-    const HANDOFF_KEY = "bob:handoff";
 
-    // The whole exchange travels, not just the last pair: someone who asked
-    // three questions here and then wants the room with more space should
-    // arrive with all three already on the page, not re-explaining what "it"
-    // referred to. `links` belongs to the final reply — the earlier ones were
-    // already clicked or already ignored.
-    function addContinueRow(transcript, links) {
+    // Nothing to hand over any more: the conversation was written to storage
+    // when the answer arrived, and the author page reads the same key. This is
+    // now an ordinary link — which is the version that also works when
+    // JavaScript has already done its part, and one mechanism instead of two.
+    function addContinueRow() {
       const a = document.createElement("a");
       a.className = "palette-continue";
       a.href = BOB_PAGE;
       a.textContent = t.continueBob;
-      a.addEventListener("click", () => {
-        try {
-          sessionStorage.setItem(HANDOFF_KEY, JSON.stringify({ turns: transcript, links }));
-        } catch {
-          // Private mode, or storage disabled. The link still works; the
-          // visitor just re-asks on the other page instead of continuing.
-        }
-      });
       body.append(a);
     }
 
@@ -725,6 +743,10 @@ const canAsk = true;
 
     function open(prefix) {
       if (!el.hidden) return;
+      // Re-read rather than trust the copy in this closure: on Bob's own page
+      // the widget and the palette are two boxes onto one conversation, and
+      // the widget may have moved it since this script ran.
+      turns = loadConversation().turns;
       lastFocused = document.activeElement;
       el.hidden = false;
       root.dataset.paletteOpen = "1";
@@ -738,10 +760,6 @@ const canAsk = true;
       if (el.hidden) return;
       el.hidden = true;
       delete root.dataset.paletteOpen;
-      // Closing the palette ends the conversation. Anything longer belongs on
-      // Bob's page, and a memory that outlived the panel it was typed into
-      // would surprise the next person to hit ⌘K on a shared machine.
-      turns = [];
       clearAnswer();
       document.querySelectorAll(".palette-note, .palette-answer, .palette-continue").forEach((n) => n.remove());
       input.setAttribute("aria-expanded", "false");

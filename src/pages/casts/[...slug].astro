@@ -11,6 +11,9 @@ export async function getStaticPaths() {
 const { cast } = Astro.props;
 const { Content } = await render(cast);
 
+const englishCasts = await getCollection("castsEn");
+const hasEnglish = englishCasts.some((c) => c.id === cast.id);
+
 const articles = await getCollection("blog");
 const article = cast.data.article
   ? articles.find((a) => a.id === cast.data.article)
@@ -20,6 +23,10 @@ const article = cast.data.article
 <BaseLayout
   title={`${cast.data.title} — Le labo de Ludo`}
   description={cast.data.description}
+  translations={{
+    fr: `/casts/${cast.id}/`,
+    ...(hasEnglish ? { en: `/en/casts/${cast.id}/` } : {}),
+  }}
 >
   <a class="back" href="/casts/">&larr; tous les enregistrements</a>
 

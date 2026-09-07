@@ -61,10 +61,11 @@ const t =
         chatHint: "⏎ envoyer · ⌫ sur une ligne vide pour revenir à la recherche · échap fermer",
       };
 
-// Bob is French-only — persona, quips and openers all are. On EN pages the
-// palette is navigation and search, with no ask row, rather than a button that
-// would fail.
-const canAsk = lang === "fr";
+// Bob answers in the language he is addressed in — he writes the English
+// translations, after all — so the ask row is offered on both sides now. He
+// only links /en/ paths for pieces he has actually translated; the rest keep
+// the French URL rather than becoming dead English links.
+const canAsk = true;
 ---
 
 <div

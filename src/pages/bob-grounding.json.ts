@@ -97,9 +97,20 @@ export const GET: APIRoute = async () => {
     `Publications : ${(await getCollection("blog")).length} articles, ${(await getCollection("casts")).length} casts`,
   ].join("\n");
 
-  const [posts, casts] = await Promise.all([
+  const [posts, casts, postsEn, castsEn] = await Promise.all([
     getCollection("blog"),
     getCollection("casts"),
+    getCollection("blogEn"),
+    getCollection("castsEn"),
+  ]);
+
+  // FR and EN pair by identical id, so a set of ids is all that is needed to
+  // know whether an English twin exists. Bob writes those translations, so when
+  // he answers in English he should point at /en/blog/<slug>/ rather than
+  // sending an English speaker to the French original.
+  const twins = new Set([
+    ...postsEn.map((e) => `article:${e.id}`),
+    ...castsEn.map((e) => `cast:${e.id}`),
   ]);
 
   const entry = (kind: string) => (e: { id: string; data: Record<string, any> }) =>
@@ -110,6 +121,7 @@ export const GET: APIRoute = async () => {
       (e.data.tags ?? []).join(","),
       oneLine(e.data.title),
       oneLine(e.data.description ?? "").slice(0, DESCRIPTION_CHARS),
+      twins.has(`${kind}:${e.id}`) ? "en" : "",
     ].join("|");
 
   const corpus = [
@@ -142,7 +154,7 @@ export const GET: APIRoute = async () => {
     counts: { devices: devices.length, corpus: corpus.length },
     approxTokens,
     // Field order in each corpus line, so the Worker's prompt can name it.
-    corpusFields: "kind|slug|date|tags|title|description",
+    corpusFields: "kind|slug|date|tags|title|description|en",
     summary,
     // Voice for the Worker's local-fallback mode. Lives in bob-humor.ts with
     // the other pools and rides along here so it is editable without a tofu

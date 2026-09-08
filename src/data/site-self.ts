@@ -28,7 +28,12 @@ export const SITE_SELF = [
   "Publication : une fusion vers la branche `main` déclenche GitHub Actions, qui bâtit le site et le déploie sur Cloudflare Pages. La branche `dev` déploie la préproduction, derrière Cloudflare Access.",
   "La recherche et la palette de commandes lisent /search-index.json, généré au moment du build ; il n'y a pas de moteur de recherche côté serveur.",
   "Cette conversation-ci passe par /api/bob/chat, un Worker Cloudflare qui assemble la personnalité de Bob et ce document, puis interroge le modèle.",
-  "Le modèle est qwen3:14b, servi par Ollama sur une carte graphique du parc. Aucun fournisseur d'IA infonuagique n'est dans le portrait.",
+  // The model's NAME is deliberately absent: it lives in the Worker, in
+  // another repo, and changes on a different day. Written here it went stale
+  // within hours — Bob was still telling visitors he was qwen3:14b after he
+  // had become something else. The Worker appends its own name to this
+  // section, because the Worker is the only thing that knows it.
+  "Le modèle tourne sur Ollama, sur une carte graphique du parc. Aucun fournisseur d'IA infonuagique n'est dans le portrait.",
   "Le diagramme d'architecture et l'inventaire viennent de fichiers JSON réécrits chaque nuit par une tâche qui relit les dépôts d'infrastructure.",
   "Le chat n'a aucun accès en écriture : Bob répond, il ne publie rien.",
 ].join("\n");

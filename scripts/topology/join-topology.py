@@ -117,6 +117,42 @@ for n in nodes.values():
             edges.append({"from": rid, "to": n["id"], "kind": "serves"})
             n_serves += 1
 
+# edge↔cluster ingress join: a dns node's meta.origin says what the tunnel
+# forwards that hostname TO. When the origin is off-cluster the cloudflare
+# emitter already turns it into `dns -routes-to-> external:*`; this does the
+# in-cluster half, which nothing did.
+#
+# It matters more than it looks. Without it `app:traefik` — the ingress six
+# public names traverse — had exactly ONE edge (part-of the cluster), so
+# clicking it lit two boxes while a NAS lit seven. The relation was sitting in
+# the data as a string the whole time.
+#
+# Resolution is deliberately narrow, because a wrong edge is worse than a
+# missing one: service name first (traefik/ntfy/unifi name their app), then a
+# namespace that resolves to exactly one app (uptime-kuma.kuma -> app:kuma).
+# Ambiguous or unknown means no edge — kube-system alone holds two apps.
+def app_for_service(svc, ns):
+    for n in nodes.values():
+        if n["kind"] == "app" and n["label"] == svc:
+            return n["id"]
+    in_ns = [n["id"] for n in nodes.values()
+             if n["kind"] == "app" and n.get("meta", {}).get("namespace") == ns]
+    return in_ns[0] if len(in_ns) == 1 else None
+
+
+n_ingress = 0
+for n in list(nodes.values()):
+    if n["kind"] != "dns":
+        continue
+    origin = n.get("meta", {}).get("origin") or ""
+    m = re.match(r"^https?://([a-z0-9-]+)\.([a-z0-9-]+)\.svc\.cluster\.local", origin)
+    if not m:
+        continue
+    target = app_for_service(m.group(1), m.group(2))
+    if target:
+        edges.append({"from": n["id"], "to": target, "kind": "routes-to"})
+        n_ingress += 1
+
 # cluster↔cloud storage join: an app's manifests may name S3 buckets
 # (meta.s3Refs, captured by the k3s emitter) — promoted to a `uses` edge
 # only when the aws layer actually declares that bucket. No match, no edge.
@@ -155,4 +191,5 @@ with open(out_path, "w", encoding="utf-8") as f:
     f.write("\n")
 print(f"join-topology: {len(result['nodes'])} nodes, "
       f"{len(result['edges'])} edges ({n_serves} cross-layer serves, "
+      f"{n_ingress} dns→ingress routes-to, "
       f"{n_s3} app→bucket uses) -> {out_path}")

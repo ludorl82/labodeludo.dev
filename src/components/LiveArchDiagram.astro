@@ -433,7 +433,7 @@ const ariaLabel =
 
       <!-- apps (agrégat : un clic allume exactement ses membres) -->
       <g class="svg-node" data-nodes={appIds}>
-        <title>les applications du cluster — cliquer pour les allumer dans l'inventaire</title>
+        <title>les applications du cluster — cliquer pour les allumer toutes</title>
         <rect x="245" y="376" width="270" height="58" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
         <text x="380" y="399" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{appCount} applications</text>
         <text x="380" y="417" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{pinCount} workloads épinglés à leur machine</text>
@@ -452,7 +452,7 @@ const ariaLabel =
 
       <!-- control-plane EC2 (dans le cluster) -->
       <a class="svg-node" data-node={cloudHost?.id} href={cloudHost && src(cloudHost)}>
-        <title>cloud-01 — cliquer pour voir ce qui tombe avec lui</title>
+        <title>cloud-01 — cliquer pour allumer les chemins qui passent par lui</title>
         <rect x="450" y="470" width="230" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
         <text x="565" y="494" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{cloudHost?.label ?? "cloud-01"}</text>
         <text x="565" y="509" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">EC2 — UNIQUE control-plane</text>
@@ -481,7 +481,7 @@ const ariaLabel =
           const c = cell(i, HOST_Y0);
           return (
             <a class="svg-node" data-node={h.id} href={src(h)}>
-              <title>{h.label} — {h.meta.class} · {inK3s(h) ? "nœud du cluster" : "gérée par l'IaC, hors cluster"} · cliquer pour voir ce qui en dépend</title>
+              <title>{h.label} — {h.meta.class} · {inK3s(h) ? "nœud du cluster" : "gérée par l'IaC, hors cluster"} · cliquer pour allumer les chemins qui y aboutissent</title>
               <rect x={c.x} y={c.y} width={H_W} height={H_H} rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
               <text x={c.x + H_W / 2} y={c.y + 18} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{h.label}</text>
               <text x={c.x + H_W / 2} y={c.y + 30} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{h.meta.class}{inK3s(h) ? " · k3s" : ""}</text>
@@ -494,7 +494,7 @@ const ariaLabel =
            n'énumère plus personne à la main -->
       {extBoxes.map(({ n, x, y, note }) => (
         <a class="svg-node" data-node={n.id} href={src(n)}>
-          <title>{n.label} — hors IaC, {note}{n.meta.via ? ` · ${n.meta.via}` : ""} · cliquer pour voir ce qui s'y accroche</title>
+          <title>{n.label} — hors IaC, {note}{n.meta.via ? ` · ${n.meta.via}` : ""} · cliquer pour allumer les chemins qui y aboutissent</title>
           <rect x={x} y={y} width={H_W} height={H_H} rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
           <text x={x + H_W / 2} y={y + 18} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{n.label}</text>
           <text x={x + H_W / 2} y={y + 30} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{note}</text>
@@ -558,8 +558,9 @@ const ariaLabel =
   </div>
   <figcaption>
     La forme du système — générée des mêmes données que l'inventaire
-    ci-dessous, et cliquable comme lui : une boîte allume ce qui en dépend,
-    ici et dans l'inventaire; un deuxième clic ouvre son fichier source.
+    ci-dessous. Une boîte allume le chemin qu'elle emprunte : d'un nom public
+    jusqu'à la machine qui le sert, et dans l'autre sens si tu pars d'une
+    machine. Un deuxième clic ouvre son fichier source.
     {fleetExtras.length > 0 &&
       " La bande du bas, elle, ne clique pas : c'est le reste du parc, qui " +
         "existe, qui tire du courant, et " +

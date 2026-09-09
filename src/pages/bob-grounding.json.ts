@@ -5,6 +5,8 @@ import { BOB_LOCAL_INTROS } from "../lib/bob-humor";
 import architecture from "../data/architecture.json";
 import dispatch from "../data/dispatch.json";
 import { SITE_SELF } from "../data/site-self";
+import { INVENTORY, type InventoryKey } from "../lib/inventory";
+import { AUTHORS } from "../lib/author";
 
 export const prerender = true;
 
@@ -135,6 +137,44 @@ export const GET: APIRoute = async () => {
       .map(entry("cast")),
   ];
 
+  // Every page of the site that is NOT a publication, so Bob can point at one.
+  //
+  // He had the article index and nothing else, so the only link he could ever
+  // offer was /blog/<slug>/ — asked "c'est quoi ton architecture ?" the best he
+  // could do was describe it, with /architecture/ sitting right there. Anything
+  // he cited that was not a slug was dropped by the Worker's link check, which
+  // is the correct behaviour for an unverified path and a bad answer to a fair
+  // question.
+  //
+  // Derived, never hand-listed: the roles come from INVENTORY, the authors from
+  // AUTHORS, the standalone pages from the `pages` collection. A route added
+  // without touching this file still shows up; a role deleted stops being
+  // offered. The only literals are the index routes, which are fixed files in
+  // src/pages and change about once a year.
+  const pagesCollection = await getCollection("pages");
+  const siteMap: [string, string][] = [
+    // No "/" entry on purpose. The home page adds nothing Bob can say that the
+    // article index does not, and as a link target it is a hazard: the widget
+    // linkifies inline by building one regex out of every slug, and a bare "/"
+    // matches every slash in the reply — including the ones inside real paths.
+    ["/architecture/", "Le schéma de l'architecture, redessiné chaque semaine à partir des dépôts"],
+    ["/inventaire/", "L'inventaire : ce que chaque rôle du labo fait, et les articles écrits dessus"],
+    ["/casts/", "Les enregistrements de terminal"],
+    ["/auteurs/", "Qui écrit ici"],
+    ["/en/", "English home — the translated half of the site"],
+    ["/en/casts/", "Terminal recordings, English index"],
+    ...(Object.keys(INVENTORY) as InventoryKey[]).map(
+      (k) => [`/inventaire/${k}/`, `Rôle : ${INVENTORY[k].name}`] as [string, string],
+    ),
+    ...Object.entries(AUTHORS).map(
+      ([id, a]) => [`/auteurs/${id}/`, `${a.name} — ${a.tagline}`] as [string, string],
+    ),
+    ...pagesCollection.map(
+      (p) => [`/${p.id}/`, oneLine(p.data.title)] as [string, string],
+    ),
+  ];
+  const pagesText = siteMap.map(([path, title]) => `${path}|${title}`).join("\n");
+
   const fleetText = devices.join("\n");
   const corpusText = corpus.join("\n");
   const approxTokens = Math.round(
@@ -157,6 +197,10 @@ export const GET: APIRoute = async () => {
     approxTokens,
     // Field order in each corpus line, so the Worker's prompt can name it.
     corpusFields: "kind|slug|date|tags|title|description|en",
+    // The non-publication pages, same idea: the Worker names the field order
+    // in the prompt and verifies every path Bob cites against this list.
+    pagesFields: "path|title",
+    pages: pagesText,
     summary,
     // How this site is built. Not derivable from the fleet — those are the
     // machines in the basement, and the blog is a static artifact on someone

@@ -64,6 +64,27 @@ its members). Ids come from architecture.json. Decorative marks
 (visiteurs, arrows, the WireGuard line) carry neither. The driver refuses
 a refresh that strips these attributes.
 
+**The click answers ONE question: « le chemin » — which path through the
+system does this box sit on.** Clicking a public name lights the machine
+that serves it; clicking a machine lights the names that end up there.
+Tooltips and captions must describe THAT and nothing else. Three different
+metaphors used to live here — "ce qui en dépend", "ce qui tombe avec lui",
+"les allumer dans l'inventaire" — and that inconsistency is a large part of
+why the highlight read as arbitrary. Phrase any new `<title>` as a path.
+
+**Every id you write must exist in architecture.json, and every clickable
+box must have at least one edge.** `scripts/check-diagram-highlight.mjs`
+runs inside `npm run build` and fails the build on an invented id, on a
+count printed here that no longer matches the data, or on a box that can
+light nothing. The guard this replaced only counted occurrences of the
+string `data-node`, so a typo shipped a box that silently did nothing — do
+not trust the drawing looking right.
+
+**Do not add per-name boxes for `dns:` nodes.** The public names are
+rendered as clickable chips by `ArchGenerated.astro`, outside this file, on
+purpose: they wrap on a phone, and they survive your rewrites. Keep drawing
+the COUNTS here, not the names.
+
 
 ## Bob's voice
 

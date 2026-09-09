@@ -198,12 +198,27 @@
     {
       "from": "dns:cronicle.pub.example.com",
       "kind": "routes-to",
+      "to": "app:traefik"
+    },
+    {
+      "from": "dns:cronicle.pub.example.com",
+      "kind": "routes-to",
       "to": "tunnel:k3s"
     },
     {
       "from": "dns:frigate.pub.example.com",
       "kind": "routes-to",
+      "to": "app:traefik"
+    },
+    {
+      "from": "dns:frigate.pub.example.com",
+      "kind": "routes-to",
       "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:grafana.pub.example.com",
+      "kind": "routes-to",
+      "to": "app:traefik"
     },
     {
       "from": "dns:grafana.pub.example.com",
@@ -223,6 +238,11 @@
     {
       "from": "dns:kuma.pub.example.com",
       "kind": "routes-to",
+      "to": "app:kuma"
+    },
+    {
+      "from": "dns:kuma.pub.example.com",
+      "kind": "routes-to",
       "to": "tunnel:k3s"
     },
     {
@@ -233,12 +253,27 @@
     {
       "from": "dns:n8n.pub.example.com",
       "kind": "routes-to",
+      "to": "app:traefik"
+    },
+    {
+      "from": "dns:n8n.pub.example.com",
+      "kind": "routes-to",
       "to": "tunnel:k3s"
     },
     {
       "from": "dns:ntfy.pub.example.com",
       "kind": "routes-to",
+      "to": "app:ntfy"
+    },
+    {
+      "from": "dns:ntfy.pub.example.com",
+      "kind": "routes-to",
       "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:plex.pub.example.com",
+      "kind": "routes-to",
+      "to": "app:traefik"
     },
     {
       "from": "dns:plex.pub.example.com",
@@ -258,7 +293,17 @@
     {
       "from": "dns:unifi.pub.example.com",
       "kind": "routes-to",
+      "to": "app:unifi"
+    },
+    {
+      "from": "dns:unifi.pub.example.com",
+      "kind": "routes-to",
       "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:vault.family.example",
+      "kind": "routes-to",
+      "to": "app:traefik"
     },
     {
       "from": "dns:vault.family.example",
@@ -646,7 +691,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-09-09T10:41:25+00:00",
+  "generated": "2026-09-09T17:08:21+00:00",
   "nodes": [
     {
       "id": "access:cronicle",

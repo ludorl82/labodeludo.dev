@@ -5,6 +5,7 @@ export type InventoryKey =
   | "pare-feu"
   | "alimentation"
   | "bastion"
+  | "ordonnancement"
   | "stockage"
   | "pipeline-media"
   | "calcul-gpu"
@@ -51,6 +52,8 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "app:traefik",
       "app:cloudflared",
       "host:cloud-01",
+      "instance:aws_node",
+      "app:cluster-dns",
     ],
   },
   "site-web": {
@@ -78,7 +81,12 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "deux-sources-pour-une-seule-image",
       "je-redessine-ces-pages-chaque-nuit",
     ],
-    nodes: ["app:kuma", "app:ntfy", "app:logging"],
+    nodes: [
+      "app:kuma",
+      "app:ntfy",
+      "app:logging",
+      "app:access-audit",
+    ],
   },
   alimentation: {
     name: "Alimentation protégée (onduleurs)",
@@ -89,11 +97,13 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "le-nas-le-courant-et-l-appel-de-reveil",
       "debrancher-le-nas-pour-la-science",
     ],
-    nodes: [
-      "external:ups-gpu-01",
-      "external:ups-pi-01",
-      "external:ups-pi-02",
-    ],
+    // The three UPS nodes this claimed have left the topology, and nothing
+    // said so: roleForNode fails soft by design, so a role pointing at
+    // vanished ids renders as an empty section, not an error. The drawing
+    // already copes (they go to the non-clickable fleet band); this list
+    // had never been told. Empty is the honest state: the power layer is
+    // real, but no repo declares it — the same hors-IaC story.
+    nodes: [],
   },
   "pare-feu": {
     name: "Pare-feu domicile",
@@ -107,6 +117,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     ],
     nodes: [
       "external:router",
+      "app:unifi",
     ],
   },
   bastion: {
@@ -129,6 +140,19 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "host:console-vm",
     ],
   },
+  ordonnancement: {
+    name: "Ordonnancement et automatisation",
+    description:
+      "Ce qui décide QUAND les choses arrivent. Un seul ordonnanceur pour tout le parc — sauvegardes, vérifications de dérive, mises à jour hebdomadaires, redessin de ces pages — plutôt qu'une crontab par machine que personne ne relit; et un moteur de workflows pour ce qui se déclenche sur un évènement plutôt que sur une heure. Les deux tournent dans la grappe et sont décrits en git comme le reste.",
+    articles: [
+      "un-pod-qui-voyage-leger",
+      "debrancher-le-nas-pour-la-science",
+    ],
+    // Both were sitting in « pas encore rattaché » — a scheduler and a
+    // workflow engine are the same family (something else decides when the
+    // work runs), so they get one role rather than two thin pages.
+    nodes: ["app:cronicle", "app:n8n"],
+  },
   stockage: {
     name: "Stockage (NAS)",
     description: "Stockage de fichiers centralisé pour le réseau serveurs.",
@@ -141,6 +165,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     ],
     nodes: [
       "external:nas",
+      "app:keepass-webdav",
     ],
   },
   "pipeline-media": {
@@ -156,7 +181,13 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "une-borne-darcade-qui-cohabite-avec-kubernetes",
       "gpu-a-la-demande-a-la-maison",
     ],
-    nodes: ["app:plex", "app:frigate", "host:srv-01", "host:gpu-02"],
+    nodes: [
+      "app:plex",
+      "app:frigate",
+      "host:srv-01",
+      "host:gpu-02",
+      "app:numeriseur",
+    ],
   },
   "calcul-gpu": {
     name: "Calcul GPU",
@@ -171,7 +202,10 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     ],
     // gpu-02 belongs to pipeline-media (it runs the NVR); a node maps to
     // exactly one role so the reverse lookup stays unambiguous
-    nodes: ["host:gpu-01"],
+    nodes: [
+      "host:gpu-01",
+      "host:gaming-01",
+    ],
   },
   "hote-conteneurs": {
     name: "Grappe conteneurs (k3s)",
@@ -194,13 +228,13 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "tout-ca-pour-un-script-bash",
       "un-pod-qui-voyage-leger",
     ],
+    // host:docker and host:vm-03 were retired out from under this list.
     nodes: [
       "cluster:k3s",
-      "host:docker",
       "host:pi-01",
       "host:vm-01",
       "host:vm-02",
-      "host:vm-03",
+      "app:argocd",
     ],
   },
   domotique: {
@@ -219,6 +253,10 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     name: "Postes personnels",
     description: "Ordinateurs et téléphones personnels sur le réseau local.",
     articles: [],
+    // The exception to the note on `nodes` above: these two ARE declared
+    // (NixOS gaming VMs), so they get a role even though the rest of this
+    // one — laptops, phones — stays deliberately invisible to the IaC.
+    nodes: ["host:arcade1", "host:arcade2"],
   },
   "cameras-peripheriques": {
     name: "Caméras / périphériques",

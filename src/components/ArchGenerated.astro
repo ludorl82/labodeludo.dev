@@ -3,7 +3,6 @@
 // showLiveArch gate is on (SHOW_LIVE_ARCH=1: staging + the nightly job).
 import LiveArchDiagram from "./LiveArchDiagram.astro";
 import arch from "../data/architecture.json";
-import { INVENTORY, roleForNode } from "../lib/inventory";
 
 // The generated architecture view. Everything on this page comes from
 // src/data/architecture.json, produced by scripts/topology/join-topology.py
@@ -28,49 +27,13 @@ const byLayer = (layer: string, kinds?: string[]) =>
     (n) => n.layer === layer && (!kinds || kinds.includes(n.kind)),
   );
 
-const protectedDns = new Set(
-  edges.filter((e) => e.kind === "protects").map((e) => e.to),
-);
-const pins = new Map(
-  edges.filter((e) => e.kind === "pinned-to").map((e) => [e.from, e.to]),
-);
-const isEdges = new Map(
-  edges.filter((e) => e.kind === "is").map((e) => [e.from, e.to]),
-);
-
 const dns = byLayer("edge", ["dns"]).sort((a, b) =>
   a.label.localeCompare(b.label),
 );
 const tunnel = byLayer("edge", ["tunnel"])[0];
-const instance = byLayer("cloud", ["instance"])[0];
-const lambdas = byLayer("cloud", ["lambda"]);
-const buckets = byLayer("cloud", ["bucket"]);
-const apps = byLayer("cluster", ["app"]).sort((a, b) =>
-  a.label.localeCompare(b.label),
-);
-const workloadsByApp = new Map<string, TNode[]>();
-for (const w of byLayer("cluster", ["workload"])) {
-  const app = "app:" + w.id.slice("workload:".length).split("/")[0];
-  workloadsByApp.set(app, [...(workloadsByApp.get(app) ?? []), w]);
-}
-const hosts = byLayer("hardware", ["host"]).sort((a, b) =>
-  a.label.localeCompare(b.label),
-);
-const externals = byLayer("external", ["external"]).sort((a, b) =>
-  a.label.localeCompare(b.label),
-);
-
-// the bridge to the writing: a node whose role is known gets a discreet
-// link to that role's page, which carries the articles about it. Unmapped
-// nodes simply render without one — see roleForNode's fail-soft contract.
-const roleOf = (n: TNode) => {
-  const key = roleForNode(n.id);
-  return key ? { key, name: INVENTORY[key].name } : null;
-};
 
 const src = (n: TNode) =>
   `https://github.com/ludorl82/${n.repo}/blob/HEAD/${n.source}`;
-const short = (id: string) => id.slice(id.indexOf(":") + 1);
 const generated = (arch.generated as string).replace("T", " ").slice(0, 16);
 
 // the drift badge: the three nightly drift checks assert the private repos
@@ -125,8 +88,50 @@ const staleTitle = Object.entries(
   .map(([repo, s]) => `${repo.replace("-iac-public", "")}: ${s.date}`)
   .join(", ");
 
-// the client-side highlighter only needs the edge list
-const edgesLite = edges.map((e) => [e.from, e.to]);
+// The highlighter needs the edge KIND, not just the endpoints: the walk is
+// directed now, and which way a `part-of` points depends on what it joins.
+// Dropping the kind is what forced the old undirected walk.
+const edgesLite = edges.map((e) => [e.from, e.to, e.kind]);
+
+// so the live caption can say "cronicle.pub.example.com", not "dns:…"
+const labels = Object.fromEntries(nodes.map((n) => [n.id, n.label]));
+
+// The public names, grouped by the path they take inward.
+//
+// These are the natural STARTING points of a request, and not one of them was
+// clickable: the drawing carries boxes for apps, machines, buckets, externals
+// and the tunnel — but zero of the 14 dns nodes, zero routes, zero workloads.
+// So the question the click answers had no entrance, and the only way in was
+// to click something in the middle of a path.
+//
+// They live here rather than in the SVG on purpose. LiveArchDiagram.astro is
+// rewritten by the weekly job, its coordinates are hand-placed literals, and
+// fourteen more boxes would have to be threaded between the edge box and the
+// cluster — pushing ~25 literals down, every one a chance for the next redraw
+// to land badly. As chips they also wrap on a phone, where a row of small SVG
+// boxes is exactly where terminal-style diagrams fall apart.
+const dnsGroup = (n: TNode): string => {
+  const targets = edges
+    .filter((e) => e.kind === "routes-to" && e.from === n.id)
+    .map((e) => e.to);
+  if (targets.includes("app:traefik")) return "ingress";
+  if (targets.some((t) => t.startsWith("app:"))) return "direct";
+  if (targets.some((t) => t.startsWith("external:"))) return "hors";
+  if (targets.some((t) => t.startsWith("bucket:"))) return "statique";
+  return "edge";
+};
+const GROUPS: [string, string][] = [
+  ["ingress", "par le tunnel, puis l'ingress"],
+  ["direct", "par le tunnel, droit au Service"],
+  ["hors", "par le tunnel, vers une origine hors cluster"],
+  ["statique", "servi depuis le bucket"],
+  ["edge", "servi à l'edge, sans origine à la maison"],
+];
+const dnsGroups = GROUPS.map(([key, note]) => ({
+  key,
+  note,
+  names: dns.filter((n) => dnsGroup(n) === key),
+})).filter((g) => g.names.length > 0);
 ---
 
   <div class="status">
@@ -165,6 +170,31 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
 
   <LiveArchDiagram />
 
+  <div class="paths">
+    <div class="paths-head">
+      <h2>Par où entre une requête</h2>
+      <button type="button" id="path-clear" hidden>effacer</button>
+    </div>
+    <p id="path-say" class="say" aria-live="polite">
+      Clique un nom public — ou n'importe quelle boîte du schéma — pour
+      allumer le chemin qu'il emprunte. <kbd>Échap</kbd> efface.
+    </p>
+    {
+      dnsGroups.map((g) => (
+        <div class="grp">
+          <span class="grp-note">{g.note}</span>
+          <span class="chips">
+            {g.names.map((n) => (
+              <a class="chip svg-node" data-node={n.id} href={src(n)}>
+                {n.label}
+              </a>
+            ))}
+          </span>
+        </div>
+      ))
+    }
+  </div>
+
   <p class="footnote">
     Je ne lis <em>que</em> les dépôts publics pour dessiner ça — les
     sanitizers et leurs vérifications, qui refusent de publier au moindre
@@ -179,89 +209,227 @@ const edgesLite = edges.map((e) => [e.from, e.to]);
   </p>
 
   <script type="application/json" id="topo-edges" set:html={JSON.stringify(edgesLite)} />
+  <script type="application/json" id="topo-labels" set:html={JSON.stringify(labels)} />
   <script>
-    // Click a node: light up its neighborhood. Hub-like nodes (the tunnel,
-    // the cluster, the machines) LIGHT UP but never propagate — otherwise
-    // any click reaches the whole page through them. Clicking a hub itself
-    // still expands one level, which is exactly the blast-radius question.
+    // One question, asked from either end: **le chemin** — which path through
+    // the system does this box sit on? Clicking a public name lights the
+    // machine it lands on; clicking a machine lights the names that end up
+    // there. Same walk, run upstream and downstream from wherever you clicked.
+    //
+    // The traversal itself lives in ../lib/arch-path so the build-time
+    // checker (scripts/check-diagram-highlight.mjs) can import the SAME code.
+    // A checker with its own copy eventually attests a logic the page no
+    // longer runs.
+    import { buildGraph, pathThrough, isolated, ns } from "../lib/arch-path";
+
     const edges = JSON.parse(
       document.getElementById("topo-edges")!.textContent!,
-    ) as [string, string][];
-    // buckets included: homelab-backups has five apps writing to it — a
-    // click on any of them must light the bucket, not every co-tenant
-    const TERMINAL = new Set([
-      "tunnel",
-      "host",
-      "cluster",
-      "external",
-      "bucket",
-    ]);
-    const ns = (id: string) => id.slice(0, id.indexOf(":"));
-    const adj = new Map<string, string[]>();
-    for (const [a, b] of edges) {
-      adj.set(a, [...(adj.get(a) ?? []), b]);
-      adj.set(b, [...(adj.get(b) ?? []), a]);
-    }
+    ) as [string, string, string][];
+    const labels = JSON.parse(
+      document.getElementById("topo-labels")!.textContent!,
+    ) as Record<string, string>;
+    const g = buildGraph(edges.map(([from, to, kind]) => ({ from, to, kind })));
+
     const els = document.querySelectorAll<HTMLElement>(
       "[data-node], [data-nodes]",
     );
+    const say = document.getElementById("path-say")!;
+    const clearBtn = document.getElementById("path-clear") as HTMLButtonElement;
+    const IDLE = say.innerHTML;
+
     function idsOf(el: HTMLElement): string[] {
       return el.dataset.node
         ? [el.dataset.node]
         : (el.dataset.nodes ?? "").split(" ").filter(Boolean);
     }
     let active: string | null = null;
+
     function apply(sel: Set<string> | null) {
       els.forEach((el) => {
-        const mine = idsOf(el);
-        const hit = !!sel && mine.some((id) => sel.has(id));
+        const hit = !!sel && idsOf(el).some((id) => sel.has(id));
         el.classList.toggle("lit", hit);
         el.classList.toggle("dimmed", !!sel && !hit);
       });
+      clearBtn.hidden = !sel;
     }
-    function reach(start: string) {
-      const seen = new Set([start]);
-      const q = [start];
-      while (q.length) {
-        const cur = q.shift()!;
-        if (cur !== start && TERMINAL.has(ns(cur))) continue;
-        for (const n of adj.get(cur) ?? []) {
-          if (!seen.has(n)) {
-            seen.add(n);
-            q.push(n);
-          }
-        }
+
+    const name = (id: string) => labels[id] ?? id.slice(id.indexOf(":") + 1);
+    // Counting by KIND is what makes the sentence explain rather than list:
+    // "2 routes, 1 application, 1 machine" is the shape of a path, where
+    // fourteen identifiers are just noise.
+    const KIND_FR: Record<string, [string, string]> = {
+      dns: ["nom public", "noms publics"],
+      access: ["porte Access", "portes Access"],
+      tunnel: ["tunnel", "tunnels"],
+      route: ["route", "routes"],
+      app: ["application", "applications"],
+      workload: ["workload", "workloads"],
+      host: ["machine", "machines"],
+      bucket: ["bucket", "buckets"],
+      external: ["appareil hors IaC", "appareils hors IaC"],
+      cluster: ["cluster", "clusters"],
+      instance: ["instance", "instances"],
+      lambda: ["lambda", "lambdas"],
+    };
+
+    function describe(start: string, sel: Set<string>) {
+      if (isolated(g, start)) {
+        return `<strong>${name(start)}</strong> — aucun lien déclaré. Cette
+          boîte existe dans l'inventaire, mais aucun dépôt ne dit à quoi elle
+          se rattache, donc il n'y a pas de chemin à allumer.`;
       }
-      return seen;
+      const counts = new Map<string, number>();
+      for (const id of sel) {
+        if (id === start) continue;
+        const k = ns(id);
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+      }
+      const parts = [...counts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, n]) => {
+          const fr = KIND_FR[k] ?? [k, k];
+          return `${n} ${n > 1 ? fr[1] : fr[0]}`;
+        });
+      return `<strong>${name(start)}</strong> — sur ce chemin : ${parts.join(
+        ", ",
+      )}.`;
     }
+
+    function select(el: HTMLElement, key: string) {
+      active = key;
+      if (el.dataset.node) {
+        const sel = pathThrough(g, el.dataset.node);
+        apply(sel);
+        say.innerHTML = describe(el.dataset.node, sel);
+      } else {
+        // an aggregate box stands for its members, not for a path through
+        // them — light exactly those and say so
+        const ids = idsOf(el);
+        apply(new Set(ids));
+        say.innerHTML = `<strong>${ids.length}</strong> éléments de ce groupe,
+          allumés tels quels — c'est un regroupement, pas un chemin.`;
+      }
+    }
+
+    function clear() {
+      active = null;
+      apply(null);
+      say.innerHTML = IDLE;
+    }
+
     els.forEach((el) => {
       el.addEventListener("click", (ev) => {
-        // single node: light its neighborhood (first click selects,
-        // second follows the link). Aggregate (data-nodes): light exactly
-        // its members — no traversal, no link.
+        // first click selects; a second on the same box follows its link to
+        // the source file (aggregates have no link, so they just re-select)
         const key = el.dataset.node ?? el.dataset.nodes!;
         if (active !== key) {
           ev.preventDefault();
-          active = key;
-          apply(
-            el.dataset.node
-              ? reach(el.dataset.node)
-              : new Set(idsOf(el)),
-          );
+          select(el, key);
         } else if (!el.dataset.node) {
           ev.preventDefault();
         }
       });
     });
+    clearBtn.addEventListener("click", clear);
     document.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape") {
-        active = null;
-        apply(null);
-      }
+      if (ev.key === "Escape") clear();
     });
   </script>
 
 <style>
+  /* Entry points into the diagram, and the sentence that explains a click.
+     The chips carry .svg-node too, so they take the same .lit/.dimmed
+     treatment as the SVG boxes and light when a path reaches them. */
+  .paths {
+    margin: 1.25rem 0 0.5rem;
+  }
+  .paths-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .paths h2 {
+    font-size: 0.95rem;
+    margin: 0 0 0.35rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  #path-clear {
+    background: none;
+    border: 1px solid var(--panel-border);
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.1rem 0.55rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  #path-clear:hover {
+    border-color: var(--accent-live);
+    color: var(--accent-live);
+  }
+  .say {
+    margin: 0 0 0.8rem;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    /* rewritten on every click; without a floor the block jumps as the
+       sentence changes length */
+    min-height: 2.6em;
+  }
+  .say kbd {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    border: 1px solid var(--panel-border);
+    border-radius: 3px;
+    padding: 0 0.25em;
+  }
+  .grp {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.6rem;
+    margin-bottom: 0.45rem;
+  }
+  .grp-note {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    flex: 0 0 auto;
+    min-width: 16ch;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 0.12rem 0.5rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      opacity 0.15s,
+      border-color 0.15s;
+  }
+  .chip:hover,
+  .chip.lit {
+    border-color: var(--accent-live);
+    color: var(--accent-live);
+  }
+  .chip.dimmed {
+    opacity: 0.25;
+  }
+  @media (max-width: 640px) {
+    .grp-note {
+      flex: 1 0 100%;
+      min-width: 0;
+    }
+  }
+
   .back {
     color: var(--text-muted);
     text-decoration: none;

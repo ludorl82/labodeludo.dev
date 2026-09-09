@@ -226,7 +226,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 <script>
   import { renderReply } from "../lib/bob-render";
     import { startThinking } from "../lib/bob-thinking";
-  import { MAX_TURNS, loadConversation, saveConversation } from "../lib/bob-memory";
+  import { MAX_TURNS, loadConversation, saveConversation, toMessages } from "../lib/bob-memory";
 
   const log = document.getElementById("bob-log");
   const form = document.getElementById("bob-form") as HTMLFormElement | null;
@@ -301,7 +301,9 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         const res = await fetch("/api/bob/chat", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ messages: history }),
+          // toMessages strips the per-turn links: they are for replaying the
+          // page, not for the model.
+          body: JSON.stringify({ messages: toMessages(history) }),
         });
         const data = await res.json();
         const reply = data.reply ?? "Pas de réponse. Bizarre.";
@@ -317,11 +319,11 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         stopThinking();
         answer.textContent = "";
         reveal(answer, reply, data.links);
-        history.push({ role: "assistant", content: reply });
+        history.push({ role: "assistant", content: reply, links: data.links || [] });
         history = history.slice(-MAX_TURNS);
         // Written once the answer is real, so a failed turn does not leave a
         // question hanging in storage with nothing after it.
-        saveConversation(history, data.links || []);
+        saveConversation(history);
       } catch {
         stopThinking();
         answer.textContent = "Le fil est coupé. Réessaie tantôt.";
@@ -343,15 +345,12 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
        is not deterministic, so asking again would cost a call and answer
        something different from what the visitor already read. */
     (function resumeConversation() {
-      const { turns, links } = loadConversation();
+      const { turns } = loadConversation();
       if (turns.length < 2) return;
 
       fallbackTurn?.remove();
       openers?.remove();
-      // Only the final reply carries links: the earlier ones were clicked
-      // already or deliberately passed over.
-      const lastAnswer = turns.reduce((n, m, i) => (m.role === "assistant" ? i : n), -1);
-      turns.forEach((m, i) => {
+      turns.forEach((m) => {
         if (m.role === "user") {
           addTurn("toi", "").textContent = m.content;
           return;
@@ -359,7 +358,10 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         const answer = addTurn("bob", "");
         // The shared renderer, so a slug that came back out of storage is
         // still subject to the same rule: only hrefs the Worker validated.
-        renderReply(answer, m.content, i === lastAnswer ? links : []);
+        // Each reply gets ITS OWN links. Replaying only the last one's is the
+        // bug this shape was changed to fix: on a refresh every earlier answer
+        // came back as bare prose.
+        renderReply(answer, m.content, m.links || []);
       });
       history = history.concat(turns).slice(-MAX_TURNS);
       input?.focus();

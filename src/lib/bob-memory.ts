@@ -24,8 +24,13 @@
  * it is not worth an error message.
  */
 
-export type Turn = { role: "user" | "assistant"; content: string };
 export type Link = Record<string, unknown>;
+/** `links` belongs to the turn that produced it, never to the conversation.
+ *  It was stored once, alongside the transcript, and a refresh therefore lost
+ *  the links of every reply but the last — the earlier ones had nowhere to
+ *  live. Only assistant turns carry it, and it never reaches the Worker: see
+ *  toMessages(). */
+export type Turn = { role: "user" | "assistant"; content: string; links?: Link[] };
 
 /** Three exchanges. The Worker caps at the same number, so a longer array here
  *  would only be trimmed on arrival — and every turn is prompt you pay for. */
@@ -50,34 +55,58 @@ function sanitize(turns: unknown): Turn[] {
         typeof (m as Turn).content === "string" &&
         !!(m as Turn).content.trim(),
     )
+    .map((m) => ({
+      role: m.role,
+      content: m.content,
+      // Dropped rather than trusted when it is not an array: the renderer
+      // validates each href anyway, but a malformed value has no business
+      // travelling this far.
+      ...(Array.isArray(m.links) ? { links: m.links } : {}),
+    }))
     .slice(-MAX_TURNS);
 }
 
-export function loadConversation(): { turns: Turn[]; links: Link[] } {
+/** The wire format the Worker expects — role and content, nothing else.
+ *  Stripping in one shared place rather than at each call site: there are two
+ *  of them, and the one that forgot would send link objects into a prompt. */
+export function toMessages(turns: Turn[]): { role: string; content: string }[] {
+  return turns.map(({ role, content }) => ({ role, content }));
+}
+
+export function loadConversation(): { turns: Turn[] } {
   try {
     const raw = sessionStorage.getItem(KEY) ?? sessionStorage.getItem(LEGACY_KEY);
-    if (!raw) return { turns: [], links: [] };
+    if (!raw) return { turns: [] };
     const parsed = JSON.parse(raw);
     // The legacy shape was a single pair in two named fields.
-    const turns = parsed?.turns
+    let turns = parsed?.turns
       ? sanitize(parsed.turns)
       : sanitize([
           { role: "user", content: parsed?.question },
           { role: "assistant", content: parsed?.reply },
         ]);
-    return { turns, links: Array.isArray(parsed?.links) ? parsed.links : [] };
+    // Older writes — and the legacy handoff — kept ONE links array for the
+    // whole conversation, meaning the last reply's. Give it back to the last
+    // assistant turn rather than dropping it, so a tab that stored the old
+    // shape still shows its links after this ships.
+    if (Array.isArray(parsed?.links) && parsed.links.length && !turns.some((t) => t.links)) {
+      for (let i = turns.length - 1; i >= 0; i--) {
+        if (turns[i].role === "assistant") {
+          turns[i] = { ...turns[i], links: parsed.links };
+          break;
+        }
+      }
+    }
+    return { turns };
   } catch {
-    return { turns: [], links: [] };
+    return { turns: [] };
   }
 }
 
-export function saveConversation(turns: Turn[], links: Link[] = []): void {
+export function saveConversation(turns: Turn[]): void {
   try {
     sessionStorage.removeItem(LEGACY_KEY);
-    sessionStorage.setItem(
-      KEY,
-      JSON.stringify({ turns: turns.slice(-MAX_TURNS), links }),
-    );
+    sessionStorage.setItem(KEY, JSON.stringify({ turns: turns.slice(-MAX_TURNS) }));
   } catch {
     // Storage refused. The turn still happened; it just will not outlive the
     // page — which is where this feature started.

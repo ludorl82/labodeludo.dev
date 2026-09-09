@@ -316,6 +316,7 @@ const canAsk = true;
     clearConversation,
     loadConversation,
     saveConversation,
+    toMessages,
   } from "../lib/bob-memory";
 
   const el = document.getElementById("palette");
@@ -359,7 +360,6 @@ const canAsk = true;
     // read next, because it lives in sessionStorage rather than in this
     // closure. See lib/bob-memory.ts for why that storage and not another.
     let turns = loadConversation().turns;
-    let lastLinks = [];
 
     /* ---------------------------------------------------------- matching --- */
 
@@ -673,7 +673,8 @@ const canAsk = true;
         const res = await fetch("/api/bob/chat", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ messages: sent }),
+          // Stripped of the per-turn links a replayed conversation carries.
+          body: JSON.stringify({ messages: toMessages(sent) }),
         });
         const data = await res.json();
         if (data.localNote) {
@@ -689,9 +690,9 @@ const canAsk = true;
         // Only a real answer joins the memory: an empty reply as context would
         // teach the next turn that Bob sometimes says nothing.
         if (data.reply) {
-          turns = [...sent, { role: "assistant", content: data.reply }].slice(-MAX_TURNS);
-          lastLinks = data.links || [];
-          saveConversation(turns, lastLinks);
+          turns = [...sent, { role: "assistant", content: data.reply, links: data.links || [] }]
+            .slice(-MAX_TURNS);
+          saveConversation(turns);
         }
         // One question, one answer is the right shape for navigation — but a
         // visitor who wants a conversation should not have to know that the

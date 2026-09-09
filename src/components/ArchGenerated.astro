@@ -244,12 +244,22 @@ const dnsGroups = GROUPS.map(([key, note]) => ({
     }
     let active: string | null = null;
 
+    // The drawing has ~53 SVG children and only 23 are nodes. The other 29 —
+    // arrows, labels, the cluster frame, the site boxes — carry no data-node,
+    // so dimming just the nodes left every arrow at full strength over boxes
+    // at 25%: bright arrows pointing into the dark. Worst on an isolated node,
+    // where every box dims and nothing else does. `selecting` on the <svg>
+    // lets the stylesheet fade the decorative layer too, so what stays bright
+    // is exactly the path.
+    const svg = document.querySelector(".live-arch svg");
+
     function apply(sel: Set<string> | null) {
       els.forEach((el) => {
         const hit = !!sel && idsOf(el).some((id) => sel.has(id));
         el.classList.toggle("lit", hit);
         el.classList.toggle("dimmed", !!sel && !hit);
       });
+      svg?.classList.toggle("selecting", !!sel);
       clearBtn.hidden = !sel;
     }
 
@@ -337,6 +347,21 @@ const dnsGroups = GROUPS.map(([key, note]) => ({
   </script>
 
 <style>
+  /* Fade the decorative layer along with the boxes while something is
+     selected. Without this only the 23 node boxes dim and the ~29 arrows,
+     labels and frames stay at full strength — arrows pointing at boxes you
+     can no longer see.
+
+     `:global`, and living HERE rather than in LiveArchDiagram.astro, is
+     deliberate: that file is rewritten by the weekly job and a rule left in
+     it would be gone the next Sunday. Every node is a direct child of the
+     <svg>, so the child selector reaches exactly the decorative siblings plus
+     the already-dimmed nodes — same 0.25, so nothing double-fades. */
+  :global(.live-arch svg.selecting > *:not(.lit)) {
+    opacity: 0.25;
+    transition: opacity 0.15s;
+  }
+
   /* Entry points into the diagram, and the sentence that explains a click.
      The chips carry .svg-node too, so they take the same .lit/.dimmed
      treatment as the SVG boxes and light when a path reaches them. */

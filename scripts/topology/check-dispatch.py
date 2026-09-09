@@ -38,6 +38,33 @@ NAMEISH = re.compile(r"\b(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)+|[a-z]{2,}[0-9]+)\b")
 MAX_CHARS = 400
 
 
+# Numbers the prose is allowed to use. Written out in French as well as in
+# digits, because a dispatch says "quatre liens", not "4 liens".
+NUM_WORDS = {
+    "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "six": 6, "sept": 7,
+    "huit": 8, "neuf": 9, "dix": 10, "onze": 11, "douze": 12, "treize": 13,
+    "quatorze": 14, "quinze": 15, "seize": 16, "vingt": 20,
+}
+# `un`/`une` are deliberately absent: in French they are articles far more
+# often than numerals, and a check that cannot tell "un lien de plus" from
+# "un nœud est apparu" would refuse correct prose. One is the one count this
+# gate cannot verify.
+#
+# Digits inside a machine name are not numbers either — `gpu-01` is a name,
+# and NAMEISH above has already vouched for it. Stripping those tokens first
+# is what stops "01" from being read as a count.
+DIGITS = re.compile(r"\b\d+\b")
+
+
+def numbers_in(text: str) -> set:
+    prose = NAMEISH.sub(" ", text.lower())
+    found = {int(d) for d in DIGITS.findall(prose)}
+    for word, value in NUM_WORDS.items():
+        if re.search(rf"\b{word}\b", prose):
+            found.add(value)
+    return found
+
+
 def fail(msg):
     print(f"check-dispatch: {msg}", file=sys.stderr)
     sys.exit(1)
@@ -70,6 +97,27 @@ def main():
             fail(
                 f"names {token!r}, which is not in tonight's diff. "
                 f"Allowed: {vocabulary or '(nothing changed)'}"
+            )
+
+    # Every COUNT in the prose must be one the diff actually contains. The
+    # sentence is generated, the numbers are not: on 2026-09-08 a run wrote
+    # "cinq liens en plus" for a diff of four, and this gate accepted it —
+    # it vouched for machine names and nothing else. A wrong number reads
+    # exactly like a right one, which is the whole reason the diff is computed
+    # upstream instead of counted by a model.
+    counts = diff.get("counts") or {
+        "added": len(diff.get("added", [])),
+        "removed": len(diff.get("removed", [])),
+        "renamed": len(diff.get("renamed", [])),
+        "edgesAdded": diff.get("edgesAdded", 0),
+        "edgesRemoved": diff.get("edgesRemoved", 0),
+    }
+    allowed = {int(v) for v in counts.values() if isinstance(v, (int, float))}
+    for n in sorted(numbers_in(text)):
+        if n not in allowed:
+            fail(
+                f"says {n}, which is not a count in tonight's diff. "
+                f"Allowed: {sorted(allowed)}"
             )
 
     # A dispatch that mentions nothing that changed is worse than no dispatch:

@@ -42,7 +42,17 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const KIND = {
   cast: { icon: "\u25B8", fr: "enregistrement", en: "recording" },
   article: { icon: "\u2261", fr: "article", en: "article" },
+  // Pages of the site — /architecture/, a role in the inventory, an author.
+  // They are neither read-as-a-post nor watched, so they get their own mark
+  // rather than borrowing the article glyph and being announced as one: a
+  // screen reader saying "article : Calcul GPU" for the inventory page is the
+  // same class of lie as the wrong glyph. U+00B7 keeps to plain characters in
+  // the face already loaded, like the other two.
+  page: { icon: "\u00B7", fr: "page", en: "page" },
 } as const;
+
+const kindOf = (k: string | undefined): keyof typeof KIND =>
+  k === "cast" || k === "page" ? k : "article";
 
 /**
  * One anchor, built the same way for the two places links appear: inline where
@@ -55,11 +65,11 @@ const KIND = {
  * untouched — this changes what the link *reads* as, never where it goes.
  */
 function makeLink(l: BobLink, lang: "fr" | "en"): HTMLAnchorElement {
-  const k = KIND[l.kind === "cast" ? "cast" : "article"];
+  const k = KIND[kindOf(l.kind)];
   const a = document.createElement("a");
   a.href = l.href;
   a.className = "bob-link";
-  a.dataset.kind = l.kind === "cast" ? "cast" : "article";
+  a.dataset.kind = kindOf(l.kind);
   a.title = l.title;
   // The glyph is decoration; a screen reader gets the word instead, so "article"
   // and "enregistrement" are announced rather than "black right-pointing small
@@ -120,7 +130,12 @@ export function renderReply(
     .map((l) => escapeRe(l.slug))
     .sort((a, b) => b.length - a.length)
     .join("|");
-  const re = new RegExp(`(?:/(?:blog|casts)/)?(${alts})/?`, "g");
+  // The trailing lookahead matters now that page paths are linkable. A page
+  // slug is a whole path, and a short one is a prefix of longer ones: "/en/"
+  // sits inside "/en/blog/<slug>/", so without a boundary the English home
+  // would win that match and swallow the article. Refusing a path character
+  // right after makes the short path match only where it actually ends.
+  const re = new RegExp(`(?:/(?:blog|casts)/)?(${alts})/?(?![a-z0-9-])`, "g");
 
   const used = new Set<string>(); // hrefs rendered inline
   let last = 0;

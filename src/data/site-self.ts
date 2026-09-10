@@ -25,7 +25,17 @@ const astro = String(pkg.dependencies.astro ?? "").replace(/^[^\d]*/, "");
 export const SITE_SELF = [
   `Le site est bâti avec Astro ${astro} et généré en statique : des fichiers HTML, pas de serveur d'application, pas de base de données.`,
   "Le contenu, ce sont des fichiers Markdown/MDX versionnés dans le dépôt Git du site — une collection française, une anglaise, plus les enregistrements de terminal.",
-  "Publication : une fusion vers la branche `main` déclenche GitHub Actions, qui bâtit le site et le déploie sur Cloudflare Pages. La branche `dev` déploie la préproduction, derrière Cloudflare Access.",
+  // The two halves were INVERTED here until 2026-09-10: this line said main
+  // deployed to Cloudflare Pages, which is what `dev` does. Prod has always
+  // been the S3 bucket — `aws s3 sync dist/ s3://labodeludo.dev/ --delete` in
+  // deploy.yml's prod job, and the S3 website endpoint's own `x-amz-*` headers
+  // still come back through Cloudflare on every response. The generated
+  // architecture diagram had it right the whole time; this sentence, which is
+  // the one a visitor actually gets when they ask, did not.
+  //
+  // Checkable, like everything else here: read the workflow, or `curl -I` the
+  // site and look for x-amz-request-id.
+  "Publication : une fusion vers la branche `main` déclenche GitHub Actions, qui bâtit le site et le téléverse dans un compartiment S3, servi au travers de Cloudflare. La branche `dev` déploie la préproduction sur Cloudflare Pages, derrière Cloudflare Access.",
   "La recherche et la palette de commandes lisent /search-index.json, généré au moment du build ; il n'y a pas de moteur de recherche côté serveur.",
   "Cette conversation-ci passe par /api/bob/chat, un Worker Cloudflare qui assemble la personnalité de Bob et ce document, puis interroge le modèle.",
   // The model's NAME is deliberately absent: it lives in the Worker, in

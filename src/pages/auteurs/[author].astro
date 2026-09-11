@@ -20,11 +20,20 @@ const info = AUTHORS[author];
 const quip = pickQuip(info);
 const quips = info.quips ?? [];
 
-// Staging-only for now, same env-flag pattern as SHOW_LIVE_ARCH: the Worker's
-// prod route does not exist yet, so on labodeludo.dev the widget would post to
-// a 404 and show every visitor a broken box. Flip this on in deploy.yml's prod
-// job at the same time as the route.
-const showBobChat = author === "bob" && process.env.SHOW_BOB_CHAT === "1";
+// No env flag any more, and its removal is the fix for a daily regression.
+//
+// The gate existed for one reason — "the Worker's prod route does not exist
+// yet, so the widget would post to a 404" — and that route has existed since
+// 2026-09-06. What the flag kept doing after that was hiding the chat from any
+// build path that forgot to set it, and one did: architecture.yml rebuilds the
+// site every morning at 04:32 and `aws s3 sync --delete`s it to production,
+// with only SHOW_LIVE_ARCH in its env. So the chat vanished from prod every
+// day and came back at the next merge to main, which looks like a flapping
+// bug and is really a missing variable.
+//
+// A flag that is switched on in every environment is not a flag, it is a way
+// to forget. The widget now renders wherever Bob's page renders.
+const showBobChat = author === "bob";
 
 const posts = (await getCollection("blog"))
   .filter((post) => authorFromTags(post.data.tags) === author)

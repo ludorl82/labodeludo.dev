@@ -7,6 +7,27 @@ const fallback = BOB_404[0];
 ---
 
 <BaseLayout title="404 — Le labo de Ludo">
+  {/* S3 website hosting serves ONE error document for the whole bucket
+      (aws-iac live/s3.tf, error_document = "404.html"), so this French page
+      answers every miss, `/en/…` included — it does not walk up the tree
+      looking for a nearer 404.html the way Cloudflare Pages does. The English
+      page at /en/404/ was built and unreachable for exactly that reason.
+
+      So hand off from here. This runs in <head>, before the first paint, so
+      an English visitor never sees the French chrome flash by. The bad URL
+      still answered a real 404 to the crawler that asked for it; only the
+      human gets moved. Without JS the French page stands, which is what
+      happened before this existed — no regression, just no improvement. */}
+  <script is:inline slot="head">
+    (function () {
+      var p = location.pathname;
+      if (p.indexOf("/en/") !== 0) return;
+      // Don't bounce the English 404 into itself if it ever 404s.
+      if (p.indexOf("/en/404") === 0) return;
+      location.replace("/en/404/");
+    })();
+  </script>
+
   <a class="back" href="/">&larr; tous les articles</a>
 
   <header class="page-header">

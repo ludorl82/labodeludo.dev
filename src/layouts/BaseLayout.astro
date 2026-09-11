@@ -182,6 +182,11 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
         });
       })();
     </script>
+
+    {/* For the rare page that must run something before the first paint —
+        404.astro redirects English visitors from here. Everything else that
+        can wait belongs at the end of the body instead. */}
+    <slot name="head" />
   </head>
   <body>
     <div class="page">

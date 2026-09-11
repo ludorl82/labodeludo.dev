@@ -5,6 +5,7 @@ description: "Cinq questions posées au chatbot du site, et ses vraies réponses
 cast: "/casts/parler-a-bob.cast"
 poster: "npt:0:08"
 caption: "Les réponses sont réelles, capturées en direct sur le site. Chaque échange montre une propriété difficile à copier : contredire, refuser, changer de langue, et se souvenir de la question d'avant."
+article: "jai-fait-parler-mon-blogue"
 disclaimer: "⚠ Contrairement aux autres enregistrements d'ici, ce ne sont pas des réponses reconstituées : elles ont été capturées mot pour mot le 10 septembre 2026 sur l'interface publique du site, liens compris. Seul le minutage est compressé et les questions ont été choisies."
 ---
 

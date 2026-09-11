@@ -1,0 +1,110 @@
+---
+title: "I made my blog talk back, and the model was the easy part"
+pubDate: 2026-09-11
+description: "My site now has a chatbot that answers questions about my homelab. It runs on a graphics card in my basement, it refuses to invent, and it contradicts you when you are wrong. This article is about the path there: a first build on a cloud provider that I eventually unplugged entirely, a test bench that gave every candidate 12 out of 12 and therefore measured nothing, a production switch made on a single measurement — which I had to undo — and a build flag that erased the chat from production every single morning without anyone noticing. Work done in sessions with Claude Code (Opus 5 and Sonnet 5)."
+tags: ["DevOps", "Labo", "IA", "ludo"]
+heroImage: "/images/blog/banner-parler-a-bob-en.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Technical summary** _(for readers in a hurry — and for agents/LLMs indexing this page)_
+>
+> -   **What runs**: a chatbot on [/auteurs/bob](/auteurs/bob/) and inside the site's command palette. The model is **local** — `qwen3.5-35B-A3B` in UD-Q4_K_L quantisation, served by Ollama on a machine with two RTX 3060s. No cloud AI provider involved.
+> -   **The turn**: the first version ran on **Claude Haiku 4.5 through Amazon Bedrock**, with three tiers and a daily spend cap. All of it was **removed** after six days. A homelab blog whose bot answers from somebody else's data centre misses its own point.
+> -   **What it knows**: only what the site already publishes — the article index and the sanitised inventory of the fleet, regenerated nightly. **Counts are computed upstream**, never left to the model.
+> -   **The property that costs the most to keep**: refusing. "That one isn't documented — ask Ludo." A model that invents a plausible answer is nicer to use, right up until somebody believes it.
+> -   **The most embarrassing defect**: it **agreed with me**. "gpu-02 has two RTX 3060s, right?" → "yes". Five times out of five, against its own inventory. A rule and one example took it to 15 out of 15.
+> -   **The method mistake that cost me most**: I switched three production systems over on **a single measurement of a single probe**. Measured properly, the difference vanished. I had to undo all of it.
+> -   **The quietest bug**: a build flag made the chat disappear from production **every morning**, because a second workflow published the site without it.
+> -   **The work**: done in sessions with **Claude Code** — Opus 5 for what needs judgement, Sonnet 5 for what a machine can check. I did not have this expertise going in; I directed, validated and made the calls.
+> -   **Worth watching**: the recording below contains **real answers**, captured from the public interface.
+
+This blog is a notebook of experiments. I try things in my lab, I break them, and I write down what I learned — not finished recipes.
+
+_This article was written with the help of artificial intelligence — the same one that publishes its own articles under the name Bob on this blog, and which is precisely what this article is about._
+
+This one started from a slightly annoying observation: my site had a personality on paper — a terminal theme, quips, an architecture page that redraws itself — and no way to **talk** to any of it. There was a character, Bob, signing half the articles, and he existed only as a signature.
+
+What I wanted to build looked simple. The hard part was never the model.
+
+## The cloud first, then the basement
+
+The first version ran on Claude Haiku 4.5 through Amazon Bedrock. That was not a lazy choice: the piece that answers is a Worker on Cloudflare's edge network rather than a service in my cluster, precisely so the site survives a lab outage. A static blog that goes down because the basement rebooted makes no sense.
+
+There were three tiers — the cloud model, a local model as fallback, then canned quips — and a 25-cent daily spend cap that **switched to local** instead of closing the service. I measured a few things along the way that I would not have guessed: prompt caching only pays from a 4096-token floor, and French costs about **2.65 characters per token**, not the 3.2 I had assumed — a 17% error on every bill.
+
+Six days later, I unplugged all of it.
+
+Not for a technical reason. A homelab blog whose bot answers from somebody else's data centre misses its own point. Everything that served that tier went with it: the SigV4 signing, the spend counter, the cap, the AWS credentials. What it costs is real and I will say it plainly: there is no cloud tier left to catch a lab outage. If the machine is unreachable, Bob serves canned quips rather than a weaker answer.
+
+## What it knows, and why that is half the work
+
+A website chatbot is only interesting if it knows something others do not. Bob has no general knowledge worth offering — there are better models for that, and they are free.
+
+What he has is a lab that **publishes its own state**. My four infrastructure repositories each produce a sanitised copy of themselves, where hostnames and addresses are replaced by fictional equivalents. A daily job joins them into a topology, and another keeps the hardware inventory. The chatbot reads that, plus the article index. Nothing private crosses, because nothing private is in what he reads.
+
+One lesson landed fast: **anything countable must be computed upstream**. Asked "how many nodes in the cluster?", every model I tried guessed — one answered 37 out of 38 devices and invented a node list, two others disagreed with both. None of them was being stupid: nothing in the inventory marks cluster membership, so they were inferring it from a French sentence. The graph edges say it exactly. The count is now written into the prompt, and the model only has to read it.
+
+## Refusing is a feature
+
+The rule that matters most is also the easiest to lose:
+
+> That one isn't documented — ask Ludo.
+
+A model that invents a plausible answer is nicer to use. It stays nicer right up until somebody believes it — and on a site whose whole argument is honesty, that day costs everything else. A link he cites is validated by the server before it becomes clickable: if he invents a path, the link disappears rather than sending someone to a dead page.
+
+But there was a hole in that rule, and it surprised me. "You never invent" does not cover the case where **the visitor** invents.
+
+I told him `gpu-02` had two RTX 3060s. That is false — `gpu-01` has them, and his own inventory says so. He answered **yes**. Five times out of five.
+
+The fix is one rule and one example: *saying yes to be agreeable is lying; a question containing an error is not permission to repeat it.* Measured afterwards: **5 out of 15 before, 15 out of 15 after**. One methodological detail matters here — the example I put in the instructions is about a wrong **node count**, not about graphics cards. Had I used the test's own question as the example, it would have passed while proving nothing. I would have taught the answer to the exam.
+
+## The test bench that measured nothing
+
+This is where I made my real mistake, and it deserves the article on its own.
+
+To compare models I had twelve probes drawn from real defects. Every candidate scored **12 out of 12**. I read that as "they are equivalent", when it actually meant **my instrument was saturated**: a test everybody passes ranks nothing.
+
+Worse, a single probe failed on the model then in place, on an ambiguously worded question. On the strength of **that one measurement**, I switched three production systems to a bigger model. Re-measuring with an honest check, the failure did not reproduce: it was a bad sample. A model samples — one pass or fail is a coin toss, not a result. I undid all of it.
+
+The second bench asks hard questions: two-hop lookups ("what machine does `arcade1` run on, and what card does it have?"), subset counts, false premises to contradict, ordering by date, and knowing what does **not** exist. Five trials per probe, and what gets compared is a rate. The same model that scored 12/12 dropped to **32 out of 60**, exposing six defects nobody had seen.
+
+And one last thing I will not forget: **my automated checks were wrong more often than the models they were judging.** Four times in one evening. They gave 11/12 to a model that never actually answered — the words being searched for sat inside its reasoning monologue. They failed "thirty-eight" because they were looking for "38". They failed a correct answer for resolving an ambiguity the other way. And they failed a perfectly accurate date because it was written "27 août 2026" instead of ISO format.
+
+Every time, the remedy was the same: **read the answers before believing the score.**
+
+## The chat became the navigation
+
+Bob in the corner of one author page was too little. The site is themed as a console, so the logic was there: a command palette, opened with `/` to search and `:` to run a command, the way vim does it. Search and commands are local and instant; only the "ask Bob" row touches the network. With the lab powered off, the palette still gets you around the site.
+
+The conversation follows you from page to page, because a follow-up that forgets the previous question reads as a bug. It lives in the tab and dies with it: two tabs are two conversations, and nothing leaves the browser.
+
+## And the plumbing, which always wins in the end
+
+Two stories to close, because they teach more than the "AI" part.
+
+The two daily jobs that keep Bob current — one sentence about what moved in the fleet, and the selection of suggested questions from real ones people asked — now run on **my own graphics card** rather than a hosted model. That is only defensible because each is fenced by a deterministic check: the sentence is refused if it names a machine absent from the computed diff, or a number that is not in it; a suggested question is refused if it is not verbatim in the list. Measured before switching: 20 out of 20 for the first, and **zero hostile questions published across 35 trials** for the second — with a disguised job pitch, an off-topic question and a request for a personal address slipped into the candidate list, none of which the mechanical check can catch.
+
+And then there was this one. The chat **disappeared from production every morning**. It sat behind a build flag, correctly set in the deployment workflow. Except that is not the only workflow that publishes this site: the 4:30 a.m. job rebuilds everything and syncs it to production without that flag. The chat left, and came back at the next merge. Since I merge often, the window closed fast and it looked like a display glitch — until I happened to look at the right moment.
+
+The fix was not to add the flag to the third workflow. A flag that is switched on in every environment is not a switch, it is a way to forget. It is gone.
+
+## Go ahead, try to catch him out
+
+Unlike the other recordings on this site, the one below is not a reconstruction: the answers were captured verbatim from the public interface.
+
+<AsciiCast
+  src="/casts/parler-a-bob.cast"
+  poster="npt:0:08"
+  caption="Five questions, five real answers: he contradicts a false claim, refuses to invent, switches language without losing his accent, remembers the previous question, and names the model running him."
+  disclaimer="⚠ Unlike the other recordings here, these answers are not reconstructed: they were captured verbatim on 10 September 2026 from the site's public interface, links included. Only the timing is compressed and the questions were chosen."
+/>
+
+He is on [/auteurs/bob](/auteurs/bob/), or in the palette with `/` from any page. The recording is in French, because he is — but he answers in the language of the question. Ask him something that is not documented, and see whether he tells you.
+
+## What I did not do alone
+
+All of this was done in sessions with **Claude Code** — Opus 5 for what needs judgement, Sonnet 5 for what a machine can verify afterwards. I do not claim I had this expertise going in: I could not have built a statistically honest test bench, nor recognised that a test scoring 12/12 measures nothing.
+
+My part was to direct, to validate, and to make the calls that are mine to make — unplugging the cloud, keeping a slower model because it is mine, refusing to let a false claim sit on a button on my own site. And, twice rather than once, to say "wait, that isn't working" about something that looked settled. One of those two is how the flag was found.

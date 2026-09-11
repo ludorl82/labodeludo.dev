@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Deux enceintes vocales identiques côte à côte dans la pénombre : celle du premier plan a son anneau lumineux en rouge et porte une bascule mécanique restée levée, celle de l'arrière-plan a le même anneau dans un bleu calme — le jumeau intact auquel on compare pour trouver la panne">
+  <defs>
+    <linearGradient id="bgmec" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#141c29"/>
+      <stop offset="100%" stop-color="#26344a"/>
+    </linearGradient>
+    <linearGradient id="puckA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a6d92"/>
+      <stop offset="100%" stop-color="#2e3a52"/>
+    </linearGradient>
+    <linearGradient id="puckB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#44536f"/>
+      <stop offset="100%" stop-color="#273246"/>
+    </linearGradient>
+    <linearGradient id="topA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6c80a6"/>
+      <stop offset="100%" stop-color="#4a5a7a"/>
+    </linearGradient>
+    <radialGradient id="glowred" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ff4d4d" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ff4d4d" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowblue" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#5aa8ff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#5aa8ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="1024" height="320" fill="url(#bgmec)"/>
+
+  <!-- sol : une ligne d'horizon discrète pour poser les deux objets -->
+  <rect x="0" y="252" width="1024" height="68" fill="#0f1621" opacity="0.55"/>
+  <rect x="0" y="250" width="1024" height="2" fill="#3d4c68" opacity="0.5"/>
+
+  <!-- ─────────── le jumeau intact, en retrait : anneau bleu, calme ─────────── -->
+  <g opacity="0.62">
+    <ellipse cx="742" cy="214" rx="120" ry="26" fill="url(#glowblue)" filter="url(#soft)"/>
+    <path d="M660 196 h164 v22 a82 22 0 0 1 -164 0 z" fill="url(#puckB)"/>
+    <ellipse cx="742" cy="196" rx="82" ry="22" fill="#3a4863"/>
+    <ellipse cx="742" cy="196" rx="62" ry="16" fill="none" stroke="#5aa8ff" stroke-width="4" opacity="0.85"/>
+    <ellipse cx="742" cy="196" rx="30" ry="8" fill="#2b3650"/>
+  </g>
+
+  <!-- ─────────── l'appareil du bureau, au premier plan : anneau rouge ─────────── -->
+  <ellipse cx="330" cy="232" rx="168" ry="36" fill="url(#glowred)" filter="url(#soft)"/>
+  <path d="M212 206 h236 v30 a118 30 0 0 1 -236 0 z" fill="url(#puckA)"/>
+  <ellipse cx="330" cy="206" rx="118" ry="30" fill="url(#topA)"/>
+  <!-- l'anneau lui-même, en rouge : la couleur persistée qui a tout empoisonné -->
+  <ellipse cx="330" cy="206" rx="92" ry="23" fill="none" stroke="#ff4d4d" stroke-width="6"/>
+  <ellipse cx="330" cy="206" rx="92" ry="23" fill="none" stroke="#ff9a9a" stroke-width="2" opacity="0.8"/>
+  <!-- le bouton central, celui qui distingue le double appui -->
+  <ellipse cx="330" cy="206" rx="46" ry="12" fill="#33405c"/>
+  <ellipse cx="330" cy="203" rx="46" ry="12" fill="#3e4d6d"/>
+
+  <!-- ─────────── la bascule mécanique, restée levée ─────────── -->
+  <g transform="translate(452,92)">
+    <rect x="0" y="0" width="78" height="104" rx="14" fill="#2b3650" stroke="#4a5a7a" stroke-width="2"/>
+    <!-- glissière -->
+    <rect x="28" y="16" width="22" height="72" rx="11" fill="#1b2434"/>
+    <!-- le curseur, bloqué en haut : c'est tout le sujet de l'article -->
+    <rect x="24" y="12" width="30" height="34" rx="13" fill="#c9d4e6"/>
+    <rect x="24" y="12" width="30" height="34" rx="13" fill="none" stroke="#8fa0bd" stroke-width="1.5"/>
+    <!-- pastille rouge du mode sourdine, à côté de la position haute -->
+    <circle cx="66" cy="29" r="5" fill="#ff4d4d"/>
+    <!-- flèche vers le bas, barrée : aucun logiciel ne peut le redescendre -->
+    <g stroke="#7f8ea8" stroke-width="3" fill="none" stroke-linecap="round">
+      <path d="M39 60 v22"/>
+      <path d="M31 74 l8 8 8 -8"/>
+    </g>
+    <path d="M22 58 l34 30" stroke="#ff6b6b" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+</svg>

@@ -135,7 +135,13 @@ export function renderReply(
   // sits inside "/en/blog/<slug>/", so without a boundary the English home
   // would win that match and swallow the article. Refusing a path character
   // right after makes the short path match only where it actually ends.
-  const re = new RegExp(`(?:/(?:blog|casts)/)?(${alts})/?(?![a-z0-9-])`, "g");
+  //
+  // The OPTIONAL `en/` is not decoration either. Without it, an English answer
+  // citing "/en/blog/<slug>/" matched only from "blog/" onward and the "/en"
+  // was left behind as bare text in front of the pill — readers saw
+  // "/en≡Déplacer mes partages NFS…", which looks like the renderer broke.
+  // Found from a real answer, not from reading this line.
+  const re = new RegExp(`(?:/(?:en/)?(?:blog|casts)/)?(${alts})/?(?![a-z0-9-])`, "g");
 
   const used = new Set<string>(); // hrefs rendered inline
   let last = 0;

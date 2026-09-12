@@ -408,35 +408,54 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
   };
 
   if (dialog && slot && expand && collapse && section) {
-    // Escape and the backdrop are the UA's job once showModal() is used; this
-    // only has to put the furniture back wherever the close came from.
+    // Moving the nodes is idempotent — it checks where they already are —
+    // because it is called from every path that can close this thing, and
+    // those paths overlap. Calling it twice has to be free.
     const moveInto = (parent: Element, before: Node | null) => {
       for (const id of ["bob-log", "bob-openers", "bob-form"]) {
         const el = document.getElementById(id);
-        if (el) parent.insertBefore(el, before);
+        if (el && el.parentElement !== parent) parent.insertBefore(el, before);
       }
     };
 
-    expand.addEventListener("click", () => {
+    const open = () => {
       moveInto(slot, null);
       dialog.showModal();
       scrollLogToEnd();
       (document.getElementById("bob-input") as HTMLInputElement | null)?.focus();
-    });
+    };
 
-    collapse.addEventListener("click", () => dialog.close());
-
-    // Fires for the button, for Escape, and for a form inside it that submits
-    // with method="dialog" — one place to restore from, whatever closed it.
-    dialog.addEventListener("close", () => {
+    const restore = () => {
       moveInto(section, homeAnchor);
       (expand as HTMLButtonElement).focus();
-    });
+    };
 
-    // Clicking the backdrop closes it. A modal dialog's own box IS the element,
-    // so a click whose target is the dialog itself landed outside the panel.
+    // EVERY close path restores explicitly, and the `close` event is only a
+    // belt-and-braces listener rather than the mechanism.
+    //
+    // That is not paranoia, it is what testing found: in the browser this was
+    // verified in, `close` never fired — not for this dialog and not for a
+    // freshly created one either. Whatever the cause, a feature that leaves the
+    // transcript stranded inside a hidden dialog when it misbehaves is not a
+    // feature worth shipping on a promise. Restoring from the paths we control
+    // costs three lines and cannot silently stop working.
+    const close = () => {
+      restore();
+      if (dialog.open) dialog.close();
+    };
+
+    expand.addEventListener("click", open);
+    collapse.addEventListener("click", close);
+    dialog.addEventListener("close", restore);
+    dialog.addEventListener("cancel", restore);
+    // Escape, handled here rather than trusted to the UA's event: same reason.
+    dialog.addEventListener("keydown", (e) => {
+      if ((e as KeyboardEvent).key === "Escape") close();
+    });
+    // Clicking the backdrop. A modal dialog's own box IS the element, so a
+    // click whose target is the dialog itself landed outside the panel.
     dialog.addEventListener("click", (e) => {
-      if (e.target === dialog) dialog.close();
+      if (e.target === dialog) close();
     });
   }
 

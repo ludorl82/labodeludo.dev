@@ -35,8 +35,13 @@ const OPENERS = popular.openers?.length ? popular.openers : HAND_WRITTEN;
 const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 ---
 
-<section class="bob-chat" aria-labelledby="bob-chat-title">
-  <p class="prompt" id="bob-chat-title">$ bob --chat</p>
+<section class="bob-chat" id="bob-chat" aria-labelledby="bob-chat-title">
+  <div class="chat-head">
+    <p class="prompt" id="bob-chat-title">$ bob --chat</p>
+    <button type="button" class="expand" id="bob-expand" aria-controls="bob-fullscreen">
+      agrandir
+    </button>
+  </div>
 
   <p class="disclaimer">
     Ceci n'est pas une reconstitution : c'est un vrai modèle qui répond, en
@@ -74,6 +79,31 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
   </noscript>
 </section>
 
+<!--
+  The same conversation, given room.
+
+  A native <dialog> rather than a hand-rolled overlay: showModal() brings the
+  focus trap, Escape, the inert background and ::backdrop with it. The palette's
+  header comment warns that this codebase's older overlays are `<div hidden>`
+  with no dialog role and no focus management, and to borrow their look rather
+  than their semantics — this is that, done the short way.
+
+  It holds NOTHING of its own. On open, the log, the openers and the form are
+  MOVED here and moved back on close. Cloning them would mean two transcripts to
+  keep in sync and two sets of listeners; moving the live nodes means the script
+  above keeps working unchanged, and the conversation cannot diverge between the
+  two views because there is only ever one of it.
+-->
+<dialog id="bob-fullscreen" class="bob-fullscreen" aria-labelledby="bob-fullscreen-title">
+  <div class="bob-fullscreen-panel">
+    <header class="bob-fullscreen-head">
+      <p class="prompt" id="bob-fullscreen-title">$ bob --chat --fullscreen</p>
+      <button type="button" class="expand" id="bob-collapse">réduire</button>
+    </header>
+    <div class="bob-fullscreen-slot" id="bob-slot"></div>
+  </div>
+</dialog>
+
 <style>
   .bob-chat {
     margin: 1.25rem 0 0;
@@ -90,6 +120,120 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     margin: 0;
     color: var(--accent-live);
     user-select: none;
+  }
+
+  .chat-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  /* Quiet by default: the page is about reading, and a loud control here would
+     compete with the prose. It gains weight on hover and focus, where it has
+     been asked for. */
+  .expand {
+    flex: 0 0 auto;
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    color: var(--text-faint);
+    font-family: inherit;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    cursor: pointer;
+  }
+
+  .expand:hover,
+  .expand:focus-visible {
+    color: var(--accent-live);
+    border-color: var(--accent-live);
+  }
+
+  /* --- the fullscreen conversation ------------------------------------- */
+
+  .bob-fullscreen {
+    /* A dialog is display:none until opened and centred by the UA; everything
+       here is about the open state. */
+    width: min(52rem, 94vw);
+    /* dvh, not vh: on a phone the on-screen keyboard shrinks the visible area,
+       and vh would put the input behind it — the same trap the palette
+       documents. */
+    height: min(85dvh, 52rem);
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  .bob-fullscreen::backdrop {
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(2px);
+  }
+
+  .bob-fullscreen-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0.85rem 1rem 1rem;
+    font-family: var(--font-mono);
+    /* Bigger than the inline box's 0.8125rem. The inline one is a widget beside
+       prose and defers to it; this one IS the page while it is open, and a
+       conversation you opened on purpose should not be read at 13px. */
+    font-size: 0.9375rem;
+    gap: 0.6rem;
+  }
+
+  .bob-fullscreen-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    flex: 0 0 auto;
+  }
+
+  /* The moved nodes live here. min-height:0 is what actually lets the log
+     scroll: without it the flex item refuses to shrink below its content and
+     the whole panel grows past the dialog instead. */
+  .bob-fullscreen-slot {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0.6rem;
+  }
+
+  /* These three selectors target the SAME elements as the inline rules above —
+     they are the same nodes, moved — so everything here is the delta that being
+     in the dialog implies: the log takes the height and scrolls, and the form
+     stays pinned under it instead of scrolling away with the transcript. */
+  .bob-fullscreen-slot .log {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin-top: 0;
+    padding-right: 0.4rem;
+  }
+
+  .bob-fullscreen-slot .openers,
+  .bob-fullscreen-slot .ask {
+    flex: 0 0 auto;
+  }
+
+  /* Phone: the dialog IS the screen. Rounded corners floating over 3% of
+     visible page is fussy rather than elegant at this size. */
+  @media (max-width: 34rem) {
+    .bob-fullscreen {
+      width: 100vw;
+      height: 100dvh;
+      border: 0;
+      border-radius: 0;
+    }
   }
 
   .disclaimer {
@@ -234,6 +378,61 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
   const send = document.getElementById("bob-send") as HTMLButtonElement | null;
   const openers = document.getElementById("bob-openers");
   const fallbackTurn = document.getElementById("bob-fallback")?.parentElement;
+
+  /* ------------------------------------------------- the fullscreen view --- */
+  //
+  // The dialog holds nothing of its own: the log, the openers and the form are
+  // MOVED into it and moved back on close. Cloning would mean two transcripts
+  // to keep in sync and two sets of listeners; moving the live nodes means the
+  // chat code below never learns that a second view exists, and the two views
+  // cannot disagree because there is only ever one of them.
+  const section = document.getElementById("bob-chat");
+  const dialog = document.getElementById("bob-fullscreen") as HTMLDialogElement | null;
+  const slot = document.getElementById("bob-slot");
+  const expand = document.getElementById("bob-expand");
+  const collapse = document.getElementById("bob-collapse");
+  // Where the nodes belong when the dialog is closed: before the <noscript>,
+  // which is where they are authored. Captured once, up front, rather than
+  // guessed at close time.
+  const homeAnchor = section?.querySelector("noscript") ?? null;
+
+  const scrollLogToEnd = () => {
+    const l = document.getElementById("bob-log");
+    if (l) l.scrollTop = l.scrollHeight;
+  };
+
+  if (dialog && slot && expand && collapse && section) {
+    // Escape and the backdrop are the UA's job once showModal() is used; this
+    // only has to put the furniture back wherever the close came from.
+    const moveInto = (parent: Element, before: Node | null) => {
+      for (const id of ["bob-log", "bob-openers", "bob-form"]) {
+        const el = document.getElementById(id);
+        if (el) parent.insertBefore(el, before);
+      }
+    };
+
+    expand.addEventListener("click", () => {
+      moveInto(slot, null);
+      dialog.showModal();
+      scrollLogToEnd();
+      (document.getElementById("bob-input") as HTMLInputElement | null)?.focus();
+    });
+
+    collapse.addEventListener("click", () => dialog.close());
+
+    // Fires for the button, for Escape, and for a form inside it that submits
+    // with method="dialog" — one place to restore from, whatever closed it.
+    dialog.addEventListener("close", () => {
+      moveInto(section, homeAnchor);
+      (expand as HTMLButtonElement).focus();
+    });
+
+    // Clicking the backdrop closes it. A modal dialog's own box IS the element,
+    // so a click whose target is the dialog itself landed outside the panel.
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+  }
 
   if (log && form && input && send) {
     // The Worker holds no memory, so the whole (short) transcript rides along.

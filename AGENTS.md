@@ -17,6 +17,18 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
+### After adding or editing an article: `npm run embed`
+
+Bob answers from `public/bob-vectors.json`, a committed semantic index of the
+corpus. The build does NOT regenerate it — that would make a public deploy fail
+whenever the homelab is down — so it goes stale silently if this is skipped, and
+the symptom is Bob failing to answer about the new article while still linking
+to it.
+
+`npm run embed` is incremental: unchanged chunks keep their vectors, so adding
+one article re-embeds that article only. It needs `bob` reachable on the LAN
+(it calls the `bge-m3` model on its Ollama); pass `--host` to point elsewhere.
+
 ## Documentation
 
 Full documentation: https://docs.astro.build

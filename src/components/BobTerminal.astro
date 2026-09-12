@@ -434,6 +434,13 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     const focusExpand = () => (expand as HTMLButtonElement).focus();
 
     const restore = () => {
+      // Refuse to run while the dialog is open, and this guard is load-bearing
+      // rather than defensive: the `close` listener below fires LATE in some
+      // browsers — late enough to land after the visitor has reopened the
+      // dialog, at which point an unguarded restore rips the transcript out of
+      // a dialog that is on screen and leaves an empty box. Seen exactly that,
+      // in the browser, on the second open.
+      if (dialog.open) return;
       moveInto(section, homeAnchor);
       focusExpand();
       setTimeout(focusExpand, 0);

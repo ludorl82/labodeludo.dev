@@ -427,7 +427,13 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 
     const restore = () => {
       moveInto(section, homeAnchor);
-      (expand as HTMLButtonElement).focus();
+      // Next frame, not now. Closing a modal makes the user agent restore focus
+      // on its own, and on the Escape path it does so AFTER this handler — so a
+      // synchronous focus() here won the button path and lost the Escape one,
+      // which is the sort of half-fix that looks tested. Deferring by a frame
+      // puts it last on both, and focusing an already-focused button costs
+      // nothing.
+      requestAnimationFrame(() => (expand as HTMLButtonElement).focus());
     };
 
     // EVERY close path restores explicitly, and the `close` event is only a

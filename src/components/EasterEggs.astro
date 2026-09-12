@@ -1,5 +1,5 @@
 ---
-import { BOB_QUIPS } from "../lib/bob-humor";
+import { BOB_QUIPS, BOB_QUIPS_EN } from "../lib/bob-humor";
 
 interface NavItem {
   href: string;
@@ -52,7 +52,11 @@ const bobHint =
 // Server-rendered pick as the initial quip; the script re-rolls on open so a
 // cached page doesn't always greet with the same line (same doctrine as
 // bob-humor.ts: never freeze a build-time pick as the only outcome).
-const initialQuip = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
+// The page already knows its language and translates everything else in this
+// component — the quips were the one thing still coming back in French on an
+// English page. Same list, chosen by the same prop.
+const QUIPS = lang === "en" ? BOB_QUIPS_EN : BOB_QUIPS;
+const initialQuip = QUIPS[Math.floor(Math.random() * QUIPS.length)];
 
 const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
 ---
@@ -194,7 +198,7 @@ const title = lang === "en" ? "Keyboard shortcuts" : "Raccourcis clavier";
   }
 </style>
 
-<script define:vars={{ lang, homeHref, pages, quips: BOB_QUIPS }}>
+<script define:vars={{ lang, homeHref, pages, quips: QUIPS }}>
   const help = document.getElementById("keyboard-help");
   const toast = document.getElementById("sudo-toast");
   const bobOverlay = document.getElementById("bob-overlay");

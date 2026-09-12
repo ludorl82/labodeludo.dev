@@ -14,7 +14,7 @@
  * The disclaimer is the INVERSE of the house rule. Casts and ConversationExcerpt
  * must warn that they are reconstructions; this one has to warn that it is not.
  */
-import { BOB_QUIPS } from "../lib/bob-humor";
+import { BOB_QUIPS, BOB_QUIPS_EN } from "../lib/bob-humor";
 import popular from "../data/openers.json";
 
 // Written by hand, and still the fallback: an empty popular list is a normal
@@ -58,7 +58,9 @@ const pickedFr = POPULAR.filter((o) => !looksEnglish(o));
 const OPENERS_FR = pickedFr.length ? pickedFr : HAND_WRITTEN_FR;
 const OPENERS_EN = pickedEn.length ? pickedEn : HAND_WRITTEN_EN;
 
-// No-JS fallback: one real quip, so the panel is never an empty box.
+// No-JS fallback: one real quip, so the panel is never an empty box. French,
+// like everything the server renders here — the script swaps it for an English
+// one when the browser asks for English, the same way it swaps the rest.
 const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 ---
 
@@ -427,6 +429,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
   import { renderReply } from "../lib/bob-render";
     import { startThinking } from "../lib/bob-thinking";
   import { MAX_TURNS, loadConversation, saveConversation, toMessages } from "../lib/bob-memory";
+  import { BOB_QUIPS_EN as QUIPS_EN } from "../lib/bob-humor";
 
   const log = document.getElementById("bob-log");
   const form = document.getElementById("bob-form") as HTMLFormElement | null;
@@ -470,6 +473,13 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     openers?.querySelectorAll<HTMLElement>(".opener").forEach((b) => {
       b.hidden = b.dataset.lang !== "en";
     });
+    // Bob's own opening line, in his own English — written rather than
+    // translated, because half of the French ones are Québécois jokes that do
+    // not travel. Picked here rather than at build time for the reason the top
+    // of bob-humor.ts gives: this is a static build, so anything chosen during
+    // the build stays frozen on every visit until the next deploy.
+    const quip = document.getElementById("bob-fallback");
+    if (quip) quip.textContent = QUIPS_EN[Math.floor(Math.random() * QUIPS_EN.length)];
   }
 
   /* ------------------------------------------------- the fullscreen view --- */

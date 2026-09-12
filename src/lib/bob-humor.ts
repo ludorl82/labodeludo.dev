@@ -63,6 +63,70 @@ export const BOB_QUIPS: string[] = [
   "Sait où sont les sauvegardes. C'est déjà plus que la moyenne.",
 ];
 
+/**
+ * The same status lines, in Bob's English.
+ *
+ * NOT a translation of BOB_QUIPS, and the ones that are missing are missing on
+ * purpose: "en titi" and "le Canada est fier, et moi itou" are jokes that only
+ * land in Québécois, and a line that has to be explained is not a joke any
+ * more. A few here have no French twin for the same reason in reverse.
+ *
+ * Register: the one already set by BOB_404_EN below — left dislocation, a
+ * dropped third-person -s, a gendered pronoun for a thing, a calqued idiom,
+ * and "my friend". Markers mostly at the opening of a line, roughly every
+ * other one, the rest left clean: the two ways this goes wrong are phonetic
+ * mockery on one side and clean prose with broken jokes bolted on the other.
+ *
+ * The engineering stays exact. Bob has an accent, not gaps.
+ */
+export const BOB_QUIPS_EN: string[] = [
+  "Status: compiled with no error, and proud of that, my friend.",
+  "Never took a coffee break — suspicious, but efficient for true.",
+  "Uptime since the last reboot: yes sir.",
+  "Writes his posts faster than a champion of the world of the keyboard.",
+  "Certified zero procrastination. A technical constraint, not a virtue, but we take it.",
+  "His favourite quote: it worked on my VM.",
+  "No bug resist me more than two commits. Deal.",
+  "Already blamed the network. The network, she had done nothing.",
+  "Reads the documentation in full. Yes, even the footnotes.",
+  "Knows exactly how many times he typed kubectl get pods today. Refuse to say.",
+  "Never lost a file. Already lost a whole volume, by example.",
+  "Spends 10% of the time writing and 90% understanding why it worked before.",
+  "Backs up everything. Except the one thing that is going to break.",
+  "Has an opinion about NAS web interfaces. She is not a positive one.",
+  "Can explain DNS. Can also break it. Often in the same afternoon.",
+  "Does not sleep, but understand the concept by hearsay.",
+  "Status: waiting for an apply that scare nobody.",
+  "Restarts the service before touching the firewall. Lesson learn the hard way.",
+  "Still believes that a small change mean something.",
+  "Read the system log. All of the system log.",
+  "His greatest enemy: a browser tab showing a cached value.",
+  "Checks the exports at the source before trusting anybody.",
+  "Never typed yes to a confirmation without reading it. Almost never.",
+  "Remembers every IP address in the lab. Less impressive than it sound, there is twelve.",
+  "Status: operational, despite an unreasonable quantity of YAML.",
+  "Does not panic. Logs, by example. A lot.",
+  "Considers git revert as a form of forgiveness.",
+  "Already formatted the right disk. The pride, she is still fresh.",
+  "Finds 3 a.m. is an hour like any other for a migration.",
+  "Can name the cluster nodes from memory, in order, forward and backward.",
+  "His relationship with IPv6: cordial, but on his guard.",
+  "Status: two certificates to renew, and he know it for a while now.",
+  "Never says it should work. Says it anyway sometimes.",
+  "Trusts the backup. Tests it the same.",
+  "The only one on the team who reread his own commits.",
+  "Status: no process stuck in D state. A good day.",
+  "Treats it works on our side as a hypothesis, not a conclusion.",
+  "Has a complicated relationship with the local DNS cache.",
+  "Checks the server name twice before typing the command. Once was not enough.",
+  "Status: online, caffeinated by proxy.",
+  "Does not reinstall. Rebuilds, declaratively, like the good people do.",
+  "Distrusts the defaults. Especially the read-only ones.",
+  "Learned that nine and empty do not mean the same thing.",
+  "Knows where the backups are. That is already more than the average.",
+  "Status: compiled without a single warning. Me, I did not think it was possible.",
+];
+
 export interface Bob404 {
   /** Terminal transcript, newline-separated. Rendered verbatim in a <pre>. */
   body: string;

@@ -19,9 +19,20 @@ une question suggérée doit être une vraie question, pas une amélioration.
 { "openers": ["…", "…"] }
 ```
 
-**Zéro à quatre questions.** Zéro est une réponse parfaitement correcte : s'il
-n'y a rien de bon dans les candidates, n'en mets pas. Les quatre questions
-écrites à la main restent affichées quand la liste est vide, et c'est très bien.
+**Jusqu'à quatre en français et quatre en anglais, dans la même liste.** Tu ne
+les sépares pas toi-même : le site les trie tout seul et n'en montre qu'une
+langue à la fois, celle du fureteur du visiteur. Ton travail, c'est que les
+deux langues aient de quoi remplir leurs quatre boutons.
+
+**Zéro est une réponse parfaitement correcte**, et zéro dans une seule langue
+aussi : s'il n'y a rien de bon en anglais dans les candidates, n'en mets pas
+d'anglaises. Les questions écrites à la main prennent le relais, par langue,
+quand une liste est vide.
+
+**Tu ne traduis JAMAIS.** Une question est publiée dans la langue où elle a été
+posée, au caractère près. Traduire, c'est écrire — et la garde refuse tout ce
+qui n'est pas dans les candidates tel quel. Une bonne question française n'a pas
+besoin d'une jumelle anglaise ; s'il n'y en a pas, il n'y en a pas.
 
 ## Ce que tu gardes
 
@@ -37,7 +48,9 @@ Une bonne question suggérée montre à un visiteur ce que Bob peut faire. Donc 
   2026-09-07 et la garde l'a refusé, à raison. Tu ne peux pas ajouter le point
   d'interrogation manquant — ce serait réécrire. Laisse-la de côté.
 - **Courte.** Entre 12 et 70 caractères, ça doit tenir sur un bouton.
-- **Variée.** Quatre formulations de la même question, c'est une question.
+- **Variée.** Quatre formulations de la même question, c'est une question. Ça
+  vaut à l'intérieur d'une langue : quatre questions anglaises sur le NAS, ce
+  n'est pas quatre suggestions, c'est une.
 
 ## Ce que tu rejettes, sans hésiter
 

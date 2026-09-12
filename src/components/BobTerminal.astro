@@ -19,17 +19,44 @@ import popular from "../data/openers.json";
 
 // Written by hand, and still the fallback: an empty popular list is a normal
 // state — a quiet fortnight, or a night where nothing survived the gate — and
-// the panel must never be an empty row of nothing.
-const HAND_WRITTEN = [
+// the panel must never be an empty row of nothing. One set per language, now
+// that the panel shows one language at a time: an English visitor with nothing
+// English in the popular list still needs four buttons, not zero.
+const HAND_WRITTEN_FR = [
   "C'est quoi le setup ?",
   "Montre-moi ta pire journée",
   "Par où je commence ?",
   "T'as écrit sur quoi récemment ?",
 ];
+const HAND_WRITTEN_EN = [
+  "What is the setup?",
+  "Show me your worst day",
+  "Where do I start?",
+  "What did you write about lately?",
+];
 
-// What people actually asked, selected nightly from real questions and cleared
-// by check-openers.py before it could land here. See scripts/topology/.
-const OPENERS = popular.openers?.length ? popular.openers : HAND_WRITTEN;
+// The suggested questions are REAL questions, published verbatim — they are the
+// only strings on this site a stranger wrote, and check-openers.py exists to
+// keep them that way. So they arrive in whatever language they were asked in,
+// and the list is genuinely mixed. Sorting them is the only honest move here:
+// translating one would break the verbatim rule the whole pipeline is built on.
+//
+// The same two word lists as the Worker's looksEnglish(), and the same shape of
+// answer: function words, majority wins, French on a tie because French is the
+// house. A question is short, so this is a coarse instrument — but a question
+// misfiled shows up as one odd button, not as a wrong answer.
+const FR_WORDS = /\b(le|la|les|un|une|des|du|est|pas|que|qui|pour|dans|avec|c'est|ça|mais|tu|je|sur|au|aux|ce|son|sa|et|moi|toi|tes|mes|ses|ne|comment|pourquoi|quoi|sans|chez|vers|entre|depuis|maintenant|ton|ta|quel|quels|quelle)\b/g;
+const EN_WORDS = /\b(the|and|you|is|are|that|this|with|for|it|he|she|got|there|was|but|of|to|my|your|not|what|do|did|how|why|where|which|your)\b/g;
+const looksEnglish = (t: string) => {
+  const prose = t.toLowerCase();
+  return (prose.match(EN_WORDS) || []).length > (prose.match(FR_WORDS) || []).length;
+};
+
+const POPULAR: string[] = popular.openers ?? [];
+const pickedEn = POPULAR.filter(looksEnglish);
+const pickedFr = POPULAR.filter((o) => !looksEnglish(o));
+const OPENERS_FR = pickedFr.length ? pickedFr : HAND_WRITTEN_FR;
+const OPENERS_EN = pickedEn.length ? pickedEn : HAND_WRITTEN_EN;
 
 // No-JS fallback: one real quip, so the panel is never an empty box.
 const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
@@ -58,8 +85,13 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     </div>
   </div>
 
+  {/* Both sets ship; one is hidden. The server renders French because this page
+      is French and because a visitor with JavaScript off gets the house
+      language rather than an empty panel — the swap happens on load, from
+      navigator.language, and is the only thing that needs a script. */}
   <div class="openers" id="bob-openers">
-    {OPENERS.map((o) => <button type="button" class="opener" data-q={o}>{o}</button>)}
+    {OPENERS_FR.map((o) => <button type="button" class="opener" data-lang="fr" data-q={o}>{o}</button>)}
+    {OPENERS_EN.map((o) => <button type="button" class="opener" data-lang="en" data-q={o} hidden>{o}</button>)}
   </div>
 
   <form class="ask" id="bob-form">
@@ -403,6 +435,43 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
   const openers = document.getElementById("bob-openers");
   const fallbackTurn = document.getElementById("bob-fallback")?.parentElement;
 
+  /* ------------------------------------------------------- the language --- */
+  //
+  // The visitor's browser, not the page. This page is French and always will
+  // be — /auteurs/bob/ has no English twin — but the panel is where somebody
+  // types a question, and Bob answers in the language he was asked in. Showing
+  // an English speaker four French buttons and a "toi" is telling them the
+  // wrong thing about what he can do.
+  //
+  // Everything is rendered in French by the server, so a visitor with no
+  // JavaScript gets the house language rather than an empty panel, and there is
+  // no flash for the majority. This runs once, before anything else, and
+  // switches the handful of strings that are UI. It does NOT touch Bob's own
+  // words: the opening quip stays French because Bob's English one-liners
+  // would have to be written, not translated, and that is Ludo's voice work.
+  const english = /^en\b/i.test(navigator.languages?.[0] || navigator.language || "");
+  const VISITOR = english ? "you" : "toi";
+  if (english) {
+    const setText = (sel: string, text: string) => {
+      const el = document.querySelector(sel);
+      if (el) el.textContent = text;
+    };
+    setText(
+      "#bob-chat > .disclaimer",
+      "This is not a reconstruction: a real model is answering, live, on a " +
+        "graphics card in the lab rather than in the cloud — ask it which model " +
+        "it is, it knows. It only knows what is published on this site and the " +
+        "(sanitised) inventory of the fleet. It can be wrong, and it is not Ludo " +
+        "speaking.",
+    );
+    setText('label[for="bob-input"]', "Ask Bob a question");
+    setText("#bob-send", "Send");
+    if (input) input.placeholder = "Ask it something…";
+    openers?.querySelectorAll<HTMLElement>(".opener").forEach((b) => {
+      b.hidden = b.dataset.lang !== "en";
+    });
+  }
+
   /* ------------------------------------------------- the fullscreen view --- */
   //
   // The dialog holds nothing of its own: the log, the openers and the form are
@@ -515,7 +584,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
       div.className = `turn ${who}`;
       const label = document.createElement("span");
       label.className = "who";
-      label.textContent = who === "bob" ? "bob" : "toi";
+      label.textContent = who === "bob" ? "bob" : VISITOR;
       const p = document.createElement("p");
       div.append(label, p);
       log!.append(div);

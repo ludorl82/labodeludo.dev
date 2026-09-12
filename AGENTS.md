@@ -17,17 +17,25 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
-### After adding or editing an article: `npm run embed`
+### The semantic index rebuilds itself during `npm run build`
 
-Bob answers from `public/bob-vectors.json`, a committed semantic index of the
-corpus. The build does NOT regenerate it — that would make a public deploy fail
-whenever the homelab is down — so it goes stale silently if this is skipped, and
-the symptom is Bob failing to answer about the new article while still linking
-to it.
+Bob answers from `public/bob-vectors.json`, a semantic index of the corpus. The
+build regenerates it (`--soft`) and the result is also committed, which is two
+things for two reasons:
 
-`npm run embed` is incremental: unchanged chunks keep their vectors, so adding
-one article re-embeds that article only. It needs `bob` reachable on the LAN
-(it calls the `bge-m3` model on its Ollama); pass `--host` to point elsewhere.
+- **In the build**, so it cannot go stale silently. It used to be a manual step
+  and the symptom of forgetting it misleads: Bob keeps LINKING a new article
+  while unable to say a word about its content, so he looks like he knows it.
+- **Committed**, so an unreachable Ollama is a loud warning and the previous
+  index ships unchanged, instead of a failed deploy.
+
+It is incremental — one new article re-embeds that article only — and it does
+not rewrite the file when nothing changed, so a build never produces a spurious
+2.4 MB diff.
+
+Run `npm run embed` (no `--soft`) by hand when you want it to FAIL on a broken
+Ollama, and commit the result so the fallback copy stays current. It needs `bob`
+reachable on the LAN for the `bge-m3` model; `--host` points it elsewhere.
 
 ## Documentation
 

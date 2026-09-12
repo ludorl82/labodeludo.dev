@@ -34,22 +34,34 @@ export const prerender = true;
 const CHARS_PER_TOKEN = 2.65;
 
 /**
- * Claude Haiku 4.5 will not cache a prefix under 4096 tokens, and it fails
- * silently — no error, just a bill that never drops.
+ * A CEILING now, where there used to be a floor.
  *
- * The floor is applied to the grounding ALONE, even though the Worker prepends
- * a persona that makes the real prefix bigger. Budgeting for the persona would
- * couple this assertion to the size of a string in another repo, so an edit
- * there could make this check quietly start lying. Treating the persona as
- * unearned margin keeps the check true on its own terms.
+ * The floor was Claude Haiku 4.5 refusing to cache a prefix under 4096 tokens,
+ * silently. That tier was removed on 2026-09-07 and the check outlived it: it
+ * was still defending a bill nobody pays, and it defended it by demanding the
+ * prompt stay BIG — the exact opposite of what the live tier needs.
  *
- * This is still an estimate. The authoritative check is
- * cache_read_input_tokens > 0 against staging.
+ * What the live tier needs is room. qwen35-q4kl runs at num_ctx 16384 and the
+ * Worker fills it from several sides at once: this grounding, the persona, up
+ * to five retrieved excerpts (~2300 tokens), twelve turns of history, and 500
+ * reserved for the answer. A worst case measured against the model itself on
+ * 2026-09-12 came to 15,324 of 16,384 — 560 tokens of headroom, with no alarm
+ * anywhere that would have said so. Past the ceiling the model does not warn
+ * either; the oldest part of the window simply stops being read.
+ *
+ * Like the floor it replaces, it is applied to the fleet and the index ALONE.
+ * Budgeting for the persona would couple this assertion to the size of a
+ * string in another repo, where an edit could make this check quietly start
+ * lying. The rest of the budget is treated as fixed and this is what is
+ * allowed to grow.
+ *
+ * ~5500 estimated tokens is about 900 above what the trimmed index and fleet
+ * measure today: roughly two thousand characters of room, a year of writing at
+ * the current pace. When it fires, trim a column out of the index rather than
+ * raising the number — raising it spends headroom that was measured, not
+ * guessed.
  */
-const MIN_GROUNDING_TOKENS = 4096;
-
-/** Description text is indexed to help Bob choose, not to be recited back. */
-const DESCRIPTION_CHARS = 80;
+const MAX_GROUNDING_TOKENS = 5500;
 
 const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
 
@@ -117,14 +129,26 @@ export const GET: APIRoute = async () => {
     ...castsEn.map((e) => `cast:${e.id}`),
   ]);
 
+  // NO description and NO tags, and that is a deletion, not an oversight.
+  //
+  // The truncated description cost 1,153 tokens of the Worker's prompt —
+  // measured with prompt_eval_count, not estimated — to do the job semantic
+  // search now does far better: retrieval reads the WHOLE article, this read
+  // the first eighty characters of a summary. The tags cost another 302 and
+  // they are coarse sections (Labo, DevOps, Domotique), not topics: nobody
+  // ever found an article about Kubernetes through them.
+  //
+  // What is left is what retrieval CANNOT replace, because it is what the
+  // index alone is still asked for: the exact slug (a path Bob must never
+  // improvise), the date (the newest, the oldest, "what did you publish in
+  // August"), the title, and whether an English twin exists. The titles here
+  // are full sentences, so choosing from them is not a downgrade.
   const entry = (kind: string) => (e: { id: string; data: Record<string, any> }) =>
     [
       kind,
       e.id, // there is no slug field in the schema — the id IS the slug
       e.data.pubDate.toISOString().slice(0, 10),
-      (e.data.tags ?? []).join(","),
       oneLine(e.data.title),
-      oneLine(e.data.description ?? "").slice(0, DESCRIPTION_CHARS),
       twins.has(`${kind}:${e.id}`) ? "en" : "",
     ].join("|");
 
@@ -181,11 +205,12 @@ export const GET: APIRoute = async () => {
     (fleetText.length + corpusText.length) / CHARS_PER_TOKEN,
   );
 
-  if (approxTokens < MIN_GROUNDING_TOKENS) {
+  if (approxTokens > MAX_GROUNDING_TOKENS) {
     throw new Error(
-      `bob-grounding: ${approxTokens} tokens is under the ${MIN_GROUNDING_TOKENS} ` +
-        `needed to keep the cached prefix above Haiku's 4096-token floor. ` +
-        `Caching would stop paying silently. See the comment in this file.`,
+      `bob-grounding: fleet + index estimate ${approxTokens} tokens, over the ` +
+        `${MAX_GROUNDING_TOKENS} budgeted. The Worker's prompt shares num_ctx ` +
+        `16384 with the excerpts, twelve turns of history and the answer. ` +
+        `Trim a column out of the index; see the comment in this file.`,
     );
   }
 
@@ -196,7 +221,7 @@ export const GET: APIRoute = async () => {
     counts: { devices: devices.length, corpus: corpus.length },
     approxTokens,
     // Field order in each corpus line, so the Worker's prompt can name it.
-    corpusFields: "kind|slug|date|tags|title|description|en",
+    corpusFields: "kind|slug|date|title|en",
     // The non-publication pages, same idea: the Worker names the field order
     // in the prompt and verifies every path Bob cites against this list.
     pagesFields: "path|title",

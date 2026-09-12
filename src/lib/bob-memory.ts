@@ -32,9 +32,23 @@ export type Link = Record<string, unknown>;
  *  toMessages(). */
 export type Turn = { role: "user" | "assistant"; content: string; links?: Link[] };
 
-/** Three exchanges. The Worker caps at the same number, so a longer array here
- *  would only be trimmed on arrival — and every turn is prompt you pay for. */
-export const MAX_TURNS = 6;
+/**
+ * Six exchanges. The Worker caps at the same number, so a longer array here
+ * would only be trimmed on arrival — and every turn is prompt you pay for.
+ *
+ * Raised from three on 2026-09-11, and the ceiling is arithmetic rather than
+ * taste. The model runs at `num_ctx` 16384. The grounding is ~7300 tokens and
+ * the retrieved excerpts up to ~2300, the answer reserves 500, which leaves
+ * ~6300 for the transcript. A worst-case exchange is ~690 tokens — a question
+ * capped at 500 characters plus a 500-token answer — so six exchanges fit with
+ * room to spare and eight would not.
+ *
+ * Overflow is worth avoiding rather than surviving: when the prompt exceeds the
+ * window it is the START that gets dropped, and the start is the grounding. Bob
+ * would not fail, he would quietly begin improvising — the one thing he is
+ * built not to do.
+ */
+export const MAX_TURNS = 12;
 
 const KEY = "bob:conversation";
 /** What the palette used to write for a one-time handoff. Read for as long as

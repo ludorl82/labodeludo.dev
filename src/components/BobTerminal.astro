@@ -440,8 +440,14 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     // feature worth shipping on a promise. Restoring from the paths we control
     // costs three lines and cannot silently stop working.
     const close = () => {
-      restore();
+      // Close FIRST, restore after. The other order looks more careful and is
+      // wrong: closing a modal makes the user agent do its own focus
+      // restoration, which lands on <body> and overwrites the focus() below —
+      // verified in the browser, the expand button did not get it back. Leaving
+      // focus on the body after dismissing a dialog is the kind of thing only
+      // keyboard users notice, and only by being lost.
       if (dialog.open) dialog.close();
+      restore();
     };
 
     expand.addEventListener("click", open);

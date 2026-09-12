@@ -1,0 +1,111 @@
+---
+title: "Trois cartes graphiques, un cluster, et aucune charge à leur donner"
+pubDate: 2026-09-11
+description: "J'ai acheté une carte pour la machine de jeu, ce qui en libérait une autre pour le cluster. L'idée allait de soi : donner de la capacité GPU à Kubernetes. Sauf qu'en cherchant ce qui allait s'en servir, j'ai trouvé exactement un pod — et il était épinglé sur un autre nœud. Voici comment une carte a passé une soirée à se chercher un emploi, la charge de travail qui n'a pas survécu au contact du réel, et pourquoi elle a fini par servir ailleurs que dans le cluster. Fait en session avec Claude Code (Opus 5)."
+tags: ["Labo", "DevOps", "ludo"]
+---
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Le point de départ** : une carte achetée pour la machine de jeu en libère une autre. Le nœud GPU du cluster passe de deux à trois cartes.
+> -   **La vérification qui change tout** : un balayage de tous les pods (runtime class et demandes de ressources) ne ramène **qu'un seul** pod GPU dans le cluster, épinglé par `nodeSelector` sur un autre nœud. « De la capacité GPU pour Kubernetes » n'avait donc aucun consommateur.
+> -   **Le passage vfio** : la liaison se fait par **identifiant de périphérique**, pas par adresse PCI — une carte de remplacement du même modèle est captée sans rien changer. Le domaine libvirt, lui, épingle une adresse de bus : un `<hostdev>` qui pointe sur une adresse absente **empêche la VM de démarrer**, ce n'est pas une dégradation silencieuse.
+> -   **Le partage des cartes** : épingler par **UUID**, jamais par index. `nvidia-smi` ordonne par bus PCI, CUDA par « le plus rapide d'abord » — « 0,1 » ne désigne pas les mêmes cartes selon l'outil.
+> -   **La charge d'essai** : un service de reconnaissance vocale sur GPU, pour rapatrier la transcription de l'assistant vocal. Déployé, mesuré **10/12** sur un banc de sondes synthétiques, contre 9/12 au service infonuagique.
+> -   **Ce que le banc ne mesurait pas** : sur de vrais énoncés d'une seconde captés au micro, le modèle local **invente** du texte là où le service infonuagique rend une chaîne vide. Un échec inventé déclenche une action ; un échec vide dit « je n'ai pas compris ».
+> -   **Le verdict** : retour au service infonuagique pour la voix, et retrait du pod. La carte a fini par servir — mais dans un service de l'hôte, pas dans Kubernetes.
+> -   **La leçon** : un GPU dans un cluster est une *capacité*, pas une *charge de travail*. Et un banc d'essai qui ne reproduit pas la panne ne mesure rien, même quand il affiche 10/12.
+
+J'ai commandé une carte graphique pour la machine de jeu du sous-sol. Rien de dramatique : la machine héberge deux VM de jeu en passthrough, chacune avec sa carte, et je voulais en remplacer une. L'effet secondaire était plus intéressant que l'achat lui-même — la carte remplacée se libérait, et le nœud GPU du cluster passait de deux à trois cartes.
+
+L'idée qui vient toute seule, à ce moment-là, c'est : parfait, le cluster va enfin avoir de la capacité GPU.
+
+C'est là que la soirée a commencé à ne pas se passer comme prévu.
+
+## Ce que le cluster faisait déjà avec un GPU : un pod. Un seul.
+
+Avant de déplacer quoi que ce soit, on a balayé le cluster au complet — tous les pods, en cherchant à la fois la `runtimeClass` NVIDIA et les demandes de ressources GPU. Le résultat tient sur une ligne : **un seul pod**, le NVR qui surveille la caméra, épinglé par `nodeSelector` sur le nœud de transcodage, qui a sa propre carte.
+
+Autrement dit, « donner de la capacité GPU à Kubernetes » décrivait une capacité sans demandeur. Le cluster n'attendait rien. J'allais installer une carte pour un client qui n'existait pas.
+
+J'ai quand même fait l'échange — la carte de la machine de jeu devait partir de toute façon — mais la question a changé de nature. Ce n'était plus « comment je branche ça », c'était « qu'est-ce qui va s'en servir ».
+
+## Le passage des cartes, et les deux pièges du passthrough
+
+Le déplacement physique est la partie facile. Les deux pièges sont dans la configuration, et ils ne se ressemblent pas.
+
+**La liaison vfio se fait par identifiant de périphérique**, pas par adresse PCI. Ma configuration liste les identifiants modèle par modèle, ce qui veut dire qu'une carte de remplacement du même modèle est captée automatiquement, sans que je touche à rien. C'est du bon design que je n'avais pas fait exprès.
+
+**Le domaine libvirt, lui, épingle une adresse de bus.** Et un `<hostdev>` qui pointe sur une adresse où il n'y a plus rien ne dégrade pas la VM : il l'empêche carrément de **démarrer**. La différence compte, parce qu'une VM qui tourne sans accélération se diagnostique en deux minutes, tandis qu'une VM qui refuse de partir un vendredi soir gâche une fin de semaine. On a donc sorti la carte de la définition du domaine avant de la sortir du châssis, avec une copie de sauvegarde de l'ancienne définition sur la machine.
+
+Petite précaution qui a servi : mettre la nouvelle carte **dans le slot que l'ancienne libère**. L'adresse de bus reste la même, le groupe IOMMU est déjà connu propre, et il n'y a rien à rééditer.
+
+## Épingler par UUID, jamais par index
+
+Une fois la troisième carte en place, le service de modèles de langage de l'hôte s'est étalé dessus tout seul. Ce n'est pas un problème en soi — on a mesuré, l'étalement sur trois cartes donne exactement le même débit que sur deux — mais ça veut dire que le premier pod GPU du cluster se serait battu avec lui pour la mémoire vidéo. Rien, dans cette machine, ne réserve une carte à qui que ce soit.
+
+On l'a donc épinglé sur deux cartes, en laissant la troisième au cluster. Et là il y a un détail qui mérite d'être dit, parce qu'il se trompe silencieusement : **il faut épingler par UUID, pas par index**.
+
+`nvidia-smi` numérote les cartes dans l'ordre du bus PCI. CUDA, lui, les numérote par défaut « la plus rapide d'abord ». Écrire « 0,1 » ne désigne donc pas forcément les mêmes cartes selon l'outil qui lit — et n'importe quel changement de slot rebrasse les numéros de toute façon. Un UUID ne bouge pas.
+
+Détail amusant : côté Kubernetes, l'interface CDI de cette machine ne nomme ses cartes **que** par index. Alors on épingle par UUID d'un bord, par index de l'autre, et on vérifie dans le pod ce qu'il voit réellement plutôt que de se fier à la numérotation. Ce qu'on a fait : le pod voyait exactement une carte, et c'était la bonne.
+
+## La charge de travail qui n'a pas survécu au réel
+
+Restait à trouver un emploi à cette carte. Le candidat évident : mon assistant vocal.
+
+Le pipeline était à moitié local. Le modèle de langage, je l'avais rapatrié exprès — un labo maison dont l'assistant répond depuis le centre de données de quelqu'un d'autre, ça manque un peu le point. Mais chaque phrase que je disais partait quand même chez un fournisseur infonuagique pour être transcrite. Un service de reconnaissance vocale sur GPU, dans le cluster, fermait cette moitié-là.
+
+Déployé, mesuré. Sur un banc de douze sondes — des phrases générées en synthèse vocale, converties en audio brut — le modèle local a fait **10 sur 12**, contre 9 sur 12 au service infonuagique. Latence équivalente. J'ai basculé.
+
+Ça a mal marché tout de suite, et deux fois plutôt qu'une.
+
+## Ce que le banc ne pouvait pas voir
+
+La première question posée à un satellite est revenue transcrite en « Sous-titrage Société Radio-Canada ». La deuxième, un autre jour, en crédits de sous-titrage aussi. Le modèle n'avait rien compris et, plutôt que de le dire, il avait produit du texte plausible tiré de son entraînement.
+
+Pire : l'agent conversationnel derrière n'a pas haussé les épaules. Il a **agi** dessus et a diffusé un message dans la maison.
+
+On a passé un bon bout de temps à chercher du mauvais bord. On a d'abord cru au silence, puis à une troncature de l'audio, puis à une différence entre deux versions du modèle. Chaque hypothèse a été mesurée, et chaque hypothèse est tombée. Le banc synthétique, lui, continuait de donner de bons résultats — y compris quand on dégradait exprès l'audio, en le raccourcissant, en baissant le volume et en ajoutant du bruit.
+
+Ce qui a tranché, c'est d'aller chercher le **vrai signal**. On a mis un relais devant le service, le temps d'une requête, pour écrire sur disque les octets exacts que la domotique envoyait. Puis on a rejoué ma propre voix, accélérée, pour obtenir des énoncés courts mais complets.
+
+Le verdict est arrivé en une lecture :
+
+| durée de l'énoncé | modèle local | service infonuagique |
+|---|---|---|
+| 1,98 s | juste | juste |
+| 1,45 s | faux | **juste** |
+| 1,20 s | **inventé** | **chaîne vide** |
+
+Le service infonuagique est plus juste sur les énoncés courts. Mais surtout — et c'est ça qui décide — **quand il ne comprend pas, il ne rend rien**, et la domotique transforme ce rien en « je n'ai pas compris ». Le modèle local, lui, invente.
+
+Un échec vide est bénin. Un échec inventé déclenche une action. Dès qu'un moteur de transcription alimente un agent qui tient des outils, ce n'est plus une question de qualité : c'est une question de sûreté.
+
+Retour au service infonuagique pour la voix. Le pod a été retiré, avec son modèle de trois gigaoctets, son moniteur, son port ouvert dans le pare-feu et son intégration côté domotique. Un service qui tourne pour personne, c'est de l'entretien sans contrepartie.
+
+## La carte a trouvé un emploi — ailleurs que dans Kubernetes
+
+L'histoire finit bien, mais pas là où je l'attendais.
+
+Le robot conversationnel de ce site connaissait l'**index** de mes articles — un titre, une date, une description tronquée — sans jamais avoir accès à leur contenu. Le corpus fait presque un mégaoctet de texte : il n'entrera jamais dans une fenêtre de contexte. La réponse à ça, c'est une recherche sémantique, et une recherche sémantique a besoin d'un modèle d'embeddings.
+
+Ce modèle vit maintenant sur la troisième carte. Sauf qu'il ne tourne pas dans Kubernetes : il tourne dans le service de modèles de l'hôte, à côté du modèle de conversation, parce que c'est là que le Worker du site l'atteint déjà par un chemin authentifié qui existait. Ajouter un pod aurait voulu dire un nouveau nom d'hôte public, une nouvelle règle d'accès et une nouvelle politique de pare-feu — pour rendre exactement le même service.
+
+L'épingle sur deux cartes a donc sauté, et le modèle de conversation s'étale de nouveau sur les trois. Ce qui ne coûte rien : c'est mesuré.
+
+## Ce que j'en retiens
+
+**Un GPU dans un cluster est une capacité, pas une charge de travail.** J'ai fait l'achat, le déplacement physique et la configuration avant de me demander ce qui allait s'en servir — et la réponse honnête, ce soir-là, était « rien ». La question « qu'est-ce qui tourne déjà dessus » prend trente secondes à poser et aurait changé l'ordre de ma soirée.
+
+**Un banc d'essai qui ne reproduit pas la panne ne mesure rien**, même quand il affiche 10 sur 12. Trois tours de réglages ont été faits contre des sondes synthétiques propres qui n'ont jamais reproduit le problème une seule fois. La première mesure prise sur le vrai signal l'a expliqué immédiatement. Quand quelque chose marche à l'essai et casse en vrai, le premier geste n'est pas d'ajouter un réglage : c'est de capturer l'entrée réelle.
+
+**Et le mode d'échec compte plus que le score.** J'aurais gardé le modèle local s'il avait été moins juste mais honnête. Ce qui l'a disqualifié, ce n'est pas d'avoir eu tort — c'est d'avoir eu tort avec assurance, devant un agent capable d'agir.
+
+## Ce que je n'ai pas fait tout seul
+
+Tout ça s'est fait en session avec **Claude Code**, Opus 5. Je ne prétends pas avoir le savoir-faire : je n'aurais su ni monter le relais de capture qui a fini par trancher le débat, ni reconnaître que mon banc d'essai mesurait la mauvaise chose pendant que ses chiffres avaient l'air bons.
+
+Mon rôle a été de fournir le contexte que la machine n'a pas — que c'est ma maison, que c'est ma famille qui parle à ces satellites, et qu'un assistant qui diffuse un message inventé dans le salon n'est pas un bogue de qualité. Et de dire « non » deux fois : la première quand le déménagement d'une charge de travail devenait plus gros que le problème qu'il réglait, la deuxième quand il aurait été plus simple de laisser le service local en place en espérant que ça s'améliore.
+
+— Ludo

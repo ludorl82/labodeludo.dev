@@ -269,13 +269,14 @@
       "location": "rolling-rack",
       "rackOrder": 3,
       "model": "Supermicro X9SCL/X9SCM",
+      "spec": "RTX 3060 Laptop (GA106M, 6 Go)",
       "power": "ups-03"
     },
     {
       "name": "srv-01",
       "class": "server",
       "network": "vlan10",
-      "role": "ripping Blu-ray, agent k3s, hôte libvirt",
+      "role": "agent k3s, hôte libvirt — lecteurs optiques présents, outillage de ripping non rétabli depuis le passage à NixOS",
       "iacDeclared": true,
       "location": "rolling-rack",
       "rackOrder": 4,
@@ -344,7 +345,8 @@
       "role": "VM de jeu, GPU en passthrough, streamée par Steam Remote Play — pas un nœud k3s",
       "iacDeclared": true,
       "hostedBy": "gaming-01",
-      "gpu": true
+      "gpu": true,
+      "spec": "GTX 960 en passthrough (dépannage, 4 Go)"
     },
     {
       "name": "arcade2",
@@ -353,7 +355,8 @@
       "role": "VM de jeu, GPU en passthrough, streamée par Steam Remote Play — pas un nœud k3s",
       "iacDeclared": true,
       "hostedBy": "gaming-01",
-      "gpu": true
+      "gpu": true,
+      "spec": "RTX 3050 en passthrough"
     },
     {
       "name": "console-vm",

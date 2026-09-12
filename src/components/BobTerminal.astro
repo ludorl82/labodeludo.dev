@@ -218,12 +218,30 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     overscroll-behavior: contain;
     margin-top: 0;
     padding-right: 0.4rem;
-    /* A short conversation sits ON the input rather than floating at the top of
-       a tall empty panel — the chat convention, and the reason the inline box
-       never needed it: there, the box is only as tall as its content. It costs
-       nothing once the transcript is long enough to scroll, because a flex
-       container that overflows starts from its scroll origin anyway. */
-    justify-content: flex-end;
+    /* Touch scrolling, the same recipe the command palette already proved it
+       needs. Without pan-y a drag inside this box did nothing on a phone. */
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  /* A short conversation sits ON the input rather than floating at the top of a
+     tall empty panel. An auto margin on a pseudo-element, NOT
+     justify-content: flex-end — and that distinction is the whole reason this
+     rule has a comment.
+     
+     flex-end on a scroll container overflows at the START edge, which browsers
+     do not let you reach: measured on the live page, the container reported
+     scrollHeight === clientHeight (no overflow at all, so nothing to scroll)
+     while the first turn sat at -1054px, above the box and unreachable. It
+     shipped that way for an hour and was found on a phone, where a long
+     conversation simply could not be scrolled back through.
+     
+     An auto margin does the same job honestly: it takes the free space when
+     there is some, and collapses to nothing when the content overflows, so the
+     scroll container behaves like a scroll container. */
+  .bob-fullscreen-slot .log::before {
+    content: "";
+    margin-top: auto;
   }
 
   .bob-fullscreen-slot .openers,

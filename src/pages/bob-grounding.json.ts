@@ -181,14 +181,25 @@ export const GET: APIRoute = async () => {
     // article index does not, and as a link target it is a hazard: the widget
     // linkifies inline by building one regex out of every slug, and a bare "/"
     // matches every slash in the reply — including the ones inside real paths.
-    ["/architecture/", "Le schéma de l'architecture, redessiné chaque semaine à partir des dépôts"],
+    // THE NAME FIRST, then " : " or " — ", then whatever describes it.
+    //
+    // That shape is not editorial taste, it is the contract with the widget:
+    // bob-render.ts puts `title.split(/ : | — /)[0]` inside the link pill and
+    // keeps the whole string for the tooltip. Written the other way round, the
+    // titles here produced two visible bugs at once — "/architecture/" had no
+    // separator at all, so Bob saying "le schéma se redessine tout seul à
+    // /architecture/" rendered as "…tout seul à ·Le schéma de l'architecture,
+    // redessiné chaque semaine à partir des dépôts", a sentence that stops
+    // making sense mid-way; and all fourteen role pages started with "Rôle : ",
+    // so every single one of them showed a pill labelled "Rôle".
+    ["/architecture/", "Le schéma de l'architecture — redessiné chaque semaine à partir des dépôts"],
     ["/inventaire/", "L'inventaire : ce que chaque rôle du labo fait, et les articles écrits dessus"],
     ["/casts/", "Les enregistrements de terminal"],
     ["/auteurs/", "Qui écrit ici"],
     ["/en/", "English home — the translated half of the site"],
-    ["/en/casts/", "Terminal recordings, English index"],
+    ["/en/casts/", "Terminal recordings — English index"],
     ...(Object.keys(INVENTORY) as InventoryKey[]).map(
-      (k) => [`/inventaire/${k}/`, `Rôle : ${INVENTORY[k].name}`] as [string, string],
+      (k) => [`/inventaire/${k}/`, `${INVENTORY[k].name} — rôle du labo`] as [string, string],
     ),
     ...Object.entries(AUTHORS).map(
       ([id, a]) => [`/auteurs/${id}/`, `${a.name} — ${a.tagline}`] as [string, string],
@@ -197,6 +208,34 @@ export const GET: APIRoute = async () => {
       (p) => [`/${p.id}/`, oneLine(p.data.title)] as [string, string],
     ),
   ];
+  // The pill label, computed exactly the way bob-render.ts computes it, and
+  // asserted here because nothing else can see both sides. Two rules, one for
+  // each way this already broke: SHORT, because the label goes inline in the
+  // middle of Bob's sentence, and UNIQUE, because fourteen role pages once
+  // shared the prefix "Rôle : " and every one of them rendered as "Rôle".
+  const PILL_MAX = 40;
+  const pill = (title: string) => title.split(/ : | — /)[0];
+  const seen = new Map<string, string>();
+  for (const [path, title] of siteMap) {
+    const label = pill(title);
+    if (label.length > PILL_MAX) {
+      throw new Error(
+        `bob-grounding: ${path} would render a ${label.length}-character link pill ` +
+          `(${JSON.stringify(label)}). Put the NAME first, then " : " or " — ", ` +
+          `then the description. See the comment above siteMap.`,
+      );
+    }
+    const clash = seen.get(label);
+    if (clash) {
+      throw new Error(
+        `bob-grounding: ${path} and ${clash} would both render a pill labelled ` +
+          `${JSON.stringify(label)}. The part before " : " or " — " has to name ` +
+          `the page, not its category.`,
+      );
+    }
+    seen.set(label, path);
+  }
+
   const pagesText = siteMap.map(([path, title]) => `${path}|${title}`).join("\n");
 
   const fleetText = devices.join("\n");

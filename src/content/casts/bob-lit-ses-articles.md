@@ -1,6 +1,6 @@
 ---
 title: "Bob lit ses articles"
-pubDate: 2026-09-11
+pubDate: 2026-09-12
 description: "Cinq questions posées au chatbot du site, et ses vraies réponses — après qu'il a enfin eu accès au contenu de ses propres articles, et pas seulement à leurs titres. Un détail enfoui au milieu d'un texte, une date de publication, une question de suivi sans sujet, une réponse qui reste en anglais, et un refus."
 cast: "/casts/bob-lit-ses-articles.cast"
 poster: "npt:0:08"

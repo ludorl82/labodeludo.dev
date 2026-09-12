@@ -218,6 +218,12 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     overscroll-behavior: contain;
     margin-top: 0;
     padding-right: 0.4rem;
+    /* A short conversation sits ON the input rather than floating at the top of
+       a tall empty panel — the chat convention, and the reason the inline box
+       never needed it: there, the box is only as tall as its content. It costs
+       nothing once the transcript is long enough to scroll, because a flex
+       container that overflows starts from its scroll origin anyway. */
+    justify-content: flex-end;
   }
 
   .bob-fullscreen-slot .openers,

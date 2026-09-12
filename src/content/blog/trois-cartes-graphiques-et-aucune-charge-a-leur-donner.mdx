@@ -13,8 +13,9 @@ tags: ["Labo", "DevOps", "ludo"]
 > -   **Le partage des cartes** : épingler par **UUID**, jamais par index. `nvidia-smi` ordonne par bus PCI, CUDA par « le plus rapide d'abord » — « 0,1 » ne désigne pas les mêmes cartes selon l'outil.
 > -   **La charge d'essai** : un service de reconnaissance vocale sur GPU, pour rapatrier la transcription de l'assistant vocal. Déployé, mesuré **10/12** sur un banc de sondes synthétiques, contre 9/12 au service infonuagique.
 > -   **Ce que le banc ne mesurait pas** : sur de vrais énoncés d'une seconde captés au micro, le modèle local **invente** du texte là où le service infonuagique rend une chaîne vide. Un échec inventé déclenche une action ; un échec vide dit « je n'ai pas compris ».
-> -   **Le verdict** : retour au service infonuagique pour la voix, et retrait du pod. La carte a fini par servir — mais dans un service de l'hôte, pas dans Kubernetes.
-> -   **La leçon** : un GPU dans un cluster est une *capacité*, pas une *charge de travail*. Et un banc d'essai qui ne reproduit pas la panne ne mesure rien, même quand il affiche 10/12.
+> -   **Le verdict** : retour au service infonuagique pour la voix, et retrait du pod.
+> -   **Où la carte a fini** : à servir la recherche sémantique du site — d'abord dans le service de l'hôte par facilité, puis **dans un pod**, pour que la carte réservée à Kubernetes ait un vrai consommateur. Le tunnel route `/api/embed` vers le pod **par chemin**, donc pas de nouveau nom d'hôte à exposer ni à garder.
+> -   **La leçon** : un GPU dans un cluster est une *capacité*, pas une *charge de travail* — et une réservation sans consommateur est une promesse que personne ne peut vérifier. Plus une deuxième : un banc d'essai qui ne reproduit pas la panne ne mesure rien, même quand il affiche 10/12.
 
 J'ai commandé une carte graphique pour la machine de jeu du sous-sol. Rien de dramatique : la machine héberge deux VM de jeu en passthrough, chacune avec sa carte, et je voulais en remplacer une. L'effet secondaire était plus intéressant que l'achat lui-même — la carte remplacée se libérait, et le nœud GPU du cluster passait de deux à trois cartes.
 
@@ -84,19 +85,31 @@ Un échec vide est bénin. Un échec inventé déclenche une action. Dès qu'un 
 
 Retour au service infonuagique pour la voix. Le pod a été retiré, avec son modèle de trois gigaoctets, son moniteur, son port ouvert dans le pare-feu et son intégration côté domotique. Un service qui tourne pour personne, c'est de l'entretien sans contrepartie.
 
-## La carte a trouvé un emploi — ailleurs que dans Kubernetes
+## La carte a fini par trouver un emploi
 
 L'histoire finit bien, mais pas là où je l'attendais.
 
 Le robot conversationnel de ce site connaissait l'**index** de mes articles — un titre, une date, une description tronquée — sans jamais avoir accès à leur contenu. Le corpus fait presque un mégaoctet de texte : il n'entrera jamais dans une fenêtre de contexte. La réponse à ça, c'est une recherche sémantique, et une recherche sémantique a besoin d'un modèle d'embeddings.
 
-Ce modèle vit maintenant sur la troisième carte. Sauf qu'il ne tourne pas dans Kubernetes : il tourne dans le service de modèles de l'hôte, à côté du modèle de conversation, parce que c'est là que le Worker du site l'atteint déjà par un chemin authentifié qui existait. Ajouter un pod aurait voulu dire un nouveau nom d'hôte public, une nouvelle règle d'accès et une nouvelle politique de pare-feu — pour rendre exactement le même service.
+Premier réflexe : le mettre dans le service de modèles de l'hôte, à côté du modèle de conversation. C'était le chemin le plus court — le Worker du site atteint déjà ce service par un chemin authentifié qui existe. Ça marchait, et j'ai failli m'arrêter là.
 
-L'épingle sur deux cartes a donc sauté, et le modèle de conversation s'étale de nouveau sur les trois. Ce qui ne coûte rien : c'est mesuré.
+Sauf que ça laissait la question de départ sans réponse. Le cluster n'avait toujours rien sur GPU, et la troisième carte n'était réservée à rien du tout : le service de l'hôte s'étalait dessus comme sur les deux autres.
+
+Alors on a fait les deux moitiés proprement.
+
+**Le modèle d'embeddings est parti dans un pod**, sur la carte réservée. Pas de `hostNetwork` — l'hôte sert déjà son propre modèle sur le même port, et un pod en réseau d'hôte serait entré en collision avec lui. Un simple Service interne suffit : le build du site tourne sur un runner dans le cluster, et le Worker, lui, passe par le tunnel.
+
+**Et le tunnel route par chemin.** C'est le détail qui rend l'opération gratuite : `/api/embed` s'en va vers le Service du cluster, tout le reste continue vers le service de l'hôte. Même nom d'hôte public, même politique d'accès, même règle de pare-feu applicative. Un second nom d'hôte aurait voulu dire une seconde surface à garder — et garder, c'est la partie qu'on oublie.
+
+**Enfin, le service de l'hôte est épinglé sur deux cartes**, par UUID. La troisième appartient au cluster, et cette fois ce n'est pas une figure de style : il y a un pod dessus qui répond.
+
+Le choix a un coût, et il est mesurable : le modèle de conversation dispose de 24 gigaoctets au lieu de 36. Il en occupe 20, alors ça passe — mais c'est la ligne à relire le jour où on voudra un troisième modèle résident. Ce qu'on achète en échange, c'est qu'une charge GPU du cluster n'aura pas à négocier avec un modèle qui a déjà tout pris.
 
 ## Ce que j'en retiens
 
 **Un GPU dans un cluster est une capacité, pas une charge de travail.** J'ai fait l'achat, le déplacement physique et la configuration avant de me demander ce qui allait s'en servir — et la réponse honnête, ce soir-là, était « rien ». La question « qu'est-ce qui tourne déjà dessus » prend trente secondes à poser et aurait changé l'ordre de ma soirée.
+
+**Et une réservation sans consommateur est une promesse que personne ne peut vérifier.** Rien, sur cette machine, ne réserve de la mémoire vidéo : le service de l'hôte prend ce qu'il trouve. Écrire « cette carte est au cluster » dans un fichier de configuration ne devient vrai que le jour où quelque chose tourne dessus. C'est pour ça que le modèle d'embeddings a déménagé dans un pod plutôt que de rester là où il fonctionnait déjà.
 
 **Un banc d'essai qui ne reproduit pas la panne ne mesure rien**, même quand il affiche 10 sur 12. Trois tours de réglages ont été faits contre des sondes synthétiques propres qui n'ont jamais reproduit le problème une seule fois. La première mesure prise sur le vrai signal l'a expliqué immédiatement. Quand quelque chose marche à l'essai et casse en vrai, le premier geste n'est pas d'ajouter un réglage : c'est de capturer l'entrée réelle.
 

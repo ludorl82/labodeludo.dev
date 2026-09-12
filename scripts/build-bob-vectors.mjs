@@ -38,9 +38,19 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
+/**
+ * The embedding model runs in the cluster, on the GPU reserved for Kubernetes,
+ * reachable as a ClusterIP Service. The build resolves it because the site's
+ * workflows run on the in-cluster runner (`runs-on: [self-hosted, k3s]`).
+ *
+ * Running this from a laptop therefore needs `--host` and a route to it — a
+ * `kubectl port-forward -n embeddings svc/embeddings 11435:11434` and
+ * `--host http://127.0.0.1:11435` is the short path. Not the common case any
+ * more: the build does this on its own now.
+ */
 const HOST = process.argv.includes("--host")
   ? process.argv[process.argv.indexOf("--host") + 1]
-  : "http://bob.tptpt.in:11434";
+  : "http://embeddings.embeddings.svc.cluster.local:11434";
 const MODEL = "bge-m3";
 const OUT = "public/bob-vectors.json";
 /** Build mode: a failure here must not take the deploy down with it. */

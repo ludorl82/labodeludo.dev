@@ -8,18 +8,30 @@
  * chars/token this site measures, so it will never fit in a prompt. Retrieval
  * is the only way to put article *content* in front of the model.
  *
- * WHY A COMMITTED ARTIFACT, not a build step: embedding happens here and the
- * result is committed, so `npm run build` never touches the homelab. Generating
- * vectors during the build would make a public site's deploy fail whenever
- * `bob` is down for maintenance — a coupling nobody would choose deliberately,
- * and one that would be discovered at the worst moment. Run this when content
- * changes; the build just serves what is in public/.
+ * IT RUNS AS PART OF THE BUILD, and the artifact is committed as well. Both,
+ * on purpose:
+ *
+ *   - Running it in the build is what keeps the index honest. Left as a manual
+ *     step it went stale silently, and the symptom misleads — Bob keeps LINKING
+ *     a new article while being unable to say a word about its content, so he
+ *     looks like he knows it.
+ *   - The committed copy is the fallback. With `--soft` (how the build calls
+ *     it) an unreachable Ollama is a loud warning and the previous artifact
+ *     ships unchanged, rather than a failed deploy.
+ *
+ * An earlier version of this comment argued the opposite — that embedding in
+ * the build would couple a public deploy to the homelab. That was wrong on the
+ * facts: the workflows run on `runs-on: [self-hosted, k3s]`, so the build
+ * already happens INSIDE the lab and there is no runner at all when the cluster
+ * is down. The only new dependency is Ollama specifically, and `--soft` covers
+ * it.
  *
  * It is INCREMENTAL: chunks are keyed by a hash of their text, and unchanged
  * chunks keep their existing vector. Adding one article re-embeds that article
- * and nothing else.
+ * and nothing else. When nothing changed it does not rewrite the file at all,
+ * so a build never produces a spurious diff.
  *
- * Usage:  node scripts/build-bob-vectors.mjs [--host http://bob.tptpt.in:11434]
+ * Usage:  node scripts/build-bob-vectors.mjs [--soft] [--host http://…:11434]
  */
 import { createHash } from "node:crypto";
 import { readFile, readdir, writeFile } from "node:fs/promises";
@@ -31,6 +43,8 @@ const HOST = process.argv.includes("--host")
   : "http://bob.tptpt.in:11434";
 const MODEL = "bge-m3";
 const OUT = "public/bob-vectors.json";
+/** Build mode: a failure here must not take the deploy down with it. */
+const SOFT = process.argv.includes("--soft");
 
 /** Chunk size in characters. ~1200 keeps a whole argument together — a section
  *  with its example — while staying small enough that four of them fit in the
@@ -185,21 +199,42 @@ for (const col of COLLECTIONS) {
 
 console.log(`${chunks.length} tronçons, ${pending.length} à vectoriser`);
 const BATCH = 16;
-for (let i = 0; i < pending.length; i += BATCH) {
-  const slice = pending.slice(i, i + BATCH);
-  const vectors = await embed(slice.map((p) => p.embedded));
-  slice.forEach((p, j) => known.set(p.entry.h, quantise(vectors[j])));
-  process.stdout.write(`\r  ${Math.min(i + BATCH, pending.length)}/${pending.length}`);
+try {
+  for (let i = 0; i < pending.length; i += BATCH) {
+    const slice = pending.slice(i, i + BATCH);
+    const vectors = await embed(slice.map((p) => p.embedded));
+    slice.forEach((p, j) => known.set(p.entry.h, quantise(vectors[j])));
+    process.stdout.write(`\r  ${Math.min(i + BATCH, pending.length)}/${pending.length}`);
+  }
+  if (pending.length) process.stdout.write("\n");
+} catch (e) {
+  // Nothing is written on a partial run: chunks that never got a vector would
+  // serialise as undefined and the artifact would be quietly corrupt. The
+  // committed copy is complete and stale, which is strictly better than
+  // published and broken.
+  if (!SOFT) throw e;
+  console.warn(`\n!! bob-vectors : impossible de vectoriser (${e.message}).`);
+  console.warn(`!! L'INDEX SÉMANTIQUE RESTE CELUI DU DÉPÔT — Bob pourra lier les`);
+  console.warn(`!! nouveaux articles sans pouvoir en parler. Relancer \`npm run embed\``);
+  console.warn(`!! une fois Ollama joignable, puis commiter ${OUT}.`);
+  process.exit(0);
 }
-if (pending.length) process.stdout.write("\n");
 
 const dim = Buffer.from(known.values().next().value, "base64").length;
-const artifact = {
-  model: MODEL,
-  dim,
-  generated: new Date().toISOString(),
-  chunks: chunks.map((c) => ({ ...c, v: known.get(c.h) })),
-};
-await writeFile(OUT, JSON.stringify(artifact));
-const bytes = Buffer.byteLength(JSON.stringify(artifact));
-console.log(`écrit ${OUT} — ${chunks.length} tronçons, ${dim} dimensions, ${(bytes / 1e6).toFixed(2)} Mo`);
+const nouveaux = chunks.map((c) => ({ ...c, v: known.get(c.h) }));
+
+// Nothing changed? Leave the file alone. Rewriting it would only bump
+// `generated`, and a 2.4 MB diff that means nothing is a diff people stop
+// reading.
+const identique =
+  previous.model === MODEL &&
+  previous.chunks.length === nouveaux.length &&
+  previous.chunks.every((c, i) => c.h === nouveaux[i].h && c.v === nouveaux[i].v);
+if (identique) {
+  console.log(`${OUT} déjà à jour — ${chunks.length} tronçons, rien à écrire`);
+} else {
+  const artifact = { model: MODEL, dim, generated: new Date().toISOString(), chunks: nouveaux };
+  const json = JSON.stringify(artifact);
+  await writeFile(OUT, json);
+  console.log(`écrit ${OUT} — ${chunks.length} tronçons, ${dim} dimensions, ${(Buffer.byteLength(json) / 1e6).toFixed(2)} Mo`);
+}

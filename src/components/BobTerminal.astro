@@ -453,7 +453,13 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
   // words: the opening quip stays French because Bob's English one-liners
   // would have to be written, not translated, and that is Ludo's voice work.
   const english = /^en\b/i.test(navigator.languages?.[0] || navigator.language || "");
+  const LANG: "fr" | "en" = english ? "en" : "fr";
   const VISITOR = english ? "you" : "toi";
+  // Bob's own words when something goes wrong. They are still Bob talking, so
+  // they stay in his register rather than becoming neutral error strings.
+  const OOPS = english
+    ? { empty: "No answer. Strange.", cut: "The line, she is cut. Try again in a bit." }
+    : { empty: "Pas de réponse. Bizarre.", cut: "Le fil est coupé. Réessaie tantôt." };
   if (english) {
     const setText = (sel: string, text: string) => {
       const el = document.querySelector(sel);
@@ -611,7 +617,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
      */
     function reveal(p: HTMLParagraphElement, text: string, links: any[]) {
       if (reduceMotion) {
-        renderReply(p, text, links);
+        renderReply(p, text, links, LANG);
         return;
       }
       const step = Math.max(4, Math.min(12, 2500 / Math.max(text.length, 1)));
@@ -620,7 +626,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         i += 1;
         p.textContent = text.slice(0, i);
         if (i < text.length) setTimeout(tick, step);
-        else renderReply(p, text, links);
+        else renderReply(p, text, links, LANG);
       };
       tick();
     }
@@ -635,7 +641,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 
       addTurn("toi", "").textContent = question;
       const answer = addTurn("bob", "");
-      const stopThinking = startThinking(answer);
+      const stopThinking = startThinking(answer, LANG);
 
       history.push({ role: "user", content: question });
       history = history.slice(-MAX_TURNS);
@@ -649,7 +655,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
           body: JSON.stringify({ messages: toMessages(history) }),
         });
         const data = await res.json();
-        const reply = data.reply ?? "Pas de réponse. Bizarre.";
+        const reply = data.reply ?? OOPS.empty;
         // The Worker says which tier answered. When it is the local model on
         // `bob`, Bob says so himself — the local answers are visibly weaker, so
         // a silent downgrade would just read as Bob getting worse.
@@ -669,7 +675,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         saveConversation(history);
       } catch {
         stopThinking();
-        answer.textContent = "Le fil est coupé. Réessaie tantôt.";
+        answer.textContent = OOPS.cut;
       } finally {
         // Belt and braces: a spinner left running after an early return would
         // sit there forever, and the interval keeps a closure alive with it.
@@ -704,7 +710,7 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
         // Each reply gets ITS OWN links. Replaying only the last one's is the
         // bug this shape was changed to fix: on a refresh every earlier answer
         // came back as bare prose.
-        renderReply(answer, m.content, m.links || []);
+        renderReply(answer, m.content, m.links || [], LANG);
       });
       history = history.concat(turns).slice(-MAX_TURNS);
       input?.focus();

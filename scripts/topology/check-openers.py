@@ -20,7 +20,12 @@ Four rules, in the order they matter:
 3. **Vocabulary.** A blocklist of the obvious, because "obscene" has no
    mechanical definition and pretending otherwise would be worse than saying
    what this actually checks.
-4. **Volume.** At most four. The panel has room for four.
+4. **Volume.** At most four PER LANGUAGE, eight in all. The panel shows one
+   language at a time — a visitor sees the four buttons that match their
+   browser — so a night that picked eight English questions would leave every
+   French visitor with the hand-written fallbacks. The split is checked here
+   rather than trusted: the session is asked for a balance, and this is what
+   makes the ask real.
 
 What this cannot do is judge intent. A perfectly clean sentence can still be
 someone using the suggestion slot as a billboard. That is why the session that
@@ -32,8 +37,30 @@ import json
 import re
 import sys
 
-MAX_OPENERS = 4
+MAX_OPENERS = 8
+MAX_PER_LANG = 4
 MIN_LEN, MAX_LEN = 12, 70
+
+# The same two word lists as the Worker and as BobTerminal.astro: function
+# words, majority wins, French on a tie because French is the house. Coarse on
+# purpose — a question is short — and used here only to check the BALANCE, not
+# to decide anything a visitor reads. The panel sorts them again at build time
+# with the same rule, so what this counts is what will be shown.
+FR_WORDS = re.compile(
+    r"\b(le|la|les|un|une|des|du|est|pas|que|qui|pour|dans|avec|c'est|ça|mais|tu|je|sur"
+    r"|au|aux|ce|son|sa|et|moi|toi|tes|mes|ses|ne|comment|pourquoi|quoi|sans|chez|vers"
+    r"|entre|depuis|maintenant|ton|ta|quel|quels|quelle)\b",
+    re.IGNORECASE,
+)
+EN_WORDS = re.compile(
+    r"\b(the|and|you|is|are|that|this|with|for|it|he|she|got|there|was|but|of|to|my"
+    r"|your|not|what|do|did|how|why|where|which)\b",
+    re.IGNORECASE,
+)
+
+
+def looks_english(q):
+    return len(EN_WORDS.findall(q)) > len(FR_WORDS.findall(q))
 
 # Deliberately short and blunt. This is a coarse net for the unmistakable; the
 # session's judgment and the commit review are what catch everything subtler.
@@ -63,7 +90,13 @@ def main():
     if not isinstance(openers, list):
         fail("openers must be a list")
     if len(openers) > MAX_OPENERS:
-        fail(f"{len(openers)} openers, at most {MAX_OPENERS} fit the panel")
+        fail(f"{len(openers)} openers, at most {MAX_OPENERS} (four per language)")
+    for lang, n in (
+        ("english", sum(1 for q in openers if isinstance(q, str) and looks_english(q))),
+        ("french", sum(1 for q in openers if isinstance(q, str) and not looks_english(q))),
+    ):
+        if n > MAX_PER_LANG:
+            fail(f"{n} {lang} questions, at most {MAX_PER_LANG} — the panel shows one language at a time")
     if len(set(openers)) != len(openers):
         fail("the same question twice")
 
@@ -85,7 +118,11 @@ def main():
         if MARKUP.search(q):
             fail(f"{q!r} contains markup characters")
 
-    print(f"check-openers: ok ({len(openers)} question(s), all verbatim from {len(allowed)} candidates)")
+    en = sum(1 for q in openers if looks_english(q))
+    print(
+        f"check-openers: ok ({len(openers)} question(s) — {en} en, {len(openers) - en} fr — "
+        f"all verbatim from {len(allowed)} candidates)"
+    )
 
 
 if __name__ == "__main__":

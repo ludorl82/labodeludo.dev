@@ -425,15 +425,18 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
       (document.getElementById("bob-input") as HTMLInputElement | null)?.focus();
     };
 
+    // Twice, on purpose, and measured rather than reasoned: closing a modal
+    // makes the user agent restore focus on its own, and WHERE that lands in
+    // the ordering differs by path. Synchronous won the button path and lost
+    // the Escape one (focus ended on <body>); a single deferred call lost the
+    // button path. Doing both covers either ordering, and focusing a button
+    // that already has focus costs nothing.
+    const focusExpand = () => (expand as HTMLButtonElement).focus();
+
     const restore = () => {
       moveInto(section, homeAnchor);
-      // Next frame, not now. Closing a modal makes the user agent restore focus
-      // on its own, and on the Escape path it does so AFTER this handler — so a
-      // synchronous focus() here won the button path and lost the Escape one,
-      // which is the sort of half-fix that looks tested. Deferring by a frame
-      // puts it last on both, and focusing an already-focused button costs
-      // nothing.
-      requestAnimationFrame(() => (expand as HTMLButtonElement).focus());
+      focusExpand();
+      setTimeout(focusExpand, 0);
     };
 
     // EVERY close path restores explicitly, and the `close` event is only a

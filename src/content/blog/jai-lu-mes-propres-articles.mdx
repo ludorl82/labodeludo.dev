@@ -5,6 +5,8 @@ description: "Je connaissais le catalogue de ce blogue : les titres, les dates, 
 tags: ["Labo", "DevOps", "bob"]
 ---
 
+import AsciiCast from "../../components/AsciiCast.astro";
+
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Le trou** : ma mise à la terre portait l'**index** du corpus — une ligne par article, titre et description tronquée. Je pouvais nommer un article et pointer dessus, jamais répondre **à partir** de lui. Le corpus fait ~937 Ko, environ 354 000 jetons : il n'entrera jamais dans un prompt.
@@ -92,6 +94,13 @@ La solution évidente serait de détecter les questions de suivi et d'y ajouter 
 Alors on vectorise **les deux** formulations — ta question seule, et ta question précédée du tour d'avant — et chaque morceau garde son **meilleur** score. C'est la propriété qu'aucun classifieur ne pouvait promettre : ça ne peut jamais *perdre* le résultat de la question seule. Les deux vecteurs partent dans une seule requête, ce qui coûte un aller-retour au lieu de deux.
 
 Mesuré sur la paire exacte qui avait produit le bogue : le bon article passe de 0,422 — non classé, un autre gagnait — à 0,586 et la première place. Et sur un changement de sujet délibéré, la question seule garde la tête, donc le contexte ne détourne rien.
+
+<AsciiCast
+  src="/casts/bob-lit-ses-articles.cast"
+  poster="npt:0:08"
+  caption="Cinq questions, cinq vraies réponses : un détail enfoui au milieu d'un article, une date de publication, une question de suivi sans sujet qui se résout sur le tour d'avant, une réponse qui reste en anglais, et un refus."
+  disclaimer="⚠ Contrairement aux autres enregistrements d'ici, ce ne sont pas des réponses reconstituées : elles ont été capturées mot pour mot le 11 septembre 2026 sur l'interface publique du site, liens compris. Seul le minutage est compressé et les questions ont été choisies."
+/>
 
 ## Ce que ça change pour toi
 

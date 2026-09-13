@@ -94,6 +94,11 @@ def main():
     openers = json.load(open(sys.argv[1], encoding="utf-8")).get("openers", [])
     candidates = json.load(open(sys.argv[2], encoding="utf-8")).get("candidates", [])
     allowed = {c["text"] for c in candidates if isinstance(c, dict) and "text" in c}
+    # Case aside: the hosted model capitalises a first letter and changes
+    # nothing else, and the driver publishes the candidate's OWN spelling
+    # (it maps each opener back to the verbatim candidate before this gate
+    # runs for real). Anything beyond case is still "written", still refused.
+    allowed_fold = {a.casefold(): a for a in allowed}
 
     if not isinstance(openers, list):
         fail("openers must be a list")
@@ -129,7 +134,7 @@ def main():
     for q in openers:
         if not isinstance(q, str):
             fail(f"not a string: {q!r}")
-        if q not in allowed:
+        if q not in allowed and q.casefold() not in allowed_fold:
             fail(f"{q!r} is not verbatim in the candidates — selected, not written, is the rule")
         if not (MIN_LEN <= len(q) <= MAX_LEN):
             fail(f"{q!r} is {len(q)} chars, outside {MIN_LEN}–{MAX_LEN}")
@@ -161,7 +166,9 @@ def main():
     for q in openers:
         cw = content_words(q)
         for prev, pcw in seen:
-            if len(cw & pcw) >= 2:
+            # the panel shows one language at a time, so the French and the
+            # English question on Frigate's GPU are two buttons, not one
+            if looks_english(prev) == looks_english(q) and len(cw & pcw) >= 2:
                 fail(f"{q!r} and {prev!r} are the same question twice (share {sorted(cw & pcw)})")
         seen.append((q, cw))
 

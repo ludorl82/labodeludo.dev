@@ -36,14 +36,9 @@ not rewrite the file when nothing changed, so a build never produces a spurious
 Run `npm run embed` (no `--soft`) by hand when you want it to FAIL on a broken
 embedding service, and commit the result so the fallback copy stays current.
 
-The model runs in the cluster (`embeddings` namespace, on the GPU reserved for
-Kubernetes), so the build reaches it by Service name — it runs on the in-cluster
-runner. From a laptop, forward the port first:
-
-```
-kubectl port-forward -n embeddings svc/embeddings 11435:11434
-npm run embed -- --host http://127.0.0.1:11435
-```
+The model (`bge-m3`) is served by the GPU host's Ollama on the LAN; the build
+reaches it by hostname from the in-cluster runner. From elsewhere, `--host`
+points it at any reachable Ollama that has the model.
 
 ## Documentation
 

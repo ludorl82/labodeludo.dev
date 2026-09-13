@@ -9,10 +9,13 @@ article: "cinq-mensonges-plantes-dans-un-dessin"
 disclaimer: "⚠ Reconstitution condensée, pas une capture en direct. Les lignes de journal, les verdicts, la preuve citée et le diff final sont ceux de la vraie exécution du 13 septembre 2026 (qwen3.5-35b-a3b et Opus 5, cas L1, premier tirage). Le minutage est compressé et douze des treize cas sont coupés."
 ---
 
-Le banc complet fait cinq mensonges, trois tirages chacun, et neuf modèles.
-Cet enregistrement n'en montre qu'un, parce que c'est le seul qui compte
-vraiment : la phrase sur WireGuard est la seule des cinq qui a réellement été
-publiée fausse un jour, et corrigée par une session de nuit.
+Le banc complet fait cinq mensonges, trois tirages chacun, neuf modèles, et
+deux harnais : le harnais fixe montré ici, puis les mêmes modèles laissés
+libres dans Qwen Code — où qwen3.8-max a corrigé cinq mensonges sur cinq et
+a fini par remplacer Opus dans le pipeline. Cet enregistrement n'en montre
+qu'un, parce que c'est le seul qui compte vraiment : la phrase sur WireGuard
+est la seule des cinq qui a réellement été publiée fausse un jour, et corrigée
+par une session de nuit.
 
 La deuxième scène est la partie instructive. Le harnais a déjà tout fait :
 extrait les 90 affirmations de la page telle qu'elle est rendue, joint les

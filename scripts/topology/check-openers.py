@@ -39,6 +39,9 @@ import sys
 
 MAX_OPENERS = 8
 MAX_PER_LANG = 4
+# floor per language, applied only when the candidates make it possible
+MIN_PER_LANG = 2
+MIN_TO_EXPECT = 3
 MIN_LEN, MAX_LEN = 12, 70
 
 # The same two word lists as the Worker and as BobTerminal.astro: function
@@ -99,6 +102,24 @@ def main():
             fail(f"{n} {lang} questions, at most {MAX_PER_LANG} — the panel shows one language at a time")
     if len(set(openers)) != len(openers):
         fail("the same question twice")
+
+    # Balance is a REQUIREMENT when the candidates allow it, not a wish in the
+    # prompt: on 2026-09-13 the model returned four English questions and no
+    # French one while 24 French candidates sat in the list — the panel showed
+    # its hand-written fallbacks to every French visitor while real questions
+    # went unused. A language with at least MIN_TO_EXPECT eligible candidates
+    # must get at least MIN_PER_LANG openers.
+    def eligible(q):
+        return (MIN_LEN <= len(q) <= MAX_LEN and q.rstrip().endswith("?")
+                and not BLOCKED.search(q) and not ADDRESSY.search(q) and not MARKUP.search(q))
+    pool_en = sum(1 for q in allowed if eligible(q) and looks_english(q))
+    pool_fr = sum(1 for q in allowed if eligible(q) and not looks_english(q))
+    got_en = sum(1 for q in openers if isinstance(q, str) and looks_english(q))
+    got_fr = len([q for q in openers if isinstance(q, str)]) - got_en
+    for lang, pool, got in (("french", pool_fr, got_fr), ("english", pool_en, got_en)):
+        if pool >= MIN_TO_EXPECT and got < MIN_PER_LANG:
+            fail(f"only {got} {lang} question(s) while {pool} eligible {lang} candidates exist — "
+                 f"pick at least {MIN_PER_LANG} in {lang}")
 
     for q in openers:
         if not isinstance(q, str):

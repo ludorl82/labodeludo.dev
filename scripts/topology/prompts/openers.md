@@ -19,7 +19,7 @@ une question suggérée doit être une vraie question, pas une amélioration.
 { "openers": ["…", "…"] }
 ```
 
-**Jusqu'à quatre en français et quatre en anglais, dans la même liste.** Tu ne
+**Jusqu'à quatre en français et quatre en anglais, dans la même liste — et au moins deux dans chaque langue qui a des candidates éligibles.** La garde le vérifie : une liste sans question française alors qu'il y en avait de bonnes dans les candidates est refusée. Ce site est d'abord francophone ; les questions françaises ne sont pas un bonus. Tu ne
 les sépares pas toi-même : le site les trie tout seul et n'en montre qu'une
 langue à la fois, celle du fureteur du visiteur. Ton travail, c'est que les
 deux langues aient de quoi remplir leurs quatre boutons.

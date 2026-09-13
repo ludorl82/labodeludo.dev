@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : un robot dessinateur assis sur une chaise d'interrogatoire sous une lampe, relié à un polygraphe dont l'aiguille trace une ligne plate ; sur la table, une pile de neuf badges d'identité différents et une feuille tamponnée « non factuel »">
+  <defs>
+    <linearGradient id="bgmenteries" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f1319"/>
+      <stop offset="100%" stop-color="#232b38"/>
+    </linearGradient>
+    <radialGradient id="lampe" cx="0.5" cy="0" r="0.8">
+      <stop offset="0%" stop-color="#fff1c2" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#fff1c2" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="320" fill="url(#bgmenteries)"/>
+  <!-- the lamp -->
+  <line x1="300" y1="0" x2="300" y2="34" stroke="#555" stroke-width="3"/>
+  <path d="M270,34 L330,34 L345,58 L255,58 Z" fill="#3b3b3b"/>
+  <path d="M255,58 L345,58 L470,320 L130,320 Z" fill="url(#lampe)"/>
+
+  <!-- the robot on the chair -->
+  <g transform="translate(240,100)">
+    <rect x="20" y="130" width="90" height="12" fill="#6b4f2e"/>
+    <rect x="24" y="142" width="8" height="70" fill="#6b4f2e"/><rect x="98" y="142" width="8" height="70" fill="#6b4f2e"/>
+    <rect x="94" y="60" width="12" height="80" fill="#6b4f2e"/>
+    <rect x="34" y="20" width="56" height="48" rx="8" fill="#b9c3d1" stroke="#7d8898" stroke-width="3"/>
+    <circle cx="52" cy="40" r="6" fill="#2d7dd2"/><circle cx="72" cy="40" r="6" fill="#2d7dd2"/>
+    <rect x="48" y="52" width="28" height="4" rx="2" fill="#5a6470"/>
+    <line x1="62" y1="20" x2="62" y2="6" stroke="#7d8898" stroke-width="3"/><circle cx="62" cy="4" r="4" fill="#e8c46a"/>
+    <rect x="30" y="70" width="64" height="62" rx="6" fill="#98a4b5" stroke="#7d8898" stroke-width="3"/>
+    <!-- wires to the polygraph -->
+    <path d="M94,90 C160,90 180,120 230,120" fill="none" stroke="#d0a04a" stroke-width="3"/>
+    <path d="M94,110 C160,110 180,140 230,140" fill="none" stroke="#d0a04a" stroke-width="3"/>
+  </g>
+
+  <!-- the polygraph -->
+  <g transform="translate(470,150)">
+    <rect x="0" y="0" width="300" height="110" rx="8" fill="#1e2631" stroke="#4a5769" stroke-width="3"/>
+    <rect x="16" y="16" width="268" height="60" rx="3" fill="#f4f1e8"/>
+    <polyline points="20,46 60,46 80,44 120,46 160,46 200,45 240,46 280,46" fill="none" stroke="#b5342b" stroke-width="2.5"/>
+    <text x="150" y="98" text-anchor="middle" font-size="13" fill="#c8d3e3" font-family="monospace">vrai · vrai · vrai · vrai · vrai</text>
+  </g>
+
+  <!-- the badges and the stamp -->
+  <g transform="translate(800,40)">
+    <g stroke="#7d8898" stroke-width="2">
+      <rect x="0" y="0" width="120" height="70" rx="6" fill="#dfe5ee"/>
+      <rect x="10" y="12" width="120" height="70" rx="6" fill="#d3dae5"/>
+      <rect x="20" y="24" width="120" height="70" rx="6" fill="#c7cfdc"/>
+      <rect x="30" y="36" width="120" height="70" rx="6" fill="#bbc4d3"/>
+    </g>
+    <text x="90" y="80" text-anchor="middle" font-size="12" fill="#2d3748" font-family="monospace">qwen3.5-35b</text>
+    <text x="90" y="96" text-anchor="middle" font-size="10" fill="#5a6470">× 9 identités</text>
+    <g transform="translate(-10,175) rotate(-12)">
+      <rect x="0" y="0" width="200" height="54" rx="6" fill="none" stroke="#b5342b" stroke-width="4"/>
+      <text x="100" y="36" text-anchor="middle" font-size="22" fill="#b5342b" font-weight="bold" letter-spacing="2">NON FACTUEL</text>
+    </g>
+  </g>
+</svg>

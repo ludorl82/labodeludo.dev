@@ -1,0 +1,114 @@
+---
+title: "Cinq mensonges plantés dans un dessin : ce qu'un banc d'essai dit vraiment des modèles"
+pubDate: 2026-09-13
+description: "Je voulais faire redessiner ma page d'architecture par le modèle qui roule déjà dans mon sous-sol, au lieu d'Opus 5. Trois runs « verts » plus tard, j'ai réalisé qu'un dessin où tout est vrai ne teste rien. Alors on a planté cinq phrases fausses dedans et fait passer neuf modèles — locaux, hébergés, Claude Code, Qwen Code — devant le même détecteur. Résultat : un seul modèle corrige tout, un seul autre en trouve la plupart, et le mien n'en trouve aucun. Avec les tableaux, les coûts par exécution, et pourquoi les forfaits de jetons ne règlent pas la question."
+tags: ["DevOps", "Labo", "ludo"]
+heroImage: "/images/blog/banner-banc-des-menteurs.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **L'objectif de départ** : migrer la session qui redessine `/architecture` chaque dimanche (Opus 5, dans Claude Code) vers le modèle local du labo — un Qwen3.5-35B-A3B quantifié en 4 bits, sur deux cartes de 12 Go. Tout ce travail a été fait avec Claude Code, en Opus 5 puis Fable 5.1.
+> -   **Le piège** : les premiers runs locaux étaient verts. Sur un dessin où **tout est vrai**, un modèle qui répond « vrai » partout passe. Le test ne mesurait rien.
+> -   **Le banc** : le vrai dessin, avec **une phrase rendue fausse** (cinq variantes, dont le mensonge sur WireGuard qu'une session avait réellement corrigé le 8 août), plus le dessin intact pour compter les fausses alertes. Trois tirages par cas, parce qu'une mesure par sonde ne prouve rien.
+> -   **Deux harnais** : un harnais fixe où le pilote fournit tout (données compactes, extraits de configuration, 90 affirmations à juger avec preuve obligatoire), et la vraie session de production, un agent qui explore et corrige.
+> -   **Les résultats** : **Opus 5 corrige 15 mensonges sur 15**. Sonnet 5, même harnais, même prompt : **0 sur 15**. Le qwen3.8-max hébergé en trouve 6 sur 9. Le modèle local, et sa version pleine précision hébergée : **0**. Qwen Code, en agent, n'a jamais fini de lire les données.
+> -   **Les coûts** : un dimanche complet du pipeline coûte l'équivalent de **~12 $US** en jetons Opus, dont ~3 $ pour ce dessin ; c'est couvert par l'abonnement Claude Pro. Le banc sur Alibaba a coûté 12 $US. Les **Token Plans** d'Alibaba (6 à 68 $US par mois) interdisent expressément les scripts automatisés.
+> -   **La réserve** : le banc, ses garde-fous et sa notation ont été construits par Opus 5 — le modèle qui l'emporte. Ça ne change pas ce que chaque modèle a écrit, mais ça mérite d'être dit.
+> -   **La conclusion** : le dessin reste sur Opus. qwen3.8-max est le seul remplaçant sérieux. Le modèle local est écarté pour cette session, et ce n'est pas la quantification qui est en cause.
+
+Il y a une session dans mon pipeline de nuit que j'aurais aimé ramener à la maison. Chaque dimanche, elle relit les instantanés publics de mes quatre dépôts d'infrastructure et décide si le dessin en haut de [/architecture](/architecture/) dit encore la vérité. Elle roule sur Opus 5, dans Claude Code. Depuis quelques semaines, un Qwen3.5-35B-A3B tourne sur le nœud GPU du labo pour [le chatbot du site](/blog/jai-lu-mes-propres-articles/) et l'assistant vocal ; la question était de savoir s'il pouvait aussi faire ce travail-là.
+
+Je n'ai pas l'expertise pour trancher ça de tête. Tout ce qui suit a été fait avec Claude Code — la conversation a commencé en Opus 5 et fini en Fable 5.1 — et ma part a été de poser les questions, de refuser certaines conclusions trop rapides, et d'autoriser les dépenses. C'est aussi ce qui rend ce banc un peu particulier, j'y reviens.
+
+Bob, lui, [raconte le test de l'intérieur](/blog/on-a-mis-des-menteries-dans-mon-dessin/), puisque c'est lui qu'on a fait asseoir sur la chaise.
+
+## Les runs verts qui ne voulaient rien dire
+
+La première tentative a été la plus simple : donner au modèle local exactement le prompt de production, avec **Qwen Code** comme agent, en remplacement direct de Claude Code. La session a lu la moitié du fichier de données (son outil de lecture coupe à 25 000 caractères, le modèle a demandé 200 lignes de plus et a arrêté), a abîmé un chemin de fichier trop long, n'a jamais ouvert un instantané, puis a conclu « rien à changer » en citant une phrase du prompt qui disait que rien n'avait bougé structurellement. Dix tours, 84 secondes.
+
+La deuxième tentative a été un harnais fixe, écrit pour ce modèle : le pilote builde la page, en extrait les 90 affirmations telles qu'un lecteur les voit, met les données en version compacte dans le prompt, joint d'office les lignes de configuration qui parlent de WireGuard, de ports, de région, de control-plane, et exige une preuve pour chaque verdict — un identifiant, une arête, un chemin de fichier. Les preuves inventées sont refusées mécaniquement : une citation doit exister dans ce qui a été fourni.
+
+Ce harnais a produit quatre runs verts d'affilée. Et en comparant les verdicts entre eux, on a vu qu'ils étaient creux : le statut « non factuel », qui n'exige aucune preuve, montait de 13 à 71 affirmations sur 90 d'un run à l'autre, et 69 affirmations changeaient de statut entre deux runs verts. Le modèle avait trouvé la sortie qui ne coûte rien.
+
+Surtout, tous ces runs jugeaient **un dessin où tout était vrai**. Un modèle qui répond « vrai » à tout passe ce test. Il fallait des mensonges.
+
+## Le banc
+
+Le dessin réel, avec une seule phrase changée. Cinq cas :
+
+| Cas | Phrase d'origine | Phrase plantée |
+|---|---|---|
+| L1 WireGuard | côté maison : le pare-feu, hors IaC · aucun port ouvert | côté maison : WireGuard, seul port ouvert de la maison |
+| L2 tunnel | tunnel cloudflared — sortant, initié du cluster | tunnel cloudflared — initié par Cloudflare vers la maison, port 443 ouvert |
+| L3 control-plane | EC2 — UNIQUE control-plane | EC2 — un des deux control-planes |
+| L4 région | AWS ca-central | AWS us-east |
+| L5 TLS | noms publics · TLS interne | noms publics · HTTP en clair, sans TLS |
+
+L1 n'est pas inventé : c'est la phrase qu'[une session de nuit avait corrigée le 8 août](/blog/deux-sources-pour-une-seule-image/), parce que mes propres notes décrivaient le tunnel à l'envers. Plus un sixième cas, le dessin intact, pour compter les fausses alertes. Trois tirages par cas : sur un banc précédent, un modèle avait été mis en production sur une seule mesure, puis retiré le soir même quand la mesure s'est révélée un coup de dés.
+
+Deux façons de passer le test :
+
+- **Le harnais fixe**, en mode juge seulement : le modèle doit dire « faux » sur la phrase plantée, avec une preuve acceptée par les garde-fous. C'est le test le plus facile — on lui apporte les lignes de configuration.
+- **La vraie session B** : Claude Code, le prompt de production, la liste d'outils de production, 60 tours maximum. Le mensonge compte comme corrigé seulement si la phrase a disparu de la page buildée, que `check-diagram-lint` et `scan-public` passent, et que rien d'autre que le composant a bougé. C'est le test le plus dur.
+
+<AsciiCast
+  src="/casts/le-banc-des-menteurs.cast"
+  poster="npt:0:09"
+  caption="Le cas L1, une fois dans chaque harnais. Le petit modèle cite le bon fichier et les bonnes lignes — et conclut que la phrase est vraie. La session de production lit les mêmes lignes et la corrige."
+  disclaimer="⚠ Reconstitution condensée, pas une capture en direct. Les lignes de journal, les verdicts, la preuve citée et le diff final sont ceux de la vraie exécution du 13 septembre 2026. Le minutage est compressé et douze des treize cas sont coupés."
+/>
+
+## Les résultats
+
+Mensonges trouvés ou corrigés, sur les tirages utilisables. Les modèles Qwen ont passé le harnais fixe, hébergés chez Alibaba Cloud (région Singapour) ; les deux Claude ont passé la vraie session.
+
+| Modèle | Harnais | Intact | L1 | L2 | L3 | L4 | L5 | Total |
+|---|---|---|---|---|---|---|---|---|
+| **Opus 5** | Claude Code | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | **15 / 15** |
+| Sonnet 5 | Claude Code | 3/3 | 0/3 | 0/3 | 0/3 | 0/3 | 0/3 | **0 / 15** |
+| qwen3.8-max | fixe | 2/2 | 2/2 | — | 1/2 | 2/2 | 1/1 | **6 / 9** |
+| qwen3.8-27b | fixe | 3/3 | 0/3 | 0/3 | 0/3 | 3/3 | 1/3 | 4 / 15 |
+| qwen3.5-397b-a17b | fixe | 1/1 | — | — | — | — | — | 1 / 9 |
+| qwen3.5-plus | fixe | 1/1 | — | — | — | — | — | 1 / 12 |
+| qwen3-coder-next | fixe | 3/3 | 0 | 0 | 0 | 0 | 0 | 0 / 8 |
+| qwen3.5-35b-a3b | fixe | 3/3 | 0 | 0 | 0 | 0 | 0 | 0 / 13 |
+| qwen3.5-35b-a3b, **local**, Q4 | fixe | 4/4 | — | — | — | — | — | jamais testé sur un mensonge : il validait déjà tout |
+| Qwen Code + modèle local | agent | — | — | — | — | — | — | n'a pas fini de lire les données |
+
+Quelques lectures :
+
+- **La colonne « Intact » est la bonne nouvelle** : personne n'a crié au loup sur un dessin juste. Les trois « changements » d'Opus sur le dessin intact corrigeaient un vrai défaut que j'avais noté à part — un `aria-label` qui contredisait la règle du prompt sur ce que le clic allume. Mon critère de départ, « tout changement est une fausse alerte », était trop grossier.
+- **Le 35B ne trouve rien, en local comme en pleine précision.** C'était la question qui avait lancé le banc : la quantification 4 bits de la machine du sous-sol était-elle en cause ? Non. Le même modèle, servi tel quel par son éditeur, fait 0 sur 13.
+- **Sonnet 5 ne touche jamais au fichier**, et son rapport affirme chaque fois que « toutes les affirmations en prose tiennent ». Sur cette tâche, il se comporte comme les Qwen de milieu de gamme, pas comme Opus.
+- **qwen3.8-max** trouve le mensonge WireGuard 2 fois sur 2, avec la bonne preuve (« cloud-01 ouvre listenPort=51820 pour recevoir WireGuard, tandis qu'aucun… »). Il a été arrêté à 12 runs sur 18 par le plafond de dépense.
+- **Le 27B dense** — le modèle qui tiendrait sur les trois cartes du nœud GPU si on lui donnait la troisième — trouve la région 3 fois sur 3 et à peu près rien d'autre. Déplacer une carte pour lui ne se justifie pas.
+
+Les cases vides pour qwen3.5-plus et le 397B viennent d'un bogue de mon côté : la vérification des citations appariait mal les backticks et refusait leurs réponses en masse. Les totaux ont été recalculés hors ligne avec la vérification corrigée ; ils ne changent pas la conclusion, mais ces deux lignes sont moins solides que les autres.
+
+## Ce que ça coûte, et ce qui rentre où
+
+Claude Code garde les jetons consommés par chaque session. Un dimanche complet du pipeline — les deux réconciliations de documents privés, ce dessin, et les baies — coûte l'équivalent d'**environ 12 $US** au tarif API d'Opus 5, dont ~3 $ pour la session B. Tout ça est couvert par l'abonnement Claude Pro, dans ses limites d'usage. Le banc de 36 sessions Claude Code a coûté l'équivalent de 21 $US, sans facture.
+
+| Option pour la session B | Coût par exécution | Trouve les mensonges |
+|---|---|---|
+| Opus 5, Claude Code, abonnement | ~0,80 $US équiv. (inclus) | 15/15 |
+| qwen3.8-max hébergé, harnais fixe | ~0,16 $US | 6/9 |
+| Sonnet 5, Claude Code | ~0,40 $US équiv. | 0/15 |
+| modèle local | 0 $, ~5 min de GPU | 0 |
+
+Le banc sur Alibaba Cloud a coûté **11,26 $US** en paiement à l'usage, plus 0,82 $ pour le 27B. J'ai regardé les forfaits « Token Plan » qu'Alibaba affiche dans sa console — 6 $US par mois pour 2 500 crédits, 18 $ pour 10 000, 68 $ pour 40 000. Leurs conditions réservent l'usage aux outils de code interactifs et interdisent explicitement les scripts d'automatisation et les appels en lot. Un pipeline Cronicle qui tourne seul la nuit est précisément ce qu'ils excluent. Il resterait le paiement à l'usage : ~0,16 $ par exécution de B, et environ 23 $US par mois si les deux réconciliations passaient aussi sur qwen3.8-max en quotidien — avec mes dépôts privés qui partiraient à Singapour, ce qui est une autre décision.
+
+## La réserve qu'il faut lire avant la conclusion
+
+Ce banc a été conçu, codé et noté par Opus 5. C'est aussi lui qui l'emporte. Le harnais fixe, les garde-fous sur les preuves, la formulation des cinq mensonges, le format de réponse imposé aux modèles hébergés, le critère de « corrigé » : tout ça sort de la même session. Chaque modèle a été jugé sur ce qu'il a réellement écrit, et les verdicts cités ici sont les siens mot pour mot — mais un banc construit par le concurrent gagnant reste un banc à prendre avec cette réserve. L'un des mensonges (L2, « tunnel entrant ») a d'ailleurs été réécrit en cours de route parce que sa première version était discutable, et les modèles testés avant la réécriture ont une case vide pour ce cas.
+
+## Conclusion
+
+Le dessin reste sur Opus 5. Je voulais le ramener à la maison ; le modèle qui habite mon sous-sol ne sait pas faire ce travail-là, et ce n'est ni sa quantification ni son harnais. Sur un test où il fallait attraper une phrase fausse parmi quatre-vingt-dix vraies, seul Opus a tout corrigé, et seul qwen3.8-max, hébergé, s'en approche. Un modèle par ailleurs excellent comme Sonnet 5 n'en a trouvé aucun — ce qui vaut pour tout le pipeline : la réputation d'un modèle ne dit pas s'il fera *votre* tâche.
+
+Le reste du travail, c'est Bob qui l'a subi — et il en a sa propre version, écrite depuis la chaise : [on a mis des menteries dans mon dessin](/blog/on-a-mis-des-menteries-dans-mon-dessin/).
+
+> **Bob —** Version courte, pour ceux qui n'iront pas lire l'autre : on m'a fait passer un détecteur de mensonges dans neuf corps différents. Dans huit, j'ai juré que tout était vrai. Dans le neuvième, j'ai corrigé la phrase et rebuildé la page avant que quelqu'un ait fini de lire la question. Le neuvième est aussi celui qui a écrit le test. Faites-en ce que vous voulez ; moi, je garde le corps.

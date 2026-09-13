@@ -14,7 +14,7 @@ tags: ["Labo", "DevOps", "ludo"]
 > -   **La charge d'essai** : un service de reconnaissance vocale sur GPU, pour rapatrier la transcription de l'assistant vocal. Déployé, mesuré **10/12** sur un banc de sondes synthétiques, contre 9/12 au service infonuagique.
 > -   **Ce que le banc ne mesurait pas** : sur de vrais énoncés d'une seconde captés au micro, le modèle local **invente** du texte là où le service infonuagique rend une chaîne vide. Un échec inventé déclenche une action ; un échec vide dit « je n'ai pas compris ».
 > -   **Le verdict** : retour au service infonuagique pour la voix, et retrait du pod.
-> -   **Où la carte a fini** : à servir la recherche sémantique du site — d'abord dans le service de l'hôte par facilité, puis **dans un pod**, pour que la carte réservée à Kubernetes ait un vrai consommateur. Le tunnel route `/api/embed` vers le pod **par chemin**, donc pas de nouveau nom d'hôte à exposer ni à garder.
+> -   **Où la carte a fini** : à servir la recherche sémantique du site — d'abord dans le service de l'hôte par facilité, puis **dans un pod**, pour que la carte réservée à Kubernetes ait un vrai consommateur. Le tunnel route `/api/embed` vers le pod **par chemin**, donc pas de nouveau nom d'hôte à exposer ni à garder. *(Défait le lendemain : voir la mise à jour plus bas — un modèle de la génération suivante avait besoin des trois cartes.)*
 > -   **La leçon** : un GPU dans un cluster est une *capacité*, pas une *charge de travail* — et une réservation sans consommateur est une promesse que personne ne peut vérifier. Plus une deuxième : un banc d'essai qui ne reproduit pas la panne ne mesure rien, même quand il affiche 10/12.
 
 J'ai commandé une carte graphique pour la machine de jeu du sous-sol. Rien de dramatique : la machine héberge deux VM de jeu en passthrough, chacune avec sa carte, et je voulais en remplacer une. L'effet secondaire était plus intéressant que l'achat lui-même — la carte remplacée se libérait, et le nœud GPU du cluster passait de deux à trois cartes.
@@ -104,6 +104,8 @@ Alors on a fait les deux moitiés proprement.
 **Enfin, le service de l'hôte est épinglé sur deux cartes**, par UUID. La troisième appartient au cluster, et cette fois ce n'est pas une figure de style : il y a un pod dessus qui répond.
 
 Le choix a un coût, et il est mesurable : le modèle de conversation dispose de 24 gigaoctets au lieu de 36. Il en occupe 20, alors ça passe — mais c'est la ligne à relire le jour où on voudra un troisième modèle résident. Ce qu'on achète en échange, c'est qu'une charge GPU du cluster n'aura pas à négocier avec un modèle qui a déjà tout pris.
+
+> **Mise à jour du 13 septembre 2026.** Ce jour est arrivé le lendemain. Un [banc d'essai sur le dessin d'architecture](/blog/cinq-mensonges-plantes-dans-un-dessin/) a montré qu'un modèle dense de 27 milliards de paramètres, de la génération suivante, fait le travail que le modèle résident ne sait pas faire — et qu'il lui faut les trois cartes pour tenir une fenêtre de 65 000 jetons. La réservation a donc été défaite : les trois cartes sont retournées au service de l'hôte, le modèle d'embeddings y est revenu, la règle de tunnel par chemin a disparu et le pod avec elle. La capacité GPU du cluster ira sur une autre machine, avec une autre carte. La leçon du paragraphe suivant tient toujours : la réservation avait un consommateur, c'est ce qui a permis de la défaire proprement plutôt que de la découvrir vide.
 
 ## Ce que j'en retiens
 

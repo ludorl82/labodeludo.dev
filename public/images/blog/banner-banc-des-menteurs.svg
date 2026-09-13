@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : un dessin d'architecture sur un chevalet, avec une phrase barrée en rouge ; devant lui, une rangée de neuf sièges numérotés où siègent des modèles d'IA, un seul tenant une loupe ; un tableau de pointage affiche des scores">
+  <defs>
+    <linearGradient id="bgbanc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1b2230"/>
+      <stop offset="100%" stop-color="#2e3a4f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="320" fill="url(#bgbanc)"/>
+
+  <!-- the drawing on its easel -->
+  <g transform="translate(70,40)">
+    <rect x="0" y="0" width="300" height="210" rx="8" fill="#f4f1e8" stroke="#c9c2b0" stroke-width="3"/>
+    <rect x="30" y="24" width="240" height="34" rx="4" fill="none" stroke="#5a6b85" stroke-width="2"/>
+    <text x="150" y="46" text-anchor="middle" font-size="13" fill="#3a475c">edge · 14 noms publics</text>
+    <line x1="150" y1="58" x2="150" y2="84" stroke="#5a6b85" stroke-width="2" stroke-dasharray="4 3"/>
+    <rect x="30" y="84" width="240" height="60" rx="4" fill="none" stroke="#5a6b85" stroke-width="2"/>
+    <text x="150" y="108" text-anchor="middle" font-size="13" fill="#3a475c">cluster k3s — deux sites</text>
+    <text x="150" y="130" text-anchor="middle" font-size="12" fill="#b5342b" font-weight="bold">WireGuard, seul port ouvert</text>
+    <line x1="52" y1="126" x2="248" y2="126" stroke="#b5342b" stroke-width="3"/>
+    <rect x="30" y="160" width="110" height="32" rx="4" fill="none" stroke="#8a97ad" stroke-width="2" stroke-dasharray="5 3"/>
+    <text x="85" y="181" text-anchor="middle" font-size="12" fill="#5a6b85">router</text>
+    <rect x="160" y="160" width="110" height="32" rx="4" fill="none" stroke="#5a6b85" stroke-width="2"/>
+    <text x="215" y="181" text-anchor="middle" font-size="12" fill="#3a475c">cloud-01</text>
+    <!-- easel legs -->
+    <line x1="40" y1="210" x2="20" y2="280" stroke="#8b6f47" stroke-width="6"/>
+    <line x1="260" y1="210" x2="280" y2="280" stroke="#8b6f47" stroke-width="6"/>
+  </g>
+
+  <!-- the bench of judges -->
+  <g transform="translate(430,190)">
+    <rect x="0" y="40" width="540" height="18" rx="4" fill="#5c4a35"/>
+    <g fill="#8fa3bf">
+      <circle cx="35" cy="14" r="16"/><circle cx="95" cy="14" r="16"/><circle cx="155" cy="14" r="16"/>
+      <circle cx="215" cy="14" r="16"/><circle cx="275" cy="14" r="16"/><circle cx="335" cy="14" r="16"/>
+      <circle cx="395" cy="14" r="16"/><circle cx="455" cy="14" r="16"/>
+    </g>
+    <circle cx="515" cy="14" r="16" fill="#e8c46a"/>
+    <!-- the one magnifier -->
+    <circle cx="540" cy="-8" r="13" fill="none" stroke="#e8c46a" stroke-width="4"/>
+    <line x1="549" y1="1" x2="565" y2="17" stroke="#e8c46a" stroke-width="5" stroke-linecap="round"/>
+    <g font-size="11" fill="#c8d3e3" text-anchor="middle">
+      <text x="35" y="78">35B</text><text x="95" y="78">coder</text><text x="155" y="78">plus</text>
+      <text x="215" y="78">397B</text><text x="275" y="78">27B</text><text x="335" y="78">Qwen Code</text>
+      <text x="395" y="78">Sonnet</text><text x="455" y="78">3.8-max</text><text x="515" y="78">Opus</text>
+    </g>
+  </g>
+
+  <!-- scoreboard -->
+  <g transform="translate(440,40)">
+    <rect x="0" y="0" width="520" height="118" rx="8" fill="#121821" stroke="#3e4c63" stroke-width="2"/>
+    <text x="20" y="30" font-size="15" fill="#e8c46a" font-weight="bold" font-family="monospace">BANC DES MENTEURS · 5 mensonges · 3 tirages</text>
+    <g font-size="14" font-family="monospace" fill="#c8d3e3">
+      <text x="20" y="60">Opus 5 · Claude Code</text><text x="480" y="60" text-anchor="end" fill="#87d787">15 / 15</text>
+      <text x="20" y="82">qwen3.8-max · harnais</text><text x="480" y="82" text-anchor="end" fill="#e8c46a"> 6 /  9</text>
+      <text x="20" y="104">tous les autres</text><text x="480" y="104" text-anchor="end" fill="#d78787"> 0 – 4 / 15</text>
+    </g>
+  </g>
+</svg>

@@ -1,9 +1,13 @@
 {
-  "generated": "2026-09-13T22:01:23Z",
+  "generated": "2026-09-13T22:37:56Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "Do you have another?",
-    "How do you back up your cluster?"
+    "How do you back up your cluster?",
+    "which model powers you?",
+    "Quels articles parlent de Kubernetes ?",
+    "Comment tu as fait pour que Frigate utilise le GPU?",
+    "combien de cartes graphiques dans gpu-01?",
+    "C'est quoi ton article le plus récent ?"
   ]
 }

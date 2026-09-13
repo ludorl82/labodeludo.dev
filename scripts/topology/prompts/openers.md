@@ -19,7 +19,7 @@ une question suggérée doit être une vraie question, pas une amélioration.
 { "openers": ["…", "…"] }
 ```
 
-**Jusqu'à quatre en français et quatre en anglais, dans la même liste.** Tu ne
+**Jusqu'à quatre en français et quatre en anglais, dans la même liste — et au moins deux dans chaque langue qui a des candidates éligibles.** La garde le vérifie : une liste sans question française alors qu'il y en avait de bonnes dans les candidates est refusée. Ce site est d'abord francophone ; les questions françaises ne sont pas un bonus. Tu ne
 les sépares pas toi-même : le site les trie tout seul et n'en montre qu'une
 langue à la fois, celle du fureteur du visiteur. Ton travail, c'est que les
 deux langues aient de quoi remplir leurs quatre boutons.
@@ -41,16 +41,25 @@ Une bonne question suggérée montre à un visiteur ce que Bob peut faire. Donc 
 - **Sur ce homelab.** L'infrastructure, les articles, les machines, ce qui a
   cassé. Une question sur autre chose — la météo, une opinion, du code qui n'a
   rien à voir — ne montre rien d'utile même si elle est polie.
-- **Claire toute seule.** Elle apparaît sans contexte, sur un bouton. « Pis
-  après ? » ne veut rien dire hors d'une conversation.
+- **Claire toute seule.** Elle apparaît sans contexte, sur un bouton, devant
+  quelqu'un qui n'a rien lu. Elle doit **nommer une chose du labo** — une
+  machine, un outil, un article, un problème. Refusées le 2026-09-13, à
+  raison : « Have a link? », « Do you have another? », « Pis après ? » —
+  trois mots, aucun sujet, une suite de conversation. Test simple : si tu ne
+  peux pas dire de quoi elle parle sans la conversation d'avant, elle ne
+  passe pas. La garde refuse d'ailleurs toute question de trois mots ou moins,
+  ou sans mot de contenu.
 - **Vraiment une question.** Elle se termine par un point d'interrogation. Les
   candidates ne le sont pas toutes : « c quoi ton nom » est arrivé tel quel le
   2026-09-07 et la garde l'a refusé, à raison. Tu ne peux pas ajouter le point
   d'interrogation manquant — ce serait réécrire. Laisse-la de côté.
 - **Courte.** Entre 12 et 70 caractères, ça doit tenir sur un bouton.
 - **Variée.** Quatre formulations de la même question, c'est une question. Ça
-  vaut à l'intérieur d'une langue : quatre questions anglaises sur le NAS, ce
-  n'est pas quatre suggestions, c'est une.
+  vaut à l'intérieur d'une langue : « What went wrong when you moved your NFS
+  shares to an SSD? » et « Why did you move your NFS shares to an SSD? », c'est
+  une suggestion, pas deux. La garde refuse deux questions qui partagent deux
+  mots de contenu. Vise des sujets différents : le matériel, un outil, un
+  article, une panne, le robot lui-même.
 
 ## Ce que tu rejettes, sans hésiter
 
@@ -70,6 +79,17 @@ Une bonne question suggérée montre à un visiteur ce que Bob peut faire. Donc 
   questions, ce sont des essais.
 
 Dans le doute, laisse tomber. Il en reste toujours assez.
+
+## Avant de choisir, pour chaque candidate
+
+1. Est-ce une question complète, avec son point d'interrogation ? Sinon, non.
+2. Nomme-t-elle une chose précise du labo ? Sinon, non.
+3. Sa prémisse est-elle vraie, à ta connaissance ? Sinon, non.
+4. Ai-je déjà retenu une question sur le même sujet ? Alors non.
+5. Entre 12 et 70 caractères ? Sinon, non.
+
+Ce qui reste après ces cinq questions, tu le classes par nombre d'occurrences
+et tu prends les premières, jusqu'à quatre par langue.
 
 ## Avant de finir
 

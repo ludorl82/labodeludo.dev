@@ -39,6 +39,9 @@ import sys
 
 MAX_OPENERS = 8
 MAX_PER_LANG = 4
+# floor per language, applied only when the candidates make it possible
+MIN_PER_LANG = 2
+MIN_TO_EXPECT = 3
 MIN_LEN, MAX_LEN = 12, 70
 
 # The same two word lists as the Worker and as BobTerminal.astro: function
@@ -71,6 +74,11 @@ BLOCKED = re.compile(
 )
 ADDRESSY = re.compile(r"(https?://|www\.|@|\+?\d[\d\s().-]{6,})", re.IGNORECASE)
 MARKUP = re.compile(r"[<>{}\[\]\\|`]")
+# words that carry no subject on their own, in either language
+STOPWORDS = {"have", "link", "another", "there", "which", "what", "when", "does", "dont", "don't",
+             "about", "some", "more", "other", "quoi", "c'est", "cest", "est-ce", "as-tu", "t'as",
+             "tas", "encore", "autre", "plus", "avez", "vous", "quel", "quelle", "quels", "quelles",
+             "comment", "pourquoi", "quand", "combien", "peux", "peut", "fait", "faire", "roules", "rouler"}
 
 
 def fail(msg):
@@ -86,6 +94,11 @@ def main():
     openers = json.load(open(sys.argv[1], encoding="utf-8")).get("openers", [])
     candidates = json.load(open(sys.argv[2], encoding="utf-8")).get("candidates", [])
     allowed = {c["text"] for c in candidates if isinstance(c, dict) and "text" in c}
+    # Case aside: the hosted model capitalises a first letter and changes
+    # nothing else, and the driver publishes the candidate's OWN spelling
+    # (it maps each opener back to the verbatim candidate before this gate
+    # runs for real). Anything beyond case is still "written", still refused.
+    allowed_fold = {a.casefold(): a for a in allowed}
 
     if not isinstance(openers, list):
         fail("openers must be a list")
@@ -100,10 +113,28 @@ def main():
     if len(set(openers)) != len(openers):
         fail("the same question twice")
 
+    # Balance is a REQUIREMENT when the candidates allow it, not a wish in the
+    # prompt: on 2026-09-13 the model returned four English questions and no
+    # French one while 24 French candidates sat in the list — the panel showed
+    # its hand-written fallbacks to every French visitor while real questions
+    # went unused. A language with at least MIN_TO_EXPECT eligible candidates
+    # must get at least MIN_PER_LANG openers.
+    def eligible(q):
+        return (MIN_LEN <= len(q) <= MAX_LEN and q.rstrip().endswith("?")
+                and not BLOCKED.search(q) and not ADDRESSY.search(q) and not MARKUP.search(q))
+    pool_en = sum(1 for q in allowed if eligible(q) and looks_english(q))
+    pool_fr = sum(1 for q in allowed if eligible(q) and not looks_english(q))
+    got_en = sum(1 for q in openers if isinstance(q, str) and looks_english(q))
+    got_fr = len([q for q in openers if isinstance(q, str)]) - got_en
+    for lang, pool, got in (("french", pool_fr, got_fr), ("english", pool_en, got_en)):
+        if pool >= MIN_TO_EXPECT and got < MIN_PER_LANG:
+            fail(f"only {got} {lang} question(s) while {pool} eligible {lang} candidates exist — "
+                 f"pick at least {MIN_PER_LANG} in {lang}")
+
     for q in openers:
         if not isinstance(q, str):
             fail(f"not a string: {q!r}")
-        if q not in allowed:
+        if q not in allowed and q.casefold() not in allowed_fold:
             fail(f"{q!r} is not verbatim in the candidates — selected, not written, is the rule")
         if not (MIN_LEN <= len(q) <= MAX_LEN):
             fail(f"{q!r} is {len(q)} chars, outside {MIN_LEN}–{MAX_LEN}")
@@ -117,6 +148,29 @@ def main():
             fail(f"{q!r} looks like an address or a link")
         if MARKUP.search(q):
             fail(f"{q!r} contains markup characters")
+
+    # Two judgement calls that turned out to be measurable (2026-09-13: the
+    # hosted model published "Have a link?" and two variants of the NFS/SSD
+    # question). A question that stands alone on a button names something —
+    # so it has more than three words and at least one word that is not a
+    # function word; and two openers about the same thing are one opener.
+    def content_words(q):
+        return {w for w in re.findall(r"[\w'’-]+", q.lower())
+                if len(w) >= 3 and not FR_WORDS.fullmatch(w) and not EN_WORDS.fullmatch(w)
+                and w not in STOPWORDS}
+    for q in openers:
+        words = re.findall(r"[\w'’-]+", q)
+        if len(words) <= 3 or not content_words(q):
+            fail(f"{q!r} does not stand on its own — it names nothing a visitor can recognise")
+    seen = []
+    for q in openers:
+        cw = content_words(q)
+        for prev, pcw in seen:
+            # the panel shows one language at a time, so the French and the
+            # English question on Frigate's GPU are two buttons, not one
+            if looks_english(prev) == looks_english(q) and len(cw & pcw) >= 2:
+                fail(f"{q!r} and {prev!r} are the same question twice (share {sorted(cw & pcw)})")
+        seen.append((q, cw))
 
     en = sum(1 for q in openers if looks_english(q))
     print(

@@ -39,15 +39,18 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 /**
- * The embedding model is served by the GPU host's Ollama on the LAN. It spent
- * one day (2026-09-12) in a cluster pod, on a card reserved for Kubernetes;
- * that reservation was undone the next day. The build reaches the host by
- * name because the site's workflows run on the in-cluster runner; from
- * anywhere else, `--host` points it elsewhere.
+ * The embedding model runs in the cluster (`embeddings` namespace), on the
+ * GPU card reserved for Kubernetes, as a ClusterIP Service. The build resolves
+ * it because the site's workflows run on the in-cluster runner. From a laptop,
+ * `kubectl port-forward -n embeddings svc/embeddings 11435:11434` and
+ * `--host http://127.0.0.1:11435`.
+ *
+ * (It was served by the host's Ollama for one afternoon, 2026-09-13, while
+ * the card reservation was undone and then re-established the same day.)
  */
 const HOST = process.argv.includes("--host")
   ? process.argv[process.argv.indexOf("--host") + 1]
-  : "http://bob.tptpt.in:11434";
+  : "http://embeddings.embeddings.svc.cluster.local:11434";
 const MODEL = "bge-m3";
 const OUT = "public/bob-vectors.json";
 /** Build mode: a failure here must not take the deploy down with it. */

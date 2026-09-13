@@ -74,6 +74,11 @@ BLOCKED = re.compile(
 )
 ADDRESSY = re.compile(r"(https?://|www\.|@|\+?\d[\d\s().-]{6,})", re.IGNORECASE)
 MARKUP = re.compile(r"[<>{}\[\]\\|`]")
+# words that carry no subject on their own, in either language
+STOPWORDS = {"have", "link", "another", "there", "which", "what", "when", "does", "dont", "don't",
+             "about", "some", "more", "other", "quoi", "c'est", "cest", "est-ce", "as-tu", "t'as",
+             "tas", "encore", "autre", "plus", "avez", "vous", "quel", "quelle", "quels", "quelles",
+             "comment", "pourquoi", "quand", "combien", "peux", "peut", "fait", "faire", "roules", "rouler"}
 
 
 def fail(msg):
@@ -138,6 +143,27 @@ def main():
             fail(f"{q!r} looks like an address or a link")
         if MARKUP.search(q):
             fail(f"{q!r} contains markup characters")
+
+    # Two judgement calls that turned out to be measurable (2026-09-13: the
+    # hosted model published "Have a link?" and two variants of the NFS/SSD
+    # question). A question that stands alone on a button names something —
+    # so it has more than three words and at least one word that is not a
+    # function word; and two openers about the same thing are one opener.
+    def content_words(q):
+        return {w for w in re.findall(r"[\w'’-]+", q.lower())
+                if len(w) >= 3 and not FR_WORDS.fullmatch(w) and not EN_WORDS.fullmatch(w)
+                and w not in STOPWORDS}
+    for q in openers:
+        words = re.findall(r"[\w'’-]+", q)
+        if len(words) <= 3 or not content_words(q):
+            fail(f"{q!r} does not stand on its own — it names nothing a visitor can recognise")
+    seen = []
+    for q in openers:
+        cw = content_words(q)
+        for prev, pcw in seen:
+            if len(cw & pcw) >= 2:
+                fail(f"{q!r} and {prev!r} are the same question twice (share {sorted(cw & pcw)})")
+        seen.append((q, cw))
 
     en = sum(1 for q in openers if looks_english(q))
     print(

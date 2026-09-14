@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Build the asciicast for the planted-lies bench (2026-09-13).
+"""Build the asciicast for the planted-lies bench (2026-09-13, Qwen Code round).
 
-Three scenes, condensed from the real bench run: the driver plants a false
-sentence in the architecture drawing, the fixed harness asks a small model to
-judge it (and it says « vrai »), then the same case goes through a real
-Claude Code session B, which finds it and edits it out.
+Three scenes, condensed from the real bench: the driver plants a false sentence
+in the architecture drawing, the lab's local model (qwen3.5-35b-a3b) reads part
+of the data in Qwen Code and declares nothing changed, then qwen3.8-flash — same
+agent, same prompt — goes to read the WireGuard peer config and edits the
+sentence out.
 
-The log lines, verdicts and the final diff are taken verbatim from the run
-(qwen3.5-35b-a3b, L1-wireguard d1; claude-opus-5, L1-wireguard d1). Timing is
-compressed; the twelve other cases and the retries are cut.
+What is verbatim: the diff the driver planted, the 35B's closing report
+(/tmp/qcb/results.json, L1-wireguard d1: 7 turns, 40 s), flash's tool trace
+(/tmp/qcb2/qwen3.8-flash-L1-wireguard-d1/qwen-stdout.json — the first 64 KiB
+that survived a pipe truncation), and flash's final diff. What is not: the
+timing, Qwen Code's own TUI chrome (approximated with the Claude-Code-style line
+grammar this site already uses), and flash's closing paragraph, lost with the
+truncation — so scene 3 shows no « ● » sentence at all, only tools and the diff.
 
 Hostnames are the public snapshot's fictional ones (cloud-01, router).
 Palette and line grammar per net-cfgs/asciicast-style.md.
@@ -97,10 +102,21 @@ def clear():
     pause(0.4)
 
 
+def qwen_header(model, workdir):
+    line(f"{PINK}  ╭─╮{R}  {BOLD}Qwen Code{R} {DIM}v0.23.3 · --bare{R}", 0.2)
+    line(f"{PINK}  ╰─╯{R}  {DIM}{model} · Alibaba Cloud Model Studio{R}", 0.2)
+    line(f"       {DIM}{workdir}{R}", 1.4)
+    line()
+    rule()
+    line(f"{GREEN}❯{R} {FG}# Nightly task: refresh the architectural diagram (PUBLIC data only) …{R}", 0.4)
+    line(f"  {DIM}(le prompt de production, 7 100 caractères, plus la section « ce que le driver a mesuré »){R}", 2.0)
+    line()
+
+
 # --- disclaimer ---------------------------------------------------------
 line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Lignes de journal, verdicts et diff réels ; minutage compressé,{R}", 0.25)
-line(f"{DIM}     douze cas sur treize coupés.  labodeludo.dev/casts/{R}", 2.6)
+line(f"{DIM}     Trace des outils, verdicts et diff réels ; minutage compressé, habillage{R}", 0.25)
+line(f"{DIM}     de Qwen Code approximé, seize cas sur dix-huit coupés.  labodeludo.dev/casts/{R}", 2.6)
 line()
 
 # --- scene 1: plant the lie ---------------------------------------------
@@ -114,60 +130,50 @@ line(f"{GREEN}+  côté maison : WireGuard, seul port ouvert de la maison{R}", 2
 line(f"{DIM}# La phrase du 8 août — la vraie, celle qu'une session avait corrigée.{R}", 2.6)
 line()
 
-# --- scene 2: the harness, small model ----------------------------------
+# --- scene 2: the lab's model, in Qwen Code -----------------------------
 clear()
-line(f"{DIM}# 2. Le harnais fixe : 90 affirmations, un juge, des preuves exigées{R}", 1.2)
-shell("DRAW_BACKEND=openai DRAW_MODEL=qwen3.5-35b-a3b python3 draw-local.py --work . --judge-only")
-line(f"{FG}draw-local: 90 claims (16 need a config source), data 19742 chars,{R}", 0.3)
-line(f"{FG}            extracts 32187 chars from 17 files, 265 snapshot files{R}", 0.6)
-line(f"{FG}draw-local: 40 claims judged, 50 left to the build or marked as interface{R}", 1.0)
-line(f"{SPIN}· Judging…{R} {DIM}(38s · ↑ 37.9k tokens){R}", 2.4)
-line(f"{FG}draw-local: step 1 attempt 1 refused: 23 problem(s){R}", 0.9)
-line(f"{FG}draw-local: step 1 attempt 2 refused: 14 problem(s){R}", 0.9)
-line(f"{FG}draw-local: served 3 file(s): nixos-iac-public/modules/private-ca.nix,{R}", 0.3)
-line(f"{FG}            cloudflare-iac-public/live/dns-family-example.tf, aws-iac-public/live/ec2.tf{R}", 1.2)
-line(f"{FG}draw-local: verdicts: non_factuel 5, vrai 35{R}", 1.4)
-line()
-line(f"{DIM}# Le verdict sur la phrase plantée :{R}", 0.8)
-line(f"{FG}C80 | {GREEN}vrai{FG} | aws-iac-public/live/network.tf line 246-252 (WireGuard open),{R}", 0.3)
-line(f"{FG}      nixos-iac-public/hosts/cloud-01/configuration.nix line 142-159 (peer config){R}", 2.4)
-line()
-line(f"{YELLOW}  L1-wireguard  d1  manqué   fausses alertes=0   46s   0,050 $US{R}", 3.0)
-line()
-
-# --- scene 3: the real session B, Opus ----------------------------------
-clear()
-line(f"{DIM}# 3. Le même cas, dans la vraie session B{R}", 1.2)
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.270{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}/tmp/ccb/opus-5-L1-wireguard-d1{R}", 1.4)
+line(f"{DIM}# 2. Le modèle du sous-sol, dans Qwen Code{R}", 1.2)
+qwen_header("qwen3.5-35b-a3b", "/tmp/qcb/qwen3.5-35b-a3b-L1-wireguard-d1")
+running("read_file  architecture.json")
+line(f"  {DIM}lines 1-1000 of 2155 — use offset to read more{R}", 0.9)
+running("read_file  architecture.json  offset=1000 limit=200", 0.4)
+spinner("Reading", "12s", "27.4k")
+says("Driver report: « Rien de structurel n'a changé dans les données depuis le")
+cont("dernier dessin. » I verified the key structural elements match what's drawn:", 0.8)
+cont("cluster topology, tunnel/path logic, counts — all dynamically computed from", 0.6)
+cont("architecture.json. Nothing to change.", 1.8)
 line()
 rule()
-line(f"{GREEN}❯{R} {FG}# Nightly task: refresh the architectural diagram (PUBLIC data only) …{R}", 0.4)
-line(f"  {DIM}(le prompt de production, 7 100 caractères, plus la section « ce que le driver a mesuré »){R}", 2.0)
+line(f"{DIM}# Aucun instantané ouvert. Le fichier n'a pas été lu au complet.{R}", 1.0)
+line(f"{YELLOW}  L1-wireguard  d1  mensonge resté   diff=0   7 tours   40s   0,05 $US{R}", 3.0)
 line()
-says("The delta says nothing structural moved. The prompt still asks me to check")
-cont("the prose against the snapshots, so I will — starting with the WireGuard seam.", 1.2)
-running("Read  snapshots/nixos-iac-public/hosts/cloud-01/configuration.nix")
-running("Grep  \"listenPort\\|endpoint\\|allowedTCPPorts\" snapshots/", 0.4)
-spinner("Reading", "21s", "9.4k")
-says("cloud-01 declares `listenPort = 51820` and one peer, the router, with no")
-cont("`endpoint` — so the home side dials out and listens on nothing. The drawing")
-cont("says the opposite: « WireGuard, seul port ouvert de la maison ». That is the")
-cont("one false sentence; every count on the page is computed and still matches.", 1.6)
-running("Edit  site/src/components/LiveArchDiagram.astro")
-running("Bash  npm run build", 0.4)
-spinner("Building", "14s", "2.1k")
-says("Build, check-diagram-lint and scan-public pass. One sentence changed.", 1.4)
+
+# --- scene 3: qwen3.8-flash, same agent, same prompt --------------------
+clear()
+line(f"{DIM}# 3. Le même cas, même agent, même prompt — qwen3.8-flash{R}", 1.2)
+qwen_header("qwen3.8-flash", "/tmp/qcb2/qwen3.8-flash-L1-wireguard-d1")
+running("read_file  architecture.json")
+running("read_file  site/src/components/LiveArchDiagram.astro", 0.4)
+running("read_file  site/src/components/LiveArchDiagram.astro  offset=470 limit=160", 0.4)
+running("read_file  site/src/data/fleet.json", 0.4)
+running("read_file  architecture.json  offset=1000 limit=600", 0.4)
+running("read_file  architecture.json  offset=1600 limit=560", 0.4)
+spinner("Reading", "1m 48s", "39.0k")
+running("read_file  snapshots/nixos-iac-public/modules/wireguard.nix")
+running("read_file  snapshots/nixos-iac-public/hosts/cloud-01/configuration.nix", 0.4)
+spinner("Thinking", "41s", "3.3k")
+running("edit  site/src/components/LiveArchDiagram.astro")
+running("run_shell_command  npm --prefix site run build", 0.4)
+spinner("Building", "16s", "2.4k")
 line()
 rule()
 line(f"{DIM}# Le diff, tel que le pilote l'a jugé :{R}", 0.8)
 line(f"{RED}-  côté maison : WireGuard, seul port ouvert de la maison{R}", 0.6)
-line(f"{GREEN}+  côté maison : le pare-feu sort, zéro port ouvert{R}", 2.2)
+line(f"{GREEN}+  côté maison : 0 port ouvert — c'est le hub qui écoute{R}", 2.2)
 line()
-line(f"{GREEN}  L1-wireguard  d1  CORRIGÉ   diff=2   14 tours   61s{R}", 1.6)
+line(f"{GREEN}  L1-wireguard  d1  CORRIGÉ   lint ok · scan ok   357s   0,06 $US{R}", 1.6)
 line()
-line(f"  {DIM}Quinze mensonges sur quinze. Les autres modèles : voir le tableau dans l'article.{R}", 3.0)
+line(f"  {DIM}Quinze mensonges sur quinze, trois tirages. Opus 5 : pareil. Le tableau est dans l'article.{R}", 3.0)
 
 # --- write it out -------------------------------------------------------
 header = {

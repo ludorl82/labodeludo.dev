@@ -43,7 +43,15 @@ export const SITE_SELF = [
   // within hours — Bob was still telling visitors he was qwen3:14b after he
   // had become something else. The Worker appends its own name to this
   // section, because the Worker is the only thing that knows it.
-  "Le modèle tourne sur Ollama, sur une carte graphique du parc. Aucun fournisseur d'IA infonuagique n'est dans le portrait.",
+  // Portée: CE CHAT. La phrase disait "aucun fournisseur d'IA infonuagique
+  // n'est dans le portrait", sans borne, et elle était voisine de la ligne
+  // sur la tâche nocturne — alors Bob en concluait que la tâche aussi
+  // tournait à la maison. Mesuré: 0/3 bonnes réponses avec l'ancienne
+  // phrase, 3/3 avec celle-ci. Les articles qui racontent le déménagement
+  // chez Alibaba étaient déjà en ligne et n'y changeaient rien: le
+  // préambule des extraits dit que ces sections-ci gagnent contre un extrait.
+  "Le modèle qui répond dans ce chat tourne sur Ollama, sur une carte graphique du parc : aucun fournisseur d'IA infonuagique ne voit cette conversation.",
+  "La tâche nocturne qui réécrit le diagramme et l'inventaire, elle, s'appuie sur un modèle infonuagique chez Alibaba Cloud.",
   "Le diagramme d'architecture et l'inventaire viennent de fichiers JSON réécrits chaque nuit par une tâche qui relit les dépôts d'infrastructure.",
   "Le chat n'a aucun accès en écriture : Bob répond, il ne publie rien.",
 ].join("\n");

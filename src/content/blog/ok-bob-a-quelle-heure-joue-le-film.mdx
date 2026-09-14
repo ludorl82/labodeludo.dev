@@ -1,72 +1,81 @@
 ---
-title: "« Ok Bob, à quelle heure joue le film ? » — donner internet à un assistant vocal local"
+title: "« Ok Bob, à quelle heure joue le film ? » — ce qu'une recherche web ne peut pas trouver"
 pubDate: 2026-09-15
-description: "L'assistant vocal du sous-sol roule sur une carte graphique à la maison et ne connaît ni la date ni le cinéma. Il a maintenant un outil de plus : une recherche web, qu'il décide d'appeler lui-même quand la question le demande. Voici comment c'est monté sur Home Assistant avec Tavily, les deux pièges qui ne sont pas là où on les attend, et la leçon qui vaut pour n'importe quel outil d'agent : le résumé tout fait rendait une date passée, les extraits bruts avec l'heure en dernier rendaient la bonne séance. Fait en session avec Claude Code (Opus 5)."
+description: "L'assistant vocal du sous-sol roule sur une carte graphique à la maison et ne connaît ni la date ni le cinéma. On lui a donné une recherche web, et il a répondu la bonne séance — jusqu'à la première vraie question du quotidien, deux jours plus tard, où il a inventé des heures du même ton assuré que les vraies. Voici pourquoi un moteur de recherche à index est structurellement le mauvais outil pour du contenu daté, comment on est allé chercher les horaires à la source, et le cadeau non prévu qui a fait disparaître le problème que le modèle n'arrivait pas à résoudre. Fait en session avec Claude Code (Opus 5)."
 tags: ["Maison", "Labo", "ludo"]
 heroImage: "/images/blog/banner-ok-bob-cinema.svg"
 ---
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Le montage** : l'assistant vocal de la maison (Home Assistant, mot de réveil « Ok Bob », modèle Qwen local sur le nœud GPU du labo) peut chercher sur le web. Tavily au palier gratuit (1 000 recherches par mois, sans carte), un `rest_command`, un script `recherche_web` exposé à l'assistant comme **outil**. Rien d'autre ne sort de la maison que la requête de recherche.
-> -   **Le modèle décide seul** d'appeler l'outil — « à quelle heure joue le film ? » suffit, aucun mot-déclencheur — et il enchaîne deux recherches dans le même tour quand il le faut.
-> -   **Piège 1** : un déclencheur de phrase (`conversation` trigger) exige `prefer_local_intents: true`, ce qui ferait intercepter « quelle est la température » par le moteur d'intentions natif. D'où le script-outil, purement additif.
-> -   **Piège 2** : exposer le script à l'assistant se fait par websocket seulement — en pratique, une case à cocher dans l'interface.
-> -   **La leçon** : la forme de la charge utile décide de tout. Le résumé `answer` de Tavily, instable, rendait une date passée ; les trois extraits bruts, avec l'heure actuelle **en dernier**, rendaient la prochaine séance. Dans un résultat d'outil, le plus fiable va à la fin.
-> -   **Ce qui n'a pas aidé** : le mode raisonnement (ne conclut jamais sur des données bruitées), et une consigne glissée dans le résultat de l'outil (elle entre en concurrence avec la question).
-> -   Tout a été fait en session avec Claude Code (Opus 5) ; ma part a été de poser la question, dans la cuisine, et de refuser la relance sans mot de réveil.
+> -   **Le montage de départ** : l'assistant vocal de la maison (Home Assistant, mot de réveil « Ok Bob », modèle Qwen local sur le nœud GPU du labo) reçoit une recherche web — Tavily au palier gratuit, un `rest_command`, un script exposé à l'assistant comme **outil**. Le modèle décide seul de l'appeler ; aucun mot-déclencheur.
+> -   **Deux pièges de Home Assistant** : un déclencheur de phrase exige `prefer_local_intents: true`, qui court-circuiterait le modèle ; l'exposition d'un script se fait par websocket seulement — une case à cocher.
+> -   **Le faux succès** : le 12, « prochaine séance ? » rendait la bonne heure une fois la charge utile réordonnée (extraits bruts, heure actuelle en dernier). Le 14, la même question tombait : rien n'était brisé, mais **chercher par film ramène des pages de film**, sans horaires — et quand les extraits n'ont pas d'heures, **le modèle en fabrique**, du même ton que les vraies. Même la bonne page arrivait périmée de deux jours, par l'index.
+> -   **La leçon** : pour du contenu daté, un moteur de recherche à index est structurellement le mauvais outil. Il faut deux coups de chance simultanés — que la page publie ses heures en HTML statique, et que l'index ait été rafraîchi ce jour-là.
+> -   **Ce qui a été monté à la place** : l'API publique que le site du cinéma appelle en arrière-plan, un second outil `horaires_cinema` (filtre par titre, décalage en jours, une ligne par film), et la description de la recherche web qui renvoie vers lui pour tout ce qui touche au cinéma.
+> -   **Le cadeau** : l'API ne rend que les séances encore à venir. « La prochaine séance », exactement là où le modèle calait, cesse d'exister comme problème.
+> -   **La règle anti-invention** va dans le prompt système, jamais dans la charge utile de l'outil. Test : « à quelle heure joue Titanic » → « il n'y a pas de séances prévues ce soir ».
+> -   Fait en session avec Claude Code (Opus 5) ; ma part a été de poser la question dans la cuisine, deux soirs de suite.
 
 Depuis juillet, [un modèle Qwen roule sur une carte graphique dans mon sous-sol](/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/) et répond à « Ok Bob » dans la maison : les lumières, la température, la télé. Il fait ça sans rien envoyer à personne, et c'est le point. Mais un modèle local a une limite dure : il ne sait rien de ce qui se passe dehors. Ni la date, ni la météo, ni l'horaire du cinéma du coin.
 
-Vendredi, dans la cuisine : « Ok Bob, à quelle heure joue le film ce soir ? » Et il a répondu la bonne séance. Voici ce qu'il a fallu pour en arriver là, en une session avec Claude Code — et ce que la session a mesuré en chemin, qui vaut au-delà de ma cuisine.
+Alors on lui a donné une recherche web. Le vendredi, dans la cuisine, « Ok Bob, à quelle heure joue le film ce soir ? » a rendu la bonne séance. Le dimanche, la même question a rendu des heures inventées. Cet article raconte les deux soirs, parce que le second corrige ce que le premier m'avait fait croire.
 
 ## Le montage, de bas en haut
 
-- **Tavily**, un service de recherche fait pour les agents : on lui envoie une requête, il rend des extraits de pages, et, si on le demande, un résumé déjà rédigé. Palier gratuit, 1 000 recherches par mois, sans carte de crédit. Une recherche simple coûte un crédit.
+- **Tavily**, un service de recherche fait pour les agents : on lui envoie une requête, il rend des extraits de pages et, si on le demande, un résumé déjà rédigé. Palier gratuit, 1 000 recherches par mois, sans carte de crédit.
 - Dans Home Assistant, un `rest_command` qui appelle Tavily. La clé passe par `secrets.yaml` — avec un détail agaçant : un `!secret` est un nœud YAML entier, on ne peut pas coller `Bearer ` devant dans l'en-tête, alors le préfixe fait partie du secret.
 - Un script `recherche_web` qui appelle ce `rest_command`, récupère la réponse, et la rend à l'assistant avec `response_variable`.
 - Ce script est **exposé à l'assistant comme un outil**. Le modèle voit qu'il existe un outil « recherche web » avec un paramètre « requête », et c'est lui qui décide de l'appeler.
 
-Ce dernier point est celui qui m'a le plus surpris. Je m'attendais à devoir dire « cherche ». Non : « quelle est la prochaine représentation de… » a suffi, et quand la première recherche ne donnait pas l'horaire, il en a lancé une deuxième dans le même tour, sans que rien ne soit configuré pour ça.
+Ce dernier point m'a surpris. Je m'attendais à devoir dire « cherche ». Non : « quelle est la prochaine représentation de… » a suffi, et quand la première recherche ne donnait pas l'horaire, il en a lancé une deuxième dans le même tour, sans que rien ne soit configuré pour ça.
 
-## Les deux pièges, qui ne sont pas où on les attend
+Deux pièges au passage, qui ne sont pas où on les attend. Le premier réflexe, pour ajouter une commande vocale, c'est un **déclencheur de phrase** — « cherche telle chose » déclenche une automatisation. Ça ne marche pas ici : les déclencheurs de phrase exigent que le pipeline vocal préfère les intentions locales (`prefer_local_intents: true`), et dès lors « quelle est la température » est intercepté par le moteur d'intentions natif avant que le modèle ne le voie. Le script-outil, lui, est purement additif. Le second piège est bête : **exposer le script** à l'assistant se fait par websocket seulement, aucune route REST — en pratique, une case à cocher dans Paramètres → Assistants vocaux → Entités exposées. Vingt minutes pour trouver la case.
 
-Le premier réflexe, pour ajouter une commande vocale dans Home Assistant, c'est un **déclencheur de phrase** : « cherche telle chose » déclenche une automatisation. Ça ne marche pas ici, et la raison est instructive. Les déclencheurs de phrase exigent que le pipeline vocal préfère les intentions locales (`prefer_local_intents: true`). Or si on active ça, « quelle est la température » est intercepté par le moteur d'intentions natif de Home Assistant, avant même que le modèle ne le voie — et toutes les règles qu'on a mises des semaines à ajuster dans son prompt ne servent plus. Le script-outil, lui, est purement additif : le modèle a un outil de plus, et rien d'autre ne change.
+## Vendredi : la bonne séance, et ce que ça a pris
 
-Le deuxième piège est bête : **exposer le script** à l'assistant. L'exposition ne vit pas dans le fichier des entités exposées, mais dans le registre des entités, sous une option `conversation.should_expose`, qui ne se bascule que par websocket — aucune route REST, et la commande websocket rend `unknown_command` sur cette version. En pratique : une case à cocher, Paramètres → Assistants vocaux → Entités exposées. Vingt minutes pour trouver la case.
+Tavily rend, si on le demande, un champ `answer` — un résumé rédigé. C'est tentant : le modèle n'a qu'à le reformuler. Avec ce résumé, à « prochaine séance ? », Bob répondait **« le 14 août »** — la date de sortie du film, un mois plus tôt. Le résumé était instable (trois réponses différentes pour le même film le même jour), et le modèle le recopiait au lieu de lire les horaires.
 
-## La leçon : le plus fiable va à la fin
+Ce qui a fini par marcher : **les trois extraits bruts seulement**, et, en tout dernier, une ligne « Nous sommes le 12/09/2026 et il est 17:42 ». Réponse : « aujourd'hui à 18h00, puis 21h40 ». Exact. L'ancrage temporel placé à la fin du résultat — au plus près de la génération — est ce qui permettait au modèle de *choisir* la prochaine séance au lieu d'énumérer la semaine. Dans un prompt, le plus important va près de la question ; dans un résultat d'outil, le plus fiable va à la fin. Je ne l'aurais pas deviné, et ça tient toujours.
 
-C'est ici que la session a mesuré quelque chose qui vaut pour n'importe quel outil donné à un agent.
+J'ai aussi mesuré deux choses qui n'aidaient pas : le mode raisonnement, qui raisonnait juste et **ne concluait jamais** (85 secondes, 3 400 mots, contenu vide) sur des données scrapées bruitées ; et une consigne glissée dans le résultat de l'outil (« choisis la première heure après maintenant »), qui faisait répondre « le film n'est plus à l'affiche ». Une règle dans des *données* entre en concurrence avec la question.
 
-Tavily rend, si on le demande, un champ `answer` — un résumé rédigé de ce qu'il a trouvé. C'est tentant : le modèle n'a qu'à le reformuler. La première version faisait ça, et à « prochaine séance ? », Bob répondait **« le 14 août 2026 »** — la date de sortie du film, un mois plus tôt. Le résumé de Tavily était instable (trois réponses différentes pour le même film le même jour), et le modèle le recopiait au lieu de lire les horaires.
+Vendredi soir, donc, ça marchait. J'ai écrit que ça marchait.
 
-Deuxième version : le résumé en tête, puis les extraits. Réponse : « mercredi 16 septembre ». Faux aussi.
+## Dimanche : rien n'était brisé, et ça ne marchait pas
 
-Troisième version : **les trois extraits bruts seulement**, 400 caractères chacun, et, en tout dernier, une ligne « Nous sommes le 12/09/2026 et il est 17:42 ». Réponse : **« aujourd'hui à 18h00, puis 21h40 »**. Exact.
+Deux jours plus tard, la première vraie question du quotidien — un autre film, ce soir — ne passait pas. Le journal gardait la demande telle qu'elle était partie : « horaire de projection du film … ce soir à … », deux appels d'outil, puis « je n'ai pas pu trouver l'horaire précis ».
 
-| Charge utile rendue par l'outil | « prochaine séance ? » |
-|---|---|
-| le résumé seul | « le 14 août 2026 » — la date de sortie, passée |
-| résumé en tête + extraits | « mercredi 16 septembre » — faux |
-| **extraits seuls, l'heure actuelle en dernier** | **« aujourd'hui à 18h00, puis 21h40 »** — exact |
+Rien n'était brisé. L'outil partait, Tavily répondait, le compte affichait 42 crédits consommés sur 1 000. C'est le genre de panne où l'on perd une heure à vérifier la plomberie parce que le symptôme ressemble à une coupure.
 
-Ce qui a changé, ce n'est pas le modèle. C'est l'ordre. L'ancrage temporel placé au plus près de la génération — à la fin du résultat — est ce qui permet au modèle de *choisir* la prochaine séance au lieu d'énumérer toutes celles de la semaine. Dans un prompt, on met le plus important près de la question ; dans un résultat d'outil, le plus fiable va **à la fin**. C'est l'inverse, et je ne l'aurais pas deviné.
+**Chercher par film ramène des pages de film.** Rejouée telle quelle, la requête rapportait trois extraits : deux billetteries et la fiche du film chez la chaîne de cinémas. Synopsis, durée, classement, date de sortie — et zéro horaire. Les heures vivent sur des pages de *cinéma*, pas de film. Formulée autrement — nom du cinéma, ville, « horaires séances » — la même recherche sortait un site d'horaires avec les heures en clair.
 
-## Ce qui n'a pas aidé
+**Quand les extraits n'ont pas d'heures, le modèle en fabrique.** La même question posée trois fois de suite a donné « 12h30, 16h10, 18h55, 21h45 », puis deux fois « 13, 16, 19, 22 heures ». Des heures plausibles, énoncées du même ton assuré que les vraies. C'est la phrase de cet article qui m'a coûté le plus : une réponse qui a l'air correcte n'est pas une preuve que la recherche a fonctionné — et ça oblige à relire d'un œil neuf le succès de vendredi.
 
-Deux choses que j'aurais parié utiles, et qui ont été mesurées inutiles ou pires.
+**Et même la bonne page arrivait périmée.** Un résultat obtenu le 14 annonçait « Aujourd'hui 12 sep. ». L'hypothèse commode — le site sert du cache aux robots — ne tient pas : la page répond `cache-control: max-age=1` et rend la journée du 14 à n'importe qui, `curl` nu compris. La péremption vient de l'index de Tavily, et sa fonction `extract`, censée aller chercher la page en direct, rendait la même version vieille de deux jours.
 
-**Le mode raisonnement.** J'avais d'abord conclu que trier « la prochaine séance après maintenant » dépassait le modèle et demandait qu'il réfléchisse. C'était faux : c'était la charge utile. Avec le raisonnement activé sur la même charge utile, il raisonnait juste (« I need to find the first screening time after this current time ») et **ne concluait jamais** — 85 secondes et 3 400 mots de raisonnement pour un contenu vide, plafond après plafond. Sur des données scrapées bruitées, le raisonnement de ce modèle ne converge pas. Sans raisonnement, il répond en cinq secondes, correctement.
+Restait l'idée d'aller à la source. La page du film chez la chaîne fait 93 Ko de HTML et ne contient pas une seule fois le nom de la ville : c'est une application JavaScript, les séances arrivent par un appel en arrière-plan. Aucun lecteur de page, humain ou machine, n'y trouvera d'horaire.
 
-**Une consigne dans le résultat de l'outil.** Ajouter « choisis la première heure postérieure à maintenant » au bout du résultat a fait répondre « le film n'est plus à l'affiche ». En la retirant, il énonçait correctement toutes les séances du jour. Une règle glissée dans des *données* entre en concurrence avec la question — la même leçon que [le prompt du chatbot](/blog/jai-fait-parler-mon-blogue/) m'avait déjà apprise : une règle, un seul endroit.
+## La leçon qui vaut le détour
 
-## Deux détails pour finir
+**Pour du contenu daté, un moteur de recherche à index est structurellement le mauvais outil.** Il faut deux coups de chance simultanés : que la page cible publie ses heures en HTML statique, et que l'index ait été rafraîchi ce jour-là. Vendredi, j'avais eu les deux. Dimanche, aucun. Rien dans le montage ne distinguait les deux cas — c'est le modèle qui comblait le vide, avec aplomb.
 
-Tavily répond dans la langue des sources, pas de la question : une requête en français revient souvent en anglais, et le modèle traduit. Ça tient, c'est une passe de plus.
+## Ce qui a été monté à la place
 
-Et le seul vrai échec de la soirée ne venait ni de la recherche ni du modèle : la reconnaissance vocale avait transcrit « De Gaulle » en « Google », et la requête partie vers Tavily cherchait les horaires de « Google, partie 2 ». Avant de soupçonner l'agent, lire ce qu'il a réellement entendu dans les journaux.
+L'appel en arrière-plan de la page du cinéma est une API publique ; sa clé voyage dans leur propre bundle JavaScript, et sa liste de salles se classe par proximité de l'adresse qui appelle. Alors :
 
-Ce que j'ai refusé, en passant : la relance sans mot de réveil. Home Assistant garde le micro ouvert seulement quand la réponse de l'assistant se termine par un point d'interrogation — il aurait fallu faire finir Bob par « Veux-tu autre chose ? » à chaque tour. Chaque demande peut être indépendante ; « Ok Bob » n'est pas si long à dire.
+- un second `rest_command` qui interroge cette API pour une salle et une date ;
+- un second script, `horaires_cinema`, exposé à l'assistant comme outil : il filtre par titre si on en donne un, accepte un décalage en jours (« demain »), et rend une ligne par film avec les heures dédupliquées — l'ancrage temporel toujours en dernier ;
+- la description de `recherche_web` renvoie explicitement vers ce nouvel outil pour tout ce qui touche au cinéma. Tavily reste en place pour le reste — la météo, l'actualité, une question de culture générale.
 
-Tout ça a été fait en session avec Claude Code (Opus 5). Ma part : la question dans la cuisine, et le refus de la relance.
+**Cadeau non prévu : l'API ne rend que les séances encore à venir.** Le tri « la prochaine séance », qui était exactement le point où le modèle calait vendredi, cesse d'exister comme problème — il n'a plus rien à calculer. Vérifié en direct : entre un essai à 18h40 et un autre à 19h00, les séances de 18h20 et 18h30 avaient disparu d'elles-mêmes.
+
+La règle anti-invention, elle, est partie **dans le prompt système**, pas dans la charge utile de l'outil — la leçon de vendredi, appliquée. Test : « à quelle heure joue Titanic » → « il n'y a pas de séances de Titanic prévues ce soir ». Le prompt évalué reste autour de 4 350 jetons ; c'est la liste des entités de la maison qui domine, pas les outils.
+
+## Ce qui reste dû
+
+La clé de cette API n'est pas un secret, mais elle n'est couverte par aucun contrat : elle tombera un jour, sans préavis. Le script rend alors une phrase explicite au lieu de rien, ce qui est mieux que le silence mais se perd dans une réponse vocale. Il manque une sonde extérieure qui crie quand l'API ne répond plus — un contrôle doit alerter de l'extérieur, pas espérer être entendu au passage. C'est la prochaine ligne du carnet.
+
+Deux détails pour finir. Le seul échec de vendredi qui ne venait ni de la recherche ni du modèle : la reconnaissance vocale avait transcrit « De Gaulle » en « Google », et la requête cherchait les horaires de « Google, partie 2 ». Avant de soupçonner l'agent, lire ce qu'il a réellement entendu. Et ce que j'ai refusé : la relance sans mot de réveil — Home Assistant garde le micro ouvert seulement quand la réponse se termine par un point d'interrogation, il aurait fallu faire finir Bob par « Veux-tu autre chose ? ». Chaque demande peut être indépendante ; « Ok Bob » n'est pas si long à dire.
+
+Tout ça a été fait en session avec Claude Code (Opus 5). Ma part : la question dans la cuisine, deux soirs de suite, et le refus de croire la deuxième réponse.

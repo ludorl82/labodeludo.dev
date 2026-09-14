@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration: an architecture drawing on an easel, with one sentence struck through in red; in front of it, two seats where two AI models sit, each holding a magnifying glass, with the same 15 out of 15 score and a much smaller price tag under the second; behind them, a row of empty seats">
+  <defs>
+    <linearGradient id="bgbanc2en" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1b2230"/>
+      <stop offset="100%" stop-color="#2e3a4f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="320" fill="url(#bgbanc2en)"/>
+
+  <!-- the drawing on its easel -->
+  <g transform="translate(60,40)">
+    <rect x="0" y="0" width="300" height="210" rx="8" fill="#f4f1e8" stroke="#c9c2b0" stroke-width="3"/>
+    <rect x="30" y="24" width="240" height="34" rx="4" fill="none" stroke="#5a6b85" stroke-width="2"/>
+    <text x="150" y="46" text-anchor="middle" font-size="13" fill="#3a475c">edge · 14 public names</text>
+    <line x1="150" y1="58" x2="150" y2="84" stroke="#5a6b85" stroke-width="2" stroke-dasharray="4 3"/>
+    <rect x="30" y="84" width="240" height="60" rx="4" fill="none" stroke="#5a6b85" stroke-width="2"/>
+    <text x="150" y="108" text-anchor="middle" font-size="13" fill="#3a475c">k3s cluster — two sites</text>
+    <text x="150" y="130" text-anchor="middle" font-size="12" fill="#b5342b" font-weight="bold">WireGuard, the only open port</text>
+    <line x1="52" y1="126" x2="248" y2="126" stroke="#b5342b" stroke-width="3"/>
+    <rect x="30" y="160" width="110" height="32" rx="4" fill="none" stroke="#8a97ad" stroke-width="2" stroke-dasharray="5 3"/>
+    <text x="85" y="181" text-anchor="middle" font-size="11" fill="#5a6470">router</text>
+    <rect x="160" y="160" width="110" height="32" rx="4" fill="none" stroke="#8a97ad" stroke-width="2"/>
+    <text x="215" y="181" text-anchor="middle" font-size="11" fill="#5a6470">cloud-01</text>
+    <!-- easel legs -->
+    <line x1="40" y1="210" x2="20" y2="280" stroke="#8a6d45" stroke-width="5"/>
+    <line x1="260" y1="210" x2="280" y2="280" stroke="#8a6d45" stroke-width="5"/>
+    <line x1="150" y1="210" x2="150" y2="280" stroke="#8a6d45" stroke-width="5"/>
+  </g>
+
+  <!-- the empty back row -->
+  <g fill="#3a4658" stroke="#4f5d72" stroke-width="2" opacity="0.7">
+    <rect x="450" y="60" width="52" height="40" rx="5"/>
+    <rect x="520" y="60" width="52" height="40" rx="5"/>
+    <rect x="590" y="60" width="52" height="40" rx="5"/>
+    <rect x="660" y="60" width="52" height="40" rx="5"/>
+    <rect x="730" y="60" width="52" height="40" rx="5"/>
+    <rect x="800" y="60" width="52" height="40" rx="5"/>
+    <rect x="870" y="60" width="52" height="40" rx="5"/>
+    <rect x="940" y="60" width="52" height="40" rx="5"/>
+  </g>
+  <text x="720" y="52" text-anchor="middle" font-size="11" fill="#7d8898">eight other bodies · 0 to 12 out of 15</text>
+
+  <!-- the two front seats -->
+  <g transform="translate(470,140)">
+    <rect x="0" y="70" width="150" height="14" rx="4" fill="#5a4630"/>
+    <rect x="8" y="84" width="10" height="70" fill="#5a4630"/><rect x="132" y="84" width="10" height="70" fill="#5a4630"/>
+    <rect x="45" y="0" width="60" height="50" rx="8" fill="#b9c3d1" stroke="#7d8898" stroke-width="3"/>
+    <circle cx="65" cy="22" r="6" fill="#2d7dd2"/><circle cx="85" cy="22" r="6" fill="#2d7dd2"/>
+    <rect x="60" y="35" width="30" height="4" rx="2" fill="#5a6470"/>
+    <circle cx="118" cy="44" r="12" fill="none" stroke="#e8c46a" stroke-width="4"/>
+    <line x1="127" y1="53" x2="140" y2="66" stroke="#e8c46a" stroke-width="4"/>
+    <text x="75" y="120" text-anchor="middle" font-size="13" fill="#e8ecf2" font-family="monospace">Opus 5</text>
+    <text x="75" y="140" text-anchor="middle" font-size="15" fill="#87d787" font-weight="bold">15 / 15</text>
+    <text x="75" y="160" text-anchor="middle" font-size="11" fill="#c8d3e3">~0.80 USD / run</text>
+  </g>
+  <g transform="translate(720,140)">
+    <rect x="0" y="70" width="150" height="14" rx="4" fill="#5a4630"/>
+    <rect x="8" y="84" width="10" height="70" fill="#5a4630"/><rect x="132" y="84" width="10" height="70" fill="#5a4630"/>
+    <rect x="52" y="8" width="46" height="42" rx="7" fill="#b9c3d1" stroke="#7d8898" stroke-width="3"/>
+    <circle cx="68" cy="26" r="5" fill="#2d7dd2"/><circle cx="82" cy="26" r="5" fill="#2d7dd2"/>
+    <rect x="63" y="38" width="24" height="4" rx="2" fill="#5a6470"/>
+    <circle cx="112" cy="44" r="12" fill="none" stroke="#e8c46a" stroke-width="4"/>
+    <line x1="121" y1="53" x2="134" y2="66" stroke="#e8c46a" stroke-width="4"/>
+    <text x="75" y="120" text-anchor="middle" font-size="13" fill="#e8ecf2" font-family="monospace">qwen3.8-flash</text>
+    <text x="75" y="140" text-anchor="middle" font-size="15" fill="#87d787" font-weight="bold">15 / 15</text>
+    <g transform="translate(20,148)">
+      <rect x="0" y="0" width="110" height="22" rx="4" fill="#e8c46a"/>
+      <text x="55" y="16" text-anchor="middle" font-size="12" fill="#2d3748" font-weight="bold">0.06 USD / run</text>
+    </g>
+  </g>
+</svg>

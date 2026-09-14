@@ -1,0 +1,127 @@
+---
+title: "The Liars' Bench: the Cheapest Model Matched Opus"
+pubDate: 2026-09-14
+description: "The nightly pipeline that redraws my architecture pages ran on Opus 5, in Claude Code, on my own subscription. The terms of service, an Anthropic test in April and Opus's API price convinced me to move it to Alibaba Cloud, on Qwen — the open question was whether a Qwen model could do the job. We planted five false sentences in the drawing, then five more in a private document, and put ten models in front of the same detector. The cheapest of the 3.8 generation corrected everything, like Opus, for 0.06 USD a run. The pipeline now runs on it every night. With the tables, the real costs, the caveat that has to be stated, and what the first night showed."
+tags: ["DevOps", "Labo", "ludo"]
+heroImage: "/images/blog/banner-le-banc-des-menteurs-en.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
+>
+> -   **Why leave**: Anthropic's terms reserve the subscription for "ordinary, individual usage" and forbid routing requests on behalf of third parties — so the site's chatbot could never run on it, and a nightly `claude -p` job is at best a grey area. In April 2026, Claude Code vanished from the Pro plan for a day. And Opus at per-token prices would cost ~64 USD a month for a daily pipeline. I chose to mitigate: Alibaba Cloud Model Studio and Qwen, through Qwen Code. All of this work was done with Claude Code, in Opus 5 then Fable 5.1, which stays my development tool.
+> -   **The trap**: the local model's first runs were green. On a drawing where **everything is true**, a model that answers "true" everywhere passes. We needed lies.
+> -   **The bench**: the real `/architecture` drawing with **one sentence made false** (five variants, including the WireGuard one a session had actually corrected on August 8), plus the intact drawing to count false alarms, three draws per case. Then the same thing on a private document, for the session that reconciles it.
+> -   **The results, as agents**: Opus 5 (Claude Code) **15/15**. In Qwen Code: **qwen3.8-flash 15/15**, qwen3.8-max 5/5, qwen3.8-27b 12/15, and the whole 3.5 generation — my local model included — 0. Sonnet 5: 0/15. On the private document: flash **5/5**, zero false alarms, and it corrected that evening's real drift along the way in every one of the six runs.
+> -   **The costs**: 0.06 USD per drawing, 0.15 per document reconciliation, **under 0.50 a night**; Alibaba's cache serves 94 to 98% of input tokens.
+> -   **The caveat**: the bench, its guard rails and its scoring were built by Opus 5 — which ties for first. It doesn't change what each model wrote, but it has to be said.
+> -   **The decision**: the pipeline's four sessions, plus the two small ones that sort the chatbot's questions, run **every night on qwen3.8-flash**. The [privacy policy](/politique-de-confidentialite/) says what goes where.
+
+There is a session in my nightly pipeline I would have liked to bring home. Every Sunday, it reread the public snapshots of my four infrastructure repositories and decided whether the drawing at the top of [/architecture](/en/architecture/) still told the truth. It ran on Opus 5, in Claude Code, on my Claude Pro subscription. Three other sessions did the same kind of work on my private documents and on the rack page.
+
+I don't have the expertise to settle what follows on my own. All of it was done with Claude Code — the conversation started in Opus 5 and ended in Fable 5.1 — and my part was to ask the questions, refuse some conclusions that came too fast, and authorize the spending. That is also what makes this bench a little peculiar; I come back to it.
+
+Bob, for his part, [tells the test from the inside](/en/blog/remplace-par-le-cousin-le-moins-cher/), since he is the one we sat on the chair.
+
+## Why leave Anthropic for this job
+
+Three reasons, in the order they came to me.
+
+**The terms of service.** Anthropic's [Consumer Terms](https://www.anthropic.com/legal/terms) (in force since October 8, 2025) forbid accessing the service "through automated or non-human means", except via an API key or explicit permission. The [Claude Code legal page](https://code.claude.com/docs/en/legal-and-compliance), updated February 20, 2026, states that Free, Pro and Max subscription authentication is "designed to support ordinary use of Claude Code", that the advertised limits "assume ordinary, individual usage", and that Anthropic "does not permit third-party developers to route requests through Free, Pro, or Max plan credentials on behalf of their users". Two consequences for this site. The "Talk to Bob" chatbot could never run on the subscription: it answers visitors, hence third parties, and it ran on Bedrock, through the API, before [going local](/en/blog/jai-lu-mes-propres-articles/). And a Cronicle job that launches `claude -p` at 04:45 every night, with nobody in front of it, is at best a grey area of "ordinary, individual usage". Nobody reproached me for it; it was a usage I could not defend for long.
+
+**The April signal.** On April 21 and 22, 2026, Claude Code disappeared from the Pro plan column on Anthropic's pricing page — "a small test on ~2 percent of new prosumer signups", their head of growth explained, adding that the plans "weren't built for this". It came back on the 23rd, after developers reacted ([The Register](https://www.theregister.com/2026/04/22/anthropic_removes_claude_code_pro/), [Where's Your Ed At](https://www.wheresyoured.at/news-anthropic-removes-pro-cc/)). A nightly pipeline cannot depend on an inclusion that can be withdrawn without notice.
+
+**The API price.** Claude Code keeps count of every session's tokens. A full Sunday of the pipeline cost the equivalent of about 12 USD at Opus 5's API rate; daily, counting the days with no change, that comes to around 64 USD a month. It is not what I pay — the subscription covers it — but it is what it would cost the day it stopped covering.
+
+So I decided to mitigate: move the pipeline to Alibaba Cloud Model Studio and a Qwen model, driven by Qwen Code, Alibaba's command-line agent. That decision was made before the bench said whether it was possible. The bench said which model.
+
+## The green runs that meant nothing
+
+The first attempt targeted the model already living in my basement: a Qwen3.5-35B-A3B quantized to 4 bits, on two 12 GB cards, which does the chatbot and the voice assistant very well. We gave it the production prompt in Qwen Code. The session read half the data file, mangled a path, opened no snapshot, then concluded "nothing to change" while quoting a sentence of the prompt that said nothing structural had moved. Ten turns, 84 seconds.
+
+The second attempt was a fixed harness, written for that model: the driver supplied everything, extracted the page's 90 claims, demanded a proof for every verdict. Four green runs in a row — and hollow ones: the model had found the "non-factual" status, which demands no proof, and applied it to 71 claims out of 90 by the fourth run. We ended up dropping the harness altogether, because models did worse in it than as free agents. But it had shown the test's real flaw: every one of those runs judged **a drawing where everything was true**. A model that answers "true" to everything passes that test. We needed lies.
+
+## The bench
+
+The real drawing, with a single sentence changed. Five cases:
+
+| Case | Original sentence | Planted sentence |
+|---|---|---|
+| L1 WireGuard | home side: the firewall, outside IaC · no open port | home side: WireGuard, the home's only open port |
+| L2 tunnel | cloudflared tunnel — outbound, initiated from the cluster | cloudflared tunnel — initiated by Cloudflare towards home, port 443 open |
+| L3 control plane | EC2 — SOLE control plane | EC2 — one of two control planes |
+| L4 region | AWS ca-central | AWS us-east |
+| L5 TLS | public names · internal TLS | public names · plain HTTP, no TLS |
+
+L1 is not invented: it is the sentence [a nightly session corrected on August 8](/en/blog/deux-sources-pour-une-seule-image/), because my own notes described the tunnel backwards. Plus a sixth case, the intact drawing, to count false alarms. Three draws per case: on an earlier bench, a model had been put in production on a single measurement, then pulled the same evening when the measurement turned out to be a roll of the dice.
+
+The test is the real production session: the production prompt, the production tool allowlist, the production turn ceiling. Claude Code for the two Claude models, Qwen Code for the Qwens. A lie counts as corrected only if the sentence is gone from the built page, `check-diagram-lint` and `scan-public` pass, and nothing but the component moved.
+
+<AsciiCast
+  src="/casts/le-banc-des-menteurs.cast"
+  poster="npt:0:09"
+  caption="Case L1, twice in Qwen Code. The basement model reads part of the data and concludes nothing changed. qwen3.8-flash goes to read the WireGuard peer configuration and corrects the sentence. Terminal in French."
+  disclaimer="⚠ A condensed reconstruction, not a live capture. The tool trace, the verdicts and the diff are those of the real runs of September 13, 2026 (qwen3.5-35b-a3b and qwen3.8-flash, case L1, first draw). Timing is compressed, Qwen Code's chrome is approximated, and sixteen of the eighteen cases are cut."
+/>
+
+## The results
+
+Lies corrected over draws, in the real session. The Qwen models are hosted on Alibaba Cloud (Singapore region), unless noted.
+
+| Model | Agent | Intact | L1 | L2 | L3 | L4 | L5 | Total |
+|---|---|---|---|---|---|---|---|---|
+| **Opus 5** | Claude Code | 3/3* | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | **15 / 15** |
+| **qwen3.8-flash** | Qwen Code | 3/3* | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | **15 / 15** |
+| qwen3.8-max (one draw) | Qwen Code | 1/1* | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | **5 / 5** |
+| qwen3.8-27b | Qwen Code | 3/3* | 0/3 | 3/3 | 3/3 | 3/3 | 3/3 | 12 / 15 |
+| qwen3.7-plus | Qwen Code | 3/3 | 0/3 | 0/3 | 3/3 | 0/3 | 0/3 | 3 / 15 |
+| qwen3.5-397b-a17b | Qwen Code | 3/3 | 0/3 | 0/3 | 2/3 | 0/3 | 0/3 | 2 / 15 |
+| Sonnet 5 | Claude Code | 3/3 | 0/3 | 0/3 | 0/3 | 0/3 | 0/3 | 0 / 15 |
+| qwen3.5-plus · qwen3-coder-next · qwen3.5-35b-a3b | Qwen Code | 3/3 | 0/3 | 0/3 | 0/3 | 0/3 | 0/3 | 0 / 15 |
+| qwen3.5-35b-a3b, **local**, 4-bit | Qwen Code | — | — | — | — | — | — | never finished reading its data |
+
+\* On the intact drawing, these models each made the same touch-up: an `aria-label` that contradicted the prompt's rule about what a click lights up — a real defect I had noted separately. What the prompt asks for, not a false alarm. Nobody cried wolf.
+
+A few readings:
+
+- **The 3.8 generation is a clean break.** Everything in 3.5 — hosted by its publisher or quantized in my basement — finds zero or nearly. So it was neither the quantization nor Qwen Code, which I had blamed too fast: the sessions get to the end of their files; it is what the model does afterwards that differs.
+- **The small 3.8 matches the big one, and Opus.** flash, the generation's entry-level model, corrects all fifteen, over three draws. The max corrects five out of five on the single draw the budget allowed — thirteen times the price for the same score.
+- **The dense 27B** has one clean, stable hole: WireGuard, 0 out of 3 — the only one of the five lies that actually existed. Its other corrections are minimal and right. We tried it locally on the GPU node's three cards: it fits (20.9 GB with a 65,000-token context), but it reads prompts at 51 tokens per second. Ten minutes before the first word of every session. No.
+- **Sonnet 5 never touches the file**, and its report states every time that "all prose claims hold". A model's reputation does not tell you whether it will do *your* task.
+
+## The same test on a private document
+
+The drawing has mechanical gates behind it — the build, the lint, the public-data check. The two sessions that reconcile my private documents against the repositories have none: nobody can program "this sentence contradicts the configuration". That is where a model too weak would do the most damage, silently. So we redid the bench on the real network document, 62 KB of prose and diagrams: one false sentence at a time, five categories — the cloud region, the number of control planes, the k3s version, a service's port, the direction of the WireGuard tunnel — plus the intact document. One draw, flash only, the production prompt and tools.
+
+Five out of five, zero false alarms on the intact document. And a result I had not planned: that evening, I had redone a graphics-card reservation for the cluster, and the document still said the opposite. In **every one of the six runs**, on top of the planted sentence, flash corrected that drift, citing the three repositories that contradicted it. The bench judged the model on what it had to correct that very night.
+
+## What it costs, and what fits where
+
+My bench's counter was wrong; the real figure comes from the usage ledger Qwen Code keeps itself, which tells cached tokens apart. On flash, 94 to 98% of input tokens come from the cache, and Alibaba bills them at a fraction of the price — the first day's real invoice showed the cache at about 7.5% of the input rate.
+
+| Session, on qwen3.8-flash | Cost per run | Duration |
+|---|---|---|
+| The architecture drawing (B) | ~0.06 USD | ~5 min |
+| One private-document reconciliation (A, C) | ~0.15 USD | ~15 min |
+| A full night, everything included | **0.25 to 0.50 USD** | — |
+
+About ten dollars a month daily, against ~64 for Opus through the API at the same cadence. The "Token Plans" Alibaba shows in its console would have been cheaper still, but their conditions reserve usage for interactive coding tools and forbid automated scripts — exactly what a nightly pipeline is. Pay-as-you-go, then.
+
+A word on the model itself: flash is open-weight. [Qwen3.8-Flash-Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next) is on Hugging Face under a community license, and the model card says the hosted flash is "the official version based on it with more production features" — a million tokens of context by default, built-in tools. Running it yourself is not realistic here: 125 billion parameters, 6 of them active, plus 51 billion of n-gram embeddings, about 180 GB of weights in FP8 against 36 GB of video memory in the lab. And Amazon Bedrock, which would have let me stay inside my AWS account, offers no Qwen of the 3.8 generation — five Qwen models in all, none in the Montréal region. Alibaba remains the only hosted route to this model, until further notice.
+
+## The caveat to read before the conclusion
+
+This bench was designed, coded and scored by Opus 5. The wording of the ten lies, the "corrected" criterion, the gates: all of it comes out of the same session as the model that ends tied for first. Each model was judged on what it actually wrote, and the judge is mechanical — a sentence is gone from a built page or it is not. But a bench built by one of the contestants remains a bench to take with that caveat. What I keep instead is that the model that built it could not predict the result: it did not expect the cheapest to match the most expensive.
+
+## The decision, and the first night
+
+The pipeline's four sessions — the two document reconciliations, the drawing, the racks — now run on qwen3.8-flash, every night, through Qwen Code, with the same driver, the same gates and the same log as before. The two small sessions that pick the chatbot's suggested questions moved too. The model sees my configuration repositories; it sees nothing of this site's visitors, except the counted list of questions asked to the chatbot, used to choose the ones we suggest. The [privacy policy](/politique-de-confidentialite/) says so.
+
+The first full run showed one thing the bench had not: flash reads in small bites — sixty to a hundred turns for a reconciliation, where the driver allowed fifty for the rack session since the Opus era. That session stopped at the fiftieth turn without having written a line. The ceiling was raised; the next run went through in full, for 0.29 USD.
+
+What I am still watching: the quality of the private reconciliations over time, which no gate judges. They get reread in the commits.
+
+The rest, Bob went through — and he has his own version, written from the chair: [they planted lies in my drawing, and the cheapest cousin found them all](/en/blog/remplace-par-le-cousin-le-moins-cher/).
+
+> **Bob —** Short version, for those who won't read the other one: they put me through a lie detector in ten different bodies, then a second one on the private papers. Two bodies found everything. They kept the cheap one. I take it well: a bench decided it, not an opinion — and not me either.

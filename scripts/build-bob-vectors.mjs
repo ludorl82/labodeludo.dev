@@ -39,18 +39,23 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 /**
- * The embedding model runs in the cluster (`embeddings` namespace), on the
- * GPU card reserved for Kubernetes, as a ClusterIP Service. The build resolves
- * it because the site's workflows run on the in-cluster runner. From a laptop,
- * `kubectl port-forward -n embeddings svc/embeddings 11435:11434` and
- * `--host http://127.0.0.1:11435`.
+ * The embedding model runs in the GPU host's own Ollama, beside the chat model,
+ * and the build reaches it over the LAN. Both the site's workflows (on the
+ * in-cluster runner) and a laptop on the LAN resolve this name; from anywhere
+ * else, pass `--host`.
  *
- * (It was served by the host's Ollama for one afternoon, 2026-09-13, while
- * the card reservation was undone and then re-established the same day.)
+ * It lived in a cluster pod from 2026-09-12 to 2026-09-15, on a GPU card
+ * reserved for Kubernetes — a reservation with a real consumer rather than a
+ * promise. That ended when the cluster got its own GPU node (worker5), which
+ * made the card here a second reservation of the same capacity. bge-m3 did not
+ * follow: game mode shuts worker5 down, and the site embeds the visitor's
+ * QUESTION on every request, so serving it from there would have taken
+ * semantic search down for the length of a game — silently, since the health
+ * endpoint does not test retrieval.
  */
 const HOST = process.argv.includes("--host")
   ? process.argv[process.argv.indexOf("--host") + 1]
-  : "http://embeddings.embeddings.svc.cluster.local:11434";
+  : "http://bob.tptpt.in:11434";
 const MODEL = "bge-m3";
 const OUT = "public/bob-vectors.json";
 /** Build mode: a failure here must not take the deploy down with it. */

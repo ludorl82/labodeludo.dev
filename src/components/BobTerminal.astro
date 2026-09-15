@@ -382,6 +382,14 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
     font-family: inherit;
     font-size: 0.75rem;
     cursor: pointer;
+    /* A <button> centres its label by default, which is invisible while the
+       pill hugs one line of text — and wrong the moment it does not. On a
+       phone the row is ~310px, so a question past roughly forty characters is
+       clamped to the full width and wraps; its two lines were then centred
+       while the shorter pills beside them read as left-aligned, which is what
+       "the long ones go centred" looks like. The labels all start at the same
+       x now, whether they wrap or not. */
+    text-align: left;
   }
 
   .opener:hover {

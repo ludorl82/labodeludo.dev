@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : au centre, un robot nommé Bob dont la tête s'ouvre sur un emplacement vide. Quatre cartouches numérotées attendent autour de lui — l'auteur des articles, le majordome du site, l'assistant de la maison, le scribe de nuit. Deux d'entre elles portent la même étiquette de modèle local, reliées par un trait, et ce qui les distingue est indiqué comme étant leurs outils.">
+  <rect width="1024" height="320" fill="#0f1d29"/>
+
+  <!-- le robot -->
+  <g transform="translate(462, 92)">
+    <!-- antenne -->
+    <line x1="50" y1="-16" x2="50" y2="0" stroke="#7a8a99" stroke-width="2"/>
+    <circle cx="50" cy="-20" r="5" fill="#8fe3b0"/>
+    <!-- tête -->
+    <rect x="8" y="0" width="84" height="66" rx="10" fill="#16222e" stroke="#7fd4d4" stroke-width="2"/>
+    <!-- emplacement de cerveau, vide -->
+    <rect x="24" y="14" width="52" height="24" rx="3" fill="#0f1d29" stroke="#7a8a99" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="50" y="30" text-anchor="middle" font-family="monospace" font-size="10" fill="#7a8a99">cerveau</text>
+    <!-- yeux -->
+    <circle cx="34" cy="52" r="5" fill="#8fe3b0"/>
+    <circle cx="66" cy="52" r="5" fill="#8fe3b0"/>
+    <!-- corps -->
+    <rect x="18" y="74" width="64" height="46" rx="8" fill="#12242f" stroke="#7a8a99" stroke-width="1.5"/>
+    <text x="50" y="102" text-anchor="middle" font-family="monospace" font-size="15" fill="#d8d8d8">Bob</text>
+  </g>
+
+  <!-- cartouches : deux à gauche, deux à droite -->
+  <g font-family="monospace" font-size="11">
+    <!-- 1. auteur -->
+    <rect x="48" y="58" width="232" height="46" rx="5" fill="#101a24" stroke="#7a8a99" stroke-width="1.5"/>
+    <text x="62" y="77" fill="#d8d8d8">1 · l'auteur des articles</text>
+    <text x="62" y="93" fill="#7a8a99">un gros modèle infonuagique</text>
+    <line x1="280" y1="81" x2="452" y2="108" stroke="#7a8a99" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+    <!-- 2. majordome -->
+    <rect x="48" y="196" width="232" height="46" rx="5" fill="#101a24" stroke="#7fd4d4" stroke-width="1.5"/>
+    <text x="62" y="215" fill="#d8d8d8">2 · le majordome du site</text>
+    <text x="62" y="231" fill="#7fd4d4">qwen35 · ma carte, mon sous-sol</text>
+    <line x1="280" y1="219" x2="452" y2="176" stroke="#7fd4d4" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+    <!-- 3. assistant -->
+    <rect x="744" y="196" width="232" height="46" rx="5" fill="#101a24" stroke="#7fd4d4" stroke-width="1.5"/>
+    <text x="758" y="215" fill="#d8d8d8">3 · l'assistant de la maison</text>
+    <text x="758" y="231" fill="#7fd4d4">qwen35 · la même carte</text>
+    <line x1="744" y1="219" x2="572" y2="176" stroke="#7fd4d4" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+    <!-- 4. scribe -->
+    <rect x="744" y="58" width="232" height="46" rx="5" fill="#101a24" stroke="#7a8a99" stroke-width="1.5"/>
+    <text x="758" y="77" fill="#d8d8d8">4 · le scribe de nuit</text>
+    <text x="758" y="93" fill="#7a8a99">un modèle infonuagique</text>
+    <line x1="744" y1="81" x2="572" y2="108" stroke="#7a8a99" stroke-width="1.5" stroke-dasharray="5 4"/>
+  </g>
+
+  <!-- le trait qui relie les deux mêmes cerveaux -->
+  <path d="M164,248 L164,272 L860,272 L860,248" fill="none" stroke="#7fd4d4" stroke-width="1.5"/>
+  <rect x="384" y="258" width="256" height="28" rx="4" fill="#0f1d29"/>
+  <text x="512" y="277" text-anchor="middle" font-family="monospace" font-size="11.5" fill="#7fd4d4">même cerveau — outils différents</text>
+
+  <text x="512" y="44" text-anchor="middle" font-size="19" font-weight="600" fill="#d8d8d8">Un robot, quatre cerveaux</text>
+  <text x="512" y="308" text-anchor="middle" font-family="monospace" font-size="11" fill="#7a8a99">le majordome n'a aucun outil, exprès</text>
+</svg>

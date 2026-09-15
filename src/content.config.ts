@@ -36,6 +36,9 @@ const castSchema = z.object({
   caption: z.string(),
   /** Slug of the article this recording came from, if any. */
   article: z.string().optional(),
+  /* « aucune » pour les enregistrements du chat du site : le cadre par défaut
+     reproduit une session Claude Code, et le chat n'en est pas une. */
+  session: z.enum(["claude-code", "aucune"]).optional(),
 });
 
 const casts = defineCollection({

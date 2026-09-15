@@ -1,9 +1,19 @@
 {
-  "generated": "2026-09-15T11:47:57Z",
+  "generated": "2026-09-15T14:11:16Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
     "c'est quoi ton setup complet ?",
-    "Quels articles parlent de Kubernetes ?"
+    "Quels articles parlent de Kubernetes ?",
+    "Comment as-tu migré ton homelab vers NixOS ?",
+    "Quels bogues le cluster a-t-il attrapés en direct ?",
+    "How did you migrate your homelab to NixOS?",
+    "What happened when you unplugged the NAS?"
+  ],
+  "written": [
+    "Comment as-tu migré ton homelab vers NixOS ?",
+    "Quels bogues le cluster a-t-il attrapés en direct ?",
+    "How did you migrate your homelab to NixOS?",
+    "What happened when you unplugged the NAS?"
   ]
 }

@@ -193,12 +193,20 @@ const drawnNames = new Set(
 const fleetExtras = fleetDevices.filter(
   (d) => !drawnNames.has(d.name) && !(d.class === "ups" && upsCount > 0),
 );
-// La dérive dans l'autre sens : le parc les croit déclarés, l'IaC ne les nomme
-// plus. Ils restent branchés, ils tirent du courant, et plus aucun repo ne
-// répond d'eux — ça se dit.
+// La dérive dans l'autre sens : le drapeau `iacDeclared` du parc dit « déjà
+// dans architecture.json » et, pour ceux-là, les quatre repos publics ne les
+// nomment pas. Ils restent branchés, ils tirent du courant — ça se dit, et
+// rien de plus : le drapeau est posé par une session privée, l'instantané
+// public n'est pas tenu au même rythme que le repo privé, et le join ne lit
+// que le public. Donc ni « l'IaC a cessé de les nommer » ni « jamais déclarés »
+// ne sont décidables d'ici — seul le désaccord des deux graines est un fait.
 const orphans = fleetDevices.filter(
   (d) => d.iacDeclared === true && !drawnNames.has(d.name),
 );
+const oneOrphan = orphans.length === 1;
+// un orphelin que l'inventaire dit agent k3s est le seul cas où la bande du bas
+// contredit un compte dessiné plus haut : ce compte-là est celui des déclarés
+const orphanAgents = orphans.filter((d) => /k3s/i.test(d.role ?? ""));
 const fleetUnits = fleetExtras.reduce((n, d) => n + (d.count ?? 1), 0);
 // the seam worth naming: an undeclared machine that nonetheless carries a
 // declared k3s agent — a layer crossing only the fleet seed can see
@@ -279,15 +287,27 @@ const fleetNotes = [
   ),
   ...(orphans.length
     ? [
-        `↑ ${orphans.map((d) => d.name).join(", ")} : le parc les croit ` +
-          `déclarés, l'IaC ne les nomme plus — plus personne pour signer.`,
+        `↑ ${orphans.map((d) => d.name).join(", ")} : l'inventaire ${
+          oneOrphan ? "le croit" : "les croit"
+        } déclaré${oneOrphan ? "" : "s"}, aucun repo public ne ${
+          oneOrphan ? "le nomme" : "les nomme"
+        }.`,
+        ...(orphanAgents.length
+          ? [
+              `↑ ${orphanAgents
+                .map((d) => d.name)
+                .join(", ")} s'y dit même agent k3s : les ${k3sAgents} ` +
+                `agents du schéma sont les déclarés, pas les seuls branchés.`,
+            ]
+          : []),
       ]
     : []),
 ];
 // « jamais déclarés » serait faux dès qu'un orphelin est dans la bande : lui,
-// il l'a été.
+// le drapeau du parc le dit déclaré — ce que les repos publics, eux, ne
+// confirment pas.
 const fleetSubtitle = orphans.length
-  ? "bien branchés, pas (ou plus) déclarés : rien à allumer, aucune source à ouvrir"
+  ? "bien branchés, déclarés par l'inventaire seulement : rien à allumer, aucune source à ouvrir"
   : "bien branchés, jamais déclarés : rien à allumer, aucune source à ouvrir";
 const svgH = fleetExtras.length
   ? fleetBottom + 26 + fleetNotes.length * 14
@@ -328,17 +348,31 @@ const ariaLabel =
       `qu'aucun repo ne déclare : elles ne sont là que parce que l'IaC les ` +
       `nomme en passant, et c'est ce qui les rend cliquables.`
     : "") +
-  ` Chaque boîte est cliquable et allume ce qui en dépend.` +
+  ` Chaque boîte cliquable répond à une seule question : le chemin qu'elle ` +
+  `emprunte, d'un nom public jusqu'à la machine qui le sert — et l'inverse ` +
+  `si tu pars d'une machine. Les groupes s'allument tels quels, et une ` +
+  `machine sans lien déclaré n'a pas de chemin à allumer.` +
   (fleetExtras.length
     ? ` Une dernière bande montre le reste du parc : ${fleetUnits} ` +
-      `appareils bien réels — ${fleetClasses.join(", ")} — qu'aucun repo ne ` +
-      `déclare, répartis sur ${netKeys.length} segments réseau. Ceux-là ` +
+      `appareils bien réels — ${fleetClasses.join(", ")} — qu'aucun des ` +
+      `quatre repos publics ne déclare, répartis sur ${netKeys.length} ` +
+      `segments réseau. Ceux-là ` +
       `n'ont pas de source à ouvrir, donc pas de clic.` +
       (orphans.length
-        ? ` ${orphans.length} d'entre eux ` +
-          `(${orphans.map((d) => d.name).join(", ")}) y figurent parce que ` +
-          `l'IaC a cessé de les nommer : le parc les croit encore déclarés, ` +
-          `plus aucun repo ne répond d'eux.`
+        ? ` ${oneOrphan ? "Un seul" : `${orphans.length} d'entre eux`} ` +
+          `(${orphans.map((d) => d.name).join(", ")}) y figure${
+            oneOrphan ? "" : "nt"
+          } parce que l'inventaire ${
+            oneOrphan ? "le croit" : "les croit"
+          } déclaré${oneOrphan ? "" : "s"} alors qu'aucun des quatre repos ` +
+          `publics ne ${oneOrphan ? "le nomme" : "les nomme"} — lequel des ` +
+          `deux a raison, je ne peux pas le voir d'ici.` +
+          (orphanAgents.length
+            ? ` Et ${orphanAgents
+                .map((d) => d.name)
+                .join(", ")} s'y dit agent k3s : les ${k3sAgents} agents de ` +
+              `ce schéma sont les déclarés, pas les seuls branchés.`
+            : "")
         : "") +
       (carriers.length
         ? ` ${carriers.length > 1 ? "Certains d'entre eux portent" : "L'un d'eux porte"} ` +
@@ -565,7 +599,8 @@ const ariaLabel =
       " La bande du bas, elle, ne clique pas : c'est le reste du parc, qui " +
         "existe, qui tire du courant, et " +
         (orphans.length
-          ? "que plus aucun commit ne regarde."
+          ? "que l'inventaire croit déjà déclarés, alors qu'aucun repo public " +
+            "ne les nomme."
           : "qu'aucun commit n'a jamais vu passer.")}
   </figcaption>
 </figure>

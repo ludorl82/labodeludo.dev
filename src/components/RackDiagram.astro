@@ -8,7 +8,7 @@
 // the racks is written by hand, which is the point — the SVG this replaced
 // had drifted to showing a machine that no longer existed.
 //
-// Three rules the data imposes, and the drawing must not break:
+// Four rules the data imposes, and the drawing must not break:
 //   * `rackOrder` is a STACKING order, not a U position. The source records
 //     no U positions, so rows are evenly spaced and no U scale is drawn.
 //     The rack's TOTAL height (racks[].units) is known and may be WRITTEN,
@@ -23,6 +23,10 @@
 //   * `power` is the whole reason a rack picture beats a list: it answers
 //     "what dies with which onduleur". It gets its own rail on the right
 //     of each rack, not a scrap at the end of a truncated line.
+//   * `gpu` is the only field that says a physical card landed INSIDE a box,
+//     and the seed puts it on VMs — which have no row of their own to write
+//     it on. A chip that swallows its card is hardware the drawing lost, so
+//     the flag is drawn, and never on a box the seed did not flag.
 //
 // Palette: this site is monochrome on purpose, so "colour by network" means
 // the existing grayscale accents, not new hues.
@@ -40,6 +44,7 @@ type Device = {
   rackOrder?: number;
   power?: string;
   hostedBy?: string;
+  gpu?: boolean;
   count?: number;
 };
 type Rack = { units?: number; kind?: string };
@@ -115,6 +120,10 @@ const CHIPS_PER_LINE = Math.max(1, Math.floor((BOX_W - 14) / CHIP_STEP));
 const DETAIL_CH = Math.floor((BOX_R - 8 - TEXT_X) / 4.8); // 8px monospace
 const CHIP_CH = Math.floor((CHIP_W - 8) / 4.5); // 7.5px monospace
 const DETAIL_LINES = 3;
+// a tagged chip spends its right end on the flag, so the name gives room back
+const GPU_TAG = "GPU";
+const GPU_TAG_W = GPU_TAG.length * 4.5 + 8; // the flag and the room before it
+const GPU_NAME_CH = Math.max(6, Math.floor((CHIP_W - 8 - GPU_TAG_W) / 4.5));
 
 const wrap = (text: string, maxChars: number, maxLines: number) => {
   const out: string[] = [];
@@ -150,10 +159,15 @@ const clip = (s: string, n: number) =>
 const label = (d: Device) =>
   d.count && d.count > 1 ? `${d.name} ×${d.count}` : d.name;
 
+// the seed says "this box was handed a card" in exactly one way, and an
+// absent flag is not the same as a flag set false: only `true` gets a mark.
+const gpuOn = (d: Device) => d.gpu === true;
+
 // right of the name line: the real hardware, and only when the seed names
 // it. `class` is a bucket, not a model — printing it there would dress a
 // taxonomy up as a nameplate, so a box the seed never modelled stays blank.
-const hardware = (d: Device) => d.model ?? d.spec ?? "";
+const hardware = (d: Device) =>
+  [d.model ?? d.spec ?? "", gpuOn(d) ? GPU_TAG : null].filter(Boolean).join(" · ");
 // under it: the role, plus the spec when the model already took the slot
 const detailOf = (d: Device) =>
   [d.role, d.model && d.spec ? d.spec : null].filter(Boolean).join(" · ");
@@ -218,21 +232,43 @@ const shownNetworks = [
   ),
 ].filter((n) => n in NETWORK_LABEL);
 
+// the flag is drawn only where the seed sets it, and the legend obeys the
+// same rule: never an explanation for a mark that is not on the page
+const shownGpu = RACKS.some((r) => {
+  const rows = rowsFor(r.key);
+  return (
+    rows.some(gpuOn) ||
+    rows.some((d) => hostedOn(d.name).some(gpuOn)) ||
+    orphanHosted(r.key, rows).some(gpuOn)
+  );
+});
+
+// a hosted box written out in words, with its card when the seed named one
+const hostedWord = (d: Device) =>
+  gpuOn(d) ? `${d.name} (avec une carte ${GPU_TAG})` : d.name;
+
 const legend = [
   ...shownNetworks.map((n) => ({
     tone: NETWORK_TONE[n],
     text: NETWORK_LABEL[n],
     power: false,
+    gpu: false,
   })),
   ...(anyPower
-    ? [{ tone: "var(--text-faint)", text: "rail d'alimentation", power: true }]
+    ? [{ tone: "var(--text-faint)", text: "rail d'alimentation", power: true, gpu: false }]
+    : []),
+  ...(shownGpu
+    ? [{ tone: "var(--text-muted)", text: `${GPU_TAG} dans cette machine`, power: false, gpu: true }]
     : []),
 ];
 let legendX = TOP;
 const legendItems = legend.map((item) => {
   const at = legendX;
-  legendX += 16 + item.text.length * 5.2;
-  return { ...item, x: at };
+  // the swatch and the rail glyph fit in the 10px before their words; a drawn
+  // mini-chip with a flag written on it does not, so it gets a wider sample
+  const sample = item.gpu ? 30 : 10;
+  legendX += sample + 6 + item.text.length * 5.2;
+  return { ...item, x: at, labelX: at + sample };
 });
 
 // hosted gear the seed places in no rack at all — neither its own location
@@ -257,6 +293,7 @@ const ariaLabel = hasRacks
       const rows = rowsFor(r.key);
       const meta = racks[r.key] ?? {};
       const feeds = powerFeeds(r.key);
+      const orphans = orphanHosted(r.key, rows);
       return (
         `${r.title}${meta.kind ? ` (${meta.kind})` : ""} : ${rows.length} équipements` +
         `${meta.units ? `, châssis de ${meta.units}U au total` : ""}. ` +
@@ -268,13 +305,16 @@ const ariaLabel = hasRacks
               hardware(d),
               detailOf(d),
               d.power ? `alimenté par ${d.power}` : "",
-              hosted.length ? `contient ${hosted.map((h) => h.name).join(", ")}` : "",
+              hosted.length ? `contient ${hosted.map(hostedWord).join(", ")}` : "",
             ]
               .filter(Boolean)
               .join(", ");
           })
           .join(". ") +
         ". " +
+        (orphans.length
+          ? `et ${orphans.map(hostedWord).join(", ")} — hébergé${orphans.length > 1 ? "s" : ""} dans cette baie sans rangée hôte. `
+          : "") +
         feeds
           .map(
             (f) =>
@@ -284,7 +324,10 @@ const ariaLabel = hasRacks
           .join(" ")
       );
     }).join(" ") +
-    " Les rangées suivent l'ordre de l'inventaire, pas une position en U, et aucune échelle en U n'est dessinée."
+    " Les rangées suivent l'ordre de l'inventaire, pas une position en U, et aucune échelle en U n'est dessinée." +
+    (shownGpu
+      ? " Le mot GPU écrit près d'un nom, en rangée comme en puce, vient du champ gpu de l'inventaire : il dit qu'une carte est dans cette machine, pas comment elle y est arrivée."
+      : "")
   : "Élévation des baies — l'inventaire matériel ne place aucun équipement en baie.";
 ---
 
@@ -388,8 +431,17 @@ const ariaLabel = hasRacks
                             <rect x={cx} y={cy} width="2" height={CHIP_H} fill={tone(hd)} />
                             <text x={cx + 6} y={cy + 10} font-family="var(--font-mono)"
                                   font-size="7.5" fill="var(--text-faint)">
-                              {clip(hd.name, CHIP_CH)}
+                              {clip(hd.name, gpuOn(hd) ? GPU_NAME_CH : CHIP_CH)}
                             </text>
+                            {/* the card the seed handed this box, written on the
+                                chip because nothing else on a chip has room */}
+                            {gpuOn(hd) && (
+                              <text x={cx + CHIP_W - 4} y={cy + 10} text-anchor="end"
+                                    font-family="var(--font-mono)" font-size="6.5"
+                                    fill="var(--text-muted)">
+                                {GPU_TAG}
+                              </text>
+                            )}
                           </Fragment>
                         );
                       })}
@@ -399,7 +451,7 @@ const ariaLabel = hasRacks
 
                 {orphans.length > 0 && (
                   <text x={x + TEXT_X} y={bodyBottom(key) + 12} font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">
-                    + {orphans.length} hébergé{orphans.length > 1 ? "s" : ""} dans cette baie sans rangée hôte : {orphans.map((o) => o.name).join(", ")}
+                    + {orphans.length} hébergé{orphans.length > 1 ? "s" : ""} dans cette baie sans rangée hôte : {orphans.map(hostedWord).join(", ")}
                   </text>
                 )}
               </Fragment>
@@ -409,7 +461,16 @@ const ariaLabel = hasRacks
           {/* legend, built from what is actually drawn */}
           {legendItems.map((item) => (
             <Fragment>
-              {item.power ? (
+              {item.gpu ? (
+                <Fragment>
+                  <rect x={item.x} y={legendY - 10} width="24" height="12" rx="2"
+                        fill="none" stroke="var(--panel-border)" stroke-dasharray="2 2" />
+                  <text x={item.x + 21} y={legendY} text-anchor="end"
+                        font-family="var(--font-mono)" font-size="6.5" fill="var(--text-muted)">
+                    {GPU_TAG}
+                  </text>
+                </Fragment>
+              ) : item.power ? (
                 <Fragment>
                   <line x1={item.x + 1} y1={legendY - 10} x2={item.x + 1} y2={legendY}
                         stroke="var(--text-faint)" stroke-width="1" />
@@ -418,7 +479,7 @@ const ariaLabel = hasRacks
               ) : (
                 <rect x={item.x} y={legendY - 9} width="3" height="10" fill={item.tone} />
               )}
-              <text x={item.x + 10} y={legendY} font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">
+              <text x={item.labelX} y={legendY} font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">
                 {item.text}
               </text>
             </Fragment>
@@ -426,7 +487,7 @@ const ariaLabel = hasRacks
 
           {unplaced.length > 0 && (
             <text x={TOP} y={height - 4} font-family="var(--font-mono)" font-size="8" fill="var(--text-faint)">
-              {unplaced.length} machine{unplaced.length > 1 ? "s" : ""} hébergée{unplaced.length > 1 ? "s" : ""} dont l'hôte n'est dans aucune baie : {unplaced.map((u) => u.name).join(", ")}
+              {unplaced.length} machine{unplaced.length > 1 ? "s" : ""} hébergée{unplaced.length > 1 ? "s" : ""} dont l'hôte n'est dans aucune baie : {unplaced.map(hostedWord).join(", ")}
             </text>
           )}
         </svg>
@@ -440,7 +501,13 @@ const ariaLabel = hasRacks
         barre de gauche donne le réseau, les puces en pointillé sont les
         machines virtuelles et les contrôleurs qui vivent <em>dans</em> la
         machine au-dessus d'elles, et le modèle réel est écrit à droite de
-        chaque rangée. À droite, le rail vertical relie chaque rangée à
+        chaque rangée.
+        {shownGpu && (
+          <> Le mot GPU écrit à côté d'un nom vient du champ gpu de l'inventaire :
+          une carte logée dans cette machine, rien de plus — le dessin ne devine
+          pas ce que le document tait.</>
+        )}
+        À droite, le rail vertical relie chaque rangée à
         l'onduleur qui la tient : le carré plein marque l'onduleur lui-même,
         et tout ce qui pend au même trait tombe avec lui. La hauteur totale
         du châssis est écrite en en-tête, mais les rangées sont dans l'ordre

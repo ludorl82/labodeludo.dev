@@ -18,7 +18,7 @@ Le site propose un robot conversationnel qui répond aux questions sur le labo �
 
 - **Les questions sont traitées par un modèle qui roule sur mon propre matériel**, dans le labo. Elles ne sont envoyées à aucun fournisseur d'intelligence artificielle externe. Le service qui reçoit la question (un Worker Cloudflare) la relaie au labo par un tunnel chiffré et retourne la réponse.
 - **Les questions sont comptées, pas conservées telles quelles avec leur auteur.** Le texte de chaque question est gardé pendant 35 jours, avec un compteur, sans adresse IP, sans identifiant de session et sans la réponse. Cette liste sert à choisir les questions suggérées sous la boîte de dialogue. Une question qui ressemble à une adresse (courriel, URL, numéro de téléphone) est refusée à l'entrée et n'est jamais enregistrée.
-- **La sélection des questions suggérées est faite par un modèle hébergé** (Alibaba Cloud Model Studio, région de Singapour) depuis le 13 septembre 2026 : la liste comptée des questions posées — le texte des questions et leur nombre, rien d'autre — lui est transmise une fois par jour pour qu'il en choisisse quelques-unes. C'est la seule donnée provenant des visiteurs qui sort du labo. Les conversations elles-mêmes n'y vont pas.
+- **La sélection des questions suggérées est faite au labo, elle aussi.** Elle a été confiée à un modèle hébergé (Alibaba Cloud Model Studio, région de Singapour) du 13 au 15 septembre 2026 : la liste comptée des questions lui était transmise une fois par jour. **Ce n'est plus le cas depuis le 15 septembre 2026** — la sélection est revenue sur mon propre matériel. **Aucune donnée provenant des visiteurs ne sort du labo.**
 - **La conversation elle-même n'est pas enregistrée** au-delà de la session en cours dans le navigateur.
 
 ## Les outils d'intelligence artificielle du labo
@@ -26,7 +26,7 @@ Le site propose un robot conversationnel qui répond aux questions sur le labo �
 Ce blogue documente un labo maison dont la configuration est décrite en code et entretenue avec des assistants d'intelligence artificielle. Pour que ce soit clair :
 
 - **Des fournisseurs externes voient la configuration du labo, pas les données des visiteurs.** Les tâches automatisées qui relisent la documentation du labo et redessinent les pages [/architecture](/architecture/) et [/inventaire](/inventaire/) tournent sur des modèles hébergés : ceux d'Anthropic (Claude), et, depuis septembre 2026, ceux d'Alibaba Cloud Model Studio (région de Singapour). Ce qui leur est transmis, ce sont mes propres dépôts de configuration et mes notes techniques. Aucune donnée provenant des visiteurs du site n'y transite.
-- **Les questions posées au robot sont traitées au labo.** Seule la liste comptée des questions (voir plus haut) est transmise à un modèle hébergé, pour choisir les questions suggérées.
+- **Les questions posées au robot sont traitées au labo, du début à la fin.** Ni les conversations, ni la liste comptée des questions ne sont transmises à un fournisseur externe. Ça a été le cas pour la liste comptée pendant deux jours en septembre 2026 ; c'est écrit plus haut.
 - **Les articles signés « Bob »** sont écrits par un assistant d'intelligence artificielle, et les pages générées qui le disent le sont réellement. C'est indiqué sur chacune.
 
 ## Intégration LinkedIn

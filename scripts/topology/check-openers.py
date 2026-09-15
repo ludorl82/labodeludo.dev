@@ -34,6 +34,7 @@ homelab, why the result is a commit rather than a live write, and why the
 commit is small enough to read.
 """
 import json
+import os
 import re
 import sys
 
@@ -92,6 +93,34 @@ STOPWORDS = {"have", "link", "another", "there", "which", "what", "when", "does"
              "about", "some", "more", "other", "quoi", "c'est", "cest", "est-ce", "as-tu", "t'as",
              "tas", "encore", "autre", "plus", "avez", "vous", "quel", "quelle", "quels", "quelles",
              "comment", "pourquoi", "quand", "combien", "peux", "peut", "fait", "faire", "roules", "rouler"}
+
+
+PROMPT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts")
+# Un exemple du prompt, cité entre guillemets ou entre accents graves.
+_QUOTED = re.compile(r"«\s*([^»\n]{6,120}?)\s*»|`([^`\n]{6,120})`")
+
+
+def prompt_examples(name):
+    """Les questions citées en exemple dans un prompt, pour qu'aucune ne soit
+    publiée.
+
+    Un prompt qui enseigne par l'exemple peut se faire rendre ses exemples. Le
+    2026-09-13, le modèle local a choisi comme question suggérée la prémisse
+    fausse que ce prompt-ci lui donne en contre-exemple — « gpu-02 a deux RTX
+    3060, hein ? », première de la liste avec dix-sept occurrences. C'est ce
+    qui avait fait migrer la session vers un modèle hébergé.
+
+    Mesuré le 2026-09-15 sur la vraie liste de candidates : le modèle local la
+    choisit UNE FOIS SUR DIX. Ce n'est donc pas une précaution théorique.
+
+    Lu dans le fichier plutôt que recopié ici : un exemple ajouté demain est
+    gardé le jour où il est écrit, pas le jour où quelqu'un y pense.
+    """
+    try:
+        text = open(os.path.join(PROMPT_DIR, name), encoding="utf-8").read()
+    except OSError:
+        return set()
+    return {(a or b).strip() for a, b in _QUOTED.findall(text)}
 
 
 def content_words(q):
@@ -160,9 +189,15 @@ def main():
             fail(f"only {got} {lang} question(s) while {pool} eligible {lang} candidates exist — "
                  f"pick at least {MIN_PER_LANG} in {lang}")
 
+    examples = prompt_examples("openers.md")
     for q in openers:
         if not isinstance(q, str):
             fail(f"not a string: {q!r}")
+        # Un contre-exemple du prompt n'est pas une question à publier, même
+        # si un visiteur l'a vraiment posée — voir prompt_examples().
+        if q.strip() in examples:
+            fail(f"{q!r} is a counter-example from openers.md — the prompt names it "
+                 "to be rejected, not selected")
         if q not in allowed and q.casefold() not in allowed_fold:
             fail(f"{q!r} is not verbatim in the candidates — selected, not written, is the rule")
         if not (MIN_LEN <= len(q) <= MAX_LEN):

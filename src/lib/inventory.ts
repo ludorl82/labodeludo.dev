@@ -202,9 +202,16 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     ],
     // gpu-02 belongs to pipeline-media (it runs the NVR); a node maps to
     // exactly one role so the reverse lookup stays unambiguous
+    //
+    // The chatbot's retrieval side landed in September 2026 and is the same
+    // thing this role already names — local LLM inference. `external:ollama`
+    // is the endpoint serving the chat model; `app:embeddings` vectorises a
+    // question before it is answered.
     nodes: [
       "host:gpu-01",
       "host:gaming-01",
+      "external:ollama",
+      "app:embeddings",
     ],
   },
   "hote-conteneurs": {
@@ -228,12 +235,17 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "tout-ca-pour-un-script-bash",
       "un-pod-qui-voyage-leger",
     ],
-    // host:docker and host:vm-03 were retired out from under this list.
+    // host:docker was retired out from under this list. host:vm-03 was too,
+    // and came BACK in September 2026 as a new VM declared with `k3s-agent`
+    // and nothing else — so it is claimed here, as a cluster node, rather
+    // than under calcul-gpu: whatever it is eventually for, what the repo
+    // declares today is an agent. Move it the day the declaration says more.
     nodes: [
       "cluster:k3s",
       "host:pi-01",
       "host:vm-01",
       "host:vm-02",
+      "host:vm-03",
       "app:argocd",
     ],
   },

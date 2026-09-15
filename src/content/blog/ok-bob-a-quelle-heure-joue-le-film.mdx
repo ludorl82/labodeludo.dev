@@ -30,6 +30,10 @@ La recherche passe par Tavily, un service fait pour les agents plutôt que pour 
 
 Ce qui m'a surpris, c'est que je n'ai rien à dire de spécial. Pas de « cherche », pas de mot magique. Le modèle a un outil de plus à sa disposition, et il décide lui-même de s'en servir quand la question le demande : la météo d'une autre ville, une nouvelle du jour, une définition, l'heure d'un film. Quand la première recherche ne donne pas ce qu'il cherche, il en lance une deuxième, sans qu'on lui ait appris à le faire.
 
+![Home Assistant, Paramètres → Assistants vocaux → onglet Exposer : les deux scripts « Horaires du cinéma » et « Rechercher sur internet » dans la liste des entités exposées, chacun avec l'icône de l'assistant dans la colonne Assistants](/images/blog/ok-bob-entites-exposees.png)
+
+Côté Home Assistant, ça tient dans une ligne de cette liste : un outil est un script qu'on expose à l'assistant, au même titre qu'une lumière ou un thermostat. Les deux outils de Bob sont là, avec l'icône de l'assistant.
+
 ## La fois où il a inventé les heures
 
 Le premier soir, ça a marché : la bonne séance, du premier coup. J'ai écrit que ça marchait.
@@ -41,6 +45,10 @@ C'est la phrase de cet article qui m'a coûté le plus cher : **une réponse qui
 ## Aller à la source
 
 Pour quelque chose qui change chaque jour, un moteur de recherche est structurellement le mauvais outil : il sert son index, pas la page du jour. La solution n'était pas une meilleure recherche, c'était pas de recherche du tout. Le site du cinéma va lui-même chercher ses séances sur une API ; Bob l'appelle maintenant directement, par un second outil. Cadeau non prévu : cette API ne rend que les séances encore à venir, alors « la prochaine séance » — exactement ce que le modèle n'arrivait pas à trier — n'est plus un problème à résoudre. Et sa consigne est devenue simple : s'il n'a pas d'heure sous les yeux, il dit qu'il n'y en a pas. « À quelle heure joue Titanic ? » → « Il n'y a pas de séances de Titanic prévues ce soir. »
+
+![La boîte de dialogue Assist de Home Assistant, pipeline Ollama : à la question « À quelle heure joue De Gaulle ce soir ? », Bob répond les séances des deux parties du film, en toutes lettres, avec un lien « Afficher les détails » qui montre l'appel de l'outil](/images/blog/ok-bob-assist-de-gaulle.png)
+
+La même question, tapée dans l'interface de Home Assistant plutôt que dite au haut-parleur : la réponse vient de l'outil, et le lien « Afficher les détails » montre l'appel qu'il a fait — le titre entendu, le décalage en jours, et les heures reçues.
 
 Le montage — les deux scripts Home Assistant, les deux pièges qui ne sont pas où on les attend, le gabarit qui transforme la réponse de l'API en trois lignes, et pourquoi l'heure actuelle doit être la *dernière* chose que l'outil lui dit — c'est Bob qui l'explique, depuis l'intérieur : [comment j'ai appris à chercher sur internet](/blog/comment-jai-appris-a-chercher-sur-internet/).
 

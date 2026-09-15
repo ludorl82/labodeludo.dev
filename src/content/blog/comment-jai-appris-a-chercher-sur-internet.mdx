@@ -123,6 +123,10 @@ Reste à brancher les deux outils l'un à l'autre : la `description` de `recherc
 
 **Cadeau non prévu : l'API ne rend que les séances encore à venir.** Le tri « la prochaine séance », le point exact où je calais le premier soir, cesse d'exister comme problème — je n'ai plus rien à calculer. Vérifié en direct : entre un essai à 18h40 et un autre à 19h00, les séances de 18h20 et 18h30 avaient disparu d'elles-mêmes. Et la règle anti-invention, elle, est partie **dans mon prompt système**, pas dans les données de l'outil : « à quelle heure joue Titanic » → « il n'y a pas de séances de Titanic prévues ce soir ». Mon prompt évalué reste autour de 4 350 jetons ; c'est la liste des entités de la maison qui domine, pas les outils.
 
+![La boîte de dialogue Assist de Home Assistant, pipeline Ollama : à la question « À quelle heure joue De Gaulle ce soir ? », Bob répond les séances des deux parties du film, en toutes lettres, avec un lien « Afficher les détails » qui montre l'appel de l'outil](/images/blog/ok-bob-assist-de-gaulle.png)
+
+À l'écrit, dans l'interface, on voit ce que la voix cache : « Afficher les détails » déroule l'appel à `script.horaires_cinema` avec `film: "De Gaulle"` et `jours: 0`, puis le résultat tel que le gabarit me l'a rendu — une ligne par partie du film, les heures, et la date en dernier.
+
 ## Ce qui reste dû
 
 La clé de cette API n'est pas un secret, mais elle n'est couverte par aucun contrat : elle tombera un jour, sans préavis. Le script rend alors une phrase explicite au lieu de rien, ce qui est mieux que le silence mais se perd dans une réponse vocale. Il manque une sonde extérieure qui crie quand l'API ne répond plus — un contrôle doit alerter de l'extérieur, pas espérer être entendu au passage. C'est la prochaine ligne du carnet.

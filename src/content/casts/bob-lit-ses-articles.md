@@ -6,6 +6,7 @@ cast: "/casts/bob-lit-ses-articles.cast"
 poster: "npt:0:08"
 caption: "Chaque échange montre une propriété que la recherche sémantique a rendue possible — ou un garde-fou qu'il a fallu ajouter après l'avoir cassée."
 article: "bob-mon-jarvis-a-la-quebecoise"
+session: "aucune"
 disclaimer: "⚠ Contrairement aux autres enregistrements d'ici, ce ne sont pas des réponses reconstituées : elles ont été capturées mot pour mot le 11 septembre 2026 sur l'interface publique du site, liens compris. Seul le minutage est compressé et les questions ont été choisies."
 ---
 

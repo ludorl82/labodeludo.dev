@@ -9,9 +9,18 @@ interface Props {
   poster?: string;
   /** Overrides the container id shown in the tmux status line. */
   containerId?: string;
+  /**
+   * Le cadre reproduit une session Claude Code : barre de pied « auto mode »,
+   * tmux, le tout dans un terminal. C'est vrai pour la plupart des
+   * enregistrements d'ici — ils SONT des sessions. Ça ne l'est pas pour ceux du
+   * chat du site, qui tourne sur un modèle local et n'a rien à voir avec Claude
+   * Code : emprunter sa présentation y ferait passer un outil pour un autre.
+   */
+  session?: "claude-code" | "aucune";
 }
 
-const { src, caption, disclaimer, poster = "npt:0:06", containerId } = Astro.props;
+const { src, caption, disclaimer, poster = "npt:0:06", containerId,
+        session = "claude-code" } = Astro.props;
 
 /* Each recording ran in its own throwaway container at its own moment, so the
    id and the clock in the status line have to differ from one cast to the
@@ -70,17 +79,19 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
   <div class="term">
     <div class="titlebar">
       <span class="app">Alacritty</span>
-      <span class="btns"><i></i><i></i><i></i></span>
+      <span class="btns"><i></i></span>
     </div>
 
     <div class="screen">
       <div data-cast-src={src} data-cast-poster={poster}></div>
     </div>
 
-    <div class="hint">
-      <span><b>▶▶ auto mode on</b> (shift+tab to cycle) · esc to interrupt</span>
-      <span class="rc">/rc</span>
-    </div>
+    {session === "claude-code" && (
+      <div class="hint">
+        <span><b>▶▶ auto mode on</b> (shift+tab to cycle) · esc to interrupt</span>
+        <span class="rc">/rc</span>
+      </div>
+    )}
 
     <div class="tmux">
       <span class="seg s0">{left[0]}</span>

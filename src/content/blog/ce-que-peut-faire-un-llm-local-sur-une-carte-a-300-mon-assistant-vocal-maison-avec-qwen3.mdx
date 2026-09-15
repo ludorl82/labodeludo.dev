@@ -21,6 +21,8 @@ Le choix du modèle est un compromis assumé : un modèle 8B tient confortableme
 
 Et le choix du local plutôt que du cloud n'est pas qu'une question de principe ici : un assistant vocal qui « écoute » dans la maison, je préfère que le traitement de ce qu'il entend ne quitte jamais le réseau local. Ça élimine aussi la latence d'un aller-retour Internet et toute facturation à l'usage — une fois la carte achetée, chaque commande vocale est gratuite.
 
+> **Mise à jour du 15 septembre 2026.** Le montage décrit plus haut n'existe plus tel quel. L'assistant vocal ne tourne plus sur le PC Windows avec sa carte unique : il est sur `gpu-01`, un serveur NixOS du rack, où Ollama est déclaré en git comme le reste. Le modèle a grossi avec la machine — `qwen35-q4kl`, un Qwen3.5 35B à 3 milliards de paramètres actifs, qui occupe deux des trois RTX 3060 en permanence au lieu d'être chargé à la demande par une tâche planifiée. La fenêtre de 16k, elle, n'a pas bougé. Le même modèle répond aussi au chat du site depuis le 7 septembre, ce qui reste deux systèmes distincts : le chat n'a aucun outil, l'assistant vocal en a. **Le schéma ci-dessous montre le montage d'aujourd'hui**, pas celui de juillet — le trajet d'une commande vocale n'a pas changé, seulement la machine au bout. Et le piège des prises, lui, est toujours exactement le même.
+
 <VoiceAssistantDiagram context="article" />
 
 ## Le piège des prises qui ne sont pas des « lumières »

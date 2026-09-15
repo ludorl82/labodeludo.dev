@@ -21,6 +21,8 @@ The model choice is a deliberate tradeoff: an 8B model fits comfortably in 12GB 
 
 And choosing local over cloud isn't just a matter of principle here: for a voice assistant that "listens" inside the house, I'd rather the processing of what it hears never leave the local network. It also eliminates the latency of a round trip to the Internet and any usage-based billing — once the card is bought, every voice command is free.
 
+> **Update, 15 September 2026.** The setup described above no longer exists as written. The voice assistant has left the Windows PC and its single card: it runs on `gpu-01`, a NixOS server in the rack, where Ollama is declared in git like everything else. The model grew with the machine — `qwen35-q4kl`, a Qwen3.5 35B with 3 billion active parameters, sitting permanently on two of the three RTX 3060s instead of being loaded on demand by a scheduled task. The 16k window did not change. The same model has been answering this site's chat since 7 September, which are still two separate systems: the chat has no tools, the voice assistant does. **The diagram below shows today's setup**, not July's — the path of a voice command has not changed, only the machine at the end of it. And the outlet gotcha is still exactly the same.
+
 <VoiceAssistantDiagram context="article" lang="en" />
 
 ## The gotcha of outlets that aren't "lights"

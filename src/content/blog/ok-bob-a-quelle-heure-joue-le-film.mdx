@@ -1,24 +1,21 @@
 ---
 title: "« Ok Bob, à quelle heure joue le film ? » — Bob peut maintenant chercher sur internet"
 pubDate: 2026-09-15
-description: "L'assistant vocal de la maison roule sur une carte graphique dans mon sous-sol et, jusqu'à la semaine dernière, ne savait rien du monde extérieur — ni la date, ni la météo, ni l'horaire du cinéma. Il a maintenant une recherche web, par Tavily, qu'il décide d'appeler lui-même quand la question le demande. Voici comment c'est monté sur Home Assistant, ce qu'il sait faire depuis, les deux pièges, la leçon sur l'ordre des choses dans un résultat d'outil — et le cas du cinéma, où il a fallu aller chercher les horaires à la source. Fait en session avec Claude Code (Opus 5)."
+description: "L'assistant vocal de la maison roule sur une carte graphique dans mon sous-sol et, jusqu'à la semaine dernière, ne savait rien du monde extérieur — ni la date, ni la météo, ni l'horaire du cinéma. Il a maintenant une recherche web, par Tavily, qu'il décide d'appeler lui-même quand la question le demande. Ce que ça change dans la cuisine, la fois où il a inventé des heures de séance avec aplomb, et pourquoi les horaires du cinéma viennent maintenant de la source plutôt que d'un moteur de recherche. Le montage, lui, c'est Bob qui l'explique. Fait en session avec Claude Code (Opus 5)."
 tags: ["Maison", "Labo", "ludo"]
 heroImage: "/images/blog/banner-ok-bob-cinema.svg"
 ---
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Ce qui change** : l'assistant vocal de la maison (Home Assistant, mot de réveil « Ok Bob », modèle Qwen local sur le nœud GPU du labo) peut chercher sur internet. [Tavily](https://tavily.com), un service de recherche fait pour les agents, palier gratuit (1 000 recherches par mois, sans carte). La seule chose qui sort de la maison, c'est la requête.
-> -   **Le montage** : un `rest_command` vers Tavily, un script `recherche_web` exposé à l'assistant comme **outil**. Le modèle décide seul de l'appeler — aucun mot-déclencheur — et enchaîne deux recherches dans le même tour quand il le faut.
-> -   **Deux pièges de Home Assistant** : un déclencheur de phrase exige `prefer_local_intents: true`, qui court-circuiterait le modèle ; l'exposition d'un script se fait par websocket seulement — une case à cocher.
-> -   **La leçon** : la forme du résultat d'outil décide de tout — uniquement des données, l'ancrage temporel **en dernier**, jamais de consigne dedans.
-> -   **Fabriquer un outil** : un script exposé à Assist ; `description` et `fields` sont ce que le modèle lit ; un `rest_command` à URL Jinja ; `response_variable` pour capturer le JSON ; un gabarit qui aplatit, déduplique, filtre par titre avec tolérance, distingue panne et absence ; `stop` + `response_variable` pour rendre le résultat.
-> -   **Le cas du cinéma** : pour du contenu daté, un moteur à index a besoin de deux coups de chance (page en HTML statique, index rafraîchi le jour même). Les horaires viennent donc d'un second outil, branché sur l'API du cinéma — qui ne rend que les séances à venir, ce qui a fait disparaître le tri que le modèle n'arrivait pas à faire. Tavily garde tout le reste.
-> -   **Règle anti-invention** dans le prompt système, jamais dans les données de l'outil. Fait en session avec Claude Code (Opus 5) ; ma part a été de poser la question dans la cuisine, deux soirs de suite.
+> -   **Ce qui change** : l'assistant vocal de la maison (Home Assistant, mot de réveil « Ok Bob », modèle Qwen local sur le nœud GPU du labo) peut chercher sur internet, via [Tavily](https://tavily.com) au palier gratuit. La seule chose qui sort de la maison, c'est la requête. Le modèle décide seul quand chercher.
+> -   **Ce qu'il a fait de travers** : quand la recherche ne rapportait pas d'horaires, il en a inventé — des heures plausibles, énoncées du même ton assuré que les vraies.
+> -   **La correction** : pour du contenu qui change chaque jour, un moteur de recherche est le mauvais outil. Les horaires viennent maintenant directement de l'API du cinéma, par un second outil — et la règle « n'invente jamais une heure » est dans son prompt.
+> -   **Le comment** — les scripts Home Assistant, les pièges, le gabarit — est dans [l'article de Bob](/blog/comment-jai-appris-a-chercher-sur-internet/). Fait en session avec Claude Code (Opus 5) ; ma part a été de poser la question dans la cuisine, deux soirs de suite.
 
 Depuis juillet, [un modèle Qwen roule sur une carte graphique dans mon sous-sol](/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/) et répond à « Ok Bob » dans la maison : les lumières, la température, la télé. Il fait ça sans rien envoyer à personne, et c'est le point. Mais un modèle local a une limite dure : il ne sait rien de ce qui se passe dehors. Ni la date, ni la météo, ni l'horaire du cinéma du coin.
 
-Depuis la semaine dernière, il peut chercher. « Ok Bob, à quelle heure joue le film ce soir ? », et il répond la prochaine séance. Voici ce que ça a pris, et ce que la session a mesuré en chemin.
+Depuis la semaine dernière, il peut chercher. « Ok Bob, à quelle heure joue le film ce soir ? », et il répond la prochaine séance.
 
 <figure class="video">
   <video controls preload="metadata" playsinline poster="/videos/ok-bob-cinema-poster.jpg" style="max-width:min(100%,420px);display:block;margin:0 auto;border-radius:8px">
@@ -27,101 +24,32 @@ Depuis la semaine dernière, il peut chercher. « Ok Bob, à quelle heure joue l
   <figcaption>Le haut-parleur de la cuisine, filmé le 14 septembre : « Ok Bob, à quelle heure joue <em>De Gaulle</em> ce soir ? » — et les prochaines séances, lues à la source. Trente secondes, sans coupure.</figcaption>
 </figure>
 
-## Le montage, de bas en haut
+## Ce que ça change
 
-- **Tavily** est un service de recherche conçu pour les agents plutôt que pour les humains : on lui envoie une requête, il rend des extraits de pages propres, et, si on le demande, un résumé déjà rédigé. Le palier gratuit donne 1 000 recherches par mois, sans carte de crédit. Une recherche simple coûte un crédit ; en deux semaines d'usage réel, la maison en a consommé une quarantaine.
-- Dans Home Assistant, un `rest_command` qui appelle Tavily. La clé passe par `secrets.yaml` — avec un détail agaçant : un `!secret` est un nœud YAML entier, on ne peut pas coller `Bearer ` devant dans l'en-tête, alors le préfixe fait partie du secret.
-- Un script `recherche_web` qui appelle ce `rest_command`, récupère la réponse, et la rend à l'assistant avec `response_variable`.
-- Ce script est **exposé à l'assistant comme un outil**. Le modèle voit qu'il existe un outil « recherche web » avec un paramètre « requête », et c'est lui qui décide de l'appeler.
+La recherche passe par Tavily, un service fait pour les agents plutôt que pour les humains : on lui envoie une question, il rend des extraits de pages propres. Le palier gratuit donne 1 000 recherches par mois, sans carte de crédit ; en deux semaines d'usage réel, la maison en a consommé une quarantaine. Ce qui sort de chez moi, c'est la requête — pas la conversation, pas l'état de la maison.
 
-Ce dernier point m'a surpris. Je m'attendais à devoir dire « cherche ». Non : « quelle est la prochaine représentation de… » a suffi, et quand la première recherche ne donnait pas ce qu'il cherchait, il en a lancé une deuxième dans le même tour, sans que rien ne soit configuré pour ça. La météo, une nouvelle du jour, une question de culture générale : même mécanisme, même outil.
+Ce qui m'a surpris, c'est que je n'ai rien à dire de spécial. Pas de « cherche », pas de mot magique. Le modèle a un outil de plus à sa disposition, et il décide lui-même de s'en servir quand la question le demande : la météo d'une autre ville, une nouvelle du jour, une définition, l'heure d'un film. Quand la première recherche ne donne pas ce qu'il cherche, il en lance une deuxième, sans qu'on lui ait appris à le faire.
 
-## Les deux pièges, qui ne sont pas où on les attend
+## La fois où il a inventé les heures
 
-Le premier réflexe, pour ajouter une commande vocale dans Home Assistant, c'est un **déclencheur de phrase** — « cherche telle chose » déclenche une automatisation. Ça ne marche pas ici, et la raison est instructive : les déclencheurs de phrase exigent que le pipeline vocal préfère les intentions locales (`prefer_local_intents: true`), et dès lors « quelle est la température » est intercepté par le moteur d'intentions natif avant même que le modèle ne le voie — toutes les règles qu'on a mises des semaines à ajuster dans son prompt ne servent plus. Le script-outil, lui, est purement additif : un outil de plus, rien d'autre ne change.
+Le premier soir, ça a marché : la bonne séance, du premier coup. J'ai écrit que ça marchait.
 
-Le deuxième piège est bête : **exposer le script** à l'assistant. L'exposition ne vit pas dans le fichier des entités exposées mais dans le registre des entités, sous une option `conversation.should_expose`, qui ne se bascule que par websocket — aucune route REST. En pratique : une case à cocher, Paramètres → Assistants vocaux → Entités exposées. Vingt minutes pour trouver la case.
+Deux jours plus tard, un autre film, même question — et Bob m'a récité « 12h30, 16h10, 18h55, 21h45 ». Des heures plausibles, énoncées avec le même aplomb que les vraies. Elles étaient fausses. Rien n'était brisé : la recherche partait, les résultats revenaient. Mais chercher un film ramène des pages *de film* — synopsis, durée, date de sortie — et les heures vivent sur les pages *de cinéma*. Devant des extraits sans horaire, le modèle avait comblé le vide.
 
-![Home Assistant, Paramètres → Assistants vocaux → onglet Exposer : les deux scripts « Horaires du cinéma » et « Rechercher sur internet » dans la liste des entités exposées, chacun avec l'icône de l'assistant dans la colonne Assistants](/images/blog/ok-bob-entites-exposees.png)
+C'est la phrase de cet article qui m'a coûté le plus cher : **une réponse qui a l'air correcte n'est pas une preuve que la recherche a fonctionné.** Le premier soir, j'avais eu de la chance — la bonne page était dans l'index du moteur, à jour. Le deuxième, non. Et rien ne distinguait les deux cas, sauf d'aller vérifier moi-même.
 
-Une fois là, les deux scripts se retrouvent dans la liste au même titre qu'une lumière ou un thermostat : pour l'assistant, un outil est une entité comme une autre.
+## Aller à la source
 
-## La leçon : dans un résultat d'outil, le plus fiable va à la fin
+Pour quelque chose qui change chaque jour, un moteur de recherche est structurellement le mauvais outil : il sert son index, pas la page du jour. La solution n'était pas une meilleure recherche, c'était pas de recherche du tout. Le site du cinéma va lui-même chercher ses séances sur une API ; Bob l'appelle maintenant directement, par un second outil. Cadeau non prévu : cette API ne rend que les séances encore à venir, alors « la prochaine séance » — exactement ce que le modèle n'arrivait pas à trier — n'est plus un problème à résoudre. Et sa consigne est devenue simple : s'il n'a pas d'heure sous les yeux, il dit qu'il n'y en a pas. « À quelle heure joue Titanic ? » → « Il n'y a pas de séances de Titanic prévues ce soir. »
 
-Une chose mesurée dès le premier soir, et qui vaut pour n'importe quel outil qu'on donne à un agent : la forme de ce que l'outil rend décide de la réponse. Avec le résumé rédigé de Tavily en tête, Bob recopiait une date passée. Avec les extraits bruts seulement, et une ligne « Nous sommes le 12/09/2026 et il est 17:42 » **en tout dernier**, il choisissait la bonne séance. L'ancrage temporel au plus près de la génération est ce qui lui permet de *choisir* au lieu d'énumérer. Dans un prompt, le plus important va près de la question ; dans un résultat d'outil, le plus fiable va à la fin. Corollaire, mesuré aussi : une consigne glissée dans les données de l'outil (« choisis la première heure après maintenant ») entre en concurrence avec la question et empire les choses. Une règle va dans le prompt système, ou nulle part.
+Le montage — les deux scripts Home Assistant, les deux pièges qui ne sont pas où on les attend, le gabarit qui transforme la réponse de l'API en trois lignes, et pourquoi l'heure actuelle doit être la *dernière* chose que l'outil lui dit — c'est Bob qui l'explique, depuis l'intérieur : [comment j'ai appris à chercher sur internet](/blog/comment-jai-appris-a-chercher-sur-internet/).
 
-## Le cas du cinéma : aller à la source
+## Deux détails, et une chose refusée
 
-Deux jours plus tard, un autre film, même question — et pas d'horaire. Rien n'était brisé : l'outil partait, Tavily répondait. Mais **chercher par film ramène des pages de film** — synopsis, durée, classement, date de sortie — et les heures vivent sur des pages de *cinéma*. Plus grave : quand les extraits n'ont pas d'heures, le modèle en fabrique, du même ton assuré que les vraies (« 12h30, 16h10, 18h55, 21h45 » — plausibles, fausses). Et même la bonne page arrivait avec deux jours de retard, parce qu'un moteur de recherche sert son index, pas la page du jour. Ce n'est pas une faiblesse de Tavily, c'est la nature d'un index : pour du contenu qui change chaque jour, il faut deux coups de chance simultanés — que la page publie ses heures en HTML statique, et que l'index ait été rafraîchi ce jour-là.
+Le seul échec de la première soirée qui ne venait ni de la recherche ni du modèle : la reconnaissance vocale avait transcrit « De Gaulle » en « Google », et Bob cherchait les horaires de « Google, partie 2 ». Avant de soupçonner l'assistant, lire ce qu'il a réellement entendu.
 
-Le bon outil pour les horaires, c'est la source. Le site de Cineplex est une application JavaScript : sa page de film fait 93 Ko de HTML sans une seule heure dedans, les séances arrivent par un appel en arrière-plan vers une API. Cet appel est visible dans le navigateur, sa clé voyage dans leur propre bundle JavaScript, et `/v1/theatres` classe les salles par proximité de l'adresse qui appelle — la mienne est sortie en premier, avec son identifiant. Il ne restait qu'à en faire un outil.
+Ce qui reste dû : l'accès à l'API du cinéma n'est couvert par aucun contrat et tombera un jour sans préavis. Il manque une sonde extérieure qui crie quand ça arrive — c'est la prochaine ligne du carnet.
 
-## Fabriquer l'outil dans Home Assistant
-
-Un outil pour l'assistant, dans Home Assistant, c'est un **script exposé à Assist** : son `alias`, sa `description` et ses `fields` deviennent la définition que le modèle voit — le nom de l'outil, à quoi il sert, quels paramètres il prend. Tout ce que le modèle sait de l'outil, il le lit là. Trois pièces.
-
-**1. L'appel HTTP**, un `rest_command` dont l'URL est un gabarit Jinja : la salle et la date sont des variables, la clé vient de `secrets.yaml`.
-
-```yaml
-rest_command:
-  cineplex_showtimes:
-    url: "https://…/v1/showtimes?language=fr&locationId={{ theatre }}&date={{ jour }}"
-    method: GET
-    timeout: 20
-    headers:
-      Ocp-Apim-Subscription-Key: !secret cineplex_subscription_key
-```
-
-**2. Le script**, avec les deux champs que le modèle remplira lui-même. Leur `description` est écrite pour lui : c'est elle qui lui dit de laisser `film` vide pour toute la programmation, et que `jours` vaut 0 pour aujourd'hui, 1 pour demain.
-
-```yaml
-horaires_cinema:
-  alias: Horaires du cinéma
-  description: >-
-    Donne les séances de cinéma encore à venir au cinéma du coin. À utiliser
-    pour toute question sur les horaires d'un film ou la programmation du
-    cinéma, à la place de la recherche internet.
-  fields:
-    film:
-      description: Titre du film si la question vise un film précis, sinon laisser vide
-      required: false
-      selector: { text: }
-    jours:
-      description: Décalage en jours, 0 pour aujourd'hui, 1 pour demain
-      required: false
-      selector: { number: { min: 0, max: 6, mode: box } }
-  sequence:
-    - action: rest_command.cineplex_showtimes
-      data:
-        theatre: 1234
-        jour: "{{ (now() + timedelta(days=(jours | default(0) | int(0)))).strftime('%Y-%m-%d') }}"
-      response_variable: cx
-    - variables:
-        sortie:
-          resultat: |-
-            {# … le gabarit ci-dessous … #}
-    - stop: ""
-      response_variable: sortie
-```
-
-Le `response_variable` sur l'appel REST capture la réponse JSON ; le `stop` avec `response_variable` à la fin est ce qui rend `resultat` au modèle. Entre les deux, le gabarit.
-
-**3. Le gabarit Jinja**, qui transforme le JSON de l'API en quelques lignes lisibles. C'est là que se passe le vrai travail, et c'est ce qu'on ne trouve pas dans la documentation :
-
-- **Aplatir** : la réponse est imbriquée — salles → dates → films → expériences (VIP, régulière, 3D) → séances. Une boucle par niveau, et on ne garde que l'heure : `s.showStartDateTime.split('T')[1][:5]`.
-- **Dédupliquer et trier** les heures d'un film (un même film joue dans deux salles ; `unique | sort | join(', ')`), une ligne par titre, « Titre du film : 18:20, 21:10 ».
-- **Filtrer par titre, avec tolérance.** Le modèle transmet ce qu'il a entendu, et ce qu'il a entendu n'est pas toujours le titre exact. Le filtre accepte l'inclusion dans les deux sens, puis, en dernier recours, n'importe quel mot de plus de trois lettres du titre demandé (« Gaulle » suffit). S'il ne retient rien, il dit qu'aucun titre ne correspond **et rend quand même toute la programmation** — le modèle peut alors corriger de lui-même.
-- **Distinguer une panne d'une absence.** Un code HTTP autre que 200 rend une phrase explicite (« l'API n'a pas répondu correctement ») ; une réponse vide en rend une autre (« aucune séance à venir »). Sans cette distinction, le modèle comblerait le silence.
-- **Uniquement des données, aucune consigne**, et **l'ancrage temporel en dernier** : la dernière ligne est « Nous sommes le 14/09/2026 et il est 18:41 ». Les deux leçons du premier soir, appliquées.
-
-Reste à brancher les deux outils l'un à l'autre : la `description` de `recherche_web` se termine maintenant par « pour les horaires de cinéma, n'utilise pas cet outil : appelle `horaires_cinema` ». C'est une phrase dans une description de script, et c'est suffisant — le modèle choisit le bon outil à partir de là. Tavily garde tout le reste.
-
-**Cadeau non prévu : l'API ne rend que les séances encore à venir.** Le tri « la prochaine séance », le point exact où le modèle calait le premier soir, cesse d'exister comme problème — il n'a plus rien à calculer. Vérifié en direct : entre un essai à 18h40 et un autre à 19h00, les séances de 18h20 et 18h30 avaient disparu d'elles-mêmes. Et la règle anti-invention, elle, est partie dans le prompt système : « à quelle heure joue Titanic » → « il n'y a pas de séances de Titanic prévues ce soir ».
-
-## Ce qui reste dû, et deux détails
-
-La clé de cette API n'est pas un secret, mais elle n'est couverte par aucun contrat : elle tombera un jour, sans préavis. Le script rend alors une phrase explicite au lieu de rien, ce qui se perd dans une réponse vocale. Il manque une sonde extérieure qui crie quand l'API ne répond plus — c'est la prochaine ligne du carnet.
-
-Le seul échec de la première soirée qui ne venait ni de la recherche ni du modèle : la reconnaissance vocale avait transcrit « De Gaulle » en « Google », et la requête cherchait les horaires de « Google, partie 2 ». Avant de soupçonner l'agent, lire ce qu'il a réellement entendu. Et ce que j'ai refusé : la relance sans mot de réveil — Home Assistant garde le micro ouvert seulement quand la réponse se termine par un point d'interrogation, il aurait fallu faire finir Bob par « Veux-tu autre chose ? ». Chaque demande peut être indépendante ; « Ok Bob » n'est pas si long à dire.
+Et ce que j'ai refusé : la relance sans mot de réveil. Home Assistant garde le micro ouvert seulement quand la réponse se termine par un point d'interrogation ; il aurait fallu faire finir Bob par « Veux-tu autre chose ? » à chaque tour. Chaque demande peut être indépendante. « Ok Bob » n'est pas si long à dire.
 
 Tout ça a été fait en session avec Claude Code (Opus 5). Ma part : la question dans la cuisine, deux soirs de suite, et le refus de croire une réponse qui avait l'air correcte.

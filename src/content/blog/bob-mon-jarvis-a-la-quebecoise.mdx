@@ -1,7 +1,7 @@
 ---
-title: "Je vous présente Bob : un robot, quatre cerveaux, et le nom de mon chien"
+title: "Je vous présente Bob : un robot, plusieurs cerveaux, et le nom de mon chien"
 pubDate: 2026-09-15
-description: "Il y a un robot sur ce site. Il s'appelle Bob, il répond à vos questions sur mon labo, il tourne sur une carte graphique dans mon sous-sol, et il fait quatre métiers avec quatre cerveaux différents. Cet article le présente : d'où vient son nom, comment il choisit quoi vous répondre, et pourquoi le fait qu'il tourne chez moi change ce que vous pouvez lui demander. Travail mené en sessions avec Claude Code."
+description: "Il y a un robot sur ce site. Il s'appelle Bob, il répond à vos questions sur mon labo, il tourne sur une carte graphique dans mon sous-sol, et il fait plusieurs métiers avec autant de cerveaux différents. Cet article le présente : d'où vient son nom, comment il choisit quoi vous répondre, et pourquoi le fait qu'il tourne chez moi change ce que vous pouvez lui demander. Travail mené en sessions avec Claude Code."
 tags: ["Labo", "IA", "ludo"]
 heroImage: "/images/blog/banner-bob-jarvis.svg"
 ---
@@ -11,7 +11,7 @@ import AsciiCast from "../../components/AsciiCast.astro";
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Ce qu'il y a à essayer** : un chatbot sur ce site, à [/auteurs/bob](/auteurs/bob/) ou dans la palette avec `/` depuis n'importe quelle page. Il répond à partir du **contenu** de mes articles, pas seulement de leurs titres.
-> -   **Un robot, quatre cerveaux** : l'auteur des articles tourne sur un gros modèle infonuagique ; le majordome du site et l'assistant vocal de la maison partagent un **Qwen3.5-35B-A3B quantifié en 4 bits** sur une carte graphique de mon sous-sol ; le scribe de nuit, qui rafraîchit la documentation, tourne sur un modèle infonuagique bon marché.
+> -   **Un robot, plusieurs cerveaux** : l'auteur des articles tourne sur un gros modèle infonuagique ; le majordome du site et l'assistant vocal de la maison partagent un **Qwen3.5-35B-A3B quantifié en 4 bits** sur une carte graphique de mon sous-sol ; le scribe de nuit, qui rafraîchit la documentation, tourne sur un modèle infonuagique bon marché.
 > -   **Ce qui distingue le majordome de l'assistant, ce n'est pas le cerveau** : c'est les outils. Celui de la maison peut chercher sur internet. Celui du site n'a **aucun outil**, exprès.
 > -   **Comment il choisit** : chaque morceau d'article et chaque question deviennent une direction dans un espace à 1024 dimensions. La proximité se mesure par un angle. Pas de base de données vectorielle — un fichier statique et un produit scalaire.
 > -   **Ce que ça implique** : rien de ce que vous écrivez ne sort de chez moi. En échange, quand le labo dort, Bob répond à côté.
@@ -24,9 +24,11 @@ Parce qu'il y a un robot ici. Il s'appelle Bob. Il signe des articles, il répon
 
 Cet article le présente. Si vous voulez juste lui parler tout de suite, il est [là](/auteurs/bob/), ou dans la palette avec `/` depuis n'importe quelle page du site.
 
-## Un robot, quatre cerveaux
+## Un robot, plusieurs cerveaux
 
-La chose la plus intéressante à propos de Bob, c'est qu'il n'y a pas un Bob. Il y a un personnage, et derrière lui, quatre cerveaux qu'on change comme on change une pile.
+La chose la plus intéressante à propos de Bob, c'est qu'il n'y a pas un Bob. Il y a un personnage, et derrière lui, des cerveaux qu'on change comme on change une pile.
+
+Le personnage reste, les cerveaux passent. Bob signe des articles depuis juillet et répond aux visiteurs depuis septembre, et en quelques semaines il a déjà changé de cerveau plusieurs fois : un service infonuagique qui a tenu six jours avant que je le débranche, deux modèles locaux de tailles différentes, un modèle bon marché pour le travail de nuit. Le tableau ci-dessous est un instantané, pas une fiche technique — voici ceux qui tournent au moment où j'écris ceci.
 
 | Le métier | Le cerveau | Où il tourne |
 |---|---|---|

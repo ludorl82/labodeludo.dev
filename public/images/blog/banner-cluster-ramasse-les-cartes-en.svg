@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Three graphics cards set between two worlds: a game controller on the left, a cluster of hexagonal nodes on the right; two cards carry two-way arrows between them, the third is filed on the cluster side">
+  <defs>
+    <linearGradient id="bgcrc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#141c29"/>
+      <stop offset="100%" stop-color="#26344a"/>
+    </linearGradient>
+    <linearGradient id="cardbody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a6d92"/>
+      <stop offset="100%" stop-color="#2e3a52"/>
+    </linearGradient>
+    <linearGradient id="cardbody2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#44536f"/>
+      <stop offset="100%" stop-color="#273246"/>
+    </linearGradient>
+    <radialGradient id="glowamber" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ffc466" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffc466" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowteal" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#5ad1c8" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#5ad1c8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softcrc" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="320" fill="url(#bgcrc)"/>
+  <ellipse cx="170" cy="170" rx="150" ry="120" fill="url(#glowamber)"/>
+  <ellipse cx="860" cy="160" rx="170" ry="130" fill="url(#glowteal)"/>
+
+  <!-- gauche : la manette (le monde du jeu) -->
+  <g transform="translate(100,120)">
+    <rect x="0" y="20" width="150" height="64" rx="32" fill="url(#cardbody)" stroke="#7d8fb3" stroke-width="2"/>
+    <circle cx="34" cy="52" r="17" fill="#1b2334" stroke="#7d8fb3" stroke-width="2"/>
+    <rect x="29" y="41" width="10" height="22" rx="2" fill="#a9b8d6"/>
+    <rect x="23" y="47" width="22" height="10" rx="2" fill="#a9b8d6"/>
+    <circle cx="112" cy="44" r="6" fill="#ffc466"/>
+    <circle cx="126" cy="58" r="6" fill="#a9b8d6"/>
+    <circle cx="98" cy="58" r="6" fill="#a9b8d6"/>
+    <circle cx="112" cy="72" r="6" fill="#a9b8d6"/>
+    <text x="75" y="118" text-anchor="middle" font-size="17" letter-spacing="4" fill="#8fa3c8">GAME</text>
+  </g>
+
+  <!-- droite : le cluster (hexagones) -->
+  <g stroke="#5ad1c8" stroke-width="2.5" fill="#1d2a3d">
+    <path d="M860 70 l32 18 v36 l-32 18 -32 -18 v-36 z"/>
+    <path d="M812 152 l32 18 v36 l-32 18 -32 -18 v-36 z"/>
+    <path d="M908 152 l32 18 v36 l-32 18 -32 -18 v-36 z"/>
+  </g>
+  <g fill="#5ad1c8">
+    <circle cx="860" cy="106" r="5"/>
+    <circle cx="812" cy="188" r="5"/>
+    <circle cx="908" cy="188" r="5"/>
+  </g>
+  <text x="860" y="262" text-anchor="middle" font-size="17" letter-spacing="4" fill="#8fa3c8">CLUSTER</text>
+
+  <!-- au centre : les trois cartes -->
+  <g transform="translate(360,72)">
+    <!-- carte 1 : empruntée, double flèche -->
+    <g transform="translate(0,0)">
+      <rect x="0" y="0" width="220" height="52" rx="8" fill="url(#cardbody)" stroke="#7d8fb3" stroke-width="2"/>
+      <circle cx="52" cy="26" r="17" fill="#1b2334" stroke="#7d8fb3" stroke-width="2"/>
+      <g stroke="#7d8fb3" stroke-width="2"><line x1="52" y1="12" x2="52" y2="40"/><line x1="38" y1="26" x2="66" y2="26"/></g>
+      <circle cx="122" cy="26" r="17" fill="#1b2334" stroke="#7d8fb3" stroke-width="2"/>
+      <g stroke="#7d8fb3" stroke-width="2"><line x1="122" y1="12" x2="122" y2="40"/><line x1="108" y1="26" x2="136" y2="26"/></g>
+      <rect x="160" y="44" width="52" height="8" rx="2" fill="#c9a24b"/>
+    </g>
+    <!-- carte 2 : empruntée, double flèche -->
+    <g transform="translate(24,72)">
+      <rect x="0" y="0" width="220" height="52" rx="8" fill="url(#cardbody2)" stroke="#7d8fb3" stroke-width="2"/>
+      <circle cx="52" cy="26" r="17" fill="#1b2334" stroke="#7d8fb3" stroke-width="2"/>
+      <g stroke="#7d8fb3" stroke-width="2"><line x1="52" y1="12" x2="52" y2="40"/><line x1="38" y1="26" x2="66" y2="26"/></g>
+      <circle cx="122" cy="26" r="17" fill="#1b2334" stroke="#7d8fb3" stroke-width="2"/>
+      <g stroke="#7d8fb3" stroke-width="2"><line x1="122" y1="12" x2="122" y2="40"/><line x1="108" y1="26" x2="136" y2="26"/></g>
+      <rect x="160" y="44" width="52" height="8" rx="2" fill="#c9a24b"/>
+    </g>
+    <!-- carte 3 : la 960, rangée côté cluster -->
+    <g transform="translate(96,144)">
+      <rect x="0" y="0" width="180" height="46" rx="8" fill="url(#cardbody2)" stroke="#5ad1c8" stroke-width="2"/>
+      <circle cx="48" cy="23" r="15" fill="#1b2334" stroke="#5ad1c8" stroke-width="2"/>
+      <g stroke="#5ad1c8" stroke-width="2"><line x1="48" y1="11" x2="48" y2="35"/><line x1="36" y1="23" x2="60" y2="23"/></g>
+      <rect x="126" y="38" width="44" height="8" rx="2" fill="#c9a24b"/>
+    </g>
+  </g>
+
+  <!-- flèches à double sens pour les deux cartes empruntées -->
+  <g stroke="#ffc466" stroke-width="3" fill="none" opacity="0.85">
+    <path d="M282 98 h64"/>
+    <path d="M282 98 l12 -8 m-12 8 l12 8"/>
+    <path d="M346 98 l-12 -8 m12 8 l-12 8"/>
+    <path d="M616 170 h140"/>
+    <path d="M616 170 l12 -8 m-12 8 l12 8"/>
+    <path d="M756 170 l-12 -8 m12 8 l-12 8"/>
+  </g>
+  <!-- flèche simple : la 960 reste au cluster -->
+  <g stroke="#5ad1c8" stroke-width="3" fill="none" opacity="0.9">
+    <path d="M652 240 h108"/>
+    <path d="M760 240 l-12 -8 m12 8 l-12 8"/>
+  </g>
+</svg>

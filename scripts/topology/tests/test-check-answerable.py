@@ -128,6 +128,25 @@ with tempfile.TemporaryDirectory() as d:
     check("exits 2 rather than judging", gate.main(), 2)
 gate.SELFTEST = saved
 
+print("\n\033[1m== the gate identifies itself so its own probes are not counted\033[0m")
+# The Worker counts every question asked at /api/bob/chat. This gate asks the
+# panel's own questions every morning, so without a marker it would feed the
+# popularity list it exists to police — and once the job also GENERATES
+# questions, an invented one would be counted as if a visitor had typed it and
+# republished the next day as a real one. Reading the argv rather than the
+# network keeps this offline.
+import os  # noqa: E402
+os.environ.pop("BOB_POPULAR_TOKEN", None)
+check("no header without a token",
+      any("authorization" in a.lower() for a in gate.curl_argv("q?")), False)
+os.environ["BOB_POPULAR_TOKEN"] = "  sekret  "
+argv = gate.curl_argv("q?")
+check("header sent when a token is set",
+      any(a.lower().startswith("authorization: bearer sekret") for a in argv), True)
+check("the question still travels in the body",
+      any("q?" in a for a in argv), True)
+os.environ.pop("BOB_POPULAR_TOKEN", None)
+
 print("\n\033[1m== the shipped file passes its own selftest\033[0m")
 r = subprocess.run([sys.executable, str(GATE), "--selftest"], capture_output=True, text=True)
 check("selftest green", r.returncode, 0)

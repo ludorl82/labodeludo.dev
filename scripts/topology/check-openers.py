@@ -55,9 +55,22 @@ FR_WORDS = re.compile(
     r"|entre|depuis|maintenant|ton|ta|quel|quels|quelle)\b",
     re.IGNORECASE,
 )
+# Widened 2026-09-15, in step with the Worker and BobTerminal.astro. The
+# original list was function words a French speaker would never write, and it
+# worked until a question carried none of them: "Can I run a local LLM on a
+# $300 card?" scores zero to zero, the tie falls to French, and the question
+# lands under the French buttons. Every word added is English-only — a word
+# that is also French (a, on, son, car, pour, en) would move FRENCH questions,
+# the same bug pointing the other way. Measured over 44 real questions: three
+# move, all three genuinely English, no French question moves.
 EN_WORDS = re.compile(
     r"\b(the|and|you|is|are|that|this|with|for|it|he|she|got|there|was|but|of|to|my"
-    r"|your|not|what|do|did|how|why|where|which)\b",
+    r"|your|not|what|do|did|how|why|where|which|can|could|should|would|will|shall"
+    r"|does|doesn't|don't|didn't|have|has|had|been|being|were|am|be|i|me|we|us|they"
+    r"|them|his|her|him|their|our|its|who|whose|whom|when|from|about|into|over|under"
+    r"|between|because|if|or|than|then|these|those|such|any|every|each|both|other"
+    r"|another|while|after|before|during|through|without|within|against|upon|onto"
+    r"|still|just|also|only|very|too|more|most|less|least|much|many)\b",
     re.IGNORECASE,
 )
 
@@ -79,6 +92,25 @@ STOPWORDS = {"have", "link", "another", "there", "which", "what", "when", "does"
              "about", "some", "more", "other", "quoi", "c'est", "cest", "est-ce", "as-tu", "t'as",
              "tas", "encore", "autre", "plus", "avez", "vous", "quel", "quelle", "quels", "quelles",
              "comment", "pourquoi", "quand", "combien", "peux", "peut", "fait", "faire", "roules", "rouler"}
+
+
+def content_words(q):
+    """The words that carry the subject — what makes two questions the same one.
+
+    Module level because check-generated.py applies the identical rule to the
+    questions Bob writes himself. Two copies of "the same question twice" would
+    drift, and the panel would end up showing a near-duplicate that one gate
+    allowed and the other would have caught.
+    """
+    return {w for w in re.findall(r"[\w'’-]+", q.lower())
+            if len(w) >= 3 and not FR_WORDS.fullmatch(w) and not EN_WORDS.fullmatch(w)
+            and w not in STOPWORDS}
+
+
+def eligible(q):
+    """Shape alone: could this string ever be published, whoever wrote it?"""
+    return (MIN_LEN <= len(q) <= MAX_LEN and q.rstrip().endswith("?")
+            and not BLOCKED.search(q) and not ADDRESSY.search(q) and not MARKUP.search(q))
 
 
 def fail(msg):
@@ -119,9 +151,6 @@ def main():
     # its hand-written fallbacks to every French visitor while real questions
     # went unused. A language with at least MIN_TO_EXPECT eligible candidates
     # must get at least MIN_PER_LANG openers.
-    def eligible(q):
-        return (MIN_LEN <= len(q) <= MAX_LEN and q.rstrip().endswith("?")
-                and not BLOCKED.search(q) and not ADDRESSY.search(q) and not MARKUP.search(q))
     pool_en = sum(1 for q in allowed if eligible(q) and looks_english(q))
     pool_fr = sum(1 for q in allowed if eligible(q) and not looks_english(q))
     got_en = sum(1 for q in openers if isinstance(q, str) and looks_english(q))
@@ -154,10 +183,6 @@ def main():
     # question). A question that stands alone on a button names something —
     # so it has more than three words and at least one word that is not a
     # function word; and two openers about the same thing are one opener.
-    def content_words(q):
-        return {w for w in re.findall(r"[\w'’-]+", q.lower())
-                if len(w) >= 3 and not FR_WORDS.fullmatch(w) and not EN_WORDS.fullmatch(w)
-                and w not in STOPWORDS}
     for q in openers:
         words = re.findall(r"[\w'’-]+", q)
         if len(words) <= 3 or not content_words(q):

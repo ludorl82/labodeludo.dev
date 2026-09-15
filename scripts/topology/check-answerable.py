@@ -41,6 +41,7 @@ Usage:
 """
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -68,6 +69,25 @@ REFUSAL_MARKERS = (
 REFUSAL_MAX_CHARS = 240
 
 
+def curl_argv(question):
+    """The exact command used to ask, so a test can read it without a network.
+
+    The Authorization header marks this as a CHECK rather than a question
+    somebody wanted answered, and the Worker skips its popularity tally for it.
+    Without that, this gate feeds the list it is meant to police: a question
+    verified every morning gains a count every morning and climbs on the job's
+    own traffic. The same secret already fetches the candidate list, and it
+    buys nothing extra here — same answer, same rate limit.
+    """
+    payload = json.dumps({"messages": [{"role": "user", "content": question}]})
+    argv = ["curl", "-sS", "--max-time", str(TIMEOUT_S), "-w", "\n%{http_code}",
+            "-X", "POST", CHAT_URL, "-H", "content-type: application/json"]
+    token = os.environ.get("BOB_POPULAR_TOKEN", "").strip()
+    if token:
+        argv += ["-H", f"authorization: Bearer {token}"]
+    return argv + ["--data-binary", payload]
+
+
 def ask(question):
     """Return (reply, links, limited, error).
 
@@ -75,12 +95,7 @@ def ask(question):
     Python's default User-Agent. Transport is a detail, but a detail that
     would have made every question look unanswerable.
     """
-    payload = json.dumps({"messages": [{"role": "user", "content": question}]})
-    p = subprocess.run(
-        ["curl", "-sS", "--max-time", str(TIMEOUT_S), "-w", "\n%{http_code}",
-         "-X", "POST", CHAT_URL, "-H", "content-type: application/json",
-         "--data-binary", payload],
-        capture_output=True, text=True)
+    p = subprocess.run(curl_argv(question), capture_output=True, text=True)
     if p.returncode != 0:
         return "", [], False, f"curl {p.returncode}: {p.stderr.strip()[:120]}"
     body, _, code = p.stdout.rpartition("\n")

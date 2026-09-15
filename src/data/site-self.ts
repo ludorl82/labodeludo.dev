@@ -54,4 +54,23 @@ export const SITE_SELF = [
   "La tâche nocturne qui réécrit le diagramme et l'inventaire, elle, s'appuie sur un modèle infonuagique chez Alibaba Cloud.",
   "Le diagramme d'architecture et l'inventaire viennent de fichiers JSON réécrits chaque nuit par une tâche qui relit les dépôts d'infrastructure.",
   "Le chat n'a aucun accès en écriture : Bob répond, il ne publie rien.",
+  // Portée: CE CHAT, encore. Le 2026-09-15, deux articles sur la recherche web
+  // de l'assistant vocal sont parus, dont un écrit par Bob à la première
+  // personne — « Comment j'ai appris à chercher sur internet ». Le chat du
+  // site s'est aussitôt attribué Tavily et le script des horaires de cinéma,
+  // et offrait de chercher pour le visiteur. L'index des TITRES suffisait:
+  // une identité unique (« tu es UNE identité, le cerveau est
+  // interchangeable », dans la persona) plus un « je » dans l'index, et les
+  // capacités d'un autre système deviennent les siennes.
+  //
+  // La règle de COMPORTEMENT vit dans la persona du Worker (0/4 avant, 6/6
+  // après). Celle-ci est le FAIT, à côté des autres faits vérifiables sur ce
+  // chat. Mesuré séparément contre qwen35-q4kl, parce qu'une deuxième ligne
+  // qui ne sert à rien est une ligne à maintenir pour rien:
+  //   — cette ligne SEULE, avec l'ancienne persona: 4/4 refus corrects, mais
+  //     l'attribution est floue (« Ludo il a codé un truc pour chercher »).
+  //   — les deux ensemble: 4/4, et les outils sont rendus à l'assistant vocal
+  //     avec le bon article.
+  // Le fait ferme la porte, la persona dit à qui appartiennent les outils.
+  "Le chat n'a aucun outil : pas de recherche web, aucun appel d'API, aucune notion de la date du jour, de la météo ni de l'heure d'une séance de cinéma. L'assistant vocal de la maison, lui, en a — c'est un autre système, raconté dans les articles.",
 ].join("\n");

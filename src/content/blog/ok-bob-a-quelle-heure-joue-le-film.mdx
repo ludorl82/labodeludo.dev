@@ -1,0 +1,63 @@
+---
+title: "« Ok Bob, à quelle heure joue le film ? » — Bob peut maintenant chercher sur internet"
+pubDate: 2026-09-15
+description: "L'assistant vocal de la maison roule sur une carte graphique dans mon sous-sol et, jusqu'à la semaine dernière, ne savait rien du monde extérieur — ni la date, ni la météo, ni l'horaire du cinéma. Il a maintenant une recherche web, par Tavily, qu'il décide d'appeler lui-même quand la question le demande. Ce que ça change, la fois où il a inventé des heures de séance avec aplomb, et pourquoi les horaires du cinéma viennent maintenant de la source plutôt que d'un moteur de recherche. Le montage, lui, c'est Bob qui l'explique. Fait en session avec Claude Code (Opus 5)."
+tags: ["Maison", "Labo", "ludo"]
+heroImage: "/images/blog/banner-ok-bob-cinema.svg"
+---
+
+> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Ce qui change** : l'assistant vocal de la maison (Home Assistant, mot de réveil « Ok Bob », modèle Qwen local sur le nœud GPU du labo) peut chercher sur internet, via [Tavily](https://tavily.com) au palier gratuit. La seule chose qui sort de la maison, c'est la requête. Le modèle décide seul quand chercher.
+> -   **Ce qu'il a fait de travers** : quand la recherche ne rapportait pas d'horaires, il en a inventé — des heures plausibles, énoncées du même ton assuré que les vraies.
+> -   **La correction** : pour du contenu qui change chaque jour, un moteur de recherche est le mauvais outil. Les horaires viennent maintenant directement de l'API du cinéma, par un second outil — et la règle « n'invente jamais une heure » est dans son prompt.
+> -   **Le comment** — les scripts Home Assistant, les pièges, le gabarit — est dans [l'article de Bob](/blog/comment-jai-appris-a-chercher-sur-internet/). Fait en session avec Claude Code (Opus 5) ; ma part a été de poser la question, deux soirs de suite.
+
+Depuis juillet, [un modèle Qwen roule sur une carte graphique dans mon sous-sol](/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/) et répond à « Ok Bob » dans la maison : les lumières, la température, la télé. Aujourd'hui c'est un Qwen3.5-35B-A3B — 35 milliards de paramètres, 3 milliards actifs par jeton — quantifié en 4 bits, servi par Ollama sur deux RTX 3060 de 12 Go, le même modèle qui fait [le chatbot de ce site](/blog/jai-lu-mes-propres-articles/). Il fait tout ça sans rien envoyer à personne, et c'est le point. Mais un modèle local a une limite dure : il ne sait rien de ce qui se passe dehors. Ni la date, ni la météo, ni l'horaire du cinéma du coin.
+
+Depuis la semaine dernière, il peut chercher. « Ok Bob, à quelle heure joue le film ce soir ? », et il répond la prochaine séance.
+
+<figure class="video">
+  <video controls preload="metadata" playsinline poster="/videos/ok-bob-cinema-poster.jpg" style="max-width:min(100%,420px);display:block;margin:0 auto;border-radius:8px">
+    <source src="/videos/ok-bob-cinema.mp4" type="video/mp4" />
+  </video>
+  <figcaption>Le haut-parleur du bureau — un Home Assistant Voice Preview Edition — filmé le 14 septembre : « Ok Bob, à quelle heure joue <em>De Gaulle</em> ce soir ? » — et les prochaines séances, lues à la source. Trente secondes, sans coupure.</figcaption>
+</figure>
+
+## Ce que ça change
+
+La recherche passe par Tavily, un service fait pour les agents plutôt que pour les humains : on lui envoie une question, il rend des extraits de pages propres. Le palier gratuit donne 1 000 recherches par mois, sans carte de crédit ; en deux semaines d'usage réel, la maison en a consommé une quarantaine. Ce qui sort de chez moi, c'est la requête — pas la conversation, pas l'état de la maison.
+
+Ce qui m'a surpris, c'est que je n'ai rien à dire de spécial. Pas de « cherche », pas de mot magique. Le modèle a un outil de plus à sa disposition, et il décide lui-même de s'en servir quand la question le demande : la météo d'une autre ville, une nouvelle du jour, une définition, l'heure d'un film. Quand la première recherche ne donne pas ce qu'il cherche, il en lance une deuxième, sans qu'on lui ait appris à le faire.
+
+![Home Assistant, Paramètres → Assistants vocaux → onglet Exposer : les deux scripts « Horaires du cinéma » et « Rechercher sur internet » dans la liste des entités exposées, chacun avec l'icône de l'assistant dans la colonne Assistants](/images/blog/ok-bob-entites-exposees.png)
+
+Côté Home Assistant, ça tient dans une ligne de cette liste : un outil est un script qu'on expose à l'assistant, au même titre qu'une lumière ou un thermostat. Les deux outils de Bob sont là, avec l'icône de l'assistant.
+
+## La fois où il a inventé les heures
+
+Le premier soir, ça a marché : la bonne séance, du premier coup. J'ai écrit que ça marchait.
+
+Deux jours plus tard, un autre film, même question — et Bob m'a récité « 12h30, 16h10, 18h55, 21h45 ». Des heures plausibles, énoncées avec le même aplomb que les vraies. Elles étaient fausses. Rien n'était brisé : la recherche partait, les résultats revenaient. Mais chercher un film ramène des pages *de film* — synopsis, durée, date de sortie — et les heures vivent sur les pages *de cinéma*. Devant des extraits sans horaire, le modèle avait comblé le vide.
+
+C'est la phrase de cet article qui m'a coûté le plus cher : **une réponse qui a l'air correcte n'est pas une preuve que la recherche a fonctionné.** Le premier soir, j'avais eu de la chance — la bonne page était dans l'index du moteur, à jour. Le deuxième, non. Et rien ne distinguait les deux cas, sauf d'aller vérifier moi-même.
+
+## Aller à la source
+
+Pour quelque chose qui change chaque jour, un moteur de recherche est structurellement le mauvais outil : il sert son index, pas la page du jour. La solution n'était pas une meilleure recherche, c'était pas de recherche du tout. Le site du cinéma va lui-même chercher ses séances sur une API ; Bob l'appelle maintenant directement, par un second outil. Cadeau non prévu : cette API ne rend que les séances encore à venir, alors « la prochaine séance » — exactement ce que le modèle n'arrivait pas à trier — n'est plus un problème à résoudre. Et sa consigne est devenue simple : s'il n'a pas d'heure sous les yeux, il dit qu'il n'y en a pas. « À quelle heure joue Titanic ? » → « Il n'y a pas de séances de Titanic prévues ce soir. »
+
+![La boîte de dialogue Assist de Home Assistant, pipeline Ollama : à la question « À quelle heure joue De Gaulle ce soir ? », Bob répond les séances des deux parties du film, en toutes lettres, avec un lien « Afficher les détails » qui montre l'appel de l'outil](/images/blog/ok-bob-assist-de-gaulle.png)
+
+La même question, tapée dans l'interface de Home Assistant plutôt que dite au haut-parleur : la réponse vient de l'outil, et le lien « Afficher les détails » montre l'appel qu'il a fait — le titre entendu, le décalage en jours, et les heures reçues.
+
+Le montage — les deux scripts Home Assistant, les deux pièges qui ne sont pas où on les attend, le gabarit qui transforme la réponse de l'API en trois lignes, et pourquoi l'heure actuelle doit être la *dernière* chose que l'outil lui dit — c'est Bob qui l'explique, depuis l'intérieur : [comment j'ai appris à chercher sur internet](/blog/comment-jai-appris-a-chercher-sur-internet/).
+
+## Deux détails, et une chose refusée
+
+Le seul échec de la première soirée qui ne venait ni de la recherche ni du modèle : la reconnaissance vocale avait transcrit « De Gaulle » en « Google », et Bob cherchait les horaires de « Google, partie 2 ». Avant de soupçonner l'assistant, lire ce qu'il a réellement entendu.
+
+Ce qui reste dû : l'accès à l'API du cinéma n'est couvert par aucun contrat et tombera un jour sans préavis. Il manque une sonde extérieure qui crie quand ça arrive — c'est la prochaine ligne du carnet.
+
+Et ce que j'ai refusé : la relance sans mot de réveil. Home Assistant garde le micro ouvert seulement quand la réponse se termine par un point d'interrogation ; il aurait fallu faire finir Bob par « Veux-tu autre chose ? » à chaque tour. Chaque demande peut être indépendante. « Ok Bob » n'est pas si long à dire.
+
+Tout ça a été fait en session avec Claude Code (Opus 5). Ma part : la question, deux soirs de suite, et le refus de croire une réponse qui avait l'air correcte.

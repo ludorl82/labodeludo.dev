@@ -81,6 +81,11 @@
       "to": "cluster:k3s"
     },
     {
+      "from": "app:embeddings",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
       "from": "app:frigate",
       "kind": "part-of",
       "to": "cluster:k3s"
@@ -271,6 +276,26 @@
       "to": "tunnel:k3s"
     },
     {
+      "from": "dns:ollama.pub.example.com",
+      "kind": "routes-to",
+      "to": "app:embeddings"
+    },
+    {
+      "from": "dns:ollama.pub.example.com",
+      "kind": "routes-to",
+      "to": "external:ollama"
+    },
+    {
+      "from": "dns:ollama.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
+      "from": "dns:ollama.pub.example.com",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
       "from": "dns:plex.pub.example.com",
       "kind": "routes-to",
       "to": "app:traefik"
@@ -357,6 +382,11 @@
     },
     {
       "from": "host:vm-02",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:vm-03",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
@@ -571,6 +601,16 @@
       "to": "app:cronicle"
     },
     {
+      "from": "workload:embeddings/embeddings",
+      "kind": "part-of",
+      "to": "app:embeddings"
+    },
+    {
+      "from": "workload:embeddings/embeddings",
+      "kind": "pinned-to",
+      "to": "host:gpu-01"
+    },
+    {
       "from": "workload:frigate/frigate",
       "kind": "part-of",
       "to": "app:frigate"
@@ -691,7 +731,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-09-15T09:22:40+00:00",
+  "generated": "2026-09-15T11:47:49+00:00",
   "nodes": [
     {
       "id": "access:cronicle",
@@ -865,6 +905,18 @@
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/cronicle.yaml"
+    },
+    {
+      "id": "app:embeddings",
+      "kind": "app",
+      "label": "embeddings",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "embeddings",
+        "path": "embeddings"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/embeddings.yaml"
     },
     {
       "id": "app:frigate",
@@ -1224,6 +1276,17 @@
       "source": "live/tunnels.tf"
     },
     {
+      "id": "dns:ollama.pub.example.com",
+      "kind": "dns",
+      "label": "ollama.pub.example.com",
+      "layer": "edge",
+      "meta": {
+        "origin": "http://embeddings.embeddings.svc.cluster.local:11434"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
       "id": "dns:plex.pub.example.com",
       "kind": "dns",
       "label": "plex.pub.example.com",
@@ -1292,6 +1355,17 @@
       },
       "repo": "nixos-iac-public",
       "source": "modules/nas-wake.nix"
+    },
+    {
+      "id": "external:ollama",
+      "kind": "external",
+      "label": "ollama",
+      "layer": "external",
+      "meta": {
+        "origin": "http://192.0.2.129:11434"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
     },
     {
       "id": "external:router",
@@ -1546,6 +1620,24 @@
       },
       "repo": "nixos-iac-public",
       "source": "hosts/vm-02/configuration.nix"
+    },
+    {
+      "id": "host:vm-03",
+      "kind": "host",
+      "label": "vm-03",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "vm",
+        "k3sRole": "agent",
+        "modules": [
+          "k3s-agent",
+          "private-ca"
+        ],
+        "networks": []
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/vm-03/configuration.nix"
     },
     {
       "id": "instance:aws_node",
@@ -1942,6 +2034,17 @@
       "source": "cronicle/deployment.yaml"
     },
     {
+      "id": "workload:embeddings/embeddings",
+      "kind": "workload",
+      "label": "embeddings",
+      "layer": "cluster",
+      "meta": {
+        "kind": "Deployment"
+      },
+      "repo": "k3s-iac-public",
+      "source": "embeddings/deployment.yaml"
+    },
+    {
       "id": "workload:frigate/frigate",
       "kind": "workload",
       "label": "frigate",
@@ -2134,20 +2237,20 @@
   ],
   "sources": {
     "aws-iac-public": {
-      "commit": "4af01aa",
-      "date": "2026-08-27T18:04:57-04:00"
+      "commit": "a0fe189",
+      "date": "2026-09-15T07:36:15-04:00"
     },
     "cloudflare-iac-public": {
-      "commit": "0b46950",
-      "date": "2026-08-27T18:05:06-04:00"
+      "commit": "026e775",
+      "date": "2026-09-15T07:36:25-04:00"
     },
     "k3s-iac-public": {
-      "commit": "425f558",
-      "date": "2026-08-27T18:04:52-04:00"
+      "commit": "3290faf",
+      "date": "2026-09-15T07:36:10-04:00"
     },
     "nixos-iac-public": {
-      "commit": "2a4d3fe",
-      "date": "2026-08-27T18:04:46-04:00"
+      "commit": "5f9275f",
+      "date": "2026-09-15T07:36:06-04:00"
     }
   },
   "topologyVersion": 1

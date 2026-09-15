@@ -46,7 +46,20 @@ const HAND_WRITTEN_EN = [
 // house. A question is short, so this is a coarse instrument — but a question
 // misfiled shows up as one odd button, not as a wrong answer.
 const FR_WORDS = /\b(le|la|les|un|une|des|du|est|pas|que|qui|pour|dans|avec|c'est|ça|mais|tu|je|sur|au|aux|ce|son|sa|et|moi|toi|tes|mes|ses|ne|comment|pourquoi|quoi|sans|chez|vers|entre|depuis|maintenant|ton|ta|quel|quels|quelle)\b/g;
-const EN_WORDS = /\b(the|and|you|is|are|that|this|with|for|it|he|she|got|there|was|but|of|to|my|your|not|what|do|did|how|why|where|which|your)\b/g;
+// Widened 2026-09-15. The original list was function words a French speaker
+// would never write, and it worked — until a question arrived carrying none of
+// them at all: "Can I run a local LLM on a $300 card?" scores zero to zero, the
+// tie falls to French, and Bob answered a plainly English question in French.
+// The comment above already described this failure for follow-ups and solved it
+// by inheriting from the conversation; a FIRST question has nothing to inherit.
+//
+// Every word added is English-only. A word that is also French — a, on, son,
+// car, pour, en, ces, ses — is deliberately absent: it would move FRENCH
+// questions, which is this same bug pointing the other way. Measured over 44
+// real questions (the live candidate list, the published panel, and this
+// session's generations): three move, all three from French to English, all
+// three genuinely English, and not one French question moves.
+const EN_WORDS = /\b(the|and|you|is|are|that|this|with|for|it|he|she|got|there|was|but|of|to|my|your|not|what|do|did|how|why|where|which|can|could|should|would|will|shall|does|doesn't|don't|didn't|have|has|had|been|being|were|am|be|i|me|we|us|they|them|his|her|him|their|our|its|who|whose|whom|when|from|about|into|over|under|between|because|if|or|than|then|these|those|such|any|every|each|both|other|another|while|after|before|during|through|without|within|against|upon|onto|still|just|also|only|very|too|more|most|less|least|much|many)\b/g;
 const looksEnglish = (t: string) => {
   const prose = t.toLowerCase();
   return (prose.match(EN_WORDS) || []).length > (prose.match(FR_WORDS) || []).length;

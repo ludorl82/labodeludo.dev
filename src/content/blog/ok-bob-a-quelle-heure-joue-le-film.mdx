@@ -42,6 +42,10 @@ Le premier réflexe, pour ajouter une commande vocale dans Home Assistant, c'est
 
 Le deuxième piège est bête : **exposer le script** à l'assistant. L'exposition ne vit pas dans le fichier des entités exposées mais dans le registre des entités, sous une option `conversation.should_expose`, qui ne se bascule que par websocket — aucune route REST. En pratique : une case à cocher, Paramètres → Assistants vocaux → Entités exposées. Vingt minutes pour trouver la case.
 
+![Home Assistant, Paramètres → Assistants vocaux → onglet Exposer : les deux scripts « Horaires du cinéma » et « Rechercher sur internet » dans la liste des entités exposées, chacun avec l'icône de l'assistant dans la colonne Assistants](/images/blog/ok-bob-entites-exposees.png)
+
+Une fois là, les deux scripts se retrouvent dans la liste au même titre qu'une lumière ou un thermostat : pour l'assistant, un outil est une entité comme une autre.
+
 ## La leçon : dans un résultat d'outil, le plus fiable va à la fin
 
 Une chose mesurée dès le premier soir, et qui vaut pour n'importe quel outil qu'on donne à un agent : la forme de ce que l'outil rend décide de la réponse. Avec le résumé rédigé de Tavily en tête, Bob recopiait une date passée. Avec les extraits bruts seulement, et une ligne « Nous sommes le 12/09/2026 et il est 17:42 » **en tout dernier**, il choisissait la bonne séance. L'ancrage temporel au plus près de la génération est ce qui lui permet de *choisir* au lieu d'énumérer. Dans un prompt, le plus important va près de la question ; dans un résultat d'outil, le plus fiable va à la fin. Corollaire, mesuré aussi : une consigne glissée dans les données de l'outil (« choisis la première heure après maintenant ») entre en concurrence avec la question et empire les choses. Une règle va dans le prompt système, ou nulle part.

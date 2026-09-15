@@ -11,7 +11,8 @@ heroImage: "/images/blog/banner-ok-bob-cinema.svg"
 > -   **Ce qui change** : l'assistant vocal de la maison (Home Assistant, mot de réveil « Ok Bob », modèle Qwen local sur le nœud GPU du labo) peut chercher sur internet. [Tavily](https://tavily.com), un service de recherche fait pour les agents, palier gratuit (1 000 recherches par mois, sans carte). La seule chose qui sort de la maison, c'est la requête.
 > -   **Le montage** : un `rest_command` vers Tavily, un script `recherche_web` exposé à l'assistant comme **outil**. Le modèle décide seul de l'appeler — aucun mot-déclencheur — et enchaîne deux recherches dans le même tour quand il le faut.
 > -   **Deux pièges de Home Assistant** : un déclencheur de phrase exige `prefer_local_intents: true`, qui court-circuiterait le modèle ; l'exposition d'un script se fait par websocket seulement — une case à cocher.
-> -   **La leçon** : la forme du résultat d'outil décide de tout. Les extraits bruts, avec l'heure actuelle **en dernier**, donnent la bonne réponse ; le résumé rédigé en tête faisait recopier une date passée. Dans un résultat d'outil, le plus fiable va à la fin.
+> -   **La leçon** : la forme du résultat d'outil décide de tout — uniquement des données, l'ancrage temporel **en dernier**, jamais de consigne dedans.
+> -   **Fabriquer un outil** : un script exposé à Assist ; `description` et `fields` sont ce que le modèle lit ; un `rest_command` à URL Jinja ; `response_variable` pour capturer le JSON ; un gabarit qui aplatit, déduplique, filtre par titre avec tolérance, distingue panne et absence ; `stop` + `response_variable` pour rendre le résultat.
 > -   **Le cas du cinéma** : pour du contenu daté, un moteur à index a besoin de deux coups de chance (page en HTML statique, index rafraîchi le jour même). Les horaires viennent donc d'un second outil, branché sur l'API du cinéma — qui ne rend que les séances à venir, ce qui a fait disparaître le tri que le modèle n'arrivait pas à faire. Tavily garde tout le reste.
 > -   **Règle anti-invention** dans le prompt système, jamais dans les données de l'outil. Fait en session avec Claude Code (Opus 5) ; ma part a été de poser la question dans la cuisine, deux soirs de suite.
 
@@ -43,29 +44,75 @@ Le deuxième piège est bête : **exposer le script** à l'assistant. L'expositi
 
 ## La leçon : dans un résultat d'outil, le plus fiable va à la fin
 
-Tavily rend, si on le demande, un champ `answer` — un résumé rédigé de ce qu'il a trouvé. C'est tentant : le modèle n'a qu'à le reformuler. Avec ce résumé, à « prochaine séance ? », Bob répondait **« le 14 août »** — la date de sortie du film, un mois plus tôt. Le résumé changeait d'une recherche à l'autre, et le modèle le recopiait au lieu de lire les horaires dans les extraits.
-
-| Ce que l'outil rend au modèle | « prochaine séance ? » |
-|---|---|
-| le résumé seul | « le 14 août 2026 » — la date de sortie, passée |
-| résumé en tête + extraits | « mercredi 16 septembre » — faux |
-| **extraits seuls, l'heure actuelle en dernier** | **« aujourd'hui à 18h00, puis 21h40 »** — exact |
-
-Ce qui a changé, ce n'est pas le modèle. C'est l'ordre. L'ancrage temporel placé à la fin du résultat — au plus près de la génération — est ce qui permet au modèle de *choisir* la prochaine séance au lieu d'énumérer la semaine. Dans un prompt, le plus important va près de la question ; dans un résultat d'outil, le plus fiable va **à la fin**. Je ne l'aurais pas deviné, et ça vaut pour n'importe quel outil qu'on donne à un agent.
-
-Deux choses que j'aurais parié utiles, mesurées inutiles ou pires : le mode raisonnement, qui raisonnait juste et **ne concluait jamais** sur des données scrapées bruitées (85 secondes, 3 400 mots, contenu vide) ; et une consigne glissée dans le résultat de l'outil (« choisis la première heure après maintenant »), qui faisait répondre « le film n'est plus à l'affiche ». Une règle dans des *données* entre en concurrence avec la question — elle va dans le prompt système, ou nulle part.
+Une chose mesurée dès le premier soir, et qui vaut pour n'importe quel outil qu'on donne à un agent : la forme de ce que l'outil rend décide de la réponse. Avec le résumé rédigé de Tavily en tête, Bob recopiait une date passée. Avec les extraits bruts seulement, et une ligne « Nous sommes le 12/09/2026 et il est 17:42 » **en tout dernier**, il choisissait la bonne séance. L'ancrage temporel au plus près de la génération est ce qui lui permet de *choisir* au lieu d'énumérer. Dans un prompt, le plus important va près de la question ; dans un résultat d'outil, le plus fiable va à la fin. Corollaire, mesuré aussi : une consigne glissée dans les données de l'outil (« choisis la première heure après maintenant ») entre en concurrence avec la question et empire les choses. Une règle va dans le prompt système, ou nulle part.
 
 ## Le cas du cinéma : aller à la source
 
-Deux jours plus tard, un autre film, même question — et pas d'horaire. Rien n'était brisé : l'outil partait, Tavily répondait. Mais **chercher par film ramène des pages de film** — synopsis, durée, classement, date de sortie — et les heures vivent sur des pages de *cinéma*. Formulée autrement, la même recherche trouvait un site d'horaires avec les heures en clair. Et deux choses plus profondes : quand les extraits n'ont pas d'heures, le modèle en fabrique, du même ton assuré que les vraies (« 12h30, 16h10, 18h55, 21h45 » — plausibles, fausses) ; et même la bonne page arrivait avec deux jours de retard, parce qu'un moteur de recherche sert son index, pas la page du jour.
+Deux jours plus tard, un autre film, même question — et pas d'horaire. Rien n'était brisé : l'outil partait, Tavily répondait. Mais **chercher par film ramène des pages de film** — synopsis, durée, classement, date de sortie — et les heures vivent sur des pages de *cinéma*. Plus grave : quand les extraits n'ont pas d'heures, le modèle en fabrique, du même ton assuré que les vraies (« 12h30, 16h10, 18h55, 21h45 » — plausibles, fausses). Et même la bonne page arrivait avec deux jours de retard, parce qu'un moteur de recherche sert son index, pas la page du jour. Ce n'est pas une faiblesse de Tavily, c'est la nature d'un index : pour du contenu qui change chaque jour, il faut deux coups de chance simultanés — que la page publie ses heures en HTML statique, et que l'index ait été rafraîchi ce jour-là.
 
-Ce n'est pas une faiblesse de Tavily, c'est la nature d'un index : pour du contenu qui change chaque jour, il faut deux coups de chance simultanés — que la page publie ses heures en HTML statique, et que l'index ait été rafraîchi ce jour-là. Le bon outil pour les horaires, c'est la source. La page du cinéma est une application JavaScript qui va chercher ses séances par un appel en arrière-plan sur une API publique ; on l'appelle directement :
+Le bon outil pour les horaires, c'est la source. Le site de Cineplex est une application JavaScript : sa page de film fait 93 Ko de HTML sans une seule heure dedans, les séances arrivent par un appel en arrière-plan vers une API. Cet appel est visible dans le navigateur, sa clé voyage dans leur propre bundle JavaScript, et `/v1/theatres` classe les salles par proximité de l'adresse qui appelle — la mienne est sortie en premier, avec son identifiant. Il ne restait qu'à en faire un outil.
 
-- un second `rest_command`, pour une salle et une date ;
-- un second script, `horaires_cinema`, exposé comme outil : il filtre par titre si on en donne un, accepte un décalage en jours (« demain »), et rend une ligne par film avec les heures dédupliquées — l'ancrage temporel toujours en dernier ;
-- la description de `recherche_web` renvoie vers ce nouvel outil pour tout ce qui touche au cinéma. Tavily garde tout le reste.
+## Fabriquer l'outil dans Home Assistant
 
-**Cadeau non prévu : l'API ne rend que les séances encore à venir.** Le tri « la prochaine séance », le point exact où le modèle calait, cesse d'exister comme problème — il n'a plus rien à calculer. Vérifié en direct : entre un essai à 18h40 et un autre à 19h00, les séances de 18h20 et 18h30 avaient disparu d'elles-mêmes. Et la règle anti-invention, elle, est partie dans le prompt système : « à quelle heure joue Titanic » → « il n'y a pas de séances de Titanic prévues ce soir ».
+Un outil pour l'assistant, dans Home Assistant, c'est un **script exposé à Assist** : son `alias`, sa `description` et ses `fields` deviennent la définition que le modèle voit — le nom de l'outil, à quoi il sert, quels paramètres il prend. Tout ce que le modèle sait de l'outil, il le lit là. Trois pièces.
+
+**1. L'appel HTTP**, un `rest_command` dont l'URL est un gabarit Jinja : la salle et la date sont des variables, la clé vient de `secrets.yaml`.
+
+```yaml
+rest_command:
+  cineplex_showtimes:
+    url: "https://…/v1/showtimes?language=fr&locationId={{ theatre }}&date={{ jour }}"
+    method: GET
+    timeout: 20
+    headers:
+      Ocp-Apim-Subscription-Key: !secret cineplex_subscription_key
+```
+
+**2. Le script**, avec les deux champs que le modèle remplira lui-même. Leur `description` est écrite pour lui : c'est elle qui lui dit de laisser `film` vide pour toute la programmation, et que `jours` vaut 0 pour aujourd'hui, 1 pour demain.
+
+```yaml
+horaires_cinema:
+  alias: Horaires du cinéma
+  description: >-
+    Donne les séances de cinéma encore à venir au cinéma du coin. À utiliser
+    pour toute question sur les horaires d'un film ou la programmation du
+    cinéma, à la place de la recherche internet.
+  fields:
+    film:
+      description: Titre du film si la question vise un film précis, sinon laisser vide
+      required: false
+      selector: { text: }
+    jours:
+      description: Décalage en jours, 0 pour aujourd'hui, 1 pour demain
+      required: false
+      selector: { number: { min: 0, max: 6, mode: box } }
+  sequence:
+    - action: rest_command.cineplex_showtimes
+      data:
+        theatre: 1234
+        jour: "{{ (now() + timedelta(days=(jours | default(0) | int(0)))).strftime('%Y-%m-%d') }}"
+      response_variable: cx
+    - variables:
+        sortie:
+          resultat: |-
+            {# … le gabarit ci-dessous … #}
+    - stop: ""
+      response_variable: sortie
+```
+
+Le `response_variable` sur l'appel REST capture la réponse JSON ; le `stop` avec `response_variable` à la fin est ce qui rend `resultat` au modèle. Entre les deux, le gabarit.
+
+**3. Le gabarit Jinja**, qui transforme le JSON de l'API en quelques lignes lisibles. C'est là que se passe le vrai travail, et c'est ce qu'on ne trouve pas dans la documentation :
+
+- **Aplatir** : la réponse est imbriquée — salles → dates → films → expériences (VIP, régulière, 3D) → séances. Une boucle par niveau, et on ne garde que l'heure : `s.showStartDateTime.split('T')[1][:5]`.
+- **Dédupliquer et trier** les heures d'un film (un même film joue dans deux salles ; `unique | sort | join(', ')`), une ligne par titre, « Titre du film : 18:20, 21:10 ».
+- **Filtrer par titre, avec tolérance.** Le modèle transmet ce qu'il a entendu, et ce qu'il a entendu n'est pas toujours le titre exact. Le filtre accepte l'inclusion dans les deux sens, puis, en dernier recours, n'importe quel mot de plus de trois lettres du titre demandé (« Gaulle » suffit). S'il ne retient rien, il dit qu'aucun titre ne correspond **et rend quand même toute la programmation** — le modèle peut alors corriger de lui-même.
+- **Distinguer une panne d'une absence.** Un code HTTP autre que 200 rend une phrase explicite (« l'API n'a pas répondu correctement ») ; une réponse vide en rend une autre (« aucune séance à venir »). Sans cette distinction, le modèle comblerait le silence.
+- **Uniquement des données, aucune consigne**, et **l'ancrage temporel en dernier** : la dernière ligne est « Nous sommes le 14/09/2026 et il est 18:41 ». Les deux leçons du premier soir, appliquées.
+
+Reste à brancher les deux outils l'un à l'autre : la `description` de `recherche_web` se termine maintenant par « pour les horaires de cinéma, n'utilise pas cet outil : appelle `horaires_cinema` ». C'est une phrase dans une description de script, et c'est suffisant — le modèle choisit le bon outil à partir de là. Tavily garde tout le reste.
+
+**Cadeau non prévu : l'API ne rend que les séances encore à venir.** Le tri « la prochaine séance », le point exact où le modèle calait le premier soir, cesse d'exister comme problème — il n'a plus rien à calculer. Vérifié en direct : entre un essai à 18h40 et un autre à 19h00, les séances de 18h20 et 18h30 avaient disparu d'elles-mêmes. Et la règle anti-invention, elle, est partie dans le prompt système : « à quelle heure joue Titanic » → « il n'y a pas de séances de Titanic prévues ce soir ».
 
 ## Ce qui reste dû, et deux détails
 

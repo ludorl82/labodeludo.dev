@@ -8,25 +8,25 @@ heroImage: "/images/blog/banner-cluster-ramasse-les-cartes.svg"
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Le point de départ** : la tour de jeu héberge deux VM de jeu avec chacune sa RTX 3050 en passthrough, plus une GTX 960 qui ne sert à rien. Objectif : donner la 960 au cluster Kubernetes, dont la tour est aussi un nœud.
-> -   **Premier mur** : le pilote NVIDIA installé sur l'hôte fige le noyau environ quatre minutes après chaque démarrage. Chaîne de tâches bloquées menée par `iptables-restor`, avec `modprobe`, `bridge` et l'agent k3s derrière. Un `modprobe` coincé bloque tout chargement de module : k3s n'obtient jamais `br_netfilter`, plus aucun conteneur ne démarre, **et le nœud s'affiche `Ready` avec un bail renouvelé**.
-> -   **La solution** : le pilote va dans une VM. Un invité q35/OVMF reçoit la 960 en passthrough et rejoint le cluster comme nœud. Le noyau de l'hôte reste un noyau libvirt + k3s ordinaire.
+> -   **Le point de départ** : la tour de jeu héberge deux VM de jeu avec chacune sa RTX 3050 en passthrough, plus une GTX 960 qui ne sert à rien. Objectif : donner la 960 au cluster Kubernetes, dont la tour est aussi un noeud.
+> -   **Premier mur** : le pilote NVIDIA installé sur l'hôte fige le noyau environ quatre minutes après chaque démarrage. Chaîne de tâches bloquées menée par `iptables-restor`, avec `modprobe`, `bridge` et l'agent k3s derrière. Un `modprobe` coincé bloque tout chargement de module : k3s n'obtient jamais `br_netfilter`, plus aucun conteneur ne démarre, **et le noeud s'affiche `Ready` avec un bail renouvelé**.
+> -   **La solution** : le pilote va dans une VM. Un invité q35/OVMF reçoit la 960 en passthrough et rejoint le cluster comme noeud. Le noyau de l'hôte reste un noyau libvirt + k3s ordinaire.
 > -   **Le pilote n'est pas un choix** : la 960 est une Maxwell, reléguée au support hérité à la branche 580. Sur la branche courante, elle n'a aucun pilote et l'échec est silencieux : CUDA ne trouve pas de carte.
 > -   **Deuxième mur** : donner aussi les deux 3050 à la VM empêche le démarrage, le firmware cale avant d'initialiser l'affichage. Agrandir la fenêtre MMIO 64 bits ne change rien. Le coupable : OVMF exécute l'option ROM de chaque carte pendant l'énumération PCI. `<rom bar='off'/>` sur les six fonctions règle tout.
 > -   **Le bissect raté** : ma variante de test « une seule carte » tombait dans le shell UEFI parce qu'elle venait du XML du dépôt, où le lecteur CD est vide. J'ai comparé une VM avec CD d'installation à une VM sans, et j'ai accusé la carte. Un `virsh screenshot` a tranché.
-> -   **L'échange des cartes** : le bouton domotique qui démarre une VM de jeu draine et éteint d'abord le nœud GPU, puis le relance à la fin. L'attente se fait dans le script appelé par SSH, jamais dans le hook libvirt, qui tourne pendant que libvirtd tient ses verrous.
-> -   **Quatre bogues attrapés en direct** : un `sudo` masqué par le `PATH` (le seul sudo setuid de NixOS vit dans `/run/wrappers/bin`) ; un cordon de drain qui survit au redémarrage du nœud ; un `systemd-run --unit=` à nom fixe qui refuse de repartir ; un arrêt envoyé avant que l'agent invité soit debout.
+> -   **L'échange des cartes** : le bouton domotique qui démarre une VM de jeu draine et éteint d'abord le noeud GPU, puis le relance à la fin. L'attente se fait dans le script appelé par SSH, jamais dans le hook libvirt, qui tourne pendant que libvirtd tient ses verrous.
+> -   **Quatre bogues attrapés en direct** : un `sudo` masqué par le `PATH` (le seul sudo setuid de NixOS vit dans `/run/wrappers/bin`) ; un cordon de drain qui survit au redémarrage du noeud ; un `systemd-run --unit=` à nom fixe qui refuse de repartir ; un arrêt envoyé avant que l'agent invité soit debout.
 > -   **Le résultat** : 18 Go de VRAM sur trois cartes pour le cluster quand personne ne joue, et chaque joueur reprend sa carte en moins d'une minute.
 
 Je vous ai déjà raconté [la chaise musicale des cartes graphiques](/blog/trois-cartes-graphiques-et-aucune-charge-a-leur-donner/) : une carte achetée pour la machine de jeu, une autre libérée, et une soirée à chercher qui s'en servirait. À la fin de cette histoire, la tour de jeu, celle qui héberge [les deux postes qui se lèvent sur un interrupteur](/blog/gpu-a-la-demande-a-la-maison/), se retrouvait avec trois GPU : une RTX 3050 pour chaque VM de jeu, et une GTX 960 qui dormait.
 
-Une carte qui dort dans une tour qui est aussi un nœud Kubernetes, ça me chicotait. Le cluster a des charges qui prendraient bien un GPU, la carte est déjà branchée, et j'avais déjà la recette pour exposer un GPU NVIDIA à k3s sur NixOS, en service sur un autre nœud du labo. Il restait à l'appliquer. Comme pour le reste de cette migration, j'ai fait le travail en session avec Claude Code, et c'est lui qui a écrit la plupart des correctifs dont je parle ici. Les mauvaises pistes, par contre, on les a prises à deux.
+Une carte qui dort dans une tour qui est aussi un noeud Kubernetes, ça me chicotait. Le cluster a des charges qui prendraient bien un GPU, la carte est déjà branchée, et j'avais déjà la recette pour exposer un GPU NVIDIA à k3s sur NixOS, en service sur un autre noeud du labo. Il restait à l'appliquer. Comme pour le reste de cette migration, j'ai fait le travail en session avec Claude Code, et c'est lui qui a écrit la plupart des correctifs dont je parle ici. Les mauvaises pistes, par contre, on les a prises à deux.
 
 ## Le pilote sur l'hôte
 
 La recette est simple : le pilote propriétaire sur l'hôte, la boîte à outils CDI, trois binaires sur le `PATH` de k3s, et les pods demandent `runtimeClassName: nvidia-cdi`. Appliquée, poussée, déployée, redémarrage.
 
-Quatre minutes plus tard, la machine ne répondait plus, mais pas complètement. Elle répondait au ping. Le nœud s'affichait `Ready` dans le cluster et son bail de kubelet se renouvelait à l'heure. Par contre, plus un seul conteneur ne démarrait, et SSH refusait la connexion avant même l'authentification.
+Quatre minutes plus tard, la machine ne répondait plus, mais pas complètement. Elle répondait au ping. Le noeud s'affichait `Ready` dans le cluster et son bail de kubelet se renouvelait à l'heure. Par contre, plus un seul conteneur ne démarrait, et SSH refusait la connexion avant même l'authentification.
 
 Le diagnostic est venu d'une photo de l'écran, parce que c'était le seul canal qui restait. Une chaîne de tâches bloquées, `iptables-restor` en tête, `bridge` qui l'attend, et derrière `bridge`, tout le monde : l'agent k3s, un travailleur udev, et surtout `modprobe`. Un `modprobe` coincé, c'est tout le chargement de modules qui s'arrête. k3s n'obtient jamais `br_netfilter`, ses règles de pare-feu ne se posent jamais, et chaque conteneur meurt d'un délai dépassé. Nulle part, il n'est question de carte graphique.
 
@@ -34,7 +34,7 @@ J'ai d'abord accusé le `PATH` de l'unité k3s. Ce n'était pas ça. Ce que je p
 
 ## Le pilote dans une VM
 
-Si le module NVIDIA ne peut pas cohabiter avec le noyau de l'hôte, on lui donne le sien. Une VM de plus sur la tour, en q35 avec OVMF, parce qu'une carte en passthrough veut un vrai port PCIe et non le bus conventionnel des VM ordinaires. La 960 attachée, et l'invité rejoint le cluster comme n'importe quel nœud. Le pilote fait maintenant tout ce qu'il a à faire dans sa boîte.
+Si le module NVIDIA ne peut pas cohabiter avec le noyau de l'hôte, on lui donne le sien. Une VM de plus sur la tour, en q35 avec OVMF, parce qu'une carte en passthrough veut un vrai port PCIe et non le bus conventionnel des VM ordinaires. La 960 attachée, et l'invité rejoint le cluster comme n'importe quel noeud. Le pilote fait maintenant tout ce qu'il a à faire dans sa boîte.
 
 Deux détails de cette VM m'ont coûté du temps, alors je les écris.
 
@@ -44,7 +44,7 @@ Le second, c'est que l'ordre de démarrage de la VM place le lecteur CD avant le
 
 ## Le bissect que j'ai raté
 
-Une fois le nœud GPU en marche avec sa 960, j'ai voulu aller plus loin. Les deux RTX 3050 dorment vingt-trois heures par jour, le jeu, c'est rare et c'est exclusif. Pourquoi ne pas les prêter au cluster et les rendre quand quelqu'un joue ?
+Une fois le noeud GPU en marche avec sa 960, j'ai voulu aller plus loin. Les deux RTX 3050 dorment vingt-trois heures par jour, le jeu, c'est rare et c'est exclusif. Pourquoi ne pas les prêter au cluster et les rendre quand quelqu'un joue ?
 
 Premier essai, les six fonctions PCI attachées à la VM : trois GPU, trois contrôleurs audio. Écran noir. Pas l'écran noir d'un système qui démarre sans affichage, celui d'un firmware qui n'a jamais initialisé l'affichage du tout. Avec une seule carte, la même VM démarrait en vingt-quatre secondes.
 
@@ -56,17 +56,17 @@ Le correctif tient en une ligne par périphérique : `<rom bar='off'/>`. Le firm
 
 ## L'échange des cartes, et les quatre bogues
 
-Restait le mécanisme central. Les 3050 appartiennent aux joueurs. Quand quelqu'un appuie sur le bouton domotique pour lever sa VM de jeu, le nœud GPU doit rendre les cartes avant, parce que libvirt refuse de démarrer un domaine dont le périphérique est déjà pris.
+Restait le mécanisme central. Les 3050 appartiennent aux joueurs. Quand quelqu'un appuie sur le bouton domotique pour lever sa VM de jeu, le noeud GPU doit rendre les cartes avant, parce que libvirt refuse de démarrer un domaine dont le périphérique est déjà pris.
 
-Le transfert a une subtilité qu'il faut dire : l'attente se fait dans le script que la domotique appelle par SSH, jamais dans le hook libvirt. Le hook s'exécute pendant que libvirtd tient ses verrous pour le domaine en cours de démarrage. Y rappeler `virsh` de façon synchrone peut bloquer la VM de jeu qu'il est censé aider. Le script SSH, lui, vit en espace utilisateur ordinaire. Il draine le nœud GPU, l'éteint proprement par l'agent invité, attend pour vrai, puis démarre la VM de jeu. Le hook garde un arrêt asynchrone en filet de sécurité, lancé par `systemd-run`, pour le cas où quelqu'un démarre une VM à la main.
+Le transfert a une subtilité qu'il faut dire : l'attente se fait dans le script que la domotique appelle par SSH, jamais dans le hook libvirt. Le hook s'exécute pendant que libvirtd tient ses verrous pour le domaine en cours de démarrage. Y rappeler `virsh` de façon synchrone peut bloquer la VM de jeu qu'il est censé aider. Le script SSH, lui, vit en espace utilisateur ordinaire. Il draine le noeud GPU, l'éteint proprement par l'agent invité, attend pour vrai, puis démarre la VM de jeu. Le hook garde un arrêt asynchrone en filet de sécurité, lancé par `systemd-run`, pour le cas où quelqu'un démarre une VM à la main.
 
 Ensuite, on a testé le cycle complet, en direct, plusieurs fois. Chaque cycle a trouvé un bogue que la relecture n'avait pas vu.
 
-**Le sudo qui n'en était pas un.** Le drain du nœud GPU échouait en permission, parce que le script tourne sous l'utilisateur de la domotique et que le kubeconfig appartient à root. Correctif évident, `sudo -n`. Échec encore, avec un autre message : « must be owned by uid 0 and have the setuid bit set ». Sur NixOS, le seul `sudo` setuid vit dans `/run/wrappers/bin`, et la première ligne du script plaçait le profil système en tête du `PATH`, ce qui masquait exactement ce répertoire.
+**Le sudo qui n'en était pas un.** Le drain du noeud GPU échouait en permission, parce que le script tourne sous l'utilisateur de la domotique et que le kubeconfig appartient à root. Correctif évident, `sudo -n`. Échec encore, avec un autre message : « must be owned by uid 0 and have the setuid bit set ». Sur NixOS, le seul `sudo` setuid vit dans `/run/wrappers/bin`, et la première ligne du script plaçait le profil système en tête du `PATH`, ce qui masquait exactement ce répertoire.
 
-**Le cordon immortel.** Drainer un nœud le cordonne. J'avais supposé qu'au redémarrage, le nœud reviendrait neuf. Non : l'objet nœud n'est jamais supprimé, donc son marquage `unschedulable` survit. Après chaque partie, le nœud GPU serait revenu au cluster en spectateur, à ne prendre que des DaemonSets. Le hook décordonne maintenant au retour.
+**Le cordon immortel.** Drainer un noeud le cordonne. J'avais supposé qu'au redémarrage, le noeud reviendrait neuf. Non : l'objet noeud n'est jamais supprimé, donc son marquage `unschedulable` survit. Après chaque partie, le noeud GPU serait revenu au cluster en spectateur, à ne prendre que des DaemonSets. Le hook décordonne maintenant au retour.
 
-**L'unité qui refuse de repartir.** Le filet de sécurité passait par `systemd-run --unit=` avec un nom fixe. Une unité transitoire peut survivre à sa course, et `systemd-run` refuse alors le même nom : « already loaded or has a fragment file ». Au deuxième cycle, le nœud GPU n'a jamais été relancé, sans un mot. Des noms générés automatiquement et `--collect` ont réglé ça.
+**L'unité qui refuse de repartir.** Le filet de sécurité passait par `systemd-run --unit=` avec un nom fixe. Une unité transitoire peut survivre à sa course, et `systemd-run` refuse alors le même nom : « already loaded or has a fragment file ». Au deuxième cycle, le noeud GPU n'a jamais été relancé, sans un mot. Des noms générés automatiquement et `--collect` ont réglé ça.
 
 **L'arrêt impatient.** Un arrêt envoyé dans la première minute après un démarrage échouait, parce que l'arrêt passe par l'agent invité et que l'agent prend de trente à soixante secondes à se lever dans une VM fraîche. Le script attend maintenant l'agent avant de demander, et il refuse volontairement de se rabattre sur un `destroy`. Tuer une VM en plein démarrage, c'est comme ça qu'une de ces cartes s'est déjà retrouvée dans un état d'alimentation dont seul un redémarrage de l'hôte la sortait.
 
@@ -74,12 +74,12 @@ Quatre bogues, quatre correctifs, et chaque fois, le correctif évident a échou
 
 ## Résultat
 
-Le lendemain matin, le vrai test : le bouton de la domotique, appuyé par un humain. Au démarrage, le nœud GPU rend la carte et s'efface, la VM de jeu se lève avec sa 3050, et la session de jeu en flux fonctionne. À l'extinction, le nœud GPU est relancé en moins de trente secondes et revient au cluster prêt à l'emploi, sans cordon, sans intervention. Le cluster dispose de 18 Go de VRAM sur trois cartes chaque fois que personne ne joue, c'est-à-dire presque tout le temps.
+Le lendemain matin, le vrai test : le bouton de la domotique, appuyé par un humain. Au démarrage, le noeud GPU rend la carte et s'efface, la VM de jeu se lève avec sa 3050, et la session de jeu en flux fonctionne. À l'extinction, le noeud GPU est relancé en moins de trente secondes et revient au cluster prêt à l'emploi, sans cordon, sans intervention. Le cluster dispose de 18 Go de VRAM sur trois cartes chaque fois que personne ne joue, c'est-à-dire presque tout le temps.
 
-Le code assaini est public, comme d'habitude : [la configuration du nœud GPU et son domaine libvirt](https://github.com/ludorl82/nixos-iac-public/tree/article/quand-personne-ne-joue-le-cluster-ramasse-les-cartes/hosts/vm-03), et [le hook de mode jeu avec le script d'échange](https://github.com/ludorl82/nixos-iac-public/blob/article/quand-personne-ne-joue-le-cluster-ramasse-les-cartes/hosts/gaming-01/configuration.nix) sur l'hôte.
+Le code assaini est public, comme d'habitude : [la configuration du noeud GPU et son domaine libvirt](https://github.com/ludorl82/nixos-iac-public/tree/article/quand-personne-ne-joue-le-cluster-ramasse-les-cartes/hosts/vm-03), et [le hook de mode jeu avec le script d'échange](https://github.com/ludorl82/nixos-iac-public/blob/article/quand-personne-ne-joue-le-cluster-ramasse-les-cartes/hosts/gaming-01/configuration.nix) sur l'hôte.
 
 ## Mot de la fin
 
-Si je retiens une chose de cette soirée, c'est qu'un nœud qui dit `Ready` ne dit pas grand-chose. La prochaine fois qu'une machine me le dira pendant que rien ne roule dessus, je vais demander à voir l'écran avant de la croire.
+Si je retiens une chose de cette soirée, c'est qu'un noeud qui dit `Ready` ne dit pas grand-chose. La prochaine fois qu'une machine me le dira pendant que rien ne roule dessus, je vais demander à voir l'écran avant de la croire.
 
 — Ludo

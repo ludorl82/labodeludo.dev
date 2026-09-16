@@ -48,7 +48,11 @@ def run(doc, tmp, per_lang=4, offset=0, write=True):
 
 
 FR = [f"Question française numéro {i} ?" for i in range(6)]
-EN = [f"English question number {i}?" for i in range(6)]
+# Written the way a visitor writes, not as a label with a question mark:
+# check-openers.looks_english reads the words, and "English question number 0?"
+# does not carry enough of them to be called English. A fixture that the
+# real language test does not recognise measures nothing.
+EN = [f"How do you run the English node number {i} at your place?" for i in range(6)]
 
 with tempfile.TemporaryDirectory() as tmp:
     print("\033[1m== the slice moves with the day\033[0m")
@@ -92,6 +96,38 @@ with tempfile.TemporaryDirectory() as tmp:
     print("\n\033[1m== junk entries are dropped, not shipped\033[0m")
     rc, mixed = run({"fr": ["Vraie question ?", "", "   ", None, 42], "en": []}, tmp, 4, 0)
     check("only the real one survives", mixed, ["Vraie question ?"])
+
+    print("\n\033[1m== it only picks what the panel still has room for\033[0m")
+    # Without this, the source picked eight, asked production eight times at
+    # six seconds apart, and the merge dropped them all because the real half
+    # had already filled the panel. Measured on its first live run.
+    # Stage this case's OWN list: the previous case left a one-item one behind,
+    # and inheriting it made two assertions measure the fixture instead of the
+    # code — both "failures" were the test's, not the picker's.
+    (pathlib.Path(tmp) / "curated.json").write_text(
+        json.dumps({"fr": FR, "en": EN}, ensure_ascii=False), encoding="utf-8")
+    already = pathlib.Path(tmp) / "already.json"
+    already.write_text(json.dumps({"openers": FR[:4]}), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(PICK), str(pathlib.Path(tmp) / "curated.json"),
+                        str(pathlib.Path(tmp) / "out.json"), "4", "0",
+                        "--already", str(already)], capture_output=True, text=True)
+    left = json.loads((pathlib.Path(tmp) / "out.json").read_text(encoding="utf-8"))["openers"]
+    check("French is full, so none are picked", [q for q in left if "française" in q], [])
+    check("English still has its four", len([q for q in left if "English" in q]), 4)
+
+    already.write_text(json.dumps({"openers": FR[:4] + EN[:4]}), encoding="utf-8")
+    subprocess.run([sys.executable, str(PICK), str(pathlib.Path(tmp) / "curated.json"),
+                    str(pathlib.Path(tmp) / "out.json"), "4", "0",
+                    "--already", str(already)], capture_output=True, text=True)
+    full = json.loads((pathlib.Path(tmp) / "out.json").read_text(encoding="utf-8"))["openers"]
+    check("a full panel picks nothing at all", full, [])
+
+    already.unlink()
+    subprocess.run([sys.executable, str(PICK), str(pathlib.Path(tmp) / "curated.json"),
+                    str(pathlib.Path(tmp) / "out.json"), "4", "0",
+                    "--already", str(already)], capture_output=True, text=True)
+    none = json.loads((pathlib.Path(tmp) / "out.json").read_text(encoding="utf-8"))["openers"]
+    check("an unreadable --already claims nothing", len(none), 8)
 
     print("\n\033[1m== the day key is the ordinal date\033[0m")
     # Reproducible from the date alone: two machines the same night agree, and

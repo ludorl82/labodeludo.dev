@@ -20,13 +20,33 @@
  * joke drift, and then only one of them is funny.
  */
 
-/** Fixed width so the line does not jitter as the frames change. */
+/**
+ * LES IMAGES SE REMPLACENT, ELLES NE DÉFILENT PAS.
+ *
+ * La version d'avant faisait glisser les lunettes depuis la droite
+ * (`( •_•)>⌐■-■`) et laissait les images à des largeurs différentes — 5, 6
+ * puis 11 caractères. Comme la boîte CSS est alignée à DROITE, le visage
+ * repartait vers la gauche à chaque image : mesuré dans la police du site,
+ * **58,7 px de glissement, cinq fois par seconde**. Et l'image de transition
+ * montrait `•_•` à côté de `■-■`, donc deux paires d'yeux côte à côte.
+ *
+ * Maintenant : un clignement, puis les lunettes d'un coup. Toutes les images
+ * commencent au même caractère et la boîte est alignée à gauche, donc le bord
+ * gauche ne bouge plus du tout. Seule la parenthèse fermante avance de 7 px
+ * quand les lunettes arrivent, ce qui se lit comme des lunettes plus larges et
+ * pas comme un soubresaut.
+ *
+ * Le clignement est en ASCII pur, donc exactement la même largeur que les yeux
+ * (48,17 px pour les deux). Le carré ■ vient d'une police de repli 1,68 px plus
+ * étroite : c'est la seule raison pour laquelle la parité n'est pas parfaite sur
+ * l'image des lunettes.
+ */
 const FRAMES = [
   "(•_•)",
   "(•_•)",
-  "( •_•)",
-  "( •_•)>⌐■-■",
-  "(⌐■_■)",
+  "(•_•)",
+  "(-_-)",
+  "(•_•)",
   "(⌐■_■)",
   "(⌐■_■)",
   "(⌐■_■)",

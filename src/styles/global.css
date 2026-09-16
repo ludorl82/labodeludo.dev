@@ -283,18 +283,20 @@ img {
   color: var(--text-muted);
 }
 
-/* The frames are different widths — "( •_•)>⌐■-■" is 11 characters and
-   "(⌐■_■)" is 6 — so the glyph gets a fixed box. Without it the verb beside it
-   jumps left and right five times a second.
-   Right-aligned inside that box so the face reaches toward the verb as the arm
-   comes out, instead of leaving a five-character hole on the narrow frames.
-   The verb, which is the part you actually read, never moves either way.
+/* Boîte fixe pour que le verbe à côté ne saute pas, ET alignée à GAUCHE pour
+   que l'icône elle-même ne saute pas non plus.
+   L'alignement à droite d'avant tenait le verbe immobile mais faisait glisser
+   le visage de 58,7 px à chaque image, parce que les images n'avaient pas la
+   même largeur. Le bord gauche est ce que l'œil suit ; c'est lui qu'il faut
+   clouer. Voir bob-thinking.ts, où les images ont aussi été refaites pour se
+   remplacer au lieu de défiler.
+   6ch : la plus large des images restantes fait 5,74ch dans cette police.
    Not green: this is decoration, and the site reserves --accent-live for
    interactive and active state. Brightness carries it instead. */
 .bob-thinking-glyph {
   flex: 0 0 auto;
-  min-width: 11ch;
-  text-align: right;
+  min-width: 6ch;
+  text-align: left;
   white-space: pre;
   color: var(--text);
 }

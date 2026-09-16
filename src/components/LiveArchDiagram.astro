@@ -151,22 +151,44 @@ const usesCount = (id: string) =>
 const originIds = new Set(
   routesTo.filter((e) => externalIds.has(e.to)).map((e) => e.to),
 );
+// Le pointillé ne veut pas dire « rien derrière », et un cas le prouve :
+// `external:ollama` est le service qu'un des repos déclare bel et bien, sur
+// une machine déjà dessinée en trait plein dans la grille du haut. Vu dans
+// nixos-iac (hosts/gpu-01/configuration.nix) : l'origine LAN du tunnel est
+// l'adresse VLAN10 de la machine, le port est ouvert, le service est activé
+// là. architecture.json ne porte aucune adresse de machine — la graine ne
+// peut pas faire le rapprochement, seul le snapshot le voit. Le nom affiché
+// vient quand même de `byId`, pour qu'un châssis renommé suive tout seul ;
+// si l'origine disparaît ou change de bécane, diagram-delta le signalera.
+const originOnHost: Record<string, string> = {
+  "external:ollama": "host:gpu-01",
+};
 const extBoxes = externals.map((n, i) => {
   const c = cell(i, EXT_Y0);
   const uses = usesCount(n.id);
+  const hostId = originOnHost[n.id];
+  const onHost = hostId
+    ? (byId(hostId)?.label ?? hostId.split(":")[1])
+    : undefined;
   return {
     n,
     ...c,
     row: Math.floor(i / H_COLS),
     origin: originIds.has(n.id),
-    note: originIds.has(n.id)
-      ? "origine de tunnel"
-      : uses > 0
-        ? `${uses} usages déclarés`
-        : "référencé par l'IaC",
+    onHost,
+    note: onHost
+      ? `origine sur ${onHost}`
+      : originIds.has(n.id)
+        ? "origine de tunnel"
+        : uses > 0
+          ? `${uses} usages déclarés`
+          : "référencé par l'IaC",
   };
 });
 const extOrigins = extBoxes.filter((b) => b.origin);
+// les pointillés qui ne sont pas du matériel inconnu, mais un service posé
+// sur une machine déclarée — c'est cette liste qui garde l'aria-label vrai
+const hostedOrigins = extBoxes.filter((b) => b.onHost);
 const railY = (row: number) => EXT_Y0 + row * H_PITCH_Y - 16;
 const railBottom = railY(
   extOrigins.length ? Math.max(...extOrigins.map((b) => b.row)) : 0,
@@ -376,8 +398,8 @@ const ariaLabel =
     ? `, et ${sharedPath.length} ${
         sharedPath.length > 1 ? "noms se partagent" : "nom se partage"
       } entre les deux (${sharedLabels}) : le tunnel trie par chemin d'URL, ` +
-      `un pod du cluster d'un côté, une origine que nul repo ne déclare de ` +
-      `l'autre — il trie, je dessine`
+      `un pod du cluster d'un côté, une origine hors cluster de l'autre ` +
+      `— il trie, je dessine`
     : "") +
   `. Le cluster s'étend sur deux sites reliés par WireGuard : la maison ` +
   `(${homeHosts.length} machines NixOS, ${k3sAgents} agents k3s) et un EC2 ` +
@@ -395,9 +417,16 @@ const ariaLabel =
     : "") +
   (externals.length
     ? ` Toujours côté maison, ${externals.length} boîtes en pointillés ` +
-      `(${externals.map((n) => n.label).join(", ")}) sont du matériel ` +
-      `qu'aucun repo ne déclare : elles ne sont là que parce que l'IaC les ` +
-      `nomme en passant, et c'est ce qui les rend cliquables.`
+      `(${externals.map((n) => n.label).join(", ")}) ne sont gérées par ` +
+      `aucun repo : elles n'existent dans la topologie que parce que l'IaC ` +
+      `les nomme en passant, et c'est ce qui les rend cliquables.`
+    : "") +
+  (hostedOrigins.length
+    ? ` Le pointillé ne veut pas dire « rien derrière » : ` +
+      `${hostedOrigins.map((b) => `${b.n.label} est un service que le repo NixOS déclare sur ${b.onHost}`).join(", ")}. ` +
+      `Même châssis que la machine en trait plein posée juste au-dessus : ` +
+      `le nom public se partage entre un pod du cluster et le service du ` +
+      `host, et le visiteur ne voit jamais qu'un seul nom.`
     : "") +
   ` Chaque boîte cliquable répond à une seule question : le chemin qu'elle ` +
   `emprunte, d'un nom public jusqu'à la machine qui le sert — et l'inverse ` +
@@ -490,7 +519,7 @@ const ariaLabel =
           {extOrigins.map((b) => (
             <path d={`M22,${railY(b.row)} L${b.x + H_W / 2},${railY(b.row)} L${b.x + H_W / 2},${b.y - 2}`} fill="none" stroke="var(--accent-live)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
           ))}
-          <text x="32" y="224" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{toLanOrigin.length} noms publics → {extOrigins.length} origines hors IaC,</text>
+          <text x="32" y="224" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{toLanOrigin.length} noms publics → {extOrigins.length} origines hors cluster,</text>
           <text x="32" y="237" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">atteintes en LAN par le connecteur</text>
         </g>
       )}
@@ -582,11 +611,11 @@ const ariaLabel =
         })
       }
 
-      <!-- hors IaC, vu depuis ses bords : la rangée suit `externals`, elle
-           n'énumère plus personne à la main -->
-      {extBoxes.map(({ n, x, y, note }) => (
+      <!-- les `external:`, vus depuis leurs bords : la rangée suit
+           `externals`, elle n'énumère plus personne à la main -->
+      {extBoxes.map(({ n, x, y, note, onHost }) => (
         <a class="svg-node" data-node={n.id} href={src(n)}>
-          <title>{n.label} — hors IaC, {note}{n.meta.via ? ` · ${n.meta.via}` : ""} · cliquer pour allumer les chemins qui y aboutissent</title>
+          <title>{n.label} — {onHost ? "service déclaré par l'IaC, mais hors topologie" : "hors IaC"}, {note}{n.meta.via ? ` · ${n.meta.via}` : ""} · cliquer pour allumer les chemins qui y aboutissent</title>
           <rect x={x} y={y} width={H_W} height={H_H} rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
           <text x={x + H_W / 2} y={y + 18} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{n.label}</text>
           <text x={x + H_W / 2} y={y + 30} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{note}</text>
@@ -595,7 +624,7 @@ const ariaLabel =
       {homeOutside.length > 0 && (
         <text x="64" y={noteY1} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">« · k3s » : dans le cluster — {homeMembers.length} des {homeHosts.length} ; les autres : NixOS, zéro pod</text>
       )}
-      <text x="64" y={noteY2} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — dessinés parce que l'IaC les référence, donc cliquables</text>
+      <text x="64" y={noteY2} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors topologie déclarée — l'IaC les référence, donc cliquables</text>
 
       <!-- AWS -->
       <rect x="490" y={SITE_TOP} width="230" height={SITE_BOTTOM - SITE_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />

@@ -98,8 +98,22 @@ REFUSAL_MAX_CHARS = 240
 CACHE_TTL_DAYS = 7
 
 
+# Fields that move without anything Bob knows having changed. They are build
+# stamps, and hashing them made the cache useless in production on its first
+# night: arch-refresh.sh dispatches architecture.yml at the START of every run,
+# which rebuilds the site and re-stamps `generated` — so the job invalidated
+# its own cache every time, and two runs three minutes apart produced two
+# different keys with identical content.
+GROUNDING_STAMPS = ("generated", "fleetGenerated", "dispatchGenerated")
+
+
 def grounding_key(path_or_text):
     """A short digest of what Bob currently knows, or "" when unavailable.
+
+    Keyed on CONTENT, not on the file's bytes. The timestamps above are
+    dropped; everything else is hashed canonically, so the key moves when an
+    article ships, the fleet changes or the dispatch is rewritten — and stays
+    put when the site is merely rebuilt.
 
     An empty key disables the cache rather than sharing one bucket for every
     grounding: a cache that cannot tell versions apart is worse than none.
@@ -108,9 +122,20 @@ def grounding_key(path_or_text):
         return ""
     try:
         with open(path_or_text, "rb") as fh:
-            return hashlib.sha256(fh.read()).hexdigest()[:16]
+            raw = fh.read()
     except OSError:
         return ""
+    try:
+        doc = json.loads(raw)
+        if isinstance(doc, dict):
+            content = {k: v for k, v in doc.items() if k not in GROUNDING_STAMPS}
+            raw = json.dumps(content, sort_keys=True,
+                             ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    except (ValueError, TypeError):
+        # Not the JSON we expect: hash the bytes rather than guess. A cache
+        # that misses is slow; one keyed on a misparse is wrong.
+        pass
+    return hashlib.sha256(raw).hexdigest()[:16]
 
 
 def cache_load(path):

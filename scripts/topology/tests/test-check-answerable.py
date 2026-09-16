@@ -169,6 +169,41 @@ with tempfile.TemporaryDirectory() as tmp:
     key = gate.grounding_key(str(g))
     check("the digest is short and stable", (len(key), key), (16, gate.grounding_key(str(g))))
 
+    # THE ONE THAT MATTERED IN PRODUCTION. arch-refresh.sh dispatches
+    # architecture.yml at the start of every run, which rebuilds the site and
+    # re-stamps `generated`. Keyed on the file's bytes, the job invalidated its
+    # own cache every time: two runs three minutes apart, identical content,
+    # two different keys, zero hits.
+    base = {"schema": 1, "corpus": "article|a|2026-09-16|A|en", "fleet": "x"}
+    g.write_text(json.dumps({**base, "generated": "2026-09-16T20:16:00.000Z",
+                             "fleetGenerated": "2026-09-16T15:00:00Z",
+                             "dispatchGenerated": "2026-09-15T11:00:00Z"}),
+                 encoding="utf-8")
+    k1 = gate.grounding_key(str(g))
+    g.write_text(json.dumps({**base, "generated": "2026-09-16T20:19:57.069Z",
+                             "fleetGenerated": "2026-09-16T15:49:13Z",
+                             "dispatchGenerated": "2026-09-15T11:47:53Z"}),
+                 encoding="utf-8")
+    check("a rebuild alone does not move the key", gate.grounding_key(str(g)), k1)
+
+    # and key order must not either, or a reserialised file looks like new content
+    g.write_text(json.dumps({"fleet": "x", "schema": 1,
+                             "corpus": "article|a|2026-09-16|A|en",
+                             "generated": "2026-09-16T21:00:00.000Z"}),
+                 encoding="utf-8")
+    check("nor does the order of the fields", gate.grounding_key(str(g)), k1)
+
+    g.write_text(json.dumps({**base, "corpus": "article|a|2026-09-16|A|en\narticle|b|2026-09-17|B|en",
+                             "generated": "2026-09-16T20:16:00.000Z"}), encoding="utf-8")
+    check("a published article DOES move it", gate.grounding_key(str(g)) != k1, True)
+
+    g.write_text("pas du json", encoding="utf-8")
+    check("a file that is not the JSON we expect still yields a key",
+          len(gate.grounding_key(str(g))), 16)
+
+    g.write_text('{"chunks": 1}', encoding="utf-8")
+    key = gate.grounding_key(str(g))
+
     cache = {}
     gate.cache_put(cache, key, "Q ?", "ANSWERED")
     check("a hit comes back", gate.cache_get(cache, key, "Q ?"), "ANSWERED")

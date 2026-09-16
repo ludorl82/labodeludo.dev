@@ -616,6 +616,34 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    /* Follow the conversation. The log only scrolled once, when the fullscreen
+       view opened, so a question sent at the bottom and the answer typing out
+       under it both landed below the fold and the visitor had to chase them
+       with the scrollbar.
+
+       Pinned-to-bottom rather than always-scroll: whoever scrolled up to reread
+       an earlier answer keeps their place, and scrolling back down re-pins.
+       The flag is only recomputed on scroll events, never on growth, so an
+       answer getting longer cannot unpin a reader who was following it.
+
+       One observer on the log instead of a call in each writer: the thinking
+       animation, the typed reveal, the swap to the linked version and the
+       local-model note all change the height, and none of them has to know. */
+    let pinned = true;
+    const followEnd = () => {
+      log!.scrollTop = log!.scrollHeight;
+    };
+    log.addEventListener(
+      "scroll",
+      () => {
+        pinned = log!.scrollHeight - log!.scrollTop - log!.clientHeight < 48;
+      },
+      { passive: true },
+    );
+    new MutationObserver(() => {
+      if (pinned) followEnd();
+    }).observe(log, { childList: true, subtree: true, characterData: true });
+
     function addTurn(who: string, text: string) {
       const div = document.createElement("div");
       div.className = `turn ${who}`;
@@ -660,6 +688,8 @@ const fallback = BOB_QUIPS[Math.floor(Math.random() * BOB_QUIPS.length)];
       fallbackTurn?.remove();
       openers?.remove();
 
+      // Sending is a request to see the exchange, wherever the reader was.
+      pinned = true;
       addTurn("toi", "").textContent = question;
       const answer = addTurn("bob", "");
       const stopThinking = startThinking(answer, LANG);

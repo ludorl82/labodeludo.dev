@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
-"""Assemble the panel from its two sources, and record which is which.
+"""Assemble the panel from its sources, and record which is which.
 
-Usage: merge-openers.py <kept.json> <written.json> <out.json> <timestamp>
+Usage: merge-openers.py [--curated <curated.json>] <kept.json> <written.json>
+                        <out.json> <timestamp>
 
-The suggested questions come from two places now: questions visitors really
-asked, gated verbatim, and questions Bob wrote to fill the buttons those leave
-empty, gated against the vocabulary of the published articles. Each half is
-checked on its own terms, so the only things decided here are the three that
-belong to neither half.
+The suggested questions come from three places: questions visitors really
+asked, gated verbatim; questions Ludo curated by hand, gated only on whether
+Bob can still answer them; and questions Bob wrote to fill what those leave
+empty, gated against the vocabulary of the published articles. Each source is
+checked on its own terms, so the only things decided here are the ones that
+belong to none of them.
 
-**Real questions come first.** A question somebody actually asked is evidence
-about what people want to know; a written one is a guess, however well
-grounded. When both are available for the same slot, the evidence wins.
+**Precedence: asked, then curated, then written.** A question somebody
+actually asked is evidence about what people want to know. A curated one is a
+person's judgement, which beats a guess. A written one is a guess, however
+well grounded. When two sources offer a slot, the stronger claim wins.
+
+`--curated` is optional and the positional form is unchanged, because this
+same script also joins the written half's two languages — a call that has no
+third source and must keep working.
 
 **The per-language cap applies to the MERGE.** Each gate caps its own output,
 and nothing else stands between two capped halves and a panel of eight French
@@ -53,9 +60,9 @@ def load(path):
         return []
 
 
-def merge(real, written, max_per_lang, looks_english):
+def merge(real, written, max_per_lang, looks_english, curated=()):
     out, per = [], {True: 0, False: 0}
-    for q in list(real) + list(written):
+    for q in list(real) + list(curated) + list(written):
         if q in out:
             continue
         en = looks_english(q)
@@ -67,17 +74,34 @@ def merge(real, written, max_per_lang, looks_english):
 
 
 def main():
-    if len(sys.argv) != 5:
-        print("usage: merge-openers.py <kept.json> <written.json> <out.json> <timestamp>",
-              file=sys.stderr)
+    argv = sys.argv[1:]
+    curated_p = None
+    if "--curated" in argv:
+        i = argv.index("--curated")
+        try:
+            curated_p = argv[i + 1]
+        except IndexError:
+            print("merge-openers: --curated needs a path", file=sys.stderr)
+            return 1
+        del argv[i:i + 2]
+    if len(argv) != 4:
+        print("usage: merge-openers.py [--curated <f>] <kept.json> <written.json> "
+              "<out.json> <timestamp>", file=sys.stderr)
         return 1
-    kept_p, written_p, out_p, stamp = sys.argv[1:5]
+    kept_p, written_p, out_p, stamp = argv
     co = _openers_gate()
 
     real, written = load(kept_p), load(written_p)
-    out = merge(real, written, co.MAX_PER_LANG, co.looks_english)
+    curated = load(curated_p) if curated_p else []
+    out = merge(real, written, co.MAX_PER_LANG, co.looks_english, curated)
+    # Labels are assigned by PRECEDENCE, not by membership: the same string can
+    # sit in two lists (a visitor may well ask what Ludo curated), and calling
+    # it curated then would quietly shrink the count of real questions the
+    # whole pipeline rests on. First source to claim it, keeps it.
     doc = {"generated": stamp, "openers": out,
-           "written": [q for q in out if q in written and q not in real]}
+           "curated": [q for q in out if q in curated and q not in real],
+           "written": [q for q in out if q in written
+                       and q not in real and q not in curated]}
 
     with open(out_p, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True, ensure_ascii=False)
@@ -85,7 +109,8 @@ def main():
 
     en = sum(1 for q in out if co.looks_english(q))
     print(f"merge-openers: {len(out)} question(s) — {en} en, {len(out) - en} fr; "
-          f"{len(real)} asked, {len(doc['written'])} written")
+          f"{len(real)} asked, {len(doc['curated'])} curated, "
+          f"{len(doc['written'])} written")
     return 0
 
 

@@ -126,7 +126,7 @@
     },
     {
       "class": "domotique",
-      "count": 1,
+      "count": 2,
       "iacDeclared": false,
       "location": "not-racked",
       "model": "Home Assistant Voice Preview Edition",
@@ -236,6 +236,26 @@
     },
     {
       "class": "server",
+      "gpus": [
+        {
+          "die": "GA106",
+          "model": "RTX 3050",
+          "passthrough": true,
+          "vram": ""
+        },
+        {
+          "die": "GA107",
+          "model": "RTX 3050 6GB",
+          "passthrough": true,
+          "vram": ""
+        },
+        {
+          "die": "GM206",
+          "model": "GTX 960",
+          "passthrough": true,
+          "vram": ""
+        }
+      ],
       "iacDeclared": true,
       "location": "rolling-rack",
       "model": "Supermicro X11SRA-RF",
@@ -244,10 +264,30 @@
       "power": "ups-03",
       "rackOrder": 2,
       "role": "agent k3s à la demande, hôte de jeu (libvirt)",
-      "spec": "GTX 960 + RTX 3050 en vfio-passthrough"
+      "spec": "RTX 3050 (GA106, vfio) + RTX 3050 6GB (GA107, vfio) + GTX 960 (GM206, vfio)"
     },
     {
       "class": "server",
+      "gpus": [
+        {
+          "die": "GA106",
+          "model": "RTX 3060",
+          "passthrough": false,
+          "vram": "12 Go"
+        },
+        {
+          "die": "GA106",
+          "model": "RTX 3060",
+          "passthrough": false,
+          "vram": "12 Go"
+        },
+        {
+          "die": "GA106",
+          "model": "RTX 3060 Lite Hash Rate",
+          "passthrough": false,
+          "vram": "12 Go"
+        }
+      ],
       "iacDeclared": true,
       "location": "rolling-rack",
       "model": "Supermicro X11SRA-RF",
@@ -256,10 +296,18 @@
       "power": "ups-03",
       "rackOrder": 1,
       "role": "agent k3s (GPU, non taint), maître NUT de l'onduleur de la baie",
-      "spec": "3x RTX 3060"
+      "spec": "2x RTX 3060 (GA106, 12 Go) + RTX 3060 Lite Hash Rate (GA106, 12 Go)"
     },
     {
       "class": "server",
+      "gpus": [
+        {
+          "die": "GA106M",
+          "model": "RTX 3060 Laptop",
+          "passthrough": false,
+          "vram": "6 Go"
+        }
+      ],
       "iacDeclared": true,
       "location": "rolling-rack",
       "model": "Supermicro X9SCL/X9SCM",
@@ -339,22 +387,38 @@
     {
       "class": "vm",
       "gpu": true,
+      "gpus": [
+        {
+          "die": "GA106",
+          "model": "RTX 3050",
+          "passthrough": true,
+          "vram": ""
+        }
+      ],
       "hostedBy": "gaming-01",
       "iacDeclared": true,
       "name": "arcade1",
       "network": "vlan10",
       "role": "VM de jeu, GPU en passthrough, streamée par Steam Remote Play — pas un nœud k3s",
-      "spec": "GTX 960 en passthrough (dépannage, 4 Go)"
+      "spec": "RTX 3050 (GA106, vfio)"
     },
     {
       "class": "vm",
       "gpu": true,
+      "gpus": [
+        {
+          "die": "GA107",
+          "model": "RTX 3050 6GB",
+          "passthrough": true,
+          "vram": ""
+        }
+      ],
       "hostedBy": "gaming-01",
       "iacDeclared": true,
       "name": "arcade2",
       "network": "vlan10",
       "role": "VM de jeu, GPU en passthrough, streamée par Steam Remote Play — pas un nœud k3s",
-      "spec": "RTX 3050 en passthrough"
+      "spec": "RTX 3050 6GB (GA107, vfio)"
     },
     {
       "class": "vm",
@@ -386,15 +450,36 @@
     {
       "class": "vm",
       "gpu": true,
+      "gpus": [
+        {
+          "die": "GA106",
+          "model": "RTX 3050",
+          "passthrough": true,
+          "vram": ""
+        },
+        {
+          "die": "GA107",
+          "model": "RTX 3050 6GB",
+          "passthrough": true,
+          "vram": ""
+        },
+        {
+          "die": "GM206",
+          "model": "GTX 960",
+          "passthrough": true,
+          "vram": ""
+        }
+      ],
       "hostedBy": "gaming-01",
       "iacDeclared": true,
       "name": "vm-03",
       "network": "vlan10",
-      "role": "agent k3s (GPU)"
+      "role": "agent k3s (GPU)",
+      "spec": "RTX 3050 (GA106, vfio) + RTX 3050 6GB (GA107, vfio) + GTX 960 (GM206, vfio)"
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-09-15T11:17:34Z",
+  "generated": "2026-09-16T15:49:13Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

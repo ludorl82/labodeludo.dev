@@ -77,24 +77,43 @@ const blogBucket = byId("bucket:labodeludo.dev");
 
 // How each public name actually leaves the edge. The tunnel no longer lands
 // on the ingress alone: some names are dialled straight at an in-cluster
-// Service, and two never touch the cluster at all. Partition it from the
-// data rather than asserting the old single spine.
+// Service, some never touch the cluster at all, and some are split between
+// the two. Partition all of it from the data — the split included, it shows
+// up as a name carrying BOTH an `app:` and an `external:` origin, and this
+// file used to recount that bucket by hand in a comment.
 const routesTo = (arch.edges as any[]).filter((e) => e.kind === "routes-to");
 const dnsNodes = kind("dns");
 const externalIds = new Set(externals.map((n) => n.id));
 const toTunnel = dnsNodes.filter((n) =>
   routesTo.some((e) => e.from === n.id && e.to === tunnel?.id),
 );
-// router / ha-01 : the connector dials a LAN origin, the cluster is not on
-// the path at all.
-const toExternal = toTunnel.filter((n) =>
+// the names whose connector dials a LAN address rather than a cluster Service
+const toLanOrigin = toTunnel.filter((n) =>
   routesTo.some((e) => e.from === n.id && externalIds.has(e.to)),
 );
-const inCluster = toTunnel.filter((n) => !toExternal.includes(n));
-const viaIngress = inCluster.filter(
-  (n) => typeof n.meta.origin === "string" && n.meta.origin.includes("traefik."),
+// Of those, the ones where the LAN box is the whole path: the cluster is not
+// on it at all.
+const toExternal = toLanOrigin.filter(
+  (n) => !routesTo.some((e) => e.from === n.id && e.to.startsWith("app:")),
 );
-const directToService = inCluster.filter((n) => !viaIngress.includes(n));
+// The rest reach the cluster AND the box: the tunnel sorts them by URL path
+// (one rule at a pod, the catch-all at the machine), so counting them as
+// purely hors-cluster is the same lie in the other direction.
+const sharedPath = toLanOrigin.filter((n) => !toExternal.includes(n));
+const inCluster = toTunnel.filter((n) => !toExternal.includes(n));
+// The four buckets stay disjoint whatever the data does: a name that both
+// transits the ingress and ends on a LAN box belongs to the split sentence,
+// not to two counts at once.
+const viaIngress = inCluster.filter(
+  (n) =>
+    !sharedPath.includes(n) &&
+    typeof n.meta.origin === "string" &&
+    n.meta.origin.includes("traefik."),
+);
+const directToService = inCluster.filter(
+  (n) => !viaIngress.includes(n) && !sharedPath.includes(n),
+);
+const sharedLabels = sharedPath.map((n) => n.label).join(", ");
 const toBucket = dnsNodes.filter((n) =>
   routesTo.some((e) => e.from === n.id && e.to.startsWith("bucket:")),
 );
@@ -132,22 +151,44 @@ const usesCount = (id: string) =>
 const originIds = new Set(
   routesTo.filter((e) => externalIds.has(e.to)).map((e) => e.to),
 );
+// Le pointillé ne veut pas dire « rien derrière », et un cas le prouve :
+// `external:ollama` est le service qu'un des repos déclare bel et bien, sur
+// une machine déjà dessinée en trait plein dans la grille du haut. Vu dans
+// nixos-iac (hosts/gpu-01/configuration.nix) : l'origine LAN du tunnel est
+// l'adresse VLAN10 de la machine, le port est ouvert, le service est activé
+// là. architecture.json ne porte aucune adresse de machine — la graine ne
+// peut pas faire le rapprochement, seul le snapshot le voit. Le nom affiché
+// vient quand même de `byId`, pour qu'un châssis renommé suive tout seul ;
+// si l'origine disparaît ou change de bécane, diagram-delta le signalera.
+const originOnHost: Record<string, string> = {
+  "external:ollama": "host:gpu-01",
+};
 const extBoxes = externals.map((n, i) => {
   const c = cell(i, EXT_Y0);
   const uses = usesCount(n.id);
+  const hostId = originOnHost[n.id];
+  const onHost = hostId
+    ? (byId(hostId)?.label ?? hostId.split(":")[1])
+    : undefined;
   return {
     n,
     ...c,
     row: Math.floor(i / H_COLS),
     origin: originIds.has(n.id),
-    note: originIds.has(n.id)
-      ? "origine de tunnel"
-      : uses > 0
-        ? `${uses} usages déclarés`
-        : "référencé par l'IaC",
+    onHost,
+    note: onHost
+      ? `origine sur ${onHost}`
+      : originIds.has(n.id)
+        ? "origine de tunnel"
+        : uses > 0
+          ? `${uses} usages déclarés`
+          : "référencé par l'IaC",
   };
 });
 const extOrigins = extBoxes.filter((b) => b.origin);
+// les pointillés qui ne sont pas du matériel inconnu, mais un service posé
+// sur une machine déclarée — c'est cette liste qui garde l'aria-label vrai
+const hostedOrigins = extBoxes.filter((b) => b.onHost);
 const railY = (row: number) => EXT_Y0 + row * H_PITCH_Y - 16;
 const railBottom = railY(
   extOrigins.length ? Math.max(...extOrigins.map((b) => b.row)) : 0,
@@ -208,6 +249,26 @@ const oneOrphan = orphans.length === 1;
 // contredit un compte dessiné plus haut : ce compte-là est celui des déclarés
 const orphanAgents = orphans.filter((d) => /k3s/i.test(d.role ?? ""));
 const fleetUnits = fleetExtras.reduce((n, d) => n + (d.count ?? 1), 0);
+// « bien branchés » n'est pas une déduction, c'est un fait que la graine sait
+// dire ou taire : le `role` d'une boîte peut la déclarer à l'arrêt. Une carte
+// de rechange rangée dans une baie fait partie du parc, elle ne tire aucun
+// courant pour autant — et son infobulle le dit déjà, ce qui mettait la
+// légende en contradiction avec sa propre bande. L'adjectif se vérifie donc
+// dans le texte du seed, et le nom cité vient de lui aussi, jamais d'ici.
+const unpowered = fleetExtras.filter((d) =>
+  /\bhors tension\b/i.test(d.role ?? ""),
+);
+const oneUnpowered = unpowered.length === 1;
+const pluggedIn = unpowered.length
+  ? "sous tension pour la plupart"
+  : "bien branchés";
+const offDuty = unpowered.length
+  ? ` — ${oneUnpowered ? "une exception" : `${unpowered.length} exceptions`}, ${unpowered
+      .map((d) => d.name)
+      .join(", ")}, qui ${oneUnpowered ? "dort" : "dorment"} hors tension et ${
+      oneUnpowered ? "compte" : "comptent"
+    } quand même —`
+  : "";
 // the seam worth naming: an undeclared machine that nonetheless carries a
 // declared k3s agent — a layer crossing only the fleet seed can see
 const agentNames = new Set(agents.map((a) => a.label));
@@ -303,12 +364,16 @@ const fleetNotes = [
       ]
     : []),
 ];
-// « jamais déclarés » serait faux dès qu'un orphelin est dans la bande : lui,
-// le drapeau du parc le dit déclaré — ce que les repos publics, eux, ne
-// confirment pas.
+// « jamais déclarés » serait faux deux fois. D'abord dès qu'un orphelin est
+// dans la bande : lui, le drapeau du parc le dit déclaré — ce que les repos
+// publics, eux, ne confirment pas. Ensuite pour les onduleurs, redescendus ici
+// parce qu'aucun nœud de topologie ne les nomme plus, alors que le repo NixOS
+// les pilote toujours, module NUT par module NUT. Le seul fait que la graine
+// garantisse, c'est l'absence de nœud — et c'est déjà tout ce qui explique
+// qu'il n'y ait rien à cliquer.
 const fleetSubtitle = orphans.length
-  ? "bien branchés, déclarés par l'inventaire seulement : rien à allumer, aucune source à ouvrir"
-  : "bien branchés, jamais déclarés : rien à allumer, aucune source à ouvrir";
+  ? `${pluggedIn}, déclarés par l'inventaire seulement : rien à allumer, aucune source à ouvrir`
+  : `${pluggedIn}, hors de la topologie : rien à allumer, aucune source à ouvrir`;
 const svgH = fleetExtras.length
   ? fleetBottom + 26 + fleetNotes.length * 14
   : SITE_BOTTOM + 20;
@@ -326,9 +391,17 @@ const ariaLabel =
   `sortant, initié depuis le cluster. De ces ${toTunnel.length} noms, ` +
   `${viaIngress.length} passent par l'ingress traefik, ` +
   `${directToService.length} visent directement un Service du cluster sans ` +
-  `passer par l'ingress, et ${toExternal.length} ne touchent pas le cluster ` +
+  `passer par l'ingress, ${toExternal.length} ne touchent pas le cluster ` +
   `du tout : le connecteur atteint leurs origines en LAN, du matériel hors ` +
-  `IaC. Le cluster s'étend sur deux sites reliés par WireGuard : la maison ` +
+  `IaC` +
+  (sharedPath.length
+    ? `, et ${sharedPath.length} ${
+        sharedPath.length > 1 ? "noms se partagent" : "nom se partage"
+      } entre les deux (${sharedLabels}) : le tunnel trie par chemin d'URL, ` +
+      `un pod du cluster d'un côté, une origine hors cluster de l'autre ` +
+      `— il trie, je dessine`
+    : "") +
+  `. Le cluster s'étend sur deux sites reliés par WireGuard : la maison ` +
   `(${homeHosts.length} machines NixOS, ${k3sAgents} agents k3s) et un EC2 ` +
   `chez AWS qui est l'unique control-plane, le hub WireGuard vers lequel la ` +
   `maison compose — côté maison la liaison se termine sur le pare-feu hors ` +
@@ -344,9 +417,16 @@ const ariaLabel =
     : "") +
   (externals.length
     ? ` Toujours côté maison, ${externals.length} boîtes en pointillés ` +
-      `(${externals.map((n) => n.label).join(", ")}) sont du matériel ` +
-      `qu'aucun repo ne déclare : elles ne sont là que parce que l'IaC les ` +
-      `nomme en passant, et c'est ce qui les rend cliquables.`
+      `(${externals.map((n) => n.label).join(", ")}) ne sont gérées par ` +
+      `aucun repo : elles n'existent dans la topologie que parce que l'IaC ` +
+      `les nomme en passant, et c'est ce qui les rend cliquables.`
+    : "") +
+  (hostedOrigins.length
+    ? ` Le pointillé ne veut pas dire « rien derrière » : ` +
+      `${hostedOrigins.map((b) => `${b.n.label} est un service que le repo NixOS déclare sur ${b.onHost}`).join(", ")}. ` +
+      `Même châssis que la machine en trait plein de la grille du haut : ` +
+      `le nom public se partage entre un pod du cluster et le service du ` +
+      `host, et le visiteur ne voit jamais qu'un seul nom.`
     : "") +
   ` Chaque boîte cliquable répond à une seule question : le chemin qu'elle ` +
   `emprunte, d'un nom public jusqu'à la machine qui le sert — et l'inverse ` +
@@ -354,9 +434,9 @@ const ariaLabel =
   `machine sans lien déclaré n'a pas de chemin à allumer.` +
   (fleetExtras.length
     ? ` Une dernière bande montre le reste du parc : ${fleetUnits} ` +
-      `appareils bien réels — ${fleetClasses.join(", ")} — qu'aucun des ` +
-      `quatre repos publics ne déclare, répartis sur ${netKeys.length} ` +
-      `segments réseau. Ceux-là ` +
+      `appareils bien réels — ${fleetClasses.join(", ")} — qu'aucun des quatre ` +
+      `repos publics ne déclare dans sa topologie, répartis sur ` +
+      `${netKeys.length} segments réseau. Ceux-là ` +
       `n'ont pas de source à ouvrir, donc pas de clic.` +
       (orphans.length
         ? ` ${oneOrphan ? "Un seul" : `${orphans.length} d'entre eux`} ` +
@@ -428,16 +508,18 @@ const ariaLabel =
       <path d="M380,282 L380,200" fill="none" stroke="var(--accent-live)" stroke-width="1.7" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
       <text x="394" y="228" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">tunnel cloudflared — sortant, initié du cluster</text>
 
-      <!-- les noms dont l'origine n'est PAS dans le cluster : le connecteur
-           atteint une adresse LAN, le cluster n'est pas sur le chemin
+      <!-- les noms dont le connecteur compose une adresse LAN : le cluster
+           n'est sur le chemin d'aucun d'eux par l'ingress. Les uns n'y
+           entrent pas du tout ; les autres y entrent quand même, triés par
+           chemin d'URL — c'est le « +N » du trait de contournement, à droite.
            (décoratif — les boîtes hors IaC portent les nœuds) -->
-      {toExternal.length > 0 && extOrigins.length > 0 && (
+      {toLanOrigin.length > 0 && extOrigins.length > 0 && (
         <g>
           <path d={`M100,200 L100,206 L22,206 L22,${railBottom}`} fill="none" stroke="var(--accent-live)" stroke-width="1.4" stroke-dasharray="5 4" />
           {extOrigins.map((b) => (
             <path d={`M22,${railY(b.row)} L${b.x + H_W / 2},${railY(b.row)} L${b.x + H_W / 2},${b.y - 2}`} fill="none" stroke="var(--accent-live)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
           ))}
-          <text x="32" y="224" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{toExternal.length} noms publics → origines hors cluster,</text>
+          <text x="32" y="224" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{toLanOrigin.length} noms publics → {extOrigins.length} origines hors cluster,</text>
           <text x="32" y="237" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">atteintes en LAN par le connecteur</text>
         </g>
       )}
@@ -455,13 +537,18 @@ const ariaLabel =
       </a>
 
       <!-- contournement de l'ingress : ces noms visent le Service directement
-           (décoratif — l'agrégat applications porte les nœuds) -->
+           (décoratif — l'agrégat applications porte les nœuds). Le « +N » est
+           le nom que le tunnel coupe par chemin d'URL : une partie de ses
+           requêtes descend ici, le reste ressort vers une boîte hors IaC. -->
       {directToService.length > 0 && (
         <g>
           <path d="M380,270 L560,270 L560,405 L519,405" fill="none" stroke="var(--accent-live)" stroke-width="1.5" marker-end="url(#la-arrow-live)" />
           <text x="568" y="300" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{directToService.length} noms visent</text>
           <text x="568" y="313" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">le Service direct,</text>
           <text x="568" y="326" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">sans l'ingress</text>
+          {sharedPath.length > 0 && (
+            <text x="568" y="345" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">+{sharedPath.length} pour un chemin</text>
+          )}
         </g>
       )}
 
@@ -524,11 +611,11 @@ const ariaLabel =
         })
       }
 
-      <!-- hors IaC, vu depuis ses bords : la rangée suit `externals`, elle
-           n'énumère plus personne à la main -->
-      {extBoxes.map(({ n, x, y, note }) => (
+      <!-- les `external:`, vus depuis leurs bords : la rangée suit
+           `externals`, elle n'énumère plus personne à la main -->
+      {extBoxes.map(({ n, x, y, note, onHost }) => (
         <a class="svg-node" data-node={n.id} href={src(n)}>
-          <title>{n.label} — hors IaC, {note}{n.meta.via ? ` · ${n.meta.via}` : ""} · cliquer pour allumer les chemins qui y aboutissent</title>
+          <title>{n.label} — {onHost ? "service déclaré par l'IaC, mais hors topologie" : "hors IaC"}, {note}{n.meta.via ? ` · ${n.meta.via}` : ""} · cliquer pour allumer les chemins qui y aboutissent</title>
           <rect x={x} y={y} width={H_W} height={H_H} rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
           <text x={x + H_W / 2} y={y + 18} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{n.label}</text>
           <text x={x + H_W / 2} y={y + 30} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{note}</text>
@@ -537,7 +624,7 @@ const ariaLabel =
       {homeOutside.length > 0 && (
         <text x="64" y={noteY1} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">« · k3s » : dans le cluster — {homeMembers.length} des {homeHosts.length} ; les autres : NixOS, zéro pod</text>
       )}
-      <text x="64" y={noteY2} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors IaC — dessinés parce que l'IaC les référence, donc cliquables</text>
+      <text x="64" y={noteY2} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors topologie déclarée — l'IaC les référence, donc cliquables</text>
 
       <!-- AWS -->
       <rect x="490" y={SITE_TOP} width="230" height={SITE_BOTTOM - SITE_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
@@ -568,7 +655,7 @@ const ariaLabel =
         <g>
           <path d={`M250,${SITE_BOTTOM} L250,${F_TOP}`} fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
           <rect x="40" y={F_TOP} width="680" height={fleetBottom - F_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" stroke-dasharray="4 3" />
-          <text x="58" y={F_TOP + 26} font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">le reste du parc — {fleetUnits} appareils, zéro ligne d'IaC</text>
+          <text x="58" y={F_TOP + 26} font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">le reste du parc — {fleetUnits} appareils, zéro nœud déclaré</text>
           <text x="58" y={F_TOP + 43} font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{fleetSubtitle}</text>
           {fleetBands.map((band) => (
             <g>
@@ -597,11 +684,12 @@ const ariaLabel =
     machine. Un deuxième clic ouvre son fichier source.
     {fleetExtras.length > 0 &&
       " La bande du bas, elle, ne clique pas : c'est le reste du parc, qui " +
-        "existe, qui tire du courant, et " +
+        "existe, qui tire du courant" +
+        (offDuty ? `${offDuty} et ` : ", et ") +
         (orphans.length
           ? "que l'inventaire croit déjà déclarés, alors qu'aucun repo public " +
             "ne les nomme."
-          : "qu'aucun commit n'a jamais vu passer.")}
+          : "que nul repo public ne compte dans sa topologie.")}
   </figcaption>
 </figure>
 

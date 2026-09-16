@@ -1,17 +1,15 @@
 {
-  "generated": "2026-09-16T09:41:03Z",
+  "curated": [],
+  "generated": "2026-09-16T19:22:43Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "which model powers you?",
-    "Quels articles parlent de Kubernetes ?",
+    "What model runs your chat?",
+    "How do you back up your cluster?",
     "c'est quoi ton setup complet ?",
-    "C'est quoi ton modèle ?",
-    "Comment avez-vous migré votre homelab vers NixOS ?",
-    "How did you automate your lab from the bastion?"
+    "Quels articles parlent de Kubernetes ?",
+    "Comment tu as fait pour que Frigate utilise le GPU?",
+    "C'est quoi ton modèle ?"
   ],
-  "written": [
-    "Comment avez-vous migré votre homelab vers NixOS ?",
-    "How did you automate your lab from the bastion?"
-  ]
+  "written": []
 }

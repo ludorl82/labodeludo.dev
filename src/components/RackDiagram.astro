@@ -22,7 +22,10 @@
 //     is resolved through its host, never assumed.
 //   * `power` is the whole reason a rack picture beats a list: it answers
 //     "what dies with which onduleur". It gets its own rail on the right
-//     of each rack, not a scrap at the end of a truncated line.
+//     of each rack, not a scrap at the end of a truncated line. It is also
+//     OPTIONAL: a row that names none gets no tick and no rail, so the words
+//     around the drawing count the rows that name one instead of promising
+//     that everything in a bay hangs from a battery.
 //   * A physical card is hardware, and the seed now names it two ways: `gpu`,
 //     the older yes/no, and `gpus`, a LIST of what is screwed into the box
 //     (model, silicon, memory, and whether it runs `passthrough` for a guest).
@@ -294,6 +297,18 @@ const RACKS = Object.keys(racks)
 
 const hasRacks = RACKS.length > 0;
 const anyPower = RACKS.some((r) => powerFeeds(r.key).length > 0);
+
+// rows the seed actually ties to an onduleur, and rows it leaves unattached.
+// `power` is optional, and a rail can only be drawn where it is set: the
+// caption quotes these two counts rather than promising that every row hangs
+// from something — a rack picture that tied the rest to an onduleur anyway
+// would be drawing a cable nobody pulled through the wall.
+const poweredRows = (key: string) => rowsFor(key).filter((d) => d.power);
+const railRows = RACKS.reduce((n, r) => n + poweredRows(r.key).length, 0);
+const bareRows = RACKS.reduce(
+  (n, r) => n + rowsFor(r.key).length - poweredRows(r.key).length,
+  0,
+);
 
 // networks actually drawn, so the legend never invents an entry
 const shownNetworks = [
@@ -600,12 +615,21 @@ const ariaLabel = hasRacks
           prêté à une VM reste vissé chez son hôte, je ne le descends pas deux
           étages pour faire joli.</>
         )}
-        À droite, le rail vertical relie chaque rangée à
-        l'onduleur qui la tient : le carré plein marque l'onduleur lui-même,
-        et tout ce qui pend au même trait tombe avec lui. La hauteur totale
-        du châssis est écrite en en-tête, mais les rangées sont dans l'ordre
-        de l'inventaire et pas à leur position en U : le document source ne
-        note pas les U, alors je ne fais pas semblant de les connaître.
+        {anyPower && (
+          <> À droite, le rail vertical relie une rangée à l'onduleur que
+          l'inventaire lui nomme : le carré plein marque l'onduleur lui-même,
+          et tout ce qui pend au même trait tombe avec lui.
+          {bareRows > 0
+            ? <> Elles sont {railRows} sur {railRows + bareRows} à nommer celui
+              qui les tient ; les {bareRows} autres ne nomment rien du tout —
+              l'inventaire ne le dit pas, et je ne vais pas tracer un câble que
+              personne n'a tiré. </>
+            : <> Toutes les rangées d'ici le nomment. </>}</>
+        )}
+        La hauteur totale du châssis est écrite en en-tête, mais les rangées
+        sont dans l'ordre de l'inventaire et pas à leur position en U : le
+        document source ne note pas les U, alors je ne fais pas semblant de les
+        connaître.
         Envie de voir la vraie chose plutôt que mes rectangles ?
         <a href="/blog/un-tiroir-1u-pour-mes-trois-raspberry-pi/">
           l'article du tiroir 1U

@@ -227,6 +227,26 @@ const oneOrphan = orphans.length === 1;
 // contredit un compte dessiné plus haut : ce compte-là est celui des déclarés
 const orphanAgents = orphans.filter((d) => /k3s/i.test(d.role ?? ""));
 const fleetUnits = fleetExtras.reduce((n, d) => n + (d.count ?? 1), 0);
+// « bien branchés » n'est pas une déduction, c'est un fait que la graine sait
+// dire ou taire : le `role` d'une boîte peut la déclarer à l'arrêt. Une carte
+// de rechange rangée dans une baie fait partie du parc, elle ne tire aucun
+// courant pour autant — et son infobulle le dit déjà, ce qui mettait la
+// légende en contradiction avec sa propre bande. L'adjectif se vérifie donc
+// dans le texte du seed, et le nom cité vient de lui aussi, jamais d'ici.
+const unpowered = fleetExtras.filter((d) =>
+  /\bhors tension\b/i.test(d.role ?? ""),
+);
+const oneUnpowered = unpowered.length === 1;
+const pluggedIn = unpowered.length
+  ? "sous tension pour la plupart"
+  : "bien branchés";
+const offDuty = unpowered.length
+  ? ` — ${oneUnpowered ? "une exception" : `${unpowered.length} exceptions`}, ${unpowered
+      .map((d) => d.name)
+      .join(", ")}, qui ${oneUnpowered ? "dort" : "dorment"} hors tension et ${
+      oneUnpowered ? "compte" : "comptent"
+    } quand même —`
+  : "";
 // the seam worth naming: an undeclared machine that nonetheless carries a
 // declared k3s agent — a layer crossing only the fleet seed can see
 const agentNames = new Set(agents.map((a) => a.label));
@@ -330,8 +350,8 @@ const fleetNotes = [
 // garantisse, c'est l'absence de nœud — et c'est déjà tout ce qui explique
 // qu'il n'y ait rien à cliquer.
 const fleetSubtitle = orphans.length
-  ? "bien branchés, déclarés par l'inventaire seulement : rien à allumer, aucune source à ouvrir"
-  : "bien branchés, hors de la topologie : rien à allumer, aucune source à ouvrir";
+  ? `${pluggedIn}, déclarés par l'inventaire seulement : rien à allumer, aucune source à ouvrir`
+  : `${pluggedIn}, hors de la topologie : rien à allumer, aucune source à ouvrir`;
 const svgH = fleetExtras.length
   ? fleetBottom + 26 + fleetNotes.length * 14
   : SITE_BOTTOM + 20;
@@ -635,7 +655,8 @@ const ariaLabel =
     machine. Un deuxième clic ouvre son fichier source.
     {fleetExtras.length > 0 &&
       " La bande du bas, elle, ne clique pas : c'est le reste du parc, qui " +
-        "existe, qui tire du courant, et " +
+        "existe, qui tire du courant" +
+        (offDuty ? `${offDuty} et ` : ", et ") +
         (orphans.length
           ? "que l'inventaire croit déjà déclarés, alors qu'aucun repo public " +
             "ne les nomme."

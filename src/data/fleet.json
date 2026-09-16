@@ -126,7 +126,7 @@
     },
     {
       "class": "domotique",
-      "count": 1,
+      "count": 2,
       "iacDeclared": false,
       "location": "not-racked",
       "model": "Home Assistant Voice Preview Edition",
@@ -479,7 +479,7 @@
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-09-16T11:24:49Z",
+  "generated": "2026-09-16T12:52:09Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

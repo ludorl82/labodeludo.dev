@@ -2,15 +2,15 @@
   "curated": [
     "Comment tu publies ton infrastructure sans donner tes secrets ?"
   ],
-  "generated": "2026-09-16T20:18:57Z",
+  "generated": "2026-09-16T20:21:53Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
+    "which model powers you?",
     "What model runs your chat?",
-    "How do you back up your cluster?",
     "c'est quoi ton setup complet ?",
     "Quels articles parlent de Kubernetes ?",
-    "C'est quoi ton architecture ?",
+    "combien de cartes graphiques dans gpu-01?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?"
   ],
   "written": []

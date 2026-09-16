@@ -151,5 +151,64 @@ print("\n\033[1m== the shipped file passes its own selftest\033[0m")
 r = subprocess.run([sys.executable, str(GATE), "--selftest"], capture_output=True, text=True)
 check("selftest green", r.returncode, 0)
 
+
+# --------------------------------------------------------------------------
+# Remembering verdicts
+# --------------------------------------------------------------------------
+#
+# The panel is largely the same eight questions night after night, and on a
+# low-traffic site it is mostly the CURATED list, which is a fixed file.
+# Re-asking those costs six seconds of spacing each and cannot learn anything
+# the grounding has not changed.
+import datetime as _dt
+
+print("\n\033[1m== a verdict is remembered while the grounding holds\033[0m")
+with tempfile.TemporaryDirectory() as tmp:
+    g = pathlib.Path(tmp) / "grounding.json"
+    g.write_text('{"chunks": 1}', encoding="utf-8")
+    key = gate.grounding_key(str(g))
+    check("the digest is short and stable", (len(key), key), (16, gate.grounding_key(str(g))))
+
+    cache = {}
+    gate.cache_put(cache, key, "Q ?", "ANSWERED")
+    check("a hit comes back", gate.cache_get(cache, key, "Q ?"), "ANSWERED")
+
+    # A published article moves the digest, and every verdict is taken again.
+    g.write_text('{"chunks": 2}', encoding="utf-8")
+    check("a new grounding misses", gate.cache_get(cache, gate.grounding_key(str(g)), "Q ?"), None)
+
+    print("\n\033[1m== refusals are remembered too, and INCONCLUSIVE never is\033[0m")
+    gate.cache_put(cache, key, "R ?", "REFUSED")
+    check("a refusal is remembered", gate.cache_get(cache, key, "R ?"), "REFUSED")
+    gate.cache_put(cache, key, "I ?", "INCONCLUSIVE")
+    check("could-not-ask is not a fact about the question",
+          gate.cache_get(cache, key, "I ?"), None)
+
+    print("\n\033[1m== a verdict expires even when the grounding has not moved\033[0m")
+    # The model behind the chat, its prompt and its relevance floor all decide
+    # answerability and none of them touch the grounding file.
+    stale = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=gate.CACHE_TTL_DAYS)
+    gate.cache_put(cache, key, "Old ?", "ANSWERED", now=stale)
+    check("past the TTL it is asked again", gate.cache_get(cache, key, "Old ?"), None)
+    fresh = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=gate.CACHE_TTL_DAYS - 1)
+    gate.cache_put(cache, key, "New ?", "ANSWERED", now=fresh)
+    check("just inside it is kept", gate.cache_get(cache, key, "New ?"), "ANSWERED")
+
+    print("\n\033[1m== no grounding means no cache, not one shared bucket\033[0m")
+    # A cache that cannot tell versions apart is worse than no cache: it would
+    # answer for a site whose articles have all changed.
+    check("an unreadable grounding yields no key", gate.grounding_key(str(g) + ".missing"), "")
+    empty = {}
+    gate.cache_put(empty, "", "Q ?", "ANSWERED")
+    check("and nothing is stored under it", empty, {})
+    check("and nothing is read back", gate.cache_get(cache, "", "Q ?"), None)
+
+    print("\n\033[1m== the cache survives a round trip through disk\033[0m")
+    cp = pathlib.Path(tmp) / "sub" / "cache.json"
+    gate.cache_save(str(cp), cache)
+    check("written into a directory it created", cp.exists(), True)
+    check("and read back identically", gate.cache_load(str(cp)), cache)
+    check("a missing cache file is an empty cache", gate.cache_load(str(cp) + ".nope"), {})
+
 print(f"\n\033[1m{passed} passed, {failed} failed\033[0m")
 sys.exit(1 if failed else 0)

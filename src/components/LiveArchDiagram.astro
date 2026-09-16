@@ -322,12 +322,16 @@ const fleetNotes = [
       ]
     : []),
 ];
-// « jamais déclarés » serait faux dès qu'un orphelin est dans la bande : lui,
-// le drapeau du parc le dit déclaré — ce que les repos publics, eux, ne
-// confirment pas.
+// « jamais déclarés » serait faux deux fois. D'abord dès qu'un orphelin est
+// dans la bande : lui, le drapeau du parc le dit déclaré — ce que les repos
+// publics, eux, ne confirment pas. Ensuite pour les onduleurs, redescendus ici
+// parce qu'aucun nœud de topologie ne les nomme plus, alors que le repo NixOS
+// les pilote toujours, module NUT par module NUT. Le seul fait que la graine
+// garantisse, c'est l'absence de nœud — et c'est déjà tout ce qui explique
+// qu'il n'y ait rien à cliquer.
 const fleetSubtitle = orphans.length
   ? "bien branchés, déclarés par l'inventaire seulement : rien à allumer, aucune source à ouvrir"
-  : "bien branchés, jamais déclarés : rien à allumer, aucune source à ouvrir";
+  : "bien branchés, hors de la topologie : rien à allumer, aucune source à ouvrir";
 const svgH = fleetExtras.length
   ? fleetBottom + 26 + fleetNotes.length * 14
   : SITE_BOTTOM + 20;
@@ -381,9 +385,9 @@ const ariaLabel =
   `machine sans lien déclaré n'a pas de chemin à allumer.` +
   (fleetExtras.length
     ? ` Une dernière bande montre le reste du parc : ${fleetUnits} ` +
-      `appareils bien réels — ${fleetClasses.join(", ")} — qu'aucun des ` +
-      `quatre repos publics ne déclare, répartis sur ${netKeys.length} ` +
-      `segments réseau. Ceux-là ` +
+      `appareils bien réels — ${fleetClasses.join(", ")} — qu'aucun des quatre ` +
+      `repos publics ne déclare dans sa topologie, répartis sur ` +
+      `${netKeys.length} segments réseau. Ceux-là ` +
       `n'ont pas de source à ouvrir, donc pas de clic.` +
       (orphans.length
         ? ` ${oneOrphan ? "Un seul" : `${orphans.length} d'entre eux`} ` +
@@ -602,7 +606,7 @@ const ariaLabel =
         <g>
           <path d={`M250,${SITE_BOTTOM} L250,${F_TOP}`} fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="2 3" />
           <rect x="40" y={F_TOP} width="680" height={fleetBottom - F_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" stroke-dasharray="4 3" />
-          <text x="58" y={F_TOP + 26} font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">le reste du parc — {fleetUnits} appareils, zéro ligne d'IaC</text>
+          <text x="58" y={F_TOP + 26} font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">le reste du parc — {fleetUnits} appareils, zéro nœud déclaré</text>
           <text x="58" y={F_TOP + 43} font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{fleetSubtitle}</text>
           {fleetBands.map((band) => (
             <g>
@@ -635,7 +639,7 @@ const ariaLabel =
         (orphans.length
           ? "que l'inventaire croit déjà déclarés, alors qu'aucun repo public " +
             "ne les nomme."
-          : "qu'aucun commit n'a jamais vu passer.")}
+          : "que nul repo public ne compte dans sa topologie.")}
   </figcaption>
 </figure>
 

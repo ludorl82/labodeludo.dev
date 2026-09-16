@@ -23,10 +23,15 @@
 //   * `power` is the whole reason a rack picture beats a list: it answers
 //     "what dies with which onduleur". It gets its own rail on the right
 //     of each rack, not a scrap at the end of a truncated line.
-//   * `gpu` is the only field that says a physical card landed INSIDE a box,
-//     and the seed puts it on VMs — which have no row of their own to write
-//     it on. A chip that swallows its card is hardware the drawing lost, so
-//     the flag is drawn, and never on a box the seed did not flag.
+//   * A physical card is hardware, and the seed now names it two ways: `gpu`,
+//     the older yes/no, and `gpus`, a LIST of what is screwed into the box
+//     (model, silicon, memory, and whether it runs `passthrough` for a guest).
+//     Either one earns the flag — a server holding three cards and declaring
+//     no boolean is still holding three cards, and a drawing that waits for
+//     the flag would lose that metal. Only the list can be counted, so the
+//     flag carries a number when the seed enumerated the cards. A guest's
+//     list is its host's cards lent downstairs, not new hardware: a bay's
+//     tally counts rows, because rows are the boxes standing on a shelf.
 //
 // Palette: this site is monochrome on purpose, so "colour by network" means
 // the existing grayscale accents, not new hues.
@@ -45,8 +50,12 @@ type Device = {
   power?: string;
   hostedBy?: string;
   gpu?: boolean;
+  gpus?: Gpu[];
   count?: number;
 };
+// one entry of `gpus`: a card the document saw in a box. `vram` arrives as
+// free text, and empty when the document had nothing to say about it.
+type Gpu = { model?: string; die?: string; vram?: string; passthrough?: boolean };
 type Rack = { units?: number; kind?: string };
 
 const devices = (fleet.devices ?? []) as Device[];
@@ -159,19 +168,77 @@ const clip = (s: string, n: number) =>
 const label = (d: Device) =>
   d.count && d.count > 1 ? `${d.name} ×${d.count}` : d.name;
 
-// the seed says "this box was handed a card" in exactly one way, and an
-// absent flag is not the same as a flag set false: only `true` gets a mark.
-const gpuOn = (d: Device) => d.gpu === true;
+// What the seed says a box holds. An absent `gpu`, a `gpu: false` and an
+// empty `gpus` are three ways of saying nothing, and none of them is a card;
+// a listed card is a card even when nobody thought to also set the boolean.
+const cards = (d: Device): Gpu[] => (Array.isArray(d.gpus) ? d.gpus : []);
+const gpuOn = (d: Device) => d.gpu === true || cards(d).length > 0;
+// the flag counts what the list enumerated, and stays a bare flag when the
+// seed only answered yes
+const gpuFlag = (d: Device) => {
+  const n = cards(d).length;
+  return n > 1 ? `${GPU_TAG} ×${n}` : GPU_TAG;
+};
+// one card, spelled the way the seed spells it: the model, then whatever it
+// recorded about it. A field the document left out is left out here too.
+const gpuName = (g: Gpu) => {
+  const meta = [g.die, g.vram].filter(Boolean).join(", ");
+  return [g.model, meta ? `(${meta})` : ""].filter(Boolean).join(" ");
+};
+// identical cards collapse into one name with how many of them there are —
+// counted off the list, never off a "2x" somebody typed in a spec field
+const gpuList = (d: Device) => {
+  const seen = new Map<string, number>();
+  for (const g of cards(d)) {
+    const n = gpuName(g);
+    if (n) seen.set(n, (seen.get(n) ?? 0) + 1);
+  }
+  return [...seen].map(([n, k]) => (k > 1 ? `${n} ×${k}` : n));
+};
+// cards the box hands to a guest instead of keeping: same metal, other
+// driver — and the reason a chip can wave the flag under a flagged row
+const gpuLoans = (d: Device) => cards(d).filter((g) => g.passthrough === true).length;
+// the whole spoken sentence for the aria-label: rows are where cards exist
+const gpuSpoken = (d: Device) => {
+  const list = gpuList(d);
+  if (!list.length) return d.gpu === true ? "une carte GPU" : "";
+  const loans = gpuLoans(d);
+  return (
+    `${list.length} carte${list.length > 1 ? "s" : ""} GPU : ${list.join(", ")}` +
+    (loans ? ` — dont ${loans} passée${loans > 1 ? "s" : ""} à une VM` : "")
+  );
+};
+
+// A card the row's own text never names. `spec` is free prose: when it already
+// mentions every model of the list, the flag and its count carry the rest, and
+// printing a nameplate twice buys nothing. When it does not — a card the
+// document enumerated but never described — the row says so out loud, or the
+// drawing is holding metal only the aria-label knows about.
+const unnamedCards = (d: Device) => {
+  const prose = [d.spec, d.role].filter(Boolean).join(" ");
+  return gpuList(d).filter((n) => {
+    const model = n.split(" (")[0].replace(/ ×\d+$/, "");
+    return model && !prose.includes(model);
+  });
+};
+const cardsNote = (d: Device) => {
+  const extra = unnamedCards(d);
+  return extra.length ? `cartes GPU : ${extra.join(", ")}` : "";
+};
 
 // right of the name line: the real hardware, and only when the seed names
 // it. `class` is a bucket, not a model — printing it there would dress a
 // taxonomy up as a nameplate, so a box the seed never modelled stays blank.
 const hardware = (d: Device) =>
-  [d.model ?? d.spec ?? "", gpuOn(d) ? GPU_TAG : null].filter(Boolean).join(" · ");
-// under it: the role, plus the spec when the model already took the slot
+  [d.model ?? d.spec ?? "", gpuOn(d) ? gpuFlag(d) : null].filter(Boolean).join(" · ");
+// under it: the role, the spec when the model already took the slot, and any
+// card the list names that no sentence of the document does
 const detailOf = (d: Device) =>
-  [d.role, d.model && d.spec ? d.spec : null].filter(Boolean).join(" · ");
-const detailLines = (d: Device) => wrap(detailOf(d), DETAIL_CH, DETAIL_LINES);
+  [d.role, d.model && d.spec ? d.spec : null, cardsNote(d)]
+    .filter(Boolean)
+    .join(" · ");
+const detailLines = (d: Device) =>
+  wrap(detailOf(d), DETAIL_CH, DETAIL_LINES + (cardsNote(d) ? 1 : 0));
 
 const chipLines = (d: Device) =>
   Math.ceil(hostedOn(d.name).length / CHIPS_PER_LINE);
@@ -183,6 +250,11 @@ const rowHeight = (d: Device) =>
   (chipLines(d) ? 2 : 0);
 
 const rowsFor = (key: string) => inRack(key);
+
+// cards bolted inside this bay: rows only. A guest's card is its host's card,
+// so counting chips too would print metal that does not exist.
+const rackCards = (key: string) =>
+  rowsFor(key).reduce((n, d) => n + cards(d).length, 0);
 
 const layoutRows = (key: string) => {
   let y = TOP + HEAD;
@@ -232,8 +304,9 @@ const shownNetworks = [
   ),
 ].filter((n) => n in NETWORK_LABEL);
 
-// the flag is drawn only where the seed sets it, and the legend obeys the
-// same rule: never an explanation for a mark that is not on the page
+// the flag is drawn only where the seed says there is a card — the boolean or
+// a named entry — and the legend obeys the same rule: never an explanation for
+// a mark that is not on the page
 const shownGpu = RACKS.some((r) => {
   const rows = rowsFor(r.key);
   return (
@@ -243,9 +316,14 @@ const shownGpu = RACKS.some((r) => {
   );
 });
 
-// a hosted box written out in words, with its card when the seed named one
-const hostedWord = (d: Device) =>
-  gpuOn(d) ? `${d.name} (avec une carte ${GPU_TAG})` : d.name;
+// a hosted box written out in words, with the cards the seed named for it
+const hostedWord = (d: Device) => {
+  const list = gpuList(d);
+  if (!list.length)
+    return gpuOn(d) ? `${d.name} (avec une carte ${GPU_TAG})` : d.name;
+  const n = cards(d).length;
+  return `${d.name} (avec la${n > 1 ? "s" : ""} carte${n > 1 ? "s" : ""} ${GPU_TAG} ${list.join(", ")})`;
+};
 
 const legend = [
   ...shownNetworks.map((n) => ({
@@ -258,7 +336,7 @@ const legend = [
     ? [{ tone: "var(--text-faint)", text: "rail d'alimentation", power: true, gpu: false }]
     : []),
   ...(shownGpu
-    ? [{ tone: "var(--text-muted)", text: `${GPU_TAG} dans cette machine`, power: false, gpu: true }]
+    ? [{ tone: "var(--text-muted)", text: `${GPU_TAG} dans cette machine, ×N le nombre de cartes`, power: false, gpu: true }]
     : []),
 ];
 let legendX = TOP;
@@ -296,13 +374,15 @@ const ariaLabel = hasRacks
       const orphans = orphanHosted(r.key, rows);
       return (
         `${r.title}${meta.kind ? ` (${meta.kind})` : ""} : ${rows.length} équipements` +
-        `${meta.units ? `, châssis de ${meta.units}U au total` : ""}. ` +
+        `${meta.units ? `, châssis de ${meta.units}U au total` : ""}` +
+        `${rackCards(r.key) ? `, ${rackCards(r.key)} cartes GPU vissées dans les boîtes de cette baie` : ""}. ` +
         rows
           .map((d) => {
             const hosted = hostedOn(d.name);
             return [
               label(d),
               hardware(d),
+              gpuSpoken(d),
               detailOf(d),
               d.power ? `alimenté par ${d.power}` : "",
               hosted.length ? `contient ${hosted.map(hostedWord).join(", ")}` : "",
@@ -326,7 +406,7 @@ const ariaLabel = hasRacks
     }).join(" ") +
     " Les rangées suivent l'ordre de l'inventaire, pas une position en U, et aucune échelle en U n'est dessinée." +
     (shownGpu
-      ? " Le mot GPU écrit près d'un nom, en rangée comme en puce, vient du champ gpu de l'inventaire : il dit qu'une carte est dans cette machine, pas comment elle y est arrivée."
+      ? " Le drapeau GPU écrit près d'un nom vient de l'inventaire : le champ gpu quand le document répond oui sans détailler, et le champ gpus quand il énumère les cartes — le nombre écrit après le drapeau est alors le compte de cette énumération, carte par carte. Une carte passée en passthrough à une machine invitée est celle de son hôte : elle est comptée une fois, sur la rangée de la boîte où elle est vissée, jamais reprise sous la puce."
       : "")
   : "Élévation des baies — l'inventaire matériel ne place aucun équipement en baie.";
 ---
@@ -343,6 +423,7 @@ const ariaLabel = hasRacks
             const orphans = orphanHosted(key, rows);
             const feeds = powerFeeds(key);
             const fh = frameHeight(key);
+            const inBay = rackCards(key);
             return (
               <Fragment>
                 {/* the enclosure: frame + two mounting rails. The rails are
@@ -362,6 +443,14 @@ const ariaLabel = hasRacks
                   {meta.units ? `châssis ${meta.units}U` : "châssis"}
                   {meta.kind ? ` · ${meta.kind}` : ""} · {rows.length} équipements
                 </text>
+                {/* the count of cards the boxes of this bay actually hold —
+                    rows only, because a borrowed card lives in one box */}
+                {inBay > 0 && (
+                  <text x={x + RACK_W - 16} y={TOP + 22} text-anchor="end"
+                        font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">
+                    {`${inBay} carte${inBay > 1 ? "s" : ""} ${GPU_TAG}`}
+                  </text>
+                )}
 
                 {/* power rails: one per onduleur named by a `power` field,
                     ticked into every row it holds up and closed on the
@@ -503,9 +592,13 @@ const ariaLabel = hasRacks
         machine au-dessus d'elles, et le modèle réel est écrit à droite de
         chaque rangée.
         {shownGpu && (
-          <> Le mot GPU écrit à côté d'un nom vient du champ gpu de l'inventaire :
-          une carte logée dans cette machine, rien de plus — le dessin ne devine
-          pas ce que le document tait.</>
+          <> Le drapeau GPU écrit à côté d'un nom vient de l'inventaire : une
+          carte logée dans cette machine, rien de plus — le dessin ne devine pas
+          ce que le document tait. Le × qui suit le drapeau compte les cartes
+          que l'inventaire énumère pour cette boîte, et le total écrit en haut
+          d'une baie ne compte que les boîtes posées sur une tablette : le métal
+          prêté à une VM reste vissé chez son hôte, je ne le descends pas deux
+          étages pour faire joli.</>
         )}
         À droite, le rail vertical relie chaque rangée à
         l'onduleur qui la tient : le carré plein marque l'onduleur lui-même,

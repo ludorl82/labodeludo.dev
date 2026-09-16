@@ -77,24 +77,43 @@ const blogBucket = byId("bucket:labodeludo.dev");
 
 // How each public name actually leaves the edge. The tunnel no longer lands
 // on the ingress alone: some names are dialled straight at an in-cluster
-// Service, and two never touch the cluster at all. Partition it from the
-// data rather than asserting the old single spine.
+// Service, some never touch the cluster at all, and some are split between
+// the two. Partition all of it from the data — the split included, it shows
+// up as a name carrying BOTH an `app:` and an `external:` origin, and this
+// file used to recount that bucket by hand in a comment.
 const routesTo = (arch.edges as any[]).filter((e) => e.kind === "routes-to");
 const dnsNodes = kind("dns");
 const externalIds = new Set(externals.map((n) => n.id));
 const toTunnel = dnsNodes.filter((n) =>
   routesTo.some((e) => e.from === n.id && e.to === tunnel?.id),
 );
-// router / ha-01 : the connector dials a LAN origin, the cluster is not on
-// the path at all.
-const toExternal = toTunnel.filter((n) =>
+// the names whose connector dials a LAN address rather than a cluster Service
+const toLanOrigin = toTunnel.filter((n) =>
   routesTo.some((e) => e.from === n.id && externalIds.has(e.to)),
 );
-const inCluster = toTunnel.filter((n) => !toExternal.includes(n));
-const viaIngress = inCluster.filter(
-  (n) => typeof n.meta.origin === "string" && n.meta.origin.includes("traefik."),
+// Of those, the ones where the LAN box is the whole path: the cluster is not
+// on it at all.
+const toExternal = toLanOrigin.filter(
+  (n) => !routesTo.some((e) => e.from === n.id && e.to.startsWith("app:")),
 );
-const directToService = inCluster.filter((n) => !viaIngress.includes(n));
+// The rest reach the cluster AND the box: the tunnel sorts them by URL path
+// (one rule at a pod, the catch-all at the machine), so counting them as
+// purely hors-cluster is the same lie in the other direction.
+const sharedPath = toLanOrigin.filter((n) => !toExternal.includes(n));
+const inCluster = toTunnel.filter((n) => !toExternal.includes(n));
+// The four buckets stay disjoint whatever the data does: a name that both
+// transits the ingress and ends on a LAN box belongs to the split sentence,
+// not to two counts at once.
+const viaIngress = inCluster.filter(
+  (n) =>
+    !sharedPath.includes(n) &&
+    typeof n.meta.origin === "string" &&
+    n.meta.origin.includes("traefik."),
+);
+const directToService = inCluster.filter(
+  (n) => !viaIngress.includes(n) && !sharedPath.includes(n),
+);
+const sharedLabels = sharedPath.map((n) => n.label).join(", ");
 const toBucket = dnsNodes.filter((n) =>
   routesTo.some((e) => e.from === n.id && e.to.startsWith("bucket:")),
 );
@@ -326,9 +345,17 @@ const ariaLabel =
   `sortant, initié depuis le cluster. De ces ${toTunnel.length} noms, ` +
   `${viaIngress.length} passent par l'ingress traefik, ` +
   `${directToService.length} visent directement un Service du cluster sans ` +
-  `passer par l'ingress, et ${toExternal.length} ne touchent pas le cluster ` +
+  `passer par l'ingress, ${toExternal.length} ne touchent pas le cluster ` +
   `du tout : le connecteur atteint leurs origines en LAN, du matériel hors ` +
-  `IaC. Le cluster s'étend sur deux sites reliés par WireGuard : la maison ` +
+  `IaC` +
+  (sharedPath.length
+    ? `, et ${sharedPath.length} ${
+        sharedPath.length > 1 ? "noms se partagent" : "nom se partage"
+      } entre les deux (${sharedLabels}) : le tunnel trie par chemin d'URL, ` +
+      `un pod du cluster d'un côté, une origine que nul repo ne déclare de ` +
+      `l'autre — il trie, je dessine`
+    : "") +
+  `. Le cluster s'étend sur deux sites reliés par WireGuard : la maison ` +
   `(${homeHosts.length} machines NixOS, ${k3sAgents} agents k3s) et un EC2 ` +
   `chez AWS qui est l'unique control-plane, le hub WireGuard vers lequel la ` +
   `maison compose — côté maison la liaison se termine sur le pare-feu hors ` +
@@ -428,16 +455,18 @@ const ariaLabel =
       <path d="M380,282 L380,200" fill="none" stroke="var(--accent-live)" stroke-width="1.7" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
       <text x="394" y="228" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">tunnel cloudflared — sortant, initié du cluster</text>
 
-      <!-- les noms dont l'origine n'est PAS dans le cluster : le connecteur
-           atteint une adresse LAN, le cluster n'est pas sur le chemin
+      <!-- les noms dont le connecteur compose une adresse LAN : le cluster
+           n'est sur le chemin d'aucun d'eux par l'ingress. Les uns n'y
+           entrent pas du tout ; les autres y entrent quand même, triés par
+           chemin d'URL — c'est le « +N » du trait de contournement, à droite.
            (décoratif — les boîtes hors IaC portent les nœuds) -->
-      {toExternal.length > 0 && extOrigins.length > 0 && (
+      {toLanOrigin.length > 0 && extOrigins.length > 0 && (
         <g>
           <path d={`M100,200 L100,206 L22,206 L22,${railBottom}`} fill="none" stroke="var(--accent-live)" stroke-width="1.4" stroke-dasharray="5 4" />
           {extOrigins.map((b) => (
             <path d={`M22,${railY(b.row)} L${b.x + H_W / 2},${railY(b.row)} L${b.x + H_W / 2},${b.y - 2}`} fill="none" stroke="var(--accent-live)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
           ))}
-          <text x="32" y="224" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{toExternal.length} noms publics → origines hors cluster,</text>
+          <text x="32" y="224" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{toLanOrigin.length} noms publics → {extOrigins.length} origines hors IaC,</text>
           <text x="32" y="237" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">atteintes en LAN par le connecteur</text>
         </g>
       )}
@@ -455,13 +484,18 @@ const ariaLabel =
       </a>
 
       <!-- contournement de l'ingress : ces noms visent le Service directement
-           (décoratif — l'agrégat applications porte les nœuds) -->
+           (décoratif — l'agrégat applications porte les nœuds). Le « +N » est
+           le nom que le tunnel coupe par chemin d'URL : une partie de ses
+           requêtes descend ici, le reste ressort vers une boîte hors IaC. -->
       {directToService.length > 0 && (
         <g>
           <path d="M380,270 L560,270 L560,405 L519,405" fill="none" stroke="var(--accent-live)" stroke-width="1.5" marker-end="url(#la-arrow-live)" />
           <text x="568" y="300" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{directToService.length} noms visent</text>
           <text x="568" y="313" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">le Service direct,</text>
           <text x="568" y="326" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">sans l'ingress</text>
+          {sharedPath.length > 0 && (
+            <text x="568" y="345" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">+{sharedPath.length} pour un chemin</text>
+          )}
         </g>
       )}
 

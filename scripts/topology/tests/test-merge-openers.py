@@ -34,7 +34,7 @@ def check(label, got, want):
         print(f"  \033[31mFAIL\033[0m {label}: got {got!r}, wanted {want!r}")
 
 
-def run(real, written, tmp, skip_written=False):
+def run(real, written, tmp, skip_written=False, curated=None):
     d = pathlib.Path(tmp)
     (d / "kept.json").write_text(json.dumps({"openers": real}, ensure_ascii=False),
                                  encoding="utf-8")
@@ -44,7 +44,12 @@ def run(real, written, tmp, skip_written=False):
     else:
         wp.write_text(json.dumps({"openers": written}, ensure_ascii=False), encoding="utf-8")
     out = d / "out.json"
-    r = subprocess.run([sys.executable, str(MERGE), str(d / "kept.json"), str(wp),
+    extra = []
+    if curated is not None:
+        cp = d / "curated.json"
+        cp.write_text(json.dumps({"openers": curated}, ensure_ascii=False), encoding="utf-8")
+        extra = ["--curated", str(cp)]
+    r = subprocess.run([sys.executable, str(MERGE), *extra, str(d / "kept.json"), str(wp),
                         str(out), "2026-09-15T04:30:00Z"], capture_output=True, text=True)
     if r.returncode != 0:
         return r.returncode, None
@@ -90,6 +95,41 @@ with tempfile.TemporaryDirectory() as tmp:
     check("the real questions still publish", d["openers"], FR[:2])
     rc, d = run([], [], tmp)
     check("both empty is still a valid file", (rc, d["openers"]), (0, []))
+
+    print("\n\033[1m== the curated source sits between asked and written\033[0m")
+    # Ludo's own questions are a person's judgement: stronger than a guess,
+    # weaker than evidence that somebody really asked.
+    rc, d = run(FR[:1], FR[2:3], tmp, curated=FR[1:2])
+    check("exit 0", rc, 0)
+    check("asked, curated, written — in that order", d["openers"], FR[:3])
+    check("curated is labelled", d["curated"], FR[1:2])
+    check("and is not counted as written", d["written"], FR[2:3])
+
+    print("\n\033[1m== a string in two sources keeps the STRONGER claim\033[0m")
+    # A visitor may well ask exactly what Ludo curated. Calling it curated then
+    # would quietly shrink the count of real questions the pipeline rests on.
+    rc, d = run(FR[:1], [], tmp, curated=FR[:1])
+    check("it appears once", d["openers"], FR[:1])
+    check("and stays asked, not curated", d["curated"], [])
+    rc, d = run([], FR[:1], tmp, curated=FR[:1])
+    check("curated beats written for the same string", d["curated"], FR[:1])
+    check("and it is not double-counted", d["written"], [])
+
+    print("\n\033[1m== curated questions obey the per-language cap too\033[0m")
+    # Five curated French for four buttons: the cap is the merge's, and a
+    # source that ignored it would render a panel of five French questions.
+    rc, d = run([], [], tmp, curated=FR[:5])
+    check("four survive", len(d["openers"]), 4)
+    check("all of them curated", len(d["curated"]), 4)
+
+    print("\n\033[1m== no --curated is the old behaviour, exactly\033[0m")
+    # The same script joins the written half's two languages, a call that has
+    # no third source. Breaking that signature breaks a path nothing else
+    # covers.
+    rc, d = run(FR[:1], FR[1:2], tmp)
+    check("exit 0 without the flag", rc, 0)
+    check("curated is present and empty", d["curated"], [])
+    check("written is unchanged", d["written"], FR[1:2])
 
     print("\n\033[1m== the timestamp is the caller's, not the clock's\033[0m")
     rc, d = run(FR[:1], [], tmp)

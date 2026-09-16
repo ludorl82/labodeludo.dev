@@ -1,16 +1,19 @@
 {
-  "generated": "2026-09-16T11:08:04Z",
+  "generated": "2026-09-16T11:59:14Z",
   "openers": [
+    "c'est quoi ton setup complet ?",
+    "Quels articles parlent de Kubernetes ?",
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "which model powers you?",
-    "What model runs your chat?",
-    "Quels articles parlent de Kubernetes ?",
-    "cest quoi qui fait rouler le blogue ?",
-    "C'est quoi ton modèle ?",
-    "Quel mot de réveil a Bob pour le français québécois ?"
+    "Comment j'ai migré tout mon homelab vers NixOS ?",
+    "Qu'est-ce qui se passe quand le NAS n'a plus de courant ?",
+    "What caused the k3s cluster identity crisis?",
+    "How did you fix the proxy failing with an HTTP scheme?"
   ],
   "written": [
-    "Quel mot de réveil a Bob pour le français québécois ?"
+    "Comment j'ai migré tout mon homelab vers NixOS ?",
+    "Qu'est-ce qui se passe quand le NAS n'a plus de courant ?",
+    "What caused the k3s cluster identity crisis?",
+    "How did you fix the proxy failing with an HTTP scheme?"
   ]
 }

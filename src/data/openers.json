@@ -1,6 +1,8 @@
 {
-  "curated": [],
-  "generated": "2026-09-16T19:22:43Z",
+  "curated": [
+    "Comment tu publies ton infrastructure sans donner tes secrets ?"
+  ],
+  "generated": "2026-09-16T20:18:57Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
@@ -8,8 +10,8 @@
     "How do you back up your cluster?",
     "c'est quoi ton setup complet ?",
     "Quels articles parlent de Kubernetes ?",
-    "Comment tu as fait pour que Frigate utilise le GPU?",
-    "C'est quoi ton modèle ?"
+    "C'est quoi ton architecture ?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?"
   ],
   "written": []
 }

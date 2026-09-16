@@ -1,23 +1,23 @@
 {
-  "generated": "2026-09-16T15:24:43Z",
+  "generated": "2026-09-16T16:08:02Z",
   "openers": [
-    "Comment Bob comprend-il le français québécois ?",
-    "Pourquoi trois GPU si personne ne joue au cluster ?",
-    "Est-ce que le NAS est vraiment protégé par une UPS ?",
-    "Comment séparer le bastion de la console sans casser l'accès ?",
-    "How do I move NFS shares without touching Kubernetes?",
-    "Can Qwen3 run on a $300 GPU card for local tasks?",
-    "Why is my video detector running on CPU instead of GPU?",
-    "Is it possible to host an arcade machine with Kubernetes?"
+    "Comment déployer un cluster k3s avec Claude Code ?",
+    "Pourquoi mon encodeur tournait sur le CPU au lieu du GPU ?",
+    "Peut-on installer des plugins asynchrones dans Neovim ?",
+    "Où trouver les clés pour publier quatre dépôts sans tout donner ?",
+    "How do I deploy a k3s cluster with Claude Code?",
+    "Can I move NFS shares to an SSD without touching Kubernetes?",
+    "Why did my video detector run on CPU instead of GPU?",
+    "How can I give each server a clean IPv6 address?"
   ],
   "written": [
-    "Comment Bob comprend-il le français québécois ?",
-    "Pourquoi trois GPU si personne ne joue au cluster ?",
-    "Est-ce que le NAS est vraiment protégé par une UPS ?",
-    "Comment séparer le bastion de la console sans casser l'accès ?",
-    "How do I move NFS shares without touching Kubernetes?",
-    "Can Qwen3 run on a $300 GPU card for local tasks?",
-    "Why is my video detector running on CPU instead of GPU?",
-    "Is it possible to host an arcade machine with Kubernetes?"
+    "Comment déployer un cluster k3s avec Claude Code ?",
+    "Pourquoi mon encodeur tournait sur le CPU au lieu du GPU ?",
+    "Peut-on installer des plugins asynchrones dans Neovim ?",
+    "Où trouver les clés pour publier quatre dépôts sans tout donner ?",
+    "How do I deploy a k3s cluster with Claude Code?",
+    "Can I move NFS shares to an SSD without touching Kubernetes?",
+    "Why did my video detector run on CPU instead of GPU?",
+    "How can I give each server a clean IPv6 address?"
   ]
 }

@@ -1,17 +1,16 @@
 {
-  "generated": "2026-09-16T09:57:37Z",
+  "generated": "2026-09-16T11:08:04Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
     "which model powers you?",
-    "cest quoi qui fait rouler le blogue ?",
-    "c'est quoi ton setup complet ?",
+    "What model runs your chat?",
     "Quels articles parlent de Kubernetes ?",
-    "Comment faire chercher Bob sur internet ?",
-    "How did you migrate your homelab to NixOS?"
+    "cest quoi qui fait rouler le blogue ?",
+    "C'est quoi ton modèle ?",
+    "Quel mot de réveil a Bob pour le français québécois ?"
   ],
   "written": [
-    "Comment faire chercher Bob sur internet ?",
-    "How did you migrate your homelab to NixOS?"
+    "Quel mot de réveil a Bob pour le français québécois ?"
   ]
 }

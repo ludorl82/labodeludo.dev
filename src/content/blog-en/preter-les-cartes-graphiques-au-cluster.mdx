@@ -1,0 +1,85 @@
+---
+title: "Lending the graphics cards to the cluster when nobody is playing"
+pubDate: 2026-09-15
+description: "After the graphics-card musical chairs, my gaming tower had three GPUs and only one of them working. Putting the NVIDIA driver on the host to hand it to Kubernetes froze the kernel on every boot, with no symptom that pointed at a graphics card. Here is the detour through a virtual machine, the firmware that refused three cards, the bisect I got wrong, and the four bugs that only live test runs flushed out."
+tags: ["Lab", "DevOps", "ludo"]
+heroImage: "/images/blog/banner-cluster-ramasse-les-cartes-en.svg"
+---
+
+> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
+>
+> -   **Starting point**: the gaming tower hosts two gaming VMs, each with its own RTX 3050 passed through, plus a GTX 960 doing nothing. Goal: give the 960 to the Kubernetes cluster the tower also belongs to.
+> -   **First wall**: the NVIDIA driver installed on the host freezes the kernel about four minutes after every boot. A hung-task chain headed by `iptables-restor`, with `modprobe`, `bridge` and the k3s agent stuck behind it. A wedged `modprobe` blocks every later module load: k3s never gets `br_netfilter`, no container starts again, **and the node keeps reporting `Ready` with a renewing lease**.
+> -   **The solution**: the driver goes into a VM. A q35/OVMF guest takes the 960 by passthrough and joins the cluster as a node. The host kernel stays a plain libvirt + k3s kernel.
+> -   **The driver branch is not a choice**: the 960 is Maxwell, moved to legacy support at the 580 branch. On the current branch it gets no driver and the failure is silent: CUDA finds no device.
+> -   **Second wall**: also giving the two 3050s to the VM stops it from booting, the firmware stalls before initialising the display. Enlarging the 64-bit MMIO aperture changes nothing. The culprit: OVMF executes each card's option ROM during PCI enumeration. `<rom bar='off'/>` on all six functions fixes it.
+> -   **The botched bisect**: my "single card" test variant fell into the UEFI shell because it came from the repository's XML, where the CD drive is empty. I compared a VM with an install CD to a VM without one, and blamed the card. A `virsh screenshot` settled it.
+> -   **The card handoff**: the home-automation button that starts a gaming VM first drains and stops the GPU node, then restarts it afterwards. The waiting happens in the script called over SSH, never in the libvirt hook, which runs while libvirtd holds its locks.
+> -   **Four bugs caught live**: a `sudo` shadowed by the `PATH` (NixOS keeps its only setuid sudo in `/run/wrappers/bin`); a drain cordon that survives the node's reboot; a fixed-name `systemd-run --unit=` that refuses to run again; a stop sent before the guest agent was up.
+> -   **The result**: 18 GB of VRAM across three cards for the cluster whenever nobody plays, and each player gets their card back in under a minute.
+
+I already told you about [the graphics-card musical chairs](/en/blog/trois-cartes-graphiques-et-aucune-charge-a-leur-donner/): one card bought for the gaming machine, another one freed up, and an evening spent looking for something to do with it. At the end of that story, the gaming tower, the one hosting [the two gaming stations that rise on a switch](/en/blog/gpu-a-la-demande-a-la-maison/), was left with three GPUs: an RTX 3050 for each gaming VM, and a GTX 960 that was sleeping.
+
+A sleeping card in a tower that is also a Kubernetes node bugged me. The cluster has workloads that would happily take a GPU, the card is already plugged in, and I already had the recipe for exposing an NVIDIA GPU to k3s on NixOS, running on another node of the lab. All that was left was applying it. As with the rest of this migration, I did the work in a session with Claude Code, and it wrote most of the fixes I describe here. The wrong turns, on the other hand, we took together.
+
+## The driver on the host
+
+The recipe is simple: the proprietary driver on the host, the CDI toolkit, three binaries on the k3s unit's `PATH`, and pods ask for `runtimeClassName: nvidia-cdi`. Applied, pushed, deployed, reboot.
+
+Four minutes later, the machine had stopped responding, but not completely. It answered pings. The node showed `Ready` in the cluster and its kubelet lease renewed right on time. But not a single container would start any more, and SSH refused the connection before authentication even began.
+
+The diagnosis came from a photo of the screen, because that was the only channel left. A hung-task chain, `iptables-restor` at the head, `bridge` waiting on it, and behind `bridge`, everyone else: the k3s agent, a udev worker, and above all `modprobe`. A wedged `modprobe` halts all module loading. k3s never gets `br_netfilter`, its firewall rules never land, and every container dies of a timeout. Nowhere is there any mention of a graphics card.
+
+I first blamed the k3s unit's `PATH`. It wasn't that. What I can actually state boils down to this: the host had a stable k3s agent before the NVIDIA module, and it froze on the first boot after. Is it the driver itself, or a race between `bridge` and `netfilter` that it merely disturbs? I still don't know. What I do know is that I did not want to play that game again on the machine that hosts the household's game nights.
+
+## The driver in a VM
+
+If the NVIDIA module cannot share the host's kernel, it gets its own. One more VM on the tower, q35 with OVMF, because a passed-through card wants a real PCIe root port rather than the conventional bus of ordinary VMs. The 960 attached, and the guest joins the cluster like any other node. Whatever the driver has to do, it now does inside its box.
+
+Two details of that VM cost me time, so I am writing them down.
+
+First, the driver branch is not a choice. The 960 is Maxwell, and NVIDIA moved Maxwell to legacy support at the 580 branch. On the current branch this card gets no driver, and the failure mode is complete silence: no error, no warning, just CUDA finding no device. On top of that, the legacy branch is not in the binary cache, so every kernel change costs about ten minutes of compilation inside the guest. That is the price of a 2015 card that is still useful.
+
+Second, the VM's boot order puts the CD drive before the disk. After the install, if you don't eject the image, the machine reboots into the installer. The symptom is vicious: my account does not exist in the installer, so everything looks like a failed installation. It had succeeded perfectly. The CD had simply been left in the drive.
+
+## The bisect I got wrong
+
+Once the GPU node was running with its 960, I wanted to go further. The two RTX 3050s sleep twenty-three hours a day; gaming is rare and exclusive. Why not lend them to the cluster and hand them back when someone plays?
+
+First attempt, all six PCI functions attached to the VM: three GPUs, three audio controllers. Black screen. Not the black screen of a system booting headless, the black screen of a firmware that never initialised the display at all. With a single card, the same VM booted in twenty-four seconds.
+
+This is where I made my finest mistake of the evening. To isolate the problem, I built a "single card" test variant from the repository's XML file. But in the repository, the CD drive is empty; the installer image gets inserted by hand. My variant was falling into the UEFI shell, and I concluded that a single card was enough to prevent booting. Basically, I compared a VM with a CD to a VM without a CD, and blamed the card. A screenshot, `virsh screenshot`, set me straight: the UEFI shell, cleanly displayed, waiting for a bootable disk that did not exist.
+
+The real explanation came after the usual false suspect. The documented reflex for "OVMF stalls with several GPUs" is enlarging the 64-bit MMIO aperture, because three cards' BARs would not fit in the default window. Tried it, nothing. The culprit was elsewhere. During PCI enumeration, OVMF executes each card's option ROM, its UEFI display driver. Three cards, three ROMs to run, and somewhere in there the firmware wedges before it has painted a pixel.
+
+The fix is one line per device: `<rom bar='off'/>`. The firmware plugs the cards in without reading their ROM, and a compute VM has no use for a firmware display driver anyway. Result: all three cards in the VM, `nvidia-smi` listing every one of them, 4 GB, 8 GB and 6 GB on one driver branch covering Maxwell and Ampere, and a CUDA pod seeing GPU 0, 1 and 2.
+
+## The card handoff, and the four bugs
+
+The central mechanism remained. The 3050s belong to the players. When someone presses the home-automation button to raise their gaming VM, the GPU node must hand the cards back first, because libvirt refuses to start a domain whose device is already claimed.
+
+The handoff has one subtlety worth stating: the waiting happens in the script that home automation calls over SSH, never in the libvirt hook. The hook runs while libvirtd holds its locks for the domain being started. Calling `virsh` synchronously from there can deadlock the very gaming VM it is supposed to help. The SSH script lives in ordinary userspace. It drains the GPU node, shuts it down cleanly through the guest agent, actually waits, then starts the gaming VM. The hook keeps an asynchronous stop as a safety net, fired through `systemd-run`, for the case where someone starts a VM by hand.
+
+Then we tested the full cycle, live, several times. Every cycle found a bug that reading the code had missed.
+
+**The sudo that wasn't one.** Draining the GPU node failed on permissions, because the script runs as the home-automation user and the kubeconfig belongs to root. Obvious fix, `sudo -n`. It failed again, with a different message: "must be owned by uid 0 and have the setuid bit set". On NixOS, the only setuid `sudo` lives in `/run/wrappers/bin`, and the script's first line put the system profile at the head of the `PATH`, which shadowed exactly that directory.
+
+**The immortal cordon.** Draining a node cordons it. I had assumed the node would come back fresh after a reboot. No: the node object is never deleted, so its `unschedulable` mark survives. After every gaming session the GPU node would have returned to the cluster as a spectator, taking nothing but DaemonSets. The hook now uncordons it on the way back.
+
+**The unit that refuses to restart.** The safety net went through `systemd-run --unit=` with a fixed name. A transient unit can outlive its run, and `systemd-run` then refuses the same name: "already loaded or has a fragment file". On the second cycle, the GPU node was never restarted, without a word. Auto-generated names plus `--collect` settled that.
+
+**The impatient stop.** A stop sent within the first minute after a start failed, because the stop goes through the guest agent and the agent takes thirty to sixty seconds to come up inside a fresh VM. The script now waits for the agent before asking, and it deliberately refuses to fall back to `destroy`. Killing a VM mid-boot is exactly how one of these cards once ended up in a power state that only a host reboot could clear.
+
+Four bugs, four fixes, and each time the obvious fix failed once before the right one. Reading the code is not what settled any of them; the live test cycle did, replayed until it passed without help.
+
+## Result
+
+The next morning, the real test: the home-automation button, pressed by a human. On power-on, the GPU node hands over the card and steps aside, the gaming VM rises with its 3050, and the streamed gaming session works. On power-off, the GPU node is restarted in under thirty seconds and returns to the cluster ready for work, no cordon, no intervention. The cluster has 18 GB of VRAM across three cards whenever nobody is playing, which is almost always.
+
+The sanitised code is public, as usual: [the GPU node's configuration and libvirt domain](https://github.com/ludorl82/nixos-iac-public/tree/article/quand-personne-ne-joue-le-cluster-ramasse-les-cartes/hosts/vm-03), and [the game-mode hook with the handoff script](https://github.com/ludorl82/nixos-iac-public/blob/article/quand-personne-ne-joue-le-cluster-ramasse-les-cartes/hosts/gaming-01/configuration.nix) on the host.
+
+## Closing note
+
+If I keep one thing from that evening, it is that a node saying `Ready` does not say much. Next time a machine tells me that while nothing runs on it, I will ask to see the screen before believing it.
+
+— Ludo

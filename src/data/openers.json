@@ -1,17 +1,19 @@
 {
-  "generated": "2026-09-16T09:41:03Z",
+  "generated": "2026-09-16T09:50:12Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "which model powers you?",
-    "Quels articles parlent de Kubernetes ?",
     "c'est quoi ton setup complet ?",
-    "C'est quoi ton modèle ?",
-    "Comment avez-vous migré votre homelab vers NixOS ?",
-    "How did you automate your lab from the bastion?"
+    "Quels articles parlent de Kubernetes ?",
+    "Comment as-tu entraîné un mot de réveil en français québécois ?",
+    "Comment as-tu géré les adresses IP d'un cluster k3s ?",
+    "How did you migrate your homelab to NixOS?",
+    "Why do you separate the bastion from the console?"
   ],
   "written": [
-    "Comment avez-vous migré votre homelab vers NixOS ?",
-    "How did you automate your lab from the bastion?"
+    "Comment as-tu entraîné un mot de réveil en français québécois ?",
+    "Comment as-tu géré les adresses IP d'un cluster k3s ?",
+    "How did you migrate your homelab to NixOS?",
+    "Why do you separate the bastion from the console?"
   ]
 }

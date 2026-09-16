@@ -1,0 +1,51 @@
+{
+  "_comment": [
+    "Les questions de Ludo — la troisieme source du panneau suggere.",
+    "Ni posees par un visiteur (celles-la sont gardees verbatim par check-openers.py),",
+    "ni ecrites par Bob (celles-la sont ancrees au vocabulaire des articles par",
+    "check-generated.py). Celles-ci sont choisies a la main, et elles portent leur",
+    "propre etiquette dans openers.json pour qu'aucune des trois ne se fasse passer",
+    "pour une autre.",
+    "",
+    "Chacune a ete posee a la production le 2026-09-16 avant d'entrer ici, et",
+    "check-answerable.py les repose avant publication : une question de cette liste",
+    "n'atteint le panneau que si Bob a encore quelque chose a en dire.",
+    "",
+    "Ecartee volontairement: « Comment Bob choisit les extraits d'articles qu'il cite ? »",
+    "— Bob y repond faux (il decrit la job nocturne des dessins au lieu de la recherche",
+    "semantique). A recuperer quand site-self.ts saura le dire. Sa jumelle anglaise",
+    "repond correctement et reste dans la liste.",
+    "Ecartee aussi: « What went wrong migrating nine machines to NixOS? » — la reponse",
+    "anglaise dit « nothing major went wrong » la ou la francaise nomme Secure Boot et",
+    "l'initrd de 430 Mo. L'arbre anglais est plus mince."
+  ],
+  "fr": [
+    "Qu'est-ce qui a mal tourné quand tu as migré tes neuf machines vers NixOS ?",
+    "Pourquoi tu as débranché le NAS exprès ?",
+    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
+    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?",
+    "Pourquoi tu as séparé le bastion de la console ?",
+    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "D'où vient le nom de Bob ?",
+    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
+    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
+    "Comment tes dessins se redessinent tout seuls la nuit ?",
+    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?"
+  ],
+  "en": [
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?",
+    "What happens to the cluster when you start a game?",
+    "Why did you split the bastion from the console?",
+    "What is the last thing still running when everything else is down?",
+    "How do you publish your infrastructure without leaking secrets?",
+    "Why did the cheapest model score like the biggest one?",
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?",
+    "Why is renumbering a k3s cluster harder than it looks?",
+    "How do your diagrams redraw themselves every night?",
+    "What did you learn moving your NFS shares to an SSD?"
+  ]
+}

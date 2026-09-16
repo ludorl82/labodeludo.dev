@@ -1,13 +1,17 @@
 {
-  "generated": "2026-09-16T08:32:31Z",
+  "generated": "2026-09-16T09:41:03Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "How do you back up your cluster?",
     "which model powers you?",
-    "c'est quoi ton setup complet ?",
     "Quels articles parlent de Kubernetes ?",
-    "T'as un article sur Proxmox ?",
-    "cest quoi qui fait rouler le blogue ?"
+    "c'est quoi ton setup complet ?",
+    "C'est quoi ton modèle ?",
+    "Comment avez-vous migré votre homelab vers NixOS ?",
+    "How did you automate your lab from the bastion?"
+  ],
+  "written": [
+    "Comment avez-vous migré votre homelab vers NixOS ?",
+    "How did you automate your lab from the bastion?"
   ]
 }

@@ -8,12 +8,12 @@ heroImage: "/images/blog/banner-bob-jarvis.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Ce qu'il y a à essayer** : un chatbot sur ce site, à [/auteurs/bob](/auteurs/bob/) ou dans la palette avec `/` depuis n'importe quelle page. Il répond à partir du **contenu** de mes articles, pas seulement de leurs titres.
-> -   **Un robot, plusieurs cerveaux** : l'auteur des articles tourne sur un gros modèle infonuagique ; le majordome du site et l'assistant vocal de la maison partagent un **Qwen3.5-35B-A3B quantifié en 4 bits** sur une carte graphique de mon sous-sol ; le scribe de nuit, qui rafraîchit la documentation, tourne sur un modèle infonuagique bon marché.
+> -   **Un robot, plusieurs cerveaux** : l'auteur des articles tourne sur un gros modèle infonuagique. Le majordome du site et l'assistant vocal de la maison partagent un **Qwen3.5-35B-A3B quantifié en 4 bits** sur une carte graphique de mon sous-sol. Le scribe de nuit, qui rafraîchit la documentation, tourne sur un modèle infonuagique bon marché.
 > -   **Ce qui distingue le majordome de l'assistant, ce n'est pas le cerveau** : c'est les outils. Celui de la maison peut chercher sur internet. Celui du site n'a **aucun outil**, exprès.
-> -   **Comment il choisit** : chaque morceau d'article et chaque question deviennent une direction dans un espace à 1024 dimensions. La proximité se mesure par un angle. Pas de base de données vectorielle — un fichier statique et un produit scalaire.
+> -   **Comment il choisit** : chaque morceau d'article et chaque question deviennent une direction dans un espace à 1024 dimensions. La proximité se mesure par un angle. Pas de base de données vectorielle, un fichier statique et un produit scalaire.
 > -   **Ce que ça implique** : rien de ce que vous écrivez ne sort de chez moi. En échange, quand le labo dort, Bob répond à côté.
 
 Mon chien s'appelait Bob.
@@ -28,7 +28,7 @@ Cet article le présente. Si vous voulez juste lui parler tout de suite, il est 
 
 La chose la plus intéressante à propos de Bob, c'est qu'il n'y a pas un Bob. Il y a un personnage, et derrière lui, des cerveaux qu'on change comme on change une pile.
 
-Le personnage reste, les cerveaux passent. Bob signe des articles depuis juillet et répond aux visiteurs depuis septembre, et en quelques semaines il a déjà changé de cerveau plusieurs fois : un service infonuagique qui a tenu six jours avant que je le débranche, deux modèles locaux de tailles différentes, un modèle bon marché pour le travail de nuit. Le tableau ci-dessous est un instantané, pas une fiche technique — voici ceux qui tournent au moment où j'écris ceci.
+Le personnage reste, les cerveaux passent. Bob signe des articles depuis juillet et répond aux visiteurs depuis septembre, et en quelques semaines il a déjà changé de cerveau plusieurs fois : un service infonuagique qui a tenu six jours avant que je le débranche, deux modèles locaux de tailles différentes, un modèle bon marché pour le travail de nuit. Le tableau ci-dessous est un instantané, pas une fiche technique. Voici ceux qui tournent au moment où j'écris ceci.
 
 | Le métier | Le cerveau | Où il tourne |
 |---|---|---|
@@ -41,7 +41,7 @@ Ce n'est pas une image que j'invente pour faire joli dans un article. C'est écr
 
 Le détail que je trouve le plus parlant est au milieu du tableau. **Le majordome du site et l'assistant de la maison partagent exactement le même cerveau.** Le même modèle, la même carte, le même processus. Ce qui les distingue n'est pas leur intelligence, c'est ce qu'ils ont le droit de toucher.
 
-Celui de la maison a des outils. Il peut chercher sur internet, il sait l'heure qu'il est, il peut aller lire l'horaire du cinéma. Celui du site n'a rien de tout ça, et ce n'est pas un oubli. Un majordome qui répond à des inconnus n'a pas d'affaire à pouvoir sortir dehors. Si vous demandez la météo à Bob sur ce site, il va vous dire qu'il ne le sait pas — pendant que son jumeau, dans ma cuisine, vous l'aurait donnée.
+Celui de la maison a des outils. Il peut chercher sur internet, il sait l'heure qu'il est, il peut aller lire l'horaire du cinéma. Celui du site n'a rien de tout ça, et ce n'est pas un oubli. Un majordome qui répond à des inconnus n'a pas d'affaire à pouvoir sortir dehors. Si vous demandez la météo à Bob sur ce site, il va vous dire qu'il ne le sait pas, pendant que son jumeau, dans ma cuisine, vous l'aurait donnée.
 
 Même cerveau, deux métiers, deux jeux de clés.
 
@@ -49,11 +49,11 @@ Même cerveau, deux métiers, deux jeux de clés.
 
 Les trois traits que je nommais au début ne sont pas une métaphore que je plaque après coup. Chacun correspond à une règle précise, écrite, qu'on a mesurée avant de la garder.
 
-**La bonne humeur.** Bob a un registre. Il parle en québécois, avec un petit fond d'Elvis Gratton assumé — léger, pas la caricature complète. Et il ne vous montre jamais une boîte vide : quand il n'a rien à dire, il trouve quand même quelque chose à répondre plutôt que de vous laisser devant un curseur qui clignote.
+**La bonne humeur.** Bob a un registre. Il parle en québécois, avec un petit fond d'Elvis Gratton assumé, léger, pas la caricature complète. Et il ne vous montre jamais une boîte vide : quand il n'a rien à dire, il trouve quand même quelque chose à répondre plutôt que de vous laisser devant un curseur qui clignote.
 
-**L'entêtement.** C'est celui dont je suis le plus fier, parce que c'est le plus difficile à obtenir d'un modèle de langage. **Bob refuse d'inventer**, et surtout, il vous contredit. Posez-lui une question qui contient une affirmation fausse sur mon labo — « ton serveur a douze nœuds, hein ? » — et il va corriger la prémisse avant de répondre, au lieu de jouer le jeu poliment. Ça n'a pas été gratuit, et la mesure est nette : sur quinze questions contenant une affirmation fausse, il en corrigeait **cinq** avant qu'on ajoute la règle. Après, **quinze sur quinze**.
+**L'entêtement.** C'est celui dont je suis le plus fier, parce que c'est le plus difficile à obtenir d'un modèle de langage. **Bob refuse d'inventer**, et surtout, il vous contredit. Posez-lui une question qui contient une affirmation fausse sur mon labo, « ton serveur a douze noeuds, hein ? », et il va corriger la prémisse avant de répondre, au lieu de jouer le jeu poliment. Ça n'a pas été gratuit, et la mesure est nette : sur quinze questions contenant une affirmation fausse, il en corrigeait **cinq** avant qu'on ajoute la règle. Après, **quinze sur quinze**.
 
-Et quand il ne sait pas, il le dit. « Ça, c'est pas documenté — demande à Ludo. » C'est une phrase que j'ai appris à aimer.
+Et quand il ne sait pas, il le dit. « Ça, c'est pas documenté, demande à Ludo. » C'est une phrase que j'ai appris à aimer.
 
 **Le côté protecteur.** C'est l'absence d'outils dont je parlais plus haut, et c'est aussi tout ce qui entoure la boîte de texte. Les questions suggérées sous le chat sont de vraies questions que du monde a posées, publiées mot pour mot ou pas du tout, et une garde vérifie avant publication que Bob a réellement quelque chose à en dire. Un bouton de mon site qui mène à un cul-de-sac, c'est le pire résultat possible : le visiteur a cliqué sur ce que je lui offrais.
 
@@ -61,17 +61,17 @@ Le chien se plaçait devant la porte. Le robot se place devant ce qui pourrait m
 
 ## Comment il choisit quoi vous répondre
 
-Voici la partie que je trouve la plus élégante, et je vais la raconter à hauteur d'idée. [Bob en a écrit la version complète](/blog/jai-lu-mes-propres-articles/), avec les chiffres, les pièges et les bogues qu'il a attrapés — allez-y si vous voulez le détail.
+Voici la partie que je trouve la plus élégante, et je vais la raconter à hauteur d'idée. [Bob en a écrit la version complète](/blog/jai-lu-mes-propres-articles/), avec les chiffres, les pièges et les bogues qu'il a attrapés. Allez-y si vous voulez le détail.
 
 Un modèle de langage ne peut pas lire tout mon blogue à chaque question : ça ne rentre pas. Il faut donc choisir quels bouts d'articles lui mettre sous les yeux, et c'est là que ça devient intéressant.
 
-L'astuce, c'est de transformer du texte en **direction**. Chaque morceau d'article passe dans un modèle qui n'écrit rien du tout : il transforme un paragraphe en une liste de 1024 nombres. On peut voir cette liste comme une flèche pointant quelque part dans un espace à 1024 dimensions — impossible à dessiner, mais parfaitement calculable. Deux textes qui parlent de la même chose pointent à peu près dans la même direction, même s'ils n'ont aucun mot en commun.
+L'astuce, c'est de transformer du texte en **direction**. Chaque morceau d'article passe dans un modèle qui n'écrit rien du tout : il transforme un paragraphe en une liste de 1024 nombres. On peut voir cette liste comme une flèche pointant quelque part dans un espace à 1024 dimensions, impossible à dessiner, mais parfaitement calculable. Deux textes qui parlent de la même chose pointent à peu près dans la même direction, même s'ils n'ont aucun mot en commun.
 
-Quand vous posez votre question, elle passe dans le même modèle et devient une flèche elle aussi. Reste à trouver les morceaux d'article dont la flèche s'approche le plus de la vôtre. « S'approcher », ici, veut dire faire un petit angle — et il se trouve que mesurer cet angle, quand les flèches sont normalisées, c'est exactement faire un **produit scalaire**. Une multiplication, une addition, répétées mille fois. Un ordinateur fait ça en un clin d'œil.
+Quand vous posez votre question, elle passe dans le même modèle et devient une flèche elle aussi. Reste à trouver les morceaux d'article dont la flèche s'approche le plus de la vôtre. « S'approcher », ici, veut dire faire un petit angle, et il se trouve que mesurer cet angle, quand les flèches sont normalisées, c'est exactement faire un **produit scalaire**. Une multiplication, une addition, répétées mille fois. Un ordinateur fait ça en un clin d'oeil.
 
 Donc : pas de base de données vectorielle, pas de service de recherche. Un fichier statique publié avec le site, et une boucle de multiplications.
 
-Il y a une nuance que j'ai apprise cette semaine, et elle est plus importante qu'elle en a l'air. **L'index des articles est bâti une fois**, au moment où je publie. Mais **votre question, elle, doit être vectorisée au moment où vous la posez** — sinon il n'y a rien à comparer. Ce sont deux choses différentes, et elles ne tombent pas en panne en même temps. Un index tout frais du matin ne sert à rien si le modèle qui transforme votre question ne répond pas.
+Il y a une nuance que j'ai apprise cette semaine, et elle est plus importante qu'elle en a l'air. **L'index des articles est bâti une fois**, au moment où je publie. Mais **votre question, elle, doit être vectorisée au moment où vous la posez**, sinon il n'y a rien à comparer. Ce sont deux choses différentes, et elles ne tombent pas en panne en même temps. Un index tout frais du matin ne sert à rien si le modèle qui transforme votre question ne répond pas.
 
 Ça paraît être un détail de plomberie. C'est en fait ce qui a décidé sur quelle machine ce modèle-là a le droit de tourner.
 
@@ -81,7 +81,7 @@ Bob ne tourne pas dans le nuage. Il tourne sur une carte graphique grand public,
 
 Ce n'est pas une position de principe pour le plaisir d'en avoir une. Ça a une conséquence concrète et vérifiable : **rien de ce que vous écrivez dans cette boîte ne sort de chez moi.** Pas de facturation au jeton, pas de politique de rétention à lire, pas de tiers à qui faire confiance. Vous pouvez lui demander ce que vous voulez.
 
-Ça a aussi un prix, et je préfère l'écrire. Il n'y a pas de filet infonuagique derrière : quand ma machine dort, ou que je casse quelque chose un samedi après-midi, Bob ne répond pas moins bien — il ne répond pas du tout, et vous tombez sur une de ses boutades enregistrées. J'ai choisi ce compromis-là en sachant ce qu'il coûte. Un blogue sur l'auto-hébergement dont le robot répond depuis le centre de données de quelqu'un d'autre, ça manquait un peu le point.
+Ça a aussi un prix, et je préfère l'écrire. Il n'y a pas de filet infonuagique derrière. Quand ma machine dort, ou que je casse quelque chose un samedi après-midi, Bob ne répond pas moins bien, il ne répond pas du tout, et vous tombez sur une de ses boutades enregistrées. J'ai choisi ce compromis-là en sachant ce qu'il coûte. Un blogue sur l'auto-hébergement dont le robot répond depuis le centre de données de quelqu'un d'autre, ça manquait un peu le point.
 
 ## Allez lui parler
 
@@ -103,7 +103,7 @@ Et si vous voulez savoir comment il fait, c'est [lui qui l'explique le mieux](/b
 
 ## Ce que je n'ai pas fait tout seul
 
-Tout ce travail a été mené en sessions avec **Claude Code**. Je ne prétends pas avoir eu ce savoir-faire au départ : je n'aurais su ni calibrer un plancher de pertinence sur un échantillon honnête, ni reconnaître que la règle qui empêche Bob d'acquiescer devait être placée après la question plutôt qu'avant.
+Tout ce travail a été mené en sessions avec **Claude Code**. Je ne prétends pas avoir eu ce savoir-faire au départ. Je n'aurais su ni calibrer un plancher de pertinence sur un échantillon honnête, ni reconnaître que la règle qui empêche Bob d'acquiescer devait être placée après la question plutôt qu'avant.
 
 Mon rôle a été de diriger, de valider, et de trancher ce qui m'appartient. Débrancher le nuage. Garder un modèle plus lent parce qu'il est à moi. Refuser qu'une affirmation fausse s'affiche sur un bouton de mon site. Et donner à tout ça le nom d'un chien qui avait déjà, de son vivant, les trois qualités que je voulais retrouver dans la machine.
 

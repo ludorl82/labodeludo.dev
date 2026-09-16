@@ -1,20 +1,17 @@
 {
   "curated": [
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "D'où vient le nom de Bob ?",
-    "Why did you split the bastion from the console?",
-    "What is the last thing still running when everything else is down?"
+    "Comment tu publies ton infrastructure sans donner tes secrets ?"
   ],
-  "generated": "2026-09-16T20:31:49Z",
+  "generated": "2026-09-16T20:33:54Z",
   "openers": [
-    "c'est quoi ton setup complet ?",
-    "Quels articles parlent de Kubernetes ?",
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "D'où vient le nom de Bob ?",
-    "Why did you split the bastion from the console?",
-    "What is the last thing still running when everything else is down?"
+    "which model powers you?",
+    "What model runs your chat?",
+    "c'est quoi ton setup complet ?",
+    "Quels articles parlent de Kubernetes ?",
+    "cest quoi qui fait rouler le blogue ?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?"
   ],
   "written": []
 }

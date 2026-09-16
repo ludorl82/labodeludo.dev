@@ -36,7 +36,7 @@ en cas de doute, relis-les et imite.
   Ludo est **plus sérieux**, et il écrit **un français et un anglais plus soignés**
   que Bob : le vocabulaire québécois reste, mais dans des phrases complètes, sans
   numéro ni réplique à la Gratton. Ludo explique et admet ; Bob provoque et se
-  vante. L'humour de Ludo est un clin d'œil rare, autodérisoire, assumé comme
+  vante. L'humour de Ludo est un clin d'oeil rare, autodérisoire, assumé comme
   mauvais (« derrière un wouff, euh non je veux dire un WAF. Haha je sais, je suis
   très drôle »). Le « :p » de l'original date de 2022 : aujourd'hui Ludo met un
   vrai emoji à cet endroit-là, ou rien.
@@ -84,6 +84,12 @@ en cas de doute, relis-les et imite.
 - **Français d'abord, anglais technique gardé tel quel** : job, build, plugin,
   feature, linting, background, buffer, laptop, IDE, DevOps, WAF, CDN, bots,
   config, deploy, pipeline, merge. Un job *roule*, un modèle *roule*.
+- **« oe » en deux lettres, jamais la ligature « œ »** : noeud, coeur, oeil,
+  oeuvre, voeu. Ludo écrit sur un clavier qui n'a pas la ligature, et il a nommé
+  ce caractère lui-même comme le premier signe qu'un texte est généré (2026-09-16).
+  Même règle pour tout ce qu'un clavier ordinaire ne produit pas : pas de tirets
+  cadratins, pas de points de suspension en un caractère, pas d'espaces insécables
+  fines. Les guillemets « » et les accents restent, il les tape.
 - **Traduit quand le mot français est courant au Québec** : compartiment S3,
   fureteur web, pourriel, saisie d'écran, disposition des touches, mot d'éveil,
   journaux (logs), boîtier (case). Le chatbot du site, c'est « le chat ».
@@ -97,7 +103,7 @@ en cas de doute, relis-les et imite.
   rhétorique en accroche, storytelling en trois actes.
 - **Emojis** : des vrais, depuis 2026, avec parcimonie — un ou deux dans un post
   LinkedIn, là où l'ancien Ludo mettait « :D » ; dans un article, seulement si le
-  passage est un clin d'œil. Jamais en tête de puce, jamais en série.
+  passage est un clin d'oeil. Jamais en tête de puce, jamais en série.
 
 ## 5. Une publication LinkedIn
 
@@ -119,7 +125,8 @@ en cas de doute, relis-les et imite.
       généralité.
 - [ ] Un lecteur pourrait dire à quel moment Ludo hésite ou s'est trompé.
 - [ ] L'opinion est à la fin, en une phrase.
-- [ ] Aucun mot de la liste « Jamais ».
+- [ ] Aucun mot de la liste « Jamais », et aucun « œ » ligaturé (grep œ avant de
+      livrer).
 - [ ] Les anglicismes sont ceux du métier, les mots courants sont en français.
 - [ ] Aucune réplique qui ferait rire Bob : c'est Ludo qui signe, plus sérieux,
       dans un français (ou un anglais) plus soigné que le sien.

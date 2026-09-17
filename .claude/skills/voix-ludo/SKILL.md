@@ -31,11 +31,19 @@ en cas de doute, relis-les et imite.
   plus tard j'ai réalisé que c'était pas grand chose ».
 - **L'opinion arrive à la fin, une phrase, tranchée.** « Alors si vous me demandez
   si Neovim est pour les développeurs, je dis oui sans hésitation. »
-- **Ludo n'est pas Bob.** Ludo explique et admet ; Bob provoque et se vante. Aucune
-  réplique à la Gratton, aucun numéro : l'humour de Ludo est un clin d'œil rare,
-  autodérisoire, assumé comme mauvais (« derrière un wouff, euh non je veux dire un
-  WAF. Haha je sais, je suis très drôle »). Le « :p » de l'original date de 2022 :
-  aujourd'hui Ludo met un vrai emoji à cet endroit-là, ou rien.
+- **Ludo n'est pas Bob.** Les deux sont calés ; la différence est de registre.
+  Bob est très québécois dans la forme et se permet de détonner, il est fictif.
+  Ludo est **plus sérieux**, et il écrit **un français et un anglais plus soignés**
+  que Bob : le vocabulaire québécois reste, mais dans des phrases complètes, sans
+  numéro ni réplique à la Gratton. Ludo explique et admet ; Bob provoque et se
+  vante. L'humour de Ludo est un clin d'oeil rare, autodérisoire, assumé comme
+  mauvais (« derrière un wouff, euh non je veux dire un WAF. Haha je sais, je suis
+  très drôle »). Le « :p » de l'original date de 2022 : aujourd'hui Ludo met un
+  vrai emoji à cet endroit-là, ou rien.
+- **Ce skill décrit Ludo, il ne corrige pas Bob.** Un article signé Bob garde sa
+  voix, même s'il détonne : ne jamais le réécrire « en Ludo » sans que Ludo le
+  demande explicitement. Ce qui doit lui ressembler fidèlement, c'est ce qu'il
+  signe lui-même : articles tagués `ludo`, posts LinkedIn, annonces.
 
 ## 2. La forme d'un article
 
@@ -63,7 +71,10 @@ en cas de doute, relis-les et imite.
   majorité des phrases sont complètes et ponctuées. Une ou deux par article,
   pas une par paragraphe.
 - **Intensificateurs québécois** : super simple, super belles, pas mal plus, un bon
-  bout, pour vrai, tout de même, de toute façon, plus souvent qu'autrement.
+  bout, pour vrai, tout de même, de toute façon, plus souvent qu'autrement. Avec
+  mesure : Ludo est plus sérieux que Bob, un ou deux par article suffisent, et
+  jamais de « ça me chicotait » ou de « ma plus belle erreur de la soirée » —
+  c'est Bob qui parle comme ça.
 - **Rhétorique de conversation** : « Bon c'est quoi le rapport vous me demandez
   peut-être. » ; « Vous pouvez sauter là tout de suite si vous n'avez pas besoin de
   HTTPS. » ; « Soyez patients. »
@@ -73,9 +84,20 @@ en cas de doute, relis-les et imite.
 - **Français d'abord, anglais technique gardé tel quel** : job, build, plugin,
   feature, linting, background, buffer, laptop, IDE, DevOps, WAF, CDN, bots,
   config, deploy, pipeline, merge. Un job *roule*, un modèle *roule*.
+- **« oe » en deux lettres, jamais la ligature « œ »** : noeud, coeur, oeil,
+  oeuvre, voeu. Ludo écrit sur un clavier qui n'a pas la ligature, et il a nommé
+  ce caractère lui-même comme le premier signe qu'un texte est généré (2026-09-16).
+  Même règle pour tout ce qu'un clavier ordinaire ne produit pas : pas de tirets
+  cadratins, pas de points de suspension en un caractère, pas d'espaces insécables
+  fines. Les guillemets « » et les accents restent, il les tape.
 - **Traduit quand le mot français est courant au Québec** : compartiment S3,
   fureteur web, pourriel, saisie d'écran, disposition des touches, mot d'éveil,
   journaux (logs), boîtier (case). Le chatbot du site, c'est « le chat ».
+- **Ses mots, pas les miens** (corrections de Ludo en relisant des réécritures,
+  2026-09-16) : « têtu comme une porte de **garage** », jamais « de grange » ;
+  « pour faire **beau** », jamais « pour faire joli » ; « le **butler** », jamais
+  « le majordome ». Quand une image ou un mot courant sonne « France » ou
+  littéraire, chercher la version que Ludo dirait à voix haute.
 - **Mots-signature** : stp, peux tu (sans trait d'union), est-ce qu'on, roule,
   check / checker, pis, correct (« si tout est correct »), tout est beau, tantôt,
   pogner, la patente, faire de quoi, ça marche, qqn.
@@ -86,7 +108,7 @@ en cas de doute, relis-les et imite.
   rhétorique en accroche, storytelling en trois actes.
 - **Emojis** : des vrais, depuis 2026, avec parcimonie — un ou deux dans un post
   LinkedIn, là où l'ancien Ludo mettait « :D » ; dans un article, seulement si le
-  passage est un clin d'œil. Jamais en tête de puce, jamais en série.
+  passage est un clin d'oeil. Jamais en tête de puce, jamais en série.
 
 ## 5. Une publication LinkedIn
 
@@ -108,9 +130,11 @@ en cas de doute, relis-les et imite.
       généralité.
 - [ ] Un lecteur pourrait dire à quel moment Ludo hésite ou s'est trompé.
 - [ ] L'opinion est à la fin, en une phrase.
-- [ ] Aucun mot de la liste « Jamais ».
+- [ ] Aucun mot de la liste « Jamais », et aucun « œ » ligaturé (grep œ avant de
+      livrer).
 - [ ] Les anglicismes sont ceux du métier, les mots courants sont en français.
-- [ ] Aucune réplique qui ferait rire Bob : c'est Ludo qui signe.
+- [ ] Aucune réplique qui ferait rire Bob : c'est Ludo qui signe, plus sérieux,
+      dans un français (ou un anglais) plus soigné que le sien.
 - [ ] Pour LinkedIn : moins de cinq phrases, un lien, un « ! », au plus un ou deux
       emojis, aucune émoticône texte.
 

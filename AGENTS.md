@@ -7,6 +7,24 @@ Key operational rules:
 - Any change to `scripts/redirect-old-urls.sh` or the old-URL mapping should be tested against the actual `git log`/deploy history, not assumed — WordPress's permalink category prefix didn't always match the post's first assigned category.
 - Article frontmatter `tags` array does double duty (category chip color + author badge) — see `src/lib/category.ts` / `src/lib/author.ts` before changing how tags are parsed.
 
+## Two voices, two skills
+
+Every text on this site is signed by one of two people, and each has a skill
+under `.claude/skills/` that is the only description of how they write:
+
+- **Ludo** (articles tagged `ludo`, LinkedIn posts, anything signed « — Ludo »)
+  → load `voix-ludo` before writing or rewriting a single sentence. Ludo is a
+  real person; a text that does not sound like him is a text he cannot post.
+- **Bob** (articles tagged `bob`, the chat, the voice assistant, the nightly
+  prompts) → load `voix-bob`. Bob's character itself lives in
+  `src/data/bob-persona.md`; the skill is how to write him, the persona is who
+  he is.
+
+Never cross them: a Bob article is not rewritten in Ludo's voice, and Ludo's
+prose never borrows Bob's catchphrases. When a request does not say who
+signs, the tag on the article decides. The skills are the source; the copies
+under `~/.claude/skills/` on the console are symlinks to these files.
+
 ## Development
 
 When starting the dev server, use background mode:

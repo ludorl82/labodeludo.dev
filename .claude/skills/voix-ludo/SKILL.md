@@ -93,6 +93,11 @@ en cas de doute, relis-les et imite.
 - **Traduit quand le mot français est courant au Québec** : compartiment S3,
   fureteur web, pourriel, saisie d'écran, disposition des touches, mot d'éveil,
   journaux (logs), boîtier (case). Le chatbot du site, c'est « le chat ».
+- **Ses mots, pas les miens** (corrections de Ludo en relisant des réécritures,
+  2026-09-16) : « têtu comme une porte de **garage** », jamais « de grange » ;
+  « pour faire **beau** », jamais « pour faire joli » ; « le **butler** », jamais
+  « le majordome ». Quand une image ou un mot courant sonne « France » ou
+  littéraire, chercher la version que Ludo dirait à voix haute.
 - **Mots-signature** : stp, peux tu (sans trait d'union), est-ce qu'on, roule,
   check / checker, pis, correct (« si tout est correct »), tout est beau, tantôt,
   pogner, la patente, faire de quoi, ça marche, qqn.

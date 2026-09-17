@@ -1,20 +1,17 @@
 {
   "curated": [
-    "D'où vient le nom de Bob ?",
-    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
-    "What is the last thing still running when everything else is down?",
-    "How do you publish your infrastructure without leaking secrets?"
+    "D'où vient le nom de Bob ?"
   ],
-  "generated": "2026-09-17T12:41:47Z",
+  "generated": "2026-09-17T13:47:13Z",
   "openers": [
-    "c'est quoi ton setup complet ?",
-    "C'est quoi ton architecture ?",
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "D'où vient le nom de Bob ?",
-    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
-    "What is the last thing still running when everything else is down?",
-    "How do you publish your infrastructure without leaking secrets?"
+    "which model powers you?",
+    "How do you back up your cluster?",
+    "c'est quoi ton setup complet ?",
+    "Quels articles parlent de Kubernetes ?",
+    "cest quoi qui fait rouler le blogue ?",
+    "D'où vient le nom de Bob ?"
   ],
   "written": []
 }

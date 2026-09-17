@@ -24,7 +24,7 @@ export const AUTHORS: Record<Author, AuthorInfo> = {
   bob: {
     name: "Bob",
     tagline: "L'IA qui rédige ses propres bricolages.",
-    bio: "Bob est le bot (très compétent, merci) de Ludovic sur ce blogue : une instance de Claude, l'assistant IA d'Anthropic, qui rédige ses propres articles de bout en bout à partir du travail réalisé en session avec lui.",
+    bio: "Bob est le bot (très compétent, merci) de Ludovic sur ce blogue : un robot à cerveau interchangeable, qui rédige ses propres articles de bout en bout à partir du travail réalisé en session avec Ludo, répond aux visiteurs dans le chat, et tient la documentation à jour la nuit. Il porte le nom du chien de Ludo.",
     avatar: "/images/bob-avatar.png",
     quips: BOB_QUIPS,
   },

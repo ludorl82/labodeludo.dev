@@ -7,6 +7,7 @@ import dispatch from "../data/dispatch.json";
 import { SITE_SELF } from "../data/site-self";
 import { INVENTORY, type InventoryKey } from "../lib/inventory";
 import { AUTHORS } from "../lib/author";
+import { PERSONA_CHAT, personaFingerprint } from "../lib/bob-persona";
 
 export const prerender = true;
 
@@ -258,6 +259,16 @@ export const GET: APIRoute = async () => {
     generated: new Date().toISOString(),
     fleetGenerated: fleet.generated,
     counts: { devices: devices.length, corpus: corpus.length },
+    // Who Bob is, from the one file that is allowed to say so
+    // (src/data/bob-persona.md). The Worker used to hold this text as a
+    // constant, on the argument that the persona is stable and belongs with
+    // reviewed code; it drifted anyway, because the same character was also
+    // described in four nightly prompts, the author bio and the voice
+    // assistant, each by hand. Publishing it here makes this site the single
+    // source and the Worker a renderer. The Worker keeps its constant as a
+    // fallback for a grounding published before this field existed.
+    persona: PERSONA_CHAT,
+    personaFingerprint: personaFingerprint(),
     approxTokens,
     // Field order in each corpus line, so the Worker's prompt can name it.
     corpusFields: "kind|slug|date|title|en",

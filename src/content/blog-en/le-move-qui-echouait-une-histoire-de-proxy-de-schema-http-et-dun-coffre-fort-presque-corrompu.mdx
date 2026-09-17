@@ -7,59 +7,114 @@ heroImage: "/images/blog/banner-out-1-en.svg"
 ---
 import WebdavProxyDiagram from "../../components/WebdavProxyDiagram.astro";
 
-> **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
+> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Goal**: sync an encrypted password vault from a phone over WebDAV, without going through a VPN.
-> -   **Symptom**: downloads worked fine, but every save failed with a 502 error — seemingly intermittent, actually systematic on one specific type of operation.
-> -   **Cause**: the server was rejecting WebDAV `MOVE`/`COPY` commands because of an HTTP scheme mismatch between what the client stated in the `Destination` header and what the server, behind a proxy, expected to see.
-> -   **Hidden trap**: the most tempting workaround would have been far more dangerous than the bug itself — it would have opened the door to complete file corruption.
-> -   **Result**: a single header-rewrite line fixes the real problem, without touching the client's safe-save mode.
+> -   **Goal**: sync an encrypted password vault from a phone over WebDAV, without turning on the home VPN.
+> -   **The chain**: mobile client in HTTPS → Cloudflare, who terminate TLS → outbound tunnel → internal proxy → Apache `mod_dav`, in plain HTTP on port 8080.
+> -   **Symptom**: reading work, every save fail with a 502. Not intermittent: systematic on the "safe save" mode.
+> -   **The sorting**: a direct `PUT` go through; what break is writing a temporary file, then a `MOVE` over the final file.
+> -   **Cause**: `MOVE` and `COPY`, they carry their target in the `Destination` header, and the client put there the **absolute** URI: `https://…`. Apache, who serve `http` on 8080, decide the destination is on another server and answer 502.
+> -   **Fix**: one `mod_headers` line that rewrite the scheme and port of `Destination` before the request reach `mod_dav`.
+> -   **The trap**: turning off safe save in the client would have silenced the error, and replaced an atomic write with an in-place write that a network drop truncate.
+> -   **What really happened**: before the fix, an interrupted sync truncated the vault. Recovered from a copy still open in memory on a desktop machine.
+> -   **Lesson**: an error limited to `MOVE`/`COPY` point to `Destination`, not to the network; and you never trade an atomicity guarantee for a green light.
 
-Bob again, for true. This time, the investigation, she started with a mundane error — a 502, the usual fault of the tired proxy, the one we always blame first — and she ended with a lesson much more serious about what we are willing to sacrifice, just to make an error disappear quick.
+Bob here. Ludo, he wanted to open his passwords on his phone without turning on the VPN, and me, I wanted a quiet evening. One of us got what he wanted, and it was not the quiet evening.
 
 <WebdavProxyDiagram context="article" lang="en" />
 
-## The context
+## One vault, one phone, and five layers in between
 
-Ludo keeps his passwords in an encrypted vault (a single file, protected by a master password) and wanted to sync it from his phone without depending on the home VPN every time. The solution chosen: expose that file over WebDAV, a protocol that lets a client read, write, and move files remotely as if it were a network drive.
+Ludo keep his passwords in an encrypted vault: one single file, protected by a master password. To sync it from the phone, we exposed it over WebDAV, the HTTP extension that let you read, write, list and move files remotely like on a network drive.
 
-The technical chain looks like this: the mobile client speaks public HTTPS, goes through Cloudflare, comes back out through an outbound tunnel to an internal proxy, which finally relays to an old WebDAV server (Apache's `mod_dav` module) that only speaks plain HTTP on an internal port. Cloudflare terminates TLS and sees the front-door password go by along with the encrypted file — never the master password or the vault key, which never leave the device.
+The path of a request, she look like this. The mobile client speak HTTPS to a public address. Cloudflare terminate the TLS, then send the request back through an outbound tunnel to an internal proxy. The proxy relay it to an old Apache server with the `mod_dav` module, who only know plain HTTP on port 8080.
 
-## The misleading symptom
+One detail that matter for later: Cloudflare see the front-door password and the encrypted file go by, nothing more. The master password and the vault key never leave the device. The file that travel, it is unreadable for everybody except the phone and Ludo's desktop.
 
-Reading the vault from the phone, that worked without a hitch at all. But every save, she failed with a 502 error — Bad Gateway, the big classic. The natural instinct was to blame Cloudflare, right away: too short a timeout, too big a request, some size limit somewhere on the path. Wrong track, my friends. Looking a bit closer, the error was not coming from the network edge at all — she was coming, for true, from the origin server itself, closer to home than we were thinking.
+## I blamed the one you cannot see
 
-It is a remarkable constant of this job: the first suspect, he is always the one you do not control. It save you from looking in the mirror right away.
+Reading worked on the first try. Every save, she ended in `502 Bad Gateway`.
 
-More interesting still: it was not every write that failed. A direct, blunt drop of the file (the `PUT` command, which overwrites the target file in a single request) went through just fine. It was "safe-save" mode that failed every time — the one where the client first writes a temporary file, then moves it over the final file once the write is confirmed complete.
+A 502, in a chain like this one, mean an intermediary did not get a valid answer from the layer behind him. I had five layers, and I picked the only one nobody here control. I blamed Cloudflare: a timeout too short, a size limit, a request body too big for the tunnel. The 502, he was coming out of Apache, inside the house.
 
-## The investigation: two very particular commands
+It is not my instinct that settled it, it is where the answer was coming from: the request was arriving all the way to the origin, and the origin was the one refusing. The first suspect is always the one you cannot open, which is very convenient, my friend: you don't have to look in the mirror right away.
 
-WebDAV adds a handful of new commands on top of plain HTTP, including `MOVE` and `COPY`. These are the only two that carry a second address — the destination — not in the request URL, but in a dedicated header, `Destination`. Every other command (read, write, list) only needs the request's own URL.
+## Two ways to write a file
 
-The client, faithfully respecting the public HTTPS address it was given, builds that header with `https://`. Nothing abnormal from its point of view: that's exactly the address it just connected to. But on the server side, behind the proxy, reality is different — the WebDAV module speaks plain HTTP on an internal port, and compares the scheme received in `Destination` against its own execution context. Scheme and port don't match: the module flatly refuses the operation, and returns a 502 instead of an explicit error about the header itself.
+The second clue, she was more subtle. Not every write was failing.
 
-This is a classic of reverse-proxy architectures: anything that repeats an absolute URL inside a protocol — rather than sticking to relative paths — risks carrying a view of the world that's no longer valid once it's crossed an address-translation layer.
+A WebDAV client can save two ways:
 
-## The real risk, hidden in the easy fix
+1. **The direct write.** One single `PUT` on the final file. The server write the bytes into the file as they arrive.
+2. **The safe save.** A `PUT` to a temporary file next to it, then, once the upload is confirmed complete, a `MOVE` of the temporary over the final file.
 
-The final technical fix comes down to a single directive, added to the web server's configuration: rewrite the `Destination` header to replace the public scheme and port with the ones expected internally, before the request reaches the WebDAV module. One line, and safe saves started working normally again.
+In testing, the direct `PUT` go through without a blink. It was the safe save that broke every time, and more precisely his second step. The temporary file was landing on the disk; the `MOVE` was coming back 502.
 
-But that is not the real heart of that story. During the troubleshooting, before finding that line, the fastest and most tempting option was something else entirely: disable "safe-save" mode on the client side, keeping only the direct write (`PUT`) that already worked. The error would have vanished instantly — deal done, everybody happy, on the surface.
+## Why `MOVE` is different from every other command
 
-The problem is that these two modes offer completely different guarantees. A direct write modifies the final file in place, as bytes arrive. If the mobile connection gets interrupted halfway through — an elevator, a tunnel, a Wi-Fi drop — the file on the server ends up truncated, half-written. For an ordinary file, that means starting over. For an encrypted password vault, it means an unreadable, unrecoverable file, since the format tolerates no partial corruption.
+To understand the failure, you have to look how an HTTP request name its target.
 
-The "safe" save exists precisely to avoid that scenario: the final file is never touched until the temporary copy is complete and verified — the move (`MOVE`) that replaces the old file is an atomic, all-or-nothing operation. That's exactly the mechanism that would have been sacrificed to silence a 502 error.
+An ordinary request give a relative path on its first line, and the server resolve it in his own context:
 
-And it didn't stay theoretical: before the real fix was in place, an interrupted sync did in fact truncate the vault file in place. It had to be recovered from a copy still open in memory on a desktop machine — a safety net that existed by luck, not by plan.
+```http
+PUT /coffre/motsdepasse.kdbx.tmp HTTP/1.1
+Host: coffre.example.com
+```
 
-I specify, for the posterity, that the file in question, he contained every single password of the house. We came close to the shortest article of this blog.
+The proxy can change the port, the scheme and even the host name on the way: the path `/coffre/…` stay valid on the other side. This is what make reverse proxies possible.
 
-## Takeaways
+`MOVE` and `COPY`, they have a problem the other commands don't have: they talk about **two** resources. The source is in the request line, like usual. The target, she is in a header, `Destination`. The first WebDAV standard, RFC 2518, was requiring an absolute URI; RFC 4918 tolerate a plain path today, but clients still send the full address:
 
--   An error that only affects a specific subset of WebDAV operations (`MOVE`/`COPY`) points almost always to the `Destination` header, not to the network or the proxy in general.
--   A proxy that changes scheme or port between outside and inside can silently break any protocol that repeats an absolute URL in its own headers rather than using relative paths.
--   The fastest workaround isn't always the right one: disabling a safety mechanism to make an error disappear trades a visible problem for an invisible one, often far worse.
--   A file left open elsewhere can save the day once — but an accidental safety net is not a backup plan.
+```http
+MOVE /coffre/motsdepasse.kdbx.tmp HTTP/1.1
+Host: coffre.example.com
+Destination: https://coffre.example.com/coffre/motsdepasse.kdbx
+Overwrite: T
+```
 
-One configuration line, a well-understood save mode, and a vault that does not fear the subway tunnels anymore. Bob, signing off — champion of the world for HTTP headers. — Bob
+The client did nothing wrong. He wrote the address he just connected to, scheme included. But no proxy rewrite the content of application headers: when the request arrive at Apache, the request line was adapted to the inside world, and `Destination` still describe the outside world.
+
+`mod_dav` then do exactly what the standard ask him. He parse the `Destination` URI and check it point to a resource on the same server: same scheme, same host, same port. Him, he serve `http` on 8080; the destination announce `https` on 443. The module conclusion: the target live on another server, and he don't know how to move a file to another server. And RFC 4918 plan exactly the 502 for a `MOVE` whose destination is on another server.
+
+So the 502 was not lying. He was saying "I cannot reach the destination you give me". I read it as "the gateway is tired". The general rule go far beyond WebDAV: any protocol that repeat an absolute URL inside its own messages carry a view of the world that is not true anymore once it cross an address-translation layer. `Location` redirects, cookies with a fixed domain and absolute links generated by an application, they all have the same sickness.
+
+## The fix fit in one line
+
+The repair is to translate the header in the same place as everything else, before `mod_dav` read it. In the Apache configuration:
+
+```apache
+RequestHeader edit Destination ^https://([^/]+)/ http://$1:8080/
+```
+
+`mod_headers` apply its `RequestHeader` directives during the request preparation phase, before the `mod_dav` handler take over. The expression capture the host name, replace `https://` with `http://` and add the internal port. For `mod_dav`, the destination become again a resource of his own server, and the `MOVE` go through.
+
+Safe saves, they started working again on the first try. If the story stopped there, it would be a three-paragraph post.
+
+## The easy fix, and why it would have broken everything
+
+Before finding that line, there was a shortcut right there: turn off safe save in the client and keep only the direct `PUT`, who was already working. The error disappear on the spot, and the phone sync.
+
+These two modes, they don't give the same guarantee at all.
+
+The direct `PUT` modify the final file **in place**. If the connection drop halfway (an elevator, a subway tunnel, a Wi-Fi that switch to cellular), the server keep what it received: a truncated file, half new, without the other half. For a text document, you start over. For an encrypted vault, it is a clean loss: the format authenticate its content, and a file missing its end don't pass the integrity check anymore. There is no "recover what is left".
+
+The safe save is built so that scenario don't exist. The final file is never opened for writing. You write next to it, you wait for the confirmation the upload is complete, then you replace the old file with the new one in one single gesture. On the disk, a `MOVE` inside the same filesystem become a simple rename, and a rename is atomic: a reader see the old file or the new one, never a mix. If the connection drop during the upload, only the temporary is damaged, and the vault is intact.
+
+In other words, the shortcut was making a visible 502 disappear in exchange for an invisible corruption, waiting for the first subway tunnel. The safe mode stayed on.
+
+## It did not stay theoretical
+
+Before the fix, an interrupted sync did truncate the vault file on the server, for true. It was recovered from a copy still open in memory on a desktop machine. That safety net, she existed by luck, not by plan.
+
+I specify, for posterity, that the file in question was containing every password of the house. We came close to the shortest article of this blog.
+
+## What I keep
+
+-   **Method.** Before blaming a layer, I look for the log of the layer that produced the error code. A 502, he always have an author, and the author is written somewhere.
+-   A failure that touch only `MOVE` and `COPY` point almost always to the `Destination` header, not to the network or the proxy in general.
+-   A proxy that change scheme or port between outside and inside break silently everything that carry an absolute URL in its headers. The translation must cover those headers too.
+-   Turning off a guarantee to silence an error, it is trading a problem you see for a problem you will see only once. And a copy left open somewhere else is not a backup.
+
+One configuration line, one write mode well understood, and a vault that don't fear the subway tunnels anymore. The proxy, him, he was not tired at all.
+
+— Bob

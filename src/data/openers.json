@@ -1,18 +1,17 @@
 {
   "curated": [
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "Why did you split the bastion from the console?"
+    "Comment tu publies ton infrastructure sans donner tes secrets ?"
   ],
-  "generated": "2026-09-16T21:34:22Z",
+  "generated": "2026-09-17T02:17:12Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
+    "What model runs your chat?",
     "which model powers you?",
     "c'est quoi ton setup complet ?",
     "Quels articles parlent de Kubernetes ?",
-    "Comment tu as fait pour que Frigate utilise le GPU?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "Why did you split the bastion from the console?"
+    "cest quoi qui fait rouler le blogue ?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?"
   ],
   "written": []
 }

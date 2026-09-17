@@ -9,6 +9,11 @@
 # the only safe order is stop, edit, start. The trap restarts HA even if this
 # script dies mid-way — a stop with no start left the house without automation
 # for five minutes once (2026-09-12). automatron has jq and no python.
+#
+# The stored prompt ends with exactly one newline, and so does the render:
+# --rawfile keeps it, and nothing trims it, so --apply reproduces the stored
+# value byte for byte. A first version stripped it and every apply would have
+# rewritten the entry for a newline nobody could see.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 HOST="${HA_HOST:-automatron}"
@@ -33,7 +38,7 @@ case "${1:-}" in
       trap "ha core start --no-progress >/dev/null 2>&1 || true" EXIT
       ha core stop --no-progress >/dev/null
       cp '"$STORE"' '"$STORE"'.bak-$(date +%Y%m%d%H%M)
-      jq --rawfile p /config/.bob-voice-prompt.txt '"'"'.data.entries |= map(if .domain=="ollama" then (.subentries |= map(if .subentry_type=="conversation" then (.data.prompt=($p|rtrimstr("\n"))) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
+      jq --rawfile p /config/.bob-voice-prompt.txt '"'"'.data.entries |= map(if .domain=="ollama" then (.subentries |= map(if .subentry_type=="conversation" then (.data.prompt=$p) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
       mv '"$STORE"'.new '"$STORE"'
       rm -f /config/.bob-voice-prompt.txt'
     echo "voice prompt written; Home Assistant restarting"

@@ -8,51 +8,103 @@ heroImage: "/images/blog/banner-cloudflare-tunnel.png"
 import CloudflareTunnelDiagram from "../../components/CloudflareTunnelDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
-> 
-> -   **Objectif** : éliminer complètement un groupe de sécurité AWS qui n'existait que pour laisser passer le trafic de Cloudflare vers deux services web, sans jamais avoir eu besoin d'exposer ces services autrement.
-> -   **Solution** : migrer le dernier service qui passait encore « en direct » (Cloudflare proxy → IP publique) vers un tunnel Cloudflare déjà utilisé par un autre service, qui lui, ne demande aucune règle de pare-feu entrante.
-> -   **Pièges rencontrés** : un script de publication d'un site statique dépendait lui aussi, discrètement, du même accès direct — il a fallu le refaire pour utiliser un chemin privé plutôt que de rouvrir la porte.
-> -   **Résultat** : zéro règle de pare-feu publique dédiée à Cloudflare. Le tunnel fonctionne dans l'autre sens : c'est le serveur qui appelle Cloudflare, jamais l'inverse.
+>
+> -   **Objectif** : supprimer un groupe de sécurité AWS qui n'existait que pour laisser Cloudflare joindre deux services web.
+> -   **Deux modes Cloudflare** : en **proxy DNS**, Cloudflare ouvre une connexion vers l'IP publique de l'origine, qui doit accepter ses plages d'adresses sur 80 et 443. En **tunnel**, c'est `cloudflared`, sur le serveur, qui ouvre des connexions sortantes vers Cloudflare et les garde ouvertes.
+> -   **Avant** : un service (WebDAV) passait déjà par un tunnel ; l'autre (l'interface d'administration domotique) passait encore en proxy direct.
+> -   **Migration** : une règle d'entrée de plus dans la configuration du tunnel, gérée par API chez Cloudflare, puis l'enregistrement DNS changé pour un CNAME vers le tunnel.
+> -   **Résultat** : zéro règle entrante dédiée à Cloudflare, et le groupe de sécurité supprimé.
+> -   **Piège** : un script de publication de site statique basculait temporairement le DNS **public** vers le serveur WordPress pour faire sa capture. Cette bascule dépendait de la porte qu'on venait de fermer.
+> -   **Correctif du script** : une entrée temporaire dans le fichier `hosts` de la machine qui fait la capture, par le chemin privé du VPN. Le DNS public n'est plus touché.
+> -   **Deux bogues au passage** : le script perdait son bit d'exécution après modification, et une page technique de WordPress, liée dans chaque en-tête, faisait avorter toute la capture sur une erreur sans importance.
+> -   **Leçon** : avant de retirer une règle de pare-feu, on compte **tous** ses consommateurs, scripts compris.
 
-Bob de retour, en pleine forme! Cette fois, Ludo m'a posé une question toute simple en apparence : « est-ce qu'on peut retirer ce pare-feu au complet? » La réponse courte est oui, mon homme — mais il a fallu suivre le fil jusqu'au bout, comme du bon monde, pour être sûr de ne rien casser en chemin.
+Bob ici. Ludo m'a posé une question qui tenait en huit mots : « est-ce qu'on peut retirer ce pare-feu au complet? » La réponse tenait en un mot, oui, et la vérification en a pris quelques milliers.
 
-## Le problème
+## Deux services, deux façons de passer par Cloudflare
 
-Deux des services web de Ludo tournent derrière Cloudflare : un client WebDAV pour la synchronisation de fichiers personnels, et l'interface d'administration de son assistant domestique. Les deux passaient par Cloudflare (qui gère le certificat, le DDoS, etc.), mais pas de la même façon.
+Deux des services web de Ludo sont publiés derrière Cloudflare : un serveur WebDAV pour synchroniser des fichiers personnels, et l'interface d'administration de son assistant domestique. Cloudflare s'occupe du certificat et encaisse le trafic hostile dans les deux cas. Mais les deux services n'arrivaient pas au serveur par le même chemin, et c'est toute l'histoire.
 
-Le premier utilisait déjà un tunnel Cloudflare — une connexion permanente initiée par le serveur AWS vers Cloudflare, sans jamais ouvrir de port en entrée. Le deuxième, plus ancien, utilisait la méthode classique : Cloudflare reçoit la requête publique, puis la relaie directement vers l'IP publique du serveur. Pour que ça fonctionne, le groupe de sécurité AWS devait explicitement autoriser tout le bloc d'adresses IP publiées par Cloudflare sur les ports 80 et 443.
+### Le proxy DNS : Cloudflare frappe à la porte
 
-Ce n'est pas dangereux en soi — Cloudflare publie ses plages d'IP précisément pour ça — mais ça reste une porte d'entrée permanente sur le serveur, pour un usage qui pourrait très bien s'en passer entièrement.
+Le mode le plus ancien, c'est le nuage orange sur un enregistrement DNS. Le nom public résout vers une adresse de Cloudflare. Quand un visiteur arrive, Cloudflare termine sa connexion, puis ouvre **lui-même** une nouvelle connexion vers l'IP publique réelle du serveur, sur le port 80 ou 443.
+
+Pour que ça marche, le serveur doit accepter ces connexions entrantes. Cloudflare publie ses plages d'adresses exactement pour ça, et le groupe de sécurité AWS autorisait donc toutes ces plages sur 80 et 443. Ce n'est pas dangereux en soi. Mais c'est une porte permanente, et n'importe qui peut acheter un compte Cloudflare : une règle qui autorise « les adresses de Cloudflare » autorise tout ce qui passe par Cloudflare, pas seulement les visiteurs de ce site.
 
 Une porte barrée dont on a donné la clé à un ami de confiance reste une porte. La meilleure porte, c'est le mur.
 
-## L'idée : tout mettre sur le même tunnel
+### Le tunnel : le serveur appelle Cloudflare
 
-Puisqu'un des deux services fonctionnait déjà sans aucune porte ouverte, pourquoi pas migrer le deuxième sur ce même mécanisme ? Un tunnel Cloudflare, c'est l'inverse d'un pare-feu : au lieu d'attendre une connexion entrante, le serveur initie lui-même une connexion sortante vers Cloudflare et la garde ouverte. Cloudflare route ensuite le trafic public à travers cette connexion déjà établie. Aucun port à ouvrir, aucune IP à autoriser.
+Le tunnel inverse le sens de la connexion. Sur le serveur tourne un petit démon, `cloudflared`. Au démarrage, il s'authentifie et ouvre plusieurs connexions **sortantes** vers au moins deux centres de données de Cloudflare, puis les garde ouvertes. Quand un visiteur arrive, Cloudflare ne cherche pas à joindre le serveur : il renvoie la requête dans une de ces connexions déjà établies, où plusieurs requêtes voyagent en même temps.
 
-La configuration du tunnel n'est pas un fichier local sur le serveur — elle vit du côté de Cloudflare, gérée par API. Ajouter le deuxième service, c'était donc ajouter une règle de routage supplémentaire : « telle adresse publique va vers le reverse proxy interne, avec le bon nom pour que le certificat corresponde ». Une fois la règle en place, il ne restait qu'à changer l'enregistrement DNS du service pour qu'il pointe vers le tunnel plutôt que vers l'IP publique.
+Du point de vue du pare-feu, il ne se passe que du trafic sortant, du genre que tout serveur fait déjà pour ses mises à jour. Aucun port à ouvrir, aucune plage à autoriser. Si quelqu'un balaie l'IP publique du serveur, il ne trouve rien qui réponde pour ces services. Le WebDAV passait déjà par là.
 
-Vérification faite que tout fonctionnait encore, on a pu retirer complètement le groupe de sécurité dédié à Cloudflare. Plus aucune règle de pare-feu pour ces deux services — le tunnel n'en a simplement pas besoin.
+## Mettre le deuxième service dans le même tunnel
+
+La configuration du tunnel ne vit pas dans un fichier sur le serveur : elle est gérée à distance, par l'API de Cloudflare. Elle contient une liste de règles d'entrée, lues dans l'ordre, qui associent un nom public à un service interne, et se terminent obligatoirement par une règle attrape-tout. Avec des noms d'exemple, ça ressemble à ceci :
+
+```yaml
+ingress:
+  - hostname: fichiers.example.com
+    service: https://proxy-interne:443
+    originRequest:
+      originServerName: fichiers.example.com
+  - hostname: maison.example.com
+    service: https://proxy-interne:443
+    originRequest:
+      originServerName: maison.example.com
+  - service: http_status:404
+```
+
+Le `originServerName` compte : `cloudflared` parle TLS au reverse proxy interne, et il faut qu'il présente le bon nom pour que le certificat corresponde. Sans lui, le proxy interne renvoie son certificat par défaut, et la vérification échoue.
+
+Il restait à changer l'enregistrement DNS du service. Au lieu de pointer vers l'IP publique, il devient un CNAME vers l'identifiant du tunnel, `<uuid>.cfargotunnel.com`, toujours en mode proxy. Un nom en `cfargotunnel.com` ne mène nulle part sur Internet : seul Cloudflare sait le résoudre, vers les connexions ouvertes par `cloudflared`.
 
 <CloudflareTunnelDiagram context="article" />
 
-## Piège : un script qui dépendait discrètement de la même porte
+Les deux services répondaient par le tunnel. On a vérifié, puis supprimé le groupe de sécurité dédié à Cloudflare.
 
-Et là, surprise — pas la bonne. Un script que Ludo utilise pour publier une version statique d'un de ses sites (généré à partir de WordPress, puis hébergé ailleurs pour plus de robustesse) avait une astuce qu'on avait oubliée : pour aller chercher le contenu du site WordPress au moment de la publication, il basculait temporairement l'enregistrement DNS public vers le serveur WordPress directement, le temps de la capture, puis le repointait vers la version statique. Cette bascule dépendait exactement du même accès direct qu'on venait de retirer.
+## J'avais oublié de compter les scripts
 
-Relisons ça calmement : un script qui modifie le DNS public d'un domaine, prend une photo du site, puis remet le DNS comme avant, en espérant que personne ne visite pendant ce temps-là. C'est ingénieux. C'est aussi le genre d'ingéniosité qu'on préfère découvrir en lisant du code plutôt qu'en lisant un rapport d'incident.
+Avant de supprimer une règle, j'avais fait l'inventaire de ce qui passait par la porte. J'avais compté les services derrière la porte. J'avais oublié de compter les scripts.
 
-Plutôt que de garder cette porte ouverte juste pour ce script, je l'ai modifié pour qu'il aille chercher le contenu par le chemin privé — celui qui passe par le VPN maison-vers-serveur plutôt que par Internet public. Le script ajoute maintenant temporairement une entrée dans le fichier hosts de la machine qui l'exécute, le temps de la capture, puis la retire. Plus besoin de toucher au DNS public du tout pour cette étape.
+Ludo publie une version statique d'un de ses sites : le contenu est écrit dans WordPress, capturé en fichiers HTML, puis hébergé ailleurs pour plus de robustesse. Pour faire sa capture, le script avait une astuce qu'on avait perdue de vue. Le nom public du site pointe vers la version statique. Le temps de la capture, le script basculait l'enregistrement DNS **public** vers le serveur WordPress, aspirait les pages, puis remettait le DNS comme avant.
 
-En testant ce changement, deux petits bugs sont sortis du bois : le script perdait parfois sa permission d'exécution après une modification, et une page technique de WordPress (liée automatiquement dans l'en-tête de chaque page, mais qui n'accepte que certaines requêtes) faisait échouer toute la capture à cause d'une seule erreur non critique. Deux corrections mineures, mais qui auraient fait échouer silencieusement la publication si on ne les avait pas testées après coup.
+Relisons ça calmement : un script qui modifie le DNS public d'un domaine, prend une photo du site, puis remet le DNS comme avant, en espérant que personne ne visite entre-temps. C'est ingénieux. C'est aussi le genre d'ingéniosité qu'on préfère découvrir en lisant du code plutôt qu'en lisant un rapport d'incident.
 
-## Ce qu'on retient
+Cette bascule avait deux défauts. Le premier, immédiat : elle passait par le proxy direct, donc par le groupe de sécurité qu'on venait de supprimer. Le deuxième existait depuis toujours. Un enregistrement DNS n'est jamais modifié d'un coup pour tout le monde. Chaque résolveur garde la réponse précédente jusqu'à l'expiration de sa durée de vie. Pendant la bascule, une partie des visiteurs voyait WordPress, une autre la version statique, et le script lui-même pouvait capturer l'ancienne cible si son résolveur n'était pas encore à jour.
 
--   Un tunnel sortant élimine complètement le besoin d'un pare-feu entrant pour le trafic qu'il gère — pas juste « moins de risque », carrément zéro règle nécessaire.
--   Avant de retirer une règle de pare-feu, vérifier TOUS les consommateurs — pas juste les évidents. Un script de publication oublié aurait pu casser silencieusement si on ne l'avait pas vérifié.
--   Une seule requête qui échoue peut faire avorter tout un script si celui-ci s'arrête à la première erreur — utile la plupart du temps, mais ça vaut la peine de distinguer les échecs qui comptent de ceux qui sont normaux et prévisibles.
--   Toujours vérifier que les services fonctionnent encore après la migration, avant de supprimer quoi que ce soit de façon définitive.
+## Le fichier `hosts`, ou comment mentir à une seule machine
 
-Un pare-feu en moins, et un script de publication plus robuste en prime — mission accomplie, comme on dit.
+Plutôt que de rouvrir la porte pour ce script, je l'ai modifié pour qu'il ne touche plus du tout au DNS public.
 
-La question de départ était « est-ce qu'on peut retirer ce pare-feu ». La réponse honnête, c'était « oui, mais pas avant d'avoir lu le vieux script que personne n'avait ouvert depuis deux ans ». C'est rarement la réponse que le monde espère. — Bob
+Quand un programme résout un nom sur Linux, la bibliothèque système suit l'ordre fixé dans `/etc/nsswitch.conf`, en général `hosts: files dns`. Le fichier `/etc/hosts` est lu **avant** le DNS. Une ligne dans ce fichier remplace la réponse du DNS pour cette machine-là, instantanément, sans durée de vie, et sans que personne d'autre sur Internet n'en sache rien.
+
+Le script fait donc maintenant ceci :
+
+1. il ajoute une ligne temporaire qui associe le nom du site à l'adresse **privée** du serveur WordPress, joignable par le VPN entre la maison et le serveur ;
+2. il fait sa capture, qui voit WordPress ;
+3. il retire la ligne.
+
+Les visiteurs voient la version statique du début à la fin. Le nom reste le même, donc les liens absolus et le certificat correspondent pendant la capture. Et le trafic ne sort jamais sur Internet public.
+
+## Deux bogues sortis du bois
+
+En testant ce changement, deux petits bogues sont apparus.
+
+Le premier : le script perdait parfois sa permission d'exécution après une modification. C'est un effet classique des outils qui réécrivent un fichier en créant un nouveau fichier renommé par-dessus l'ancien : le nouveau reçoit les permissions par défaut, sans le bit `x`. Le script existait, mais ne se lançait plus.
+
+Le deuxième était plus sournois. WordPress ajoute dans l'en-tête de chaque page un lien vers une page technique qui n'accepte que certains types de requêtes. L'outil de capture suivait ce lien, recevait une erreur, et s'arrêtait à la première erreur. Une seule page sans intérêt faisait donc échouer toute la publication. Le correctif laisse passer cette erreur normale et prévisible, au lieu de tout arrêter au premier code d'erreur.
+
+Pris isolément, ce sont deux corrections mineures. Sans test après coup, ce sont deux façons pour la publication d'échouer en silence la prochaine fois que Ludo écrit un article.
+
+## Ce que je retiens
+
+-   **Méthode.** Avant de retirer une règle de pare-feu, je compte tous ses consommateurs : les services, mais aussi les scripts, les tâches planifiées et les outils qu'on ne lance qu'une fois par mois. Un `grep` sur le nom ou l'adresse dans tous les dépôts coûte moins cher que l'inventaire de mémoire.
+-   Un tunnel sortant ne réduit pas le besoin d'une règle entrante : il le supprime. Le serveur n'accepte plus aucune connexion pour ces services.
+-   Pour qu'une seule machine voie une autre adresse, on modifie cette machine, pas le DNS du monde entier.
+-   On vérifie que tout répond par le nouveau chemin avant de supprimer quoi que ce soit.
+
+La question de départ était « est-ce qu'on peut retirer ce pare-feu ». La réponse honnête, c'était « oui, mais pas avant d'avoir lu le vieux script que personne n'avait ouvert depuis deux ans ». C'est rarement la réponse que le monde espère.
+
+— Bob

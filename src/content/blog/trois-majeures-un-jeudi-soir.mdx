@@ -13,9 +13,12 @@ heroImage: "/images/blog/banner-trois-majeures.svg"
 > -   **MongoDB** : quatre majeures d'un coup, c'est trois de trop — Mongo monte une majeure à la fois, avec un `featureCompatibilityVersion` à ajuster entre chaque. Pire : les démarrages ratés de la v8 ont modifié les métadonnées WiredTiger, rendant les fichiers illisibles par *toutes* les versions. Récupération par le mongodump nocturne dans S3.
 > -   **Le bogue caché** : les trois sondes de santé appelaient `mongo`, le shell retiré depuis la v6 — le kubelet tuait donc un mongod parfaitement sain aux 90 secondes.
 > -   **Uptime Kuma** : la migration v2 a besoin de ~40 minutes ininterrompues ; la sonde de démarrage en donnait 5. Le processus tué a laissé un verrou de migration qui bloquait chaque redémarrage.
+> -   **La fenêtre d'une sonde** : `failureThreshold × periodSeconds`. Tant que la sonde de démarrage n'a pas réussi, les deux autres sondes sont suspendues ; quand la fenêtre expire, le kubelet tue le conteneur, migration ou pas.
+> -   **Le pipeline contre moi** : une première tentative de retirer les sondes en direct a été annulée par la synchronisation automatique du déploiement. Il a fallu la mettre en pause pendant la chirurgie.
+> -   **La sauvegarde elle-même** : la job nocturne installait son outil S3 avec un gestionnaire de paquets absent de la nouvelle image. Celle qui nous a sauvés était cassée depuis la fusion.
 > -   **Après coup** : les majeures attendent maintenant une approbation explicite, les majeures de bases de données ne viennent plus jamais d'un robot, et la sonde de Kuma a une fenêtre de 60 minutes.
 
-Bob à l'appareil. La semaine passée, on a branché le labo pour que chaque fusion dans git déploie toute seule — les garde-fous, la porte qui refuse les destructions, toute l'affaire. Cette semaine, la suite logique : un robot qui *remarque* les mises à jour disponibles pis qui ouvre les PR tout seul le dimanche matin. Premier passage du robot : quatre PR. Un paquet de mises à jour mineures groupées, pis trois versions majeures, chacune sa PR, comme du monde civilisé.
+Bob ici. La semaine passée, on a branché le labo pour que chaque fusion dans git déploie toute seule — les garde-fous, la porte qui refuse les destructions, toute l'affaire. Cette semaine, la suite logique : un robot qui *remarque* les mises à jour disponibles pis qui ouvre les PR tout seul le dimanche matin. Premier passage du robot : quatre PR. Un paquet de mises à jour mineures groupées, pis trois versions majeures, chacune sa PR, comme du monde civilisé.
 
 Je les ai toutes fusionnées le soir même. J'étais confiant. C'est exactement le genre de confiance qui produit des articles.
 
@@ -50,13 +53,19 @@ Grafana v13 a migré sa base de données tout seul, a redémarré, pis a répond
 
 L'étiquette de version de MongoDB traînait à 4.4 depuis assez longtemps que le robot, tout naturellement, a proposé la dernière : 8.3. Un saut de quatre versions majeures. Le problème, c'est que MongoDB monte les majeures **une à la fois** — 4.4 vers 5.0, ajuster le `featureCompatibilityVersion`, 5.0 vers 6.0, ajuster encore, et ainsi de suite jusqu'en haut. C'est écrit dans la documentation, que j'aurais lue si j'avais su que j'étais en train de faire une montée de version de base de données. Dans ma tête, je fusionnais une PR.
 
+La raison de cette échelle mérite deux minutes, parce qu'elle explique tout ce qui suit. Le `featureCompatibilityVersion`, ou FCV, est un réglage stocké **dans les données**, pas dans le binaire. Il dit quelles fonctions et quels formats sur disque la base a le droit d'utiliser. Un binaire MongoDB ne sait ouvrir que des données dont le FCV est sa propre version ou la précédente : un mongod 5.0 accepte un FCV 4.4 ou 5.0, rien d'autre. Chaque montée se fait donc en deux gestes. On remplace le binaire (le 5.0 roule encore en mode 4.4, et on peut redescendre), puis on monte le FCV (et là, la porte de retour se ferme). Sauter de 4.4 à 8.3, c'est présenter des données en FCV 4.4 à un binaire qui n'accepte que 8.0 ou 8.3.
+
 La 8.3 a donc démarré, regardé les fichiers, dit « non », pis planté. Jusque-là, récupérable : on redescend à 4.4 pis on monte l'échelle comme il faut. Sauf que non. Pendant ses tentatives de démarrage, la 8.3 avait eu le temps de **mettre à jour les métadonnées WiredTiger** — le format interne des fichiers. Résultat : les vieilles versions lisaient maintenant ces fichiers comme de la corruption, pis la nouvelle refusait toujours le `featureCompatibilityVersion`. Une base de données que *plus aucune version de son propre logiciel* ne voulait ouvrir. Empoisonnée par ses propres tentatives de réanimation.
 
 La sortie de secours, c'était la sauvegarde logique : un mongodump chiffré, envoyé dans S3 chaque nuit, vieux de 27 heures. Pour un contrôleur Wi-Fi, 27 heures de pertes, c'est des statistiques de trafic. On efface — en fait on *tasse*, deux copies complètes de côté, parce qu'effacer des fichiers de base de données un jeudi soir, non merci — on laisse la 8.3 s'initialiser à neuf, on restaure : 1984 documents, zéro échec. Petit détail en passant : `mv /data/*` ne prend pas les fichiers cachés. Deux fichiers cachés sont restés. C'est **toujours** les fichiers cachés.
 
 ## Le bogue qui se cachait derrière le bogue
 
-La base restaurée, le pod continuait de redémarrer. Aux 90 secondes, précisément. C'est là qu'on a fini par lire les sondes de santé — les petites commandes que Kubernetes exécute pour vérifier qu'un conteneur va bien, pis qu'il redémarre s'il ne répond pas.
+La base restaurée, le pod continuait de redémarrer. Aux 90 secondes, précisément.
+
+J'ai accusé la restauration. La restauration était parfaite : 1984 documents, zéro échec. C'est là qu'on a fini par lire les sondes de santé — les petites commandes que Kubernetes exécute pour vérifier qu'un conteneur va bien, pis qu'il redémarre s'il ne répond pas.
+
+Kubernetes a trois sortes de sondes, et elles ne punissent pas de la même façon. La sonde de **démarrage** protège les débuts lents : tant qu'elle n'a pas réussi, les deux autres ne sont même pas évaluées, et si elle échoue trop longtemps, le conteneur est tué. La sonde de **vivacité** (*liveness*) tourne ensuite en permanence, et un échec répété veut dire « redémarre-le ». La sonde de **disponibilité** (*readiness*) est la plus douce : un échec retire seulement le pod du trafic, sans le tuer. Dans les trois cas, la fenêtre de tolérance vaut le nombre d'échecs permis multiplié par la période entre deux essais.
 
 Les trois sondes appelaient `mongo`. Le shell `mongo` a été **retiré du produit à la version 6**. Depuis la fusion, les sondes prenaient le pouls du patient en composant un numéro débranché depuis deux versions majeures — pis comme personne ne répondait, elles concluaient que le patient était mort, pis le kubelet le tuait. Un mongod parfaitement en santé, exécuté aux 90 secondes, 65 fois de suite. Le garde du corps tirait sur son propre client pis remplissait le rapport d'incident en même temps.
 
@@ -66,7 +75,7 @@ Une ligne à changer — `mongo` devient `mongosh` — pis soudainement tout ten
 
 Pendant ce temps-là, Uptime Kuma v2 migrait sa base de données. Une grosse migration : toutes les données de surveillance des dernières années, réorganisées en tables agrégées. Le logiciel écrivait, dans ses propres logs, en majuscules : `[DON'T STOP] Migrating...`. Environ 40 minutes de travail.
 
-Sa sonde de démarrage lui donnait 5 minutes.
+Sa sonde de démarrage lui donnait 5 minutes. Autrement dit : un nombre d'échecs permis multiplié par une période qui, mis bout à bout, faisait 5 minutes, après quoi le kubelet ne pose plus de questions.
 
 Vous voyez où ça s'en va. Le kubelet a tué la migration en plein vol — pendant qu'elle écrivait littéralement DON'T STOP — pis le logiciel a laissé derrière lui un verrou « migration en cours ». À chaque redémarrage suivant : « une migration est déjà en cours », plantage, redémarrage, même message. 82 fois.
 
@@ -78,4 +87,14 @@ Le robot, lui, n'a rien fait de mal — il a proposé des versions, les portes o
 
 Alors on a encodé les leçons au lieu de juste s'en souvenir : les versions majeures attendent maintenant une **approbation explicite** sur un tableau de bord avant même de devenir des PR ; un logiciel en retard de plusieurs majeures les recevra **une à la fois** ; les majeures de bases de données ne viennent **plus jamais d'un robot** — c'est une maintenance planifiée avec un runbook, pas une surprise du dimanche ; pis la sonde de Kuma a maintenant une fenêtre de démarrage d'une heure, parce qu'une migration, ça se respecte. Dernier morceau de jardinage, trouvé en creusant : la job de sauvegarde nocturne installait son outil S3 avec le gestionnaire de paquets de l'image — outil qui n'existe plus dans l'image de base venue avec la v8. La sauvegarde qui nous a sauvés était donc, depuis la fusion, elle-même brisée. Elle installe maintenant l'outil officiel directement. Vérifiez vos sauvegardes après une majeure ; elles vivent dans la même image que le patient.
 
-La morale, si vous en voulez une : un pipeline de déploiement automatique, ça ne rend pas les mises à jour sûres. Ça rend les erreurs *rapides*, les corrections *aussi rapides*, pis les leçons *permanentes*. Les trois services ont fini la soirée en santé. Moi, j'ai fini la soirée avec trois règles de plus dans un fichier JSON pis un respect neuf pour le mot « majeure ».
+## Ce que je retiens
+
+-   **Méthode.** Une PR étiquetée « major » n'est pas une PR : c'est une maintenance. Avant de fusionner, je lis les notes de version en cherchant deux mots, « migration » et « removed ».
+-   Une base de données ne saute pas de versions majeures. Le FCV vit dans les données, et chaque montée ferme une porte derrière elle.
+-   Une sonde est du code écrit pour une version précise du logiciel qu'elle surveille. Elle vieillit avec lui, et une majeure la réveille.
+-   Une fenêtre de démarrage se calcule à partir de la plus longue migration possible, pas du démarrage habituel.
+-   Après une majeure, je vérifie la sauvegarde avant le reste : elle vit dans la même image que le patient.
+
+Un pipeline de déploiement automatique ne rend pas les mises à jour sûres. Il rend les erreurs *rapides*, les corrections *aussi rapides*, pis les leçons *permanentes*. Les trois services ont fini la soirée en santé. Moi, j'ai fini la soirée avec trois règles de plus dans un fichier JSON pis un respect neuf pour le mot « majeure ».
+
+— Bob

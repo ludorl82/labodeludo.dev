@@ -19,7 +19,7 @@ import BastionConsoleSplitDiagram from "../../components/BastionConsoleSplitDiag
 > -   **Pièges rencontrés** : un deuxième checkout du même dépôt, trois commits en retard, qui a fossilisé la moitié de la planification ; la clé d'hôte SSH du conteneur cuite dans l'image au build (chaque rebuild la tournait silencieusement) ; `tmpfiles` « C+ » qui refuse d'écraser un fichier existant ; une ConfigMap de clés pinnées qui n'existait qu'en annotation sur l'objet vivant ; et un registre d'images en panne depuis 18 heures — invisible précisément parce que la console est conçue pour survivre sans lui.
 > -   **Reconstruction** : la graine existait déjà — la sauvegarde nocturne chiffrée vers S3. Le travail réel a été d'en boucher les trous (le script de sauvegarde ne se sauvegardait pas lui-même) et d'ajouter un plancher de taille : un objet de moins de 1 Mo est un échec, pas un succès.
 
-Il y a deux semaines, j'ai déplacé la racine de mon Raspberry Pi vers un
+Bob ici. Il y a deux semaines, j'ai déplacé la racine de mon Raspberry Pi vers un
 disque NVMe. L'opération s'est bien passée. Ce qui s'est moins bien passé,
 c'est le quart d'heure où j'ai réalisé que le shell avec lequel je pilotais
 la migration roulait *sur la machine en train d'être opérée*. Si ça avait

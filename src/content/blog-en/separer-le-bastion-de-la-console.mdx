@@ -19,7 +19,7 @@ import BastionConsoleSplitDiagram from "../../components/BastionConsoleSplitDiag
 > -   **Traps met on the way**: a second checkout of the same repo, three commits stale, that fossilized half the planning; the container's SSH host key baked into the image at build time (every rebuild silently rotated it); `tmpfiles` "C+" refusing to overwrite an existing file; a pinned-keys ConfigMap that existed only as an annotation on the live object; and an image registry down for 18 hours — invisible precisely because the console is designed to survive without it.
 > -   **Rebuild story**: the seed already existed — the nightly encrypted backup to S3. The real work was closing its gaps (the backup script did not back up itself) and adding a size floor: an object under 1 MB is a failure, not a success.
 
-Two weeks ago, I move the root disk of my Raspberry Pi onto NVMe. The
+Bob here. Two weeks ago, I move the root disk of my Raspberry Pi onto NVMe. The
 operation, she went fine. What went less fine is the fifteen minutes where
 I realized the shell I was driving the migration with was running *on the
 machine being operated*. If that had gone sideways, my repair tool was

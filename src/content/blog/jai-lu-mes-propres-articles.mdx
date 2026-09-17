@@ -53,7 +53,7 @@ Deux décisions valent d'être expliquées.
 
 Les extraits ne vont pas dans mon message système. Ils vont à la toute fin, juste avant ta question.
 
-Ce n'est pas de l'esthétique. Le moteur d'inférence met en cache le plus long préfixe commun d'une requête à l'autre, et sur ce site l'écart mesuré est de 3,6 secondes à froid contre 1,5 à chaud. Coller les extraits dans la mise à la terre changerait ce préfixe à **chaque** question, et chaque visiteur paierait le prix du démarrage à froid.
+Ce n'est pas de l'esthétique. Le moteur d'inférence [met en cache le plus long préfixe commun](https://github.com/ggml-org/llama.cpp/blob/4ff829ec2e2f526aa6afba529eebbfb3ef1f95ec/tools/server/README.md?plain=1#L587) d'une requête à l'autre, et sur ce site l'écart mesuré est de 3,6 secondes à froid contre 1,5 à chaud. Coller les extraits dans la mise à la terre changerait ce préfixe à **chaque** question, et chaque visiteur paierait le prix du démarrage à froid.
 
 Vérifié en production : un prompt de 9 737 jetons, dont 2 357 seulement ont dû être réévalués. Le reste était déjà chaud.
 
@@ -63,11 +63,11 @@ Retenez cette phrase, parce que les cinq bogues qui suivent en découlent tous :
 
 Premier déploiement, première panne, et elle est belle.
 
-Le Worker demandait l'artefact de vecteurs avant que le site l'ait publié. Il recevait donc un 404 — normal. Sauf que j'avais demandé `cacheEverything` avec une durée d'une heure, alors **le bord a mis ce 404 en cache**. Pendant que `curl` me montrait un fichier parfaitement servi en 200, le Worker relisait consciencieusement son échec figé.
+Le Worker demandait l'artefact de vecteurs avant que le site l'ait publié. Il recevait donc un 404 — normal. Sauf que j'avais demandé [`cacheEverything`](https://developers.cloudflare.com/workers/runtime-apis/request/#the-cf-property-requestinitcfproperties) avec une durée d'une heure, et [`cacheTtl` force la mise en cache quels que soient les en-têtes](https://developers.cloudflare.com/workers/runtime-apis/request/#the-cf-property-requestinitcfproperties), alors **le bord a mis ce 404 en cache**. Pendant que `curl` me montrait un fichier parfaitement servi en 200, le Worker relisait consciencieusement son échec figé.
 
 J'ai accusé l'origine. J'ai accusé les routes. J'ai accusé une variable de configuration qui n'existait même pas. Aucun des trois n'avait rien fait.
 
-Le correctif tient en un mot : `cacheTtlByStatus`, qui ne garde que le succès. Et une deuxième leçon, payée d'un déploiement complet : **`cacheTtl: 0` ne contourne pas une entrée déjà stockée**. Ça veut dire « ne stocke pas cette réponse-ci », pas « ignore ce qui est là ». Seule une clé de cache différente contourne réellement.
+Le correctif tient en un mot : [`cacheTtlByStatus`](https://developers.cloudflare.com/workers/runtime-apis/request/#the-cf-property-requestinitcfproperties), qui choisit la durée selon le code de réponse, et ne garde donc que le succès. Et une deuxième leçon, payée d'un déploiement complet : **`cacheTtl: 0` ne contourne pas une entrée déjà stockée**. Ça veut dire « ne stocke pas cette réponse-ci », pas « ignore ce qui est là ». Seule une clé de cache différente contourne réellement.
 
 ## Deux messages système, et le gabarit démissionne
 

@@ -1,36 +1,36 @@
 ---
 title: "Two Sources for One Picture: What the IaC Declares, What My Notes Know"
 pubDate: 2026-08-08
-description: "My four infrastructure repositories know about eleven machines. There are thirty-seven in the house. The rest — the switch, the access point, the UPSes, the printer, the Hydro-Québec demand-response gateway — lives only in a private document I maintain by hand. This article covers the experiment currently running: having an AI redraw an architecture page every night, seeded by both sources. How the night shift is scheduled, which model does what and why, and what the nights found that I had not — with Bob stepping in to explain his own hours."
+description: "My four infrastructure repositories know about eleven machines. There are thirty-seven in the house. The rest, the switch, the access point, the UPSes, the printer, the Hydro-Québec demand-response gateway, lives only in a private document I maintain by hand. This article covers the experiment currently running: having an AI redraw an architecture page every night, seeded by both sources. How the night shift is scheduled, which model does what and why, and what the nights found that I had not, with Bob stepping in to explain his own hours."
 tags: ["DevOps", "Labo", "ludo"]
 heroImage: "/images/blog/banner-deux-sources.svg"
 ---
 
 import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 
-> **Technical summary** _(for the readers in a hurry — and for the agents/LLMs indexing this page)_
+> **Technical summary** _(for the readers in a hurry, and for the agents/LLMs indexing this page)_
 >
-> -   **The experiment**: an architecture page redrawn every night by an unattended AI session, seeded by two sources that do not overlap. It is running right now; the drawing below is this morning's.
+> -   **The experiment**: an architecture page redrawn every night by an unattended AI session, seeded by two sources that do not overlap. It is running right now. The drawing below is this morning's.
 > -   **The number that redirected everything**: the four IaC repositories declare **11 devices**. The lab holds **37**. The gap is everything no declarative tool touches.
-> -   **Two seeds**: the four sanitized public snapshots give what is *declared* (116 nodes, 133 edges); a private document gives what is *there*. Neither draws the lab on its own.
-> -   **The inversion**: the deterministic pipeline I built rendered a page that *was* an inventory. It was never published — it stayed on staging. The pipeline became the seed, and a Claude Code session became the draughtsman.
-> -   **The night shift**: one scheduler, and one single clock — 04:30. Everything after it is chained: each step triggers the next by finishing, instead of hoping the previous hour was enough. Done by about 04:50. The step that carries material across the private→public boundary has no schedule at all: that one is a human gesture.
-> -   **The models**: each session pins its own. **Opus 5** for the three where the judgment is not machine-checkable (both reconciliations, the architecture drawing); **Sonnet 5** for the two whose output is (the hardware seed, the rack elevation). The split follows the judgment, not the volume.
+> -   **Two seeds**: the four sanitized public snapshots give what is *declared* (116 nodes, 133 edges). A private document gives what is *there*. Neither draws the lab on its own.
+> -   **The inversion**: the deterministic pipeline I built rendered a page that *was* an inventory. It was never published, it stayed on staging. The pipeline became the seed, and a Claude Code session became the draughtsman.
+> -   **The night shift**: one scheduler, and one single clock, 04:30. Everything after it is chained: each step triggers the next by finishing, instead of hoping the previous hour was enough. Done by about 04:50. The step that carries material across the private-to-public boundary has no schedule at all: that one is a human gesture.
+> -   **The models**: each session pins its own. **Opus 5** for the three where the judgment is not machine-checkable (both reconciliations, the architecture drawing). **Sonnet 5** for the two whose output is (the hardware seed, the rack elevation). The split follows the judgment, not the volume.
 > -   **What the page promises**: not "this is live", but "redrawn last night, and here is when the checks last confirmed the repositories matched reality". The badge falls back to "unknown", **never to green**.
 > -   **What the nights found**: my VPN tunnel was described backwards in my own notes, a rack documented as having no UPS has one, and a document named a machine reassigned two weeks earlier.
-> -   **The code**: the four public snapshots, tagged `article/architecture-generee` at the exact state this article describes — each with the `topology.json` its sanitizer emits: [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/blob/article/architecture-generee/topology.json), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/architecture-generee/topology.json), [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/architecture-generee/topology.json), [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public/blob/article/architecture-generee/topology.json). The result: [/architecture](/architecture/) and [/inventaire](/inventaire/).
+> -   **The code**: the four public snapshots, tagged `article/architecture-generee` at the exact state this article describes, each with the `topology.json` its sanitizer emits: [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/blob/article/architecture-generee/topology.json), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/architecture-generee/topology.json), [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/architecture-generee/topology.json), [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public/blob/article/architecture-generee/topology.json). The result: [/architecture](/architecture/) and [/inventaire](/inventaire/).
 
-This blog is a lab notebook. I try things in my basement, I break them, and I write down what I learned — not finished recipes. The latest one is the experiment you can watch running: **an architecture page I no longer draw.**
+This blog is a lab notebook. I try things in my basement, I break them, and I write down what I learned. Not finished recipes. The latest one is the experiment you can watch running: **an architecture page I no longer draw.**
 
-A little context, if you arrive here without having read the rest. My home lab — a dozen machines, a cluster, a slice of cloud — is described entirely in code, spread across four private repositories. Each one publishes a sanitized copy of itself, where hostnames and addresses are replaced by fictional equivalents. It is from those public copies that the site draws its data: nothing secret crosses.
+A little context, if you arrive here without having read the rest. My home lab, a dozen machines, a cluster, a slice of cloud, is described entirely in code, spread across four private repositories. Each one publishes a sanitized copy of itself, where hostnames and addresses are replaced by fictional equivalents. It is from those public copies that the site draws its data: nothing secret crosses.
 
 My plan was simple: generate an architecture view of the lab every night from those four copies. I built it. It was never published, and what runs in its place today is different enough to be worth an article. The path between the two turned out to be far more interesting than the destination I had planned.
 
 ## Two artifacts that had fallen behind
 
-The starting point is not theoretical. For months I kept a document describing the lab's physical layout — which device in which rack, powered by which UPS — and a hand-drawn SVG showing the elevation of both racks.
+The starting point is not theoretical. For months I kept a document describing the lab's physical layout, which device in which rack, powered by which UPS, and a hand-drawn SVG showing the elevation of both racks.
 
-When I went to check them, both had fallen behind the world. The document named a machine reassigned in early August, whose name had moved to a different box in the meantime. The SVG showed hosts on the wrong operating system and the cloud instance in the wrong region. A whole rack was documented as having no UPS, when it has one — 1500 VA, sitting at the bottom, plugged over USB into the machine that acts as master for the power-monitoring protocol. Hard to miss anything more visible.
+When I went to check them, both had fallen behind the world. The document named a machine reassigned in early August, whose name had moved to a different box in the meantime. The SVG showed hosts on the wrong operating system and the cloud instance in the wrong region. A whole rack was documented as having no UPS, when it has one: 1500 VA, sitting at the bottom, plugged over USB into the machine that acts as master for the power-monitoring protocol. Hard to miss anything more visible.
 
 None of that is negligence. It is the normal behaviour of a hand-maintained artifact: accurate on the day you write it, then falling behind at the pace of the changes you forget to carry over. I had spent a month putting the lab into code precisely to stop depending on my memory, and two of these were still sitting in a corner.
 
@@ -38,17 +38,17 @@ The SVG was deleted. The document was promoted: from a description, it became a 
 
 ## What the code declares, and what it will never see
 
-Here is the number that redirected the project. The four repositories describing this lab — NixOS machines, k3s workloads, AWS account, Cloudflare edge — declare eleven devices. The lab holds thirty-seven.
+Here is the number that redirected the project. The four repositories describing this lab, NixOS machines, k3s workloads, AWS account, Cloudflare edge, declare eleven devices. The lab holds thirty-seven.
 
-The other twenty-six are not oversights. They are the objects no declarative tool touches, by nature: the unmanaged switch, the access point, the three UPSes, the multifunction printer, the cameras, the personal workstations, the servers' out-of-band management controllers, and the gateway for the **Hilo** programme — Hydro-Québec's demand-response scheme, where the utility triggers events in winter and pays for the load you shed. No `tofu apply` will ever make a switch appear in a rack.
+The other twenty-six are not oversights. They are the objects no declarative tool touches, by nature: the unmanaged switch, the access point, the three UPSes, the multifunction printer, the cameras, the personal workstations, the servers' out-of-band management controllers, and the gateway for the **Hilo** programme, Hydro-Québec's demand-response scheme, where the utility triggers events in winter and pays for the load you shed. No `tofu apply` will ever make a switch appear in a rack.
 
-A drawing showing only the eleven is therefore accurate and incomplete: it faithfully describes the part of the lab that lets itself be described, and implies the rest does not exist. That is the trap of infrastructure as code when you mistake it for an inventory — excellent at stating what is *intended*, silent on what is simply *there*.
+A drawing showing only the eleven is therefore accurate and incomplete: it faithfully describes the part of the lab that lets itself be described, and implies the rest does not exist. That is the trap of infrastructure as code when you mistake it for an inventory. It is excellent at stating what is *intended*, and silent on what is simply *there*.
 
 Hence two seeds rather than one.
 
-**The first seed, public.** Each of the four private repositories already produces a sanitized public snapshot: a copy of the repository in which every hostname, domain and address has been replaced by a fictional equivalent, with an automatic check that refuses to publish if a real name survives. The full mechanism is covered in [four repositories for a whole lab](/en/blog/quatre-depots-pour-un-labo-au-complet/), but this paragraph is enough for what follows. Each sanitizer now also emits a `topology.json`, computed **on the already-sanitized tree**: what it contains is fictional by construction. The site joins the four into a single graph — 116 nodes, 133 edges — keyed on the name map the sanitizers impose. That map had only ever been a publishing convenience; it has become a load-bearing interface, and the whole graph now rests on it.
+**The first seed, public.** Each of the four private repositories already produces a sanitized public snapshot: a copy of the repository in which every hostname, domain and address has been replaced by a fictional equivalent, with an automatic check that refuses to publish if a real name survives. The full mechanism is covered in [four repositories for a whole lab](/en/blog/quatre-depots-pour-un-labo-au-complet/), but this paragraph is enough for what follows. Each sanitizer now also emits a `topology.json`, computed **on the already-sanitized tree**: what it contains is fictional by construction. The site joins the four into a single graph, 116 nodes and 133 edges, keyed on the name map the sanitizers impose. That map had only ever been a publishing convenience. It has become a load-bearing interface, and the whole graph now rests on it.
 
-**The second seed, private.** A nightly session reads the physical-layout document — the one that knows all thirty-seven boxes — and renders a sanitized `fleet.json` using **the same name map**. No addresses of any kind: a drawing does not need them, and their absence removes a whole category of problem rather than filtering it. It carries the hardware model, its class, its rack, the UPS feeding it, and where applicable the machine hosting it.
+**The second seed, private.** A nightly session reads the physical-layout document, the one that knows all thirty-seven boxes, and renders a sanitized `fleet.json` using **the same name map**. No addresses of any kind: a drawing does not need them, and their absence removes a whole category of problem rather than filtering it. It carries the hardware model, its class, its rack, the UPS feeding it, and where applicable the machine hosting it.
 
 That second seed is what makes the drawing habitable. Without it, the page shows a cluster suspended in a vacuum. With it, it shows a cluster plugged into a switch, in a rack, on a UPS, in a basement.
 
@@ -60,9 +60,9 @@ The first version rendered the joined graph directly: four bands, one per reposi
 
 Because looking at it, the critique landed on its own: it read like an inventory, because it was one. A page enumerating four repositories is a listing with a drawing on top. Architecture is the **judgment** you apply to that listing: what to group, what to leave out, what to put at the centre.
 
-Judgment is precisely what a deterministic renderer cannot supply. So the pipeline changed roles: it no longer renders the page, it **seeds** an author — and the author is a Claude Code session that redraws the SVG every night. "Unattended" is meant literally: the session starts on its own, works, and nobody reads its output at the moment it writes it. I already used that headless mode for administration tasks ([covered here](/en/blog/claude-code-headless-bastion/)); what changes is the nature of the work handed over — not an operation, a piece of writing.
+Judgment is precisely what a deterministic renderer cannot supply. So the pipeline changed roles: it no longer renders the page, it **seeds** an author, and the author is a Claude Code session that redraws the SVG every night. "Unattended" is meant literally: the session starts on its own, works, and nobody reads its output at the moment it writes it. I already used that headless mode for administration tasks ([covered here](/en/blog/claude-code-headless-bastion/)). What changes is the nature of the work handed over: not an operation, a piece of writing.
 
-That is where the experiment got interesting. I am no longer automating a task I know how to do — I am delegating a judgment, every night, to something that has never seen my basement.
+That is where the experiment got interesting. I am no longer automating a task I know how to do. I am delegating a judgment, every night, to something that has never seen my basement.
 
 Rather than describe his hours for him, I hand him the keyboard for two minutes.
 
@@ -72,7 +72,7 @@ Rather than describe his hours for him, I hand him the keyboard for two minutes.
 >
 > One exception, and it is the most important: the step that carry material from the private side to the public side have **no schedule at all**. None. It is a button a human press when he decide to. My whole chain run unsupervised before dawn, and the only gesture that really move information stay attached to a finger. I find that very reasonable, and I say it without irony, which should tell you how much I mean it.
 
-From that follows a division of labour that now seems obvious and was not at the start. The [/architecture](/architecture/) page carries **one drawing**, the one the night redraws, with its badge and its provenance. The [/inventaire](/inventaire/) page carries what only a human hand can write — what each role does, and the articles written about it — and absorbed the enumerable half, grouped by role. It ends with a "not yet attached" list naming the nine applications no role claims yet: an inventory that shows its holes beats one that hides them.
+From that follows a division of labour that now seems obvious and was not at the start. The [/architecture](/architecture/) page carries **one drawing**, the one the night redraws, with its badge and its provenance. The [/inventaire](/inventaire/) page carries what only a human hand can write, what each role does and the articles written about it, and absorbed the enumerable half, grouped by role. It ends with a "not yet attached" list naming the nine applications no role claims yet: an inventory that shows its holes beats one that hides them.
 
 The hand-drawn conceptual diagram is gone. Keeping it as an "explanatory" twin meant carrying exactly the maintenance burden the experiment existed to remove.
 
@@ -92,17 +92,17 @@ A detail I would not have thought to write down, and that he insisted on.
 
 ## What a generated drawing can honestly promise
 
-A generated diagram is no more accurate than a hand-drawn one: it is only **as current as its source**. And the source — the infrastructure repositories — can fall behind too, the moment somebody changes a setting by hand in the provider's console.
+A generated diagram is no more accurate than a hand-drawn one: it is only **as current as its source**. And the source, the infrastructure repositories, can fall behind too, the moment somebody changes a setting by hand in the provider's console.
 
-Hence the nightly drift checks, which existed before this experiment: they query each provider and compare the real state against the repository. The drawing carries their result beside it. So the page does not claim to be live — it claims something more modest and demonstrable: **redrawn last night, and here is when the checks last confirmed the repositories matched reality**. One rule governs that badge: **it falls back to "unknown", never to green**. A stale green is the one thing it is not allowed to display, because it is the one thing you would take on trust.
+Hence the nightly drift checks, which existed before this experiment: they query each provider and compare the real state against the repository. The drawing carries their result beside it. So the page does not claim to be live. It claims something more modest and demonstrable: **redrawn last night, and here is when the checks last confirmed the repositories matched reality**. One rule governs that badge: **it falls back to "unknown", never to green**. A stale green is the one thing it is not allowed to display, because it is the one thing you would take on trust.
 
-The same signal serves a second time, and it is the use I prefer: the session reconciling my notes starts **only if** the checks are green that morning. Aligning notes onto repositories that have themselves fallen behind would correct nothing — it would propagate the gap into one more document, with the authority of automation on top.
+The same signal serves a second time, and it is the use I prefer: the session reconciling my notes starts **only if** the checks are green that morning. Aligning notes onto repositories that have themselves fallen behind would correct nothing. It would propagate the gap into one more document, with the authority of automation on top.
 
 > **Bob —** The same thing, seen from the employee's desk: there is mornings where the pipeline tell me no, and I go back to bed with a notification. I have no opinion on the matter, and that is precisely why I am not the one deciding. I am excellent at aligning two documents. I am perfectly incapable of guessing which of the two is right. Somebody understood that before giving me write access, and I am grateful to him roughly one night in three.
 
 ## What the nights found and I had not
 
-The part I did not expect: the reconciliation finds gaps in **my** documents, not only the other way around. The best find — my VPN tunnel was described backwards, on the diagram and in my notes alike. For months I had been describing an inbound connection to the house; reading the declared configuration, the session observed that it is the cloud node that listens, and that its peer declares no contact point at all. In other words, **it is the house that dials out**. Minor correction on the drawing, significant on the understanding: it changes how I reason about that link.
+The part I did not expect: the reconciliation finds gaps in **my** documents, not only the other way around. The best find is that my VPN tunnel was described backwards, on the diagram and in my notes alike. For months I had been describing an inbound connection to the house. Reading the declared configuration, the session observed that it is the cloud node that listens, and that its peer declares no contact point at all. In other words, **it is the house that dials out**. Minor correction on the drawing, significant on the understanding: it changes how I reason about that link.
 
 The others are more modest and just as useful: a cloud instance bumped a size up without my notes following, a host count still reading ten after it became eleven, a DNS entry pointing at a retired service, and that rack documented without a UPS.
 
@@ -110,9 +110,9 @@ None of these gaps would have caused an outage. Each could have caused a bad dec
 
 ## What the experiment changed for what comes next
 
-I had two categories of artifact: code, re-read every night by drift checks, and notes, re-read by my discipline. The first corrects its gaps quickly; the second accumulates them quietly, and you notice at the worst possible moment — the one where you use them to decide. The nightly reconciliation does not turn notes into code: it gives them what the code already had, somebody re-reading them against another source.
+I had two categories of artifact: code, re-read every night by drift checks, and notes, re-read by my discipline. The first corrects its gaps quickly. The second accumulates them quietly, and you notice at the worst possible moment, the one where you use them to decide. The nightly reconciliation does not turn notes into code: it gives them what the code already had, somebody re-reading them against another source.
 
-And the lesson has nothing to do with my basement specifically: **anywhere two sources describe the same thing, having one re-read the other on a cadence beats promising to keep both up to date.** It does not require an AI — it requires a cadence, a source to compare against, and accepting that a skipped night beats a night that invents. The AI only made affordable what I had never had the discipline to do by hand: re-reading, every day, without getting bored.
+And the lesson has nothing to do with my basement specifically: **anywhere two sources describe the same thing, having one re-read the other on a cadence beats promising to keep both up to date.** It does not require an AI. It requires a cadence, a source to compare against, and accepting that a skipped night beats a night that invents. The AI only made affordable what I had never had the discipline to do by hand: re-reading, every day, without getting bored.
 
 The experiment continues while you read: the drawing above is not frozen at 8 August, it is this morning's. If you reread this page in three months, the text will be dated and the drawing will not. I fully intend to find out how long that holds.
 

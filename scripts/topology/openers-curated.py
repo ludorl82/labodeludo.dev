@@ -27,10 +27,21 @@ unpublished and a retrieval floor can be retuned. `check-answerable.py` reposes
 tonight's slice before it ships, exactly as it does for the other two sources.
 A curated question that has gone stale is dropped like any other dead end.
 
+ONLY WHAT THE PANEL STILL HAS ROOM FOR. `--already` names the questions an
+earlier source already claimed, and the slice shrinks to the slots that are
+left — per language, because the panel is capped per language. Without it this
+source picks eight, asks production eight times at six seconds apart, and the
+merge then drops them all because the real half had already filled the panel.
+That happened on the first live run: eight probes, six seconds each, for
+questions that could not ship. The written half has had this check since the
+day it existed; this one was written without it.
+
 Usage:
   openers-curated.py <curated.json> <out.json> [max-per-lang] [day-offset]
+                     [--already <openers.json>]
 """
 import datetime
+import importlib.util
 import json
 import os
 import sys
@@ -84,7 +95,55 @@ def day_offset(today=None):
     return (today or datetime.date.today()).toordinal()
 
 
+def _looks_english():
+    """check-openers.py's own language test, not a second one.
+
+    Two answers to "is this English?" would disagree eventually, and the panel
+    cap is enforced with THAT one at merge time — so a slice computed with a
+    different test would ask for slots the merge does not agree exist.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "co", os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           "check-openers.py"))
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m.looks_english
+
+
+def remaining(already_path, per_lang):
+    """Slots left per language: {"fr": n, "en": n}.
+
+    A missing or unreadable file means nothing is claimed yet — the state on a
+    morning where the earlier source found nothing, which is exactly when this
+    source matters most.
+    """
+    room = {"fr": per_lang, "en": per_lang}
+    if not already_path:
+        return room
+    try:
+        with open(already_path, encoding="utf-8") as fh:
+            taken = [q for q in json.load(fh).get("openers", []) if isinstance(q, str)]
+    except (OSError, ValueError, AttributeError):
+        return room
+    is_en = _looks_english()
+    for q in taken:
+        lang = "en" if is_en(q) else "fr"
+        room[lang] = max(0, room[lang] - 1)
+    return room
+
+
 def main():
+    argv = sys.argv[1:]
+    already = None
+    if "--already" in argv:
+        i = argv.index("--already")
+        try:
+            already = argv[i + 1]
+        except IndexError:
+            print("openers-curated: --already needs a path", file=sys.stderr)
+            return 2
+        del argv[i:i + 2]
+    sys.argv = [sys.argv[0]] + argv
     if not 3 <= len(sys.argv) <= 5:
         print("usage: openers-curated.py <curated.json> <out.json> "
               "[max-per-lang] [day-offset]", file=sys.stderr)
@@ -94,9 +153,10 @@ def main():
     offset = int(sys.argv[4]) if len(sys.argv) > 4 else day_offset()
 
     lists = load(src)
+    room = remaining(already, per_lang)
     picked = []
     for lang in ("fr", "en"):
-        picked += rotate(lists[lang], offset, per_lang)
+        picked += rotate(lists[lang], offset, room[lang])
 
     if not picked:
         # Not an error: an empty or missing list simply means this source has
@@ -109,9 +169,10 @@ def main():
         fh.write("\n")
 
     print(f"openers-curated: {len(picked)} question(s) — "
-          f"{len(rotate(lists['en'], offset, per_lang))} en, "
-          f"{len(rotate(lists['fr'], offset, per_lang))} fr "
-          f"(rotation {offset % max(len(lists['fr']) or 1, 1)} "
+          f"{len(rotate(lists['en'], offset, room['en']))} en, "
+          f"{len(rotate(lists['fr'], offset, room['fr']))} fr "
+          f"(room {room['fr']} fr + {room['en']} en; "
+          f"rotation {offset % max(len(lists['fr']) or 1, 1)} "
           f"of {len(lists['fr'])} fr / {len(lists['en'])} en)")
     return 0
 

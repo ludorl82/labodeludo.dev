@@ -1,15 +1,19 @@
 {
-  "curated": [],
-  "generated": "2026-09-17T08:34:15Z",
+  "curated": [
+    "D'où vient le nom de Bob ?",
+    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
+    "What is the last thing still running when everything else is down?"
+  ],
+  "generated": "2026-09-17T08:47:14Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "which model powers you?",
-    "How do you back up your cluster?",
+    "What model runs your chat?",
     "c'est quoi ton setup complet ?",
     "Quels articles parlent de Kubernetes ?",
-    "Comment tu as fait pour que Frigate utilise le GPU?",
-    "cest quoi qui fait rouler le blogue ?"
+    "D'où vient le nom de Bob ?",
+    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
+    "What is the last thing still running when everything else is down?"
   ],
   "written": []
 }

@@ -172,6 +172,22 @@ export const GET: APIRoute = async () => {
       .map(entry("cast")),
   ];
 
+  // "C'est quoi ton dernier article ?" is a question the index answers — its
+  // first line per author — and the model still got it wrong: retrieval hands
+  // it three passages of « J'ai lu mes propres articles » because the WORDS
+  // match, and what sits next to the question wins. So the answer is counted
+  // here, like every other count, and read rather than deduced. One line per
+  // signature, one for the casts, from the same sort the index uses.
+  const newest = (list: typeof posts, pred: (e: (typeof posts)[number]) => boolean = () => true) =>
+    [...list].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()).find(pred);
+  const line = (label: string, base: string, e: (typeof posts)[number] | undefined) =>
+    e ? `${label} : ${base}${e.id}/ (${e.data.pubDate.toISOString().slice(0, 10)}) — « ${oneLine(e.data.title)} »` : null;
+  const latest = [
+    line("Dernier article signé Bob", "/blog/", newest(posts, (e) => authorFromTags(e.data.tags ?? []) === "bob")),
+    line("Dernier article signé Ludo", "/blog/", newest(posts, (e) => authorFromTags(e.data.tags ?? []) === "ludo")),
+    line("Dernier cast", "/casts/", newest(casts as typeof posts)),
+  ].filter(Boolean);
+
   // Every page of the site that is NOT a publication, so Bob can point at one.
   //
   // He had the article index and nothing else, so the only link he could ever
@@ -286,7 +302,7 @@ export const GET: APIRoute = async () => {
     // in the prompt and verifies every path Bob cites against this list.
     pagesFields: "path|title",
     pages: pagesText,
-    summary,
+    summary: [summary, ...latest].join("\n"),
     // How this site is built. Not derivable from the fleet — those are the
     // machines in the basement, and the blog is a static artifact on someone
     // else's edge — so without it the most-asked question had nothing behind

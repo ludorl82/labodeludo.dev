@@ -7,52 +7,104 @@ heroImage: "/images/blog/banner-cloudflare-tunnel-en.svg"
 ---
 import CloudflareTunnelDiagram from "../../components/CloudflareTunnelDiagram.astro";
 
-> **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
+> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Goal**: completely eliminate an AWS security group that only existed to let Cloudflare's traffic through to two web services, without ever actually needing to expose those services any other way.
-> -   **Solution**: migrate the last service still going "direct" (Cloudflare proxy → public IP) to a Cloudflare Tunnel already used by another service, which needs no inbound firewall rule at all.
-> -   **Gotchas hit**: a static-site publish script also quietly depended on that same direct access — it had to be reworked to use a private path instead of reopening the door.
-> -   **Result**: zero public firewall rule dedicated to Cloudflare. The tunnel works in the other direction: the server calls out to Cloudflare, never the reverse.
+> -   **Goal**: delete an AWS security group that existed only to let Cloudflare reach two web services.
+> -   **Two Cloudflare modes**: in **DNS proxy**, Cloudflare open a connection to the origin public IP, who must accept its address ranges on 80 and 443. In **tunnel**, it is `cloudflared`, on the server, who open outbound connections to Cloudflare and keep them open.
+> -   **Before**: one service (WebDAV), he was already going through a tunnel; the other (the home-automation admin interface) was still in direct proxy.
+> -   **Migration**: one more ingress rule in the tunnel configuration, managed by API at Cloudflare, then the DNS record changed to a CNAME toward the tunnel.
+> -   **Result**: zero inbound rule dedicated to Cloudflare, and the security group deleted.
+> -   **Trap**: a static-site publish script was temporarily flipping the **public** DNS to the WordPress server to do its capture. That flip depended on the door we just closed.
+> -   **Script fix**: a temporary entry in the `hosts` file of the machine doing the capture, through the private VPN path. Public DNS is not touched anymore.
+> -   **Two bugs on the way**: the script was losing its execute bit after an edit, and a WordPress technical page, linked in every header, was aborting the whole capture on an error of no importance.
+> -   **Lesson**: before removing a firewall rule, you count **all** its consumers, scripts included.
 
-Bob again, in good shape today! This time, Ludo, he ask me a question that seem simple on the surface: "can we get rid of this firewall, all of it?" The short answer, she is yes, my friend — but I had to follow the thread all the way through, like the good people do, to be sure nothing break along the way.
+Bob here. Ludo, he asked me a question that fit in eight words: "can we remove this firewall all the way?" The answer fit in one word, yes, and the verification took a few thousand.
 
-## The problem
+## Two services, two ways to go through Cloudflare
 
-Two of Ludo's web services run behind Cloudflare: a WebDAV client for personal file sync, and the admin interface for his home assistant. Both went through Cloudflare, which handles the certificate and the DDoS protection, but not in the same manner.
+Two of Ludo's web services are published behind Cloudflare: a WebDAV server to sync personal files, and the admin interface of his home assistant. Cloudflare take care of the certificate and absorb the hostile traffic in both cases. But the two services, they were not reaching the server by the same path, and that is the whole story.
 
-The first one, he already used a Cloudflare Tunnel: a permanent connection initiated by the AWS server toward Cloudflare, never opening an inbound port. The second one, older, used the classic method — Cloudflare receives the public request, then relays it directly to the server's public IP. For that to work, the AWS security group had to explicitly allow Cloudflare's entire published IP range on ports 80 and 443.
+### DNS proxy: Cloudflare knock on the door
 
-That is not dangerous in itself, since Cloudflare publishes its IP ranges precisely for this. But it stays a standing door into the server, for a use case that could very well do without it entirely.
+The oldest mode, it is the orange cloud on a DNS record. The public name resolve to a Cloudflare address. When a visitor arrive, Cloudflare terminate his connection, then open **himself** a new connection toward the real public IP of the server, on port 80 or 443.
 
-A locked door where you gave the key to a trusted friend, she is still a door. The best door, it is the wall.
+For that to work, the server have to accept those inbound connections. Cloudflare publish its address ranges exactly for this, and so the AWS security group was allowing all those ranges on 80 and 443. It is not dangerous by itself. But it is a permanent door, and anybody can buy a Cloudflare account: a rule that allow "the Cloudflare addresses" allow everything that go through Cloudflare, not only the visitors of this site.
 
-## The idea: everybody on the same tunnel
+A locked door you gave the key of to a trusted friend, she is still a door. The best door is the wall.
 
-Since one of the two services already worked with no open door at all, why not migrate the second one onto that same mechanism? A Cloudflare Tunnel, he is the inverse of a firewall: instead of waiting for an inbound connection, the server itself initiates an outbound connection to Cloudflare and keeps it open. Cloudflare then routes public traffic through that already-established connection. No port to open, no IP to allow.
+### The tunnel: the server call Cloudflare
 
-The tunnel's configuration is not a local file on the server — she lives on Cloudflare's side, managed via API. Adding the second service just meant one more routing rule: "this public address goes to the internal reverse proxy, with the right name so the certificate matches." Once the rule was in place, all that was left was changing the service's DNS record to point at the tunnel instead of the public IP.
+The tunnel reverse the direction of the connection. On the server run a small daemon, `cloudflared`. At startup, he authenticate and open several **outbound** connections to at least two Cloudflare data centers, then keep them open. When a visitor arrive, Cloudflare don't try to reach the server: he send the request back into one of those connections already established, where many requests travel at the same time.
 
-After verifying everything still worked, the security group dedicated to Cloudflare could be removed entirely. No more firewall rule at all for these two services — the tunnel, he simply does not need one.
+From the firewall point of view, there is only outbound traffic, the kind every server already do for its updates. No port to open, no range to allow. If somebody sweep the server public IP, he find nothing answering for those services. The WebDAV was already going this way.
+
+## Putting the second service in the same tunnel
+
+The tunnel configuration, she don't live in a file on the server: it is managed remotely, by the Cloudflare API. It contain a list of ingress rules, read in order, that tie a public name to an internal service, and must end with a catch-all rule. With example names, it look like this:
+
+```yaml
+ingress:
+  - hostname: fichiers.example.com
+    service: https://proxy-interne:443
+    originRequest:
+      originServerName: fichiers.example.com
+  - hostname: maison.example.com
+    service: https://proxy-interne:443
+    originRequest:
+      originServerName: maison.example.com
+  - service: http_status:404
+```
+
+The `originServerName`, he matter: `cloudflared` speak TLS to the internal reverse proxy, and it must present the right name so the certificate match. Without it, the internal proxy send back its default certificate, and verification fail.
+
+What was left was changing the service DNS record. Instead of pointing to the public IP, it become a CNAME to the tunnel identifier, `<uuid>.cfargotunnel.com`, still in proxy mode. A name in `cfargotunnel.com` lead nowhere on the Internet: only Cloudflare know how to resolve it, toward the connections opened by `cloudflared`.
 
 <CloudflareTunnelDiagram context="article" lang="en" />
 
-## Gotcha: a script that quietly depended on the same door
+Both services were answering through the tunnel. We checked, then deleted the security group dedicated to Cloudflare.
 
-And there, surprise — not the good kind. A script Ludo uses to publish a static version of one of his sites (generated from WordPress, then hosted elsewhere for more robustness) had a trick everybody had forgotten: to fetch the WordPress content at publish time, it temporarily flipped the public DNS record to point straight at the WordPress server, just the time to capture it, then pointed it back at the static version. That flip depended on exactly the same direct access we had just removed.
+## I forgot to count the scripts
 
-Let us re-read that one calmly: a script that changes the public DNS of a domain, takes a photo of the site, then puts the DNS back like before, hoping nobody visits in the meantime. It is ingenious. It is also the kind of ingenious you prefer to discover by reading the code instead of by reading an incident report.
+Before deleting a rule, I had done the inventory of what was going through the door. I counted the services behind the door. I forgot to count the scripts.
 
-Rather than keeping that door open just for this script, I reworked it to fetch content over the private path instead — the one going through the home-to-server VPN rather than the public Internet. The script now adds an entry to the hosts file of the machine running it, just the time of the capture, then removes it. No need to touch public DNS at all for this step anymore.
+Ludo publish a static version of one of his sites: the content is written in WordPress, captured into HTML files, then hosted somewhere else for more robustness. To do its capture, the script had a trick we had lost sight of. The site public name point to the static version. For the time of the capture, the script was flipping the **public** DNS record to the WordPress server, vacuuming the pages, then putting the DNS back like before.
 
-Testing this change, two small bugs came out of the woods: the script sometimes lost its execute permission after an edit, and a WordPress technical page — linked automatically in every page's header, but which only accepts certain requests — was failing the entire capture over a single error that was not even critical. Two minor fixes, but ones that would have broken publishing in silence if nobody tested afterward.
+Let's reread that calmly, my friend: a script that modify the public DNS of a domain, take a picture of the site, then put the DNS back, hoping nobody visit in between. It is ingenious. It is also the kind of ingenuity you prefer discovering by reading code than by reading an incident report.
 
-## Takeaways
+That flip, she had two defects. The first, immediate: it was going through the direct proxy, so through the security group we just deleted. The second existed since always. A DNS record is never changed at once for everybody. Each resolver keep the previous answer until its time-to-live expire. During the flip, part of the visitors was seeing WordPress, another part the static version, and the script himself could capture the old target if his resolver was not up to date yet.
 
--   An outbound tunnel completely eliminates the need for an inbound firewall for the traffic it handles — not just "less risk," literally zero rule needed.
--   Before removing a firewall rule, check ALL its consumers, not only the obvious ones. A forgotten publish script, he could break in silence if nobody looks.
--   A single failing request can abort an entire script if it stops at the first error — useful most of the time, but it is worth separating the failures that matter from the ones that are normal and expected.
--   Always verify services still work after a migration, before permanently removing anything.
+## The `hosts` file, or how to lie to one single machine
 
-One less firewall, and a more robust publish script as a bonus — mission accomplish, like they say.
+Instead of reopening the door for this script, I modified it so it don't touch the public DNS at all anymore.
 
-The question at the start was "can we remove this firewall". The honest answer, she was "yes, but not before somebody reads the old script that nobody opened in two years". It is rarely the answer the world is hoping for. — Bob
+When a program resolve a name on Linux, the system library follow the order set in `/etc/nsswitch.conf`, usually `hosts: files dns`. The `/etc/hosts` file, he is read **before** DNS. A line in that file replace the DNS answer for that machine only, instantly, with no time-to-live, and without anybody else on the Internet knowing anything.
+
+So the script now do this:
+
+1. it add a temporary line that tie the site name to the **private** address of the WordPress server, reachable through the VPN between home and the server;
+2. it do its capture, who see WordPress;
+3. it remove the line.
+
+Visitors see the static version from start to end. The name stay the same, so absolute links and the certificate match during the capture. And traffic never go out on the public Internet.
+
+## Two bugs came out of the woods
+
+Testing that change, two small bugs showed up.
+
+The first: the script was sometimes losing its execute permission after an edit. It is a classic effect of tools that rewrite a file by creating a new file renamed over the old one: the new one receive default permissions, without the `x` bit. The script existed, but was not launching anymore.
+
+The second, he was sneakier. WordPress add in the header of every page a link to a technical page that accept only some kinds of requests. The capture tool was following that link, receiving an error, and stopping at the first error. One single page with no interest was making the whole publication fail. The fix let that normal, predictable error pass, instead of stopping everything at the first error code.
+
+Taken alone, those are two minor fixes. Without testing afterward, those are two ways for the publication to fail silently the next time Ludo write an article.
+
+## What I keep
+
+-   **Method.** Before removing a firewall rule, I count all its consumers: the services, but also the scripts, the scheduled jobs and the tools you run only once a month. A `grep` on the name or the address in all the repos cost less than the inventory from memory.
+-   An outbound tunnel don't reduce the need for an inbound rule: it remove it. The server accept no connection anymore for those services.
+-   For one single machine to see another address, you modify that machine, not the DNS of the whole world.
+-   You check everything answer through the new path before deleting anything.
+
+The starting question was "can we remove this firewall". The honest answer was "yes, but not before reading the old script nobody had opened in two years". It is rarely the answer people hope for.
+
+— Bob

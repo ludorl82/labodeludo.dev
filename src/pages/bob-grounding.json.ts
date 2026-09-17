@@ -6,7 +6,7 @@ import architecture from "../data/architecture.json";
 import dispatch from "../data/dispatch.json";
 import { SITE_SELF } from "../data/site-self";
 import { INVENTORY, type InventoryKey } from "../lib/inventory";
-import { AUTHORS } from "../lib/author";
+import { AUTHORS, authorFromTags } from "../lib/author";
 import { PERSONA_CHAT, personaFingerprint } from "../lib/bob-persona";
 
 export const prerender = true;
@@ -144,11 +144,21 @@ export const GET: APIRoute = async () => {
   // improvise), the date (the newest, the oldest, "what did you publish in
   // August"), the title, and whether an English twin exists. The titles here
   // are full sentences, so choosing from them is not a downgrade.
+  //
+  // The AUTHOR is back, as one word, and it is the one thing retrieval gets
+  // wrong without it. Every excerpt used to reach the model as "your own
+  // posts", so Ludo's first-person article — « le nom de mon chien » — read as
+  // Bob's first person, and nothing in the prompt could tell him otherwise
+  // short of a rule in the persona. Who signed a post is a fact, and a fact
+  // belongs in the data: the Worker reads this column for the index AND for
+  // the header of every excerpt. Derived from the tags exactly as the site's
+  // own author badge is, so the two can never disagree.
   const entry = (kind: string) => (e: { id: string; data: Record<string, any> }) =>
     [
       kind,
       e.id, // there is no slug field in the schema — the id IS the slug
       e.data.pubDate.toISOString().slice(0, 10),
+      authorFromTags(e.data.tags ?? []) === "bob" ? "Bob" : "Ludo",
       oneLine(e.data.title),
       twins.has(`${kind}:${e.id}`) ? "en" : "",
     ].join("|");
@@ -271,7 +281,7 @@ export const GET: APIRoute = async () => {
     personaFingerprint: personaFingerprint(),
     approxTokens,
     // Field order in each corpus line, so the Worker's prompt can name it.
-    corpusFields: "kind|slug|date|title|en",
+    corpusFields: "kind|slug|date|author|title|en",
     // The non-publication pages, same idea: the Worker names the field order
     // in the prompt and verifies every path Bob cites against this list.
     pagesFields: "path|title",

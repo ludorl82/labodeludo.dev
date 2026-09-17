@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : un feu vert allumé marqué OK ; à côté, un robot tient une feuille tamponnée « 13 SEPT. » en rouge ; à droite, un terminal où la troisième ligne d'un .bashrc, exec zsh, est encadrée, sous un exit 70">
+  <defs>
+    <linearGradient id="bgverte" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10151c"/>
+      <stop offset="100%" stop-color="#242d3a"/>
+    </linearGradient>
+    <radialGradient id="glowverte" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#3ddc84" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#3ddc84" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="320" fill="url(#bgverte)"/>
+  <!-- the green light on its post -->
+  <circle cx="170" cy="110" r="90" fill="url(#glowverte)"/>
+  <rect x="164" y="150" width="12" height="150" fill="#4a5361"/>
+  <rect x="130" y="60" width="80" height="100" rx="14" fill="#2b323d" stroke="#5a6470" stroke-width="3"/>
+  <circle cx="170" cy="110" r="30" fill="#3ddc84"/>
+  <text x="170" y="117" text-anchor="middle" font-size="20" font-weight="bold" fill="#0d3b22">OK</text>
+  <!-- Bob, the robot, holding a stale sheet -->
+  <g transform="translate(400,40)">
+    <rect x="34" y="20" width="60" height="50" rx="9" fill="#b9c3d1" stroke="#7d8898" stroke-width="3"/>
+    <circle cx="52" cy="42" r="6" fill="#2d7dd2"/><circle cx="76" cy="42" r="6" fill="#2d7dd2"/>
+    <path d="M50,58 Q64,52 78,58" stroke="#5a6470" stroke-width="3" fill="none"/>
+    <line x1="64" y1="20" x2="64" y2="6" stroke="#7d8898" stroke-width="3"/><circle cx="64" cy="4" r="4" fill="#e8c46a"/>
+    <rect x="30" y="72" width="68" height="92" rx="6" fill="#98a4b5" stroke="#7d8898" stroke-width="3"/>
+    <rect x="38" y="164" width="20" height="56" fill="#7d8898"/><rect x="70" y="164" width="20" height="56" fill="#7d8898"/>
+    <path d="M98,96 L150,84" stroke="#98a4b5" stroke-width="10" stroke-linecap="round"/>
+    <g transform="translate(146,40) rotate(8)">
+      <rect x="0" y="0" width="92" height="116" fill="#efe9d8" stroke="#bdb49a" stroke-width="2"/>
+      <line x1="12" y1="24" x2="80" y2="24" stroke="#b8ae93" stroke-width="3"/>
+      <line x1="12" y1="40" x2="72" y2="40" stroke="#b8ae93" stroke-width="3"/>
+      <line x1="12" y1="56" x2="80" y2="56" stroke="#b8ae93" stroke-width="3"/>
+      <g transform="translate(46,86) rotate(-14)">
+        <rect x="-40" y="-14" width="80" height="28" fill="none" stroke="#c0392b" stroke-width="3"/>
+        <text x="0" y="6" text-anchor="middle" font-size="15" font-weight="bold" fill="#c0392b">13 SEPT.</text>
+      </g>
+    </g>
+  </g>
+  <!-- a terminal with the culprit line -->
+  <g transform="translate(720,70)">
+    <rect x="0" y="0" width="250" height="160" rx="10" fill="#0b0f14" stroke="#3a4350" stroke-width="3"/>
+    <circle cx="18" cy="16" r="5" fill="#e06c75"/><circle cx="34" cy="16" r="5" fill="#e5c07b"/><circle cx="50" cy="16" r="5" fill="#98c379"/>
+    <text x="16" y="56" font-family="monospace" font-size="15" fill="#5c6370">1  # ~/.bashrc</text>
+    <text x="16" y="80" font-family="monospace" font-size="15" fill="#5c6370">2</text>
+    <text x="16" y="104" font-family="monospace" font-size="15" fill="#e5c07b">3  exec zsh</text>
+    <text x="16" y="138" font-family="monospace" font-size="15" fill="#e06c75">exit 70</text>
+    <rect x="12" y="88" width="226" height="22" fill="none" stroke="#e5c07b" stroke-width="2" rx="3"/>
+  </g>
+  <text x="512" y="300" text-anchor="middle" font-size="14" fill="#8b96a8">vert ne dit pas quelle version a roulé</text>
+</svg>

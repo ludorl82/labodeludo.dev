@@ -1,0 +1,117 @@
+---
+title: "Ce que coûte une nuit de pipeline, avec et sans changements"
+pubDate: 2026-09-17
+description: "Mon pipeline de nuit relit mes documents d'infrastructure et redessine deux pages du site avec qwen3.8-flash. Le 16 septembre, avec Claude Code (Opus 5), on l'a fait rouler sept fois en optimisant entre les passages. Voici les tableaux par session : durée, requêtes, jetons, coût, selon qu'il y avait des changements ou non. Une relecture complète qui ne trouve rien coûte plus cher qu'une qui trouve, un delta coupe le coût par cinq, et le passage le plus rassurant de la journée était un refus de l'API lu comme un accord."
+tags: ["DevOps", "Labo", "ludo"]
+heroImage: "/images/blog/banner-ce-que-coute-une-nuit.svg"
+---
+
+> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Le pipeline** : quatre sessions de qwen3.8-flash dans Qwen Code. A relit le document réseau privé contre quatre dépôts, C relit le document de disposition physique, B redessine [/architecture](/architecture/), D redessine les baies.
+> -   **La source des chiffres** : les transcriptions JSON de Qwen Code (durée, requêtes, jetons d'entrée, en cache et de sortie) de chaque session du 16 septembre 2026, et le verdict de chaque session dans le journal du job. Coût calculé au tarif flash : 0,15 $US par million de jetons d'entrée, 0,011 $ en cache, 0,47 $ en sortie.
+> -   **Session A, relecture complète** : 24 à 25 minutes et 0,25 à 0,28 $ quand elle corrige quelque chose, **35,4 minutes et 0,42 $ quand elle ne trouve rien**.
+> -   **Session A, en delta** : 7,5 à 12,8 minutes, 0,05 à 0,09 $. Une exception à 46 minutes, 72,5 secondes par requête, pas expliquée.
+> -   **Les jetons** : 2 à 25 millions de jetons d'entrée par session, servis à 93-98 % par le cache. Chaque requête renvoie toute la conversation, donc le coût suit le nombre de requêtes plus que la taille des documents.
+> -   **Le faux vert** : une session C refusée par le filtre de contenu de l'API en 12 secondes, pour 0,00 $, rapportée « déjà conforme ». Corrigé le jour même.
+> -   **Sans aucun changement dans les dépôts** : aucune session ne démarre, 0 minute, 0 $.
+> -   **La journée** : 97,8 minutes de sessions et 0,44 $ au pire passage, 20,5 minutes et 0,16 $ au dernier.
+> -   Tout le travail a été fait avec **Claude Code, en Opus 5**. Bob [raconte les optimisations dans le détail](/blog/la-job-etait-verte/).
+
+Depuis une semaine, mon pipeline de nuit roule sur qwen3.8-flash chez Alibaba Cloud, après [le banc des menteurs](/blog/le-banc-des-menteurs/). Il marchait, mais je trouvais qu'il roulait longtemps pour un job qui, la plupart des nuits, n'a rien à corriger. J'ai demandé s'il y avait moyen de ne pas perdre de temps et d'argent quand rien n'a changé.
+
+La journée du 16 septembre a servi à ça, et à d'autres choses que Bob raconte [de son côté](/blog/la-job-etait-verte/). Tout a été fait avec Claude Code, en Opus 5 : c'est lui qui a proposé le delta, écrit les correctifs et extrait les mesures. Ma part a été de refuser qu'on remesure ce qu'on savait déjà, de relancer le pipeline après chaque fusion et de demander les chiffres par session. Ce sont ces chiffres que je publie ici.
+
+## Un peu de contexte
+
+Le pipeline a quatre sessions, qui roulent l'une après l'autre :
+
+-   **A** relit le document réseau privé (environ 850 lignes) contre mes quatre dépôts d'infrastructure.
+-   **C** relit le document de disposition physique : baies, onduleurs, disques.
+-   **B** vérifie que le dessin en haut de [/architecture](/architecture/) dit encore vrai.
+-   **D** fait la même chose pour la page des baies.
+
+A et C ne roulent que si un dépôt privé a bougé. B et D ne roulent que si leurs entrées publiques ont bougé. Ce jour-là, chaque fusion faisait bouger un dépôt, donc presque tout roulait. C'est ce qui donne des comparaisons.
+
+## Comment j'ai mesuré
+
+Qwen Code écrit une transcription JSON à la fin de chaque session : durée, nombre de requêtes au modèle, jetons d'entrée, jetons servis par le cache, jetons de sortie. Le journal du job, lui, dit ce que la session a conclu : document corrigé, déjà conforme, refusé. J'ai croisé les deux pour les sept passages de la journée. Les heures sont à l'heure de l'Est.
+
+Deux mots de vocabulaire. Une **relecture complète**, c'est la session qui relit tout le document contre tous les dépôts. Un **delta**, c'est la session qui reçoit la liste calculée des commits depuis son dernier passage réussi et qui concentre sa lecture là-dessus. Le delta pour A est arrivé en milieu de matinée.
+
+## Session A : le document réseau
+
+| Départ | Lecture | Changements | Durée | Requêtes | Jetons d'entrée (cache) | Sortie | Coût |
+|---|---|---|---:|---:|---:|---:|---:|
+| 04:45 | complète | oui | 24,4 min | 95 | 15,1 M (97 %) | 52,5 k | 0,25 $ |
+| 06:34 | complète | **non** | **35,4 min** | 149 | 24,9 M (97 %) | 110,6 k | **0,42 $** |
+| 08:26 | complète | oui | 25,2 min | 109 | 16,8 M (97 %) | 67,2 k | 0,28 $ |
+| 15:43 | complète | oui | 24,7 min | 109 | 16,7 M (97 %) | 81,8 k | 0,28 $ |
+| 09:43 | delta | oui | 46,0 min | 38 | 2,7 M (94 %) | 34,4 k | 0,07 $ |
+| 11:22 | delta | non | 12,8 min | 43 | 4,1 M (96 %) | 39,8 k | 0,09 $ |
+| 17:12 | delta | oui | **7,5 min** | 24 | 1,9 M (93 %) | 26,7 k | **0,05 $** |
+| aucun dépôt n'a bougé | aucune | non | 0 | 0 | 0 | 0 | 0 $ |
+
+La ligne qui m'a surpris, c'est celle de 06:34. Je m'attendais à ce qu'une relecture sans changement soit la moins chère. C'est la plus chère : pour conclure qu'il n'y a rien à corriger, le modèle doit vérifier chaque affirmation, alors qu'une correction trouvée lui donne une raison de s'arrêter plus tôt. « Pas de changement » n'est donc pas gratuit tant que la session démarre.
+
+En delta, la même session coûte cinq fois moins. Le passage de 09:43 est l'exception : 38 requêtes seulement, mais 72,5 secondes chacune, contre 13 à 19 secondes d'habitude. La session C lancée juste après était à 19,6 secondes par requête. On n'a pas d'explication, et je préfère le laisser dans le tableau que de retirer la ligne.
+
+La dernière ligne n'est pas une mesure de cette journée : quand aucun dépôt privé n'a bougé, A ne démarre pas du tout. C'est voulu par le code, et ça n'est pas arrivé le 16 parce qu'on fusionnait sans arrêt.
+
+## Session C : la disposition physique
+
+| Départ | Lecture | Résultat | Durée | Requêtes | Jetons d'entrée (cache) | Sortie | Coût |
+|---|---|---|---:|---:|---:|---:|---:|
+| 05:09 | complète | aucun changement | 22,1 min | 60 | 6,9 M (97 %) | 76,5 k | 0,14 $ |
+| 07:09 | complète | corrigé | 14,9 min | 51 | 5,1 M (97 %) | 47,4 k | 0,10 $ |
+| 08:51 | refusée par l'API, **lue comme conforme** | aucun | 0,2 min | 3 | 0,02 M | 0,2 k | 0,00 $ |
+| 10:29 | complète, puis refusée par l'API | détecté, échec | 31,6 min | 96 | 13,2 M (98 %) | 105,0 k | 0,23 $ |
+| 11:34 | complète | aucun changement | 14,1 min | 20 | 1,5 M (91 %) | 52,9 k | 0,06 $ |
+| 16:08 | complète | corrigé, perdu au redéploiement | 10,2 min | 34 | 2,3 M (95 %) | 37,6 k | 0,06 $ |
+| 17:20 | complète | aucun changement | 13,0 min | 41 | 5,0 M (96 %) | 50,9 k | 0,11 $ |
+
+C n'a jamais roulé en delta ce jour-là : on modifiait son document à la main entre les passages, et une modification du document force une relecture complète. Son delta reste à mesurer.
+
+La ligne de 08:51 est la plus importante de l'article, et elle ne coûte rien. Le filtre de contenu d'Alibaba a refusé la requête dès le départ. La session a duré douze secondes, n'a lu aucun fichier, et le job a rapporté « déjà conforme aux dépôts ». Pire, il a noté ce passage comme point de départ du prochain delta. Le correctif cherche maintenant la trace d'erreur dans la transcription, et c'est lui qui a attrapé le refus de 10:29. La session de 16:08, elle, a bien trouvé une correction, mais le job a été tué par un redéploiement avant de la commettre ; elle a été récupérée à la main.
+
+## B et D : les dessins publics
+
+| Session | Départ | Durée | Requêtes | Jetons d'entrée (cache) | Coût |
+|---|---|---:|---:|---:|---:|
+| B | 05:31 | 15,1 min | 45 | 3,9 M (97 %) | 0,09 $ |
+| B | 07:24 | 16,8 min | 58 | 5,7 M (97 %) | 0,11 $ |
+| B | 08:52 | 21,1 min | 52 | 6,1 M (97 %) | 0,13 $ |
+| B | 11:00 | 20,2 min | 54 | 7,1 M (97 %) | 0,14 $ |
+| B | 11:49 | 15,5 min | 38 | 3,3 M (96 %) | 0,08 $ |
+| B | 17:33, entrées publiques inchangées | 0 | 0 | 0 | 0 $ |
+| D | 07:41 | 14,5 min | 39 | 2,5 M (96 %) | 0,07 $ |
+| D | 09:13 | 14,1 min | 41 | 2,6 M (96 %) | 0,06 $ |
+| D | 4 passages, inventaire inchangé | 0 | 0 | 0 | 0 $ |
+
+B et D recevaient déjà un delta avant cette journée, et ça se voit : 14 à 21 minutes, jamais plus de 0,14 $. Détail amusant : les cinq fois, B a constaté que rien de structurel n'avait bougé, et les cinq fois il a quand même trouvé une phrase écrite en dur qui n'était plus vraie.
+
+## Les passages au complet
+
+| Départ | A | C | B | D | Temps de session | Coût |
+|---|---|---|---|---|---:|---:|
+| 04:45 | complète, corrigé | complète, conforme | redessiné | sautée | 61,6 min | 0,48 $ |
+| 06:34 | complète, conforme | complète, corrigé | redessiné | redessiné | 81,6 min | 0,70 $ |
+| 08:26 | complète, corrigé | refusée en 12 s | redessiné | redessiné | 60,6 min | 0,47 $ |
+| 09:43 | delta, corrigé | refusée, détectée | redessiné | sautée | 97,8 min | 0,44 $ |
+| 11:22 | delta, conforme | complète, conforme | redessiné | sautée | 42,4 min | 0,23 $ |
+| 15:43 | complète, corrigé | complète, corrigé | tué | tué | 34,9 min | 0,34 $ |
+| 17:12 | delta, corrigé | complète, conforme | sautée | sautée | **20,5 min** | **0,16 $** |
+
+Pour comparer, le même pipeline sur Opus 5 coûtait l'équivalent d'environ 12 $US par dimanche au tarif API, comme je l'expliquais dans [le banc des menteurs](/blog/le-banc-des-menteurs/).
+
+## Ce que je retiens des chiffres
+
+**Les jetons impressionnent, mais c'est le nombre de requêtes qui coûte.** Vingt-cinq millions de jetons d'entrée pour relire un document, ça a l'air absurde. En fait, chaque requête renvoie toute la conversation depuis le début, et le cache en sert presque tout. Sur le passage de 04:45, les jetons en cache font à eux seuls 64 % du coût de A, même à 0,011 $ le million. Moins de requêtes, c'est moins de conversation à renvoyer, et c'est pour ça que le delta coupe le coût par cinq alors qu'il ne coupe le temps que par trois environ.
+
+**Une session qui ne trouve rien n'est pas une session gratuite.** Le vrai gain, quand rien n'a bougé, c'est de ne pas la démarrer.
+
+**Un zéro dans le tableau mérite une deuxième lecture.** Le passage le moins cher de la journée était un refus. Je l'aurais pris pour une bonne nouvelle si personne n'avait regardé la transcription.
+
+## Mot de la fin
+
+Au dernier passage, le pipeline a pris 20,5 minutes de sessions pour 16 cennes, en corrigeant quand même une erreur dans le document réseau. Il reste à voir ce que donnent C en delta et une vraie nuit sans aucun changement, et je vais laisser rouler quelques nuits avant de conclure. Peut-être un sujet pour une autre fois.

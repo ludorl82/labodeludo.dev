@@ -1,0 +1,117 @@
+---
+title: "What a Night of Pipeline Costs, With and Without Changes"
+pubDate: 2026-09-17
+description: "My night pipeline re-reads my infrastructure documents and redraws two pages of this site with qwen3.8-flash. On September 16, working with Claude Code (Opus 5), we ran it seven times and optimized between runs. Here are the tables per session: duration, requests, tokens and cost, depending on whether there were changes. A full review that finds nothing costs more than one that finds something, a delta cuts the cost by five, and the most reassuring run of the day was an API refusal read as agreement."
+tags: ["DevOps", "Labo", "ludo"]
+heroImage: "/images/blog/banner-ce-que-coute-une-nuit-en.svg"
+---
+
+> **Technical summary** _(for readers in a hurry, and for the agents/LLMs indexing this page)_
+>
+> -   **The pipeline**: four qwen3.8-flash sessions in Qwen Code. A reviews the private network document against four repositories, C reviews the physical layout document, B redraws [/architecture](/architecture/), D redraws the racks.
+> -   **Where the numbers come from**: the Qwen Code JSON transcripts (duration, requests, input, cached and output tokens) of every session on September 16, 2026, and each session's verdict in the job log. Cost computed at flash pricing: US$0.15 per million input tokens, $0.011 cached, $0.47 output.
+> -   **Session A, full review**: 24 to 25 minutes and $0.25 to $0.28 when it corrects something, **35.4 minutes and $0.42 when it finds nothing**.
+> -   **Session A, delta**: 7.5 to 12.8 minutes, $0.05 to $0.09. One outlier at 46 minutes, 72.5 seconds per request, still unexplained.
+> -   **Tokens**: 2 to 25 million input tokens per session, 93 to 98% served from cache. Every request resends the whole conversation, so cost follows the number of requests more than the size of the documents.
+> -   **The false green**: a session C refused by the API's content filter in 12 seconds, for $0.00, reported as "already matched". Fixed the same day.
+> -   **When no repository moved**: no session starts, 0 minutes, $0.
+> -   **The day**: 97.8 minutes of sessions and $0.44 for the worst run, 20.5 minutes and $0.16 for the last one.
+> -   All the work was done with **Claude Code, on Opus 5**. Bob [tells the optimizations in detail](/en/blog/la-job-etait-verte/).
+
+For a week now, my night pipeline has been running on qwen3.8-flash at Alibaba Cloud, after [the liars' bench](/en/blog/le-banc-des-menteurs/). It worked, but I felt it ran for a long time for a job that, most nights, has nothing to fix. I asked whether there was a way to stop wasting time and money when nothing has changed.
+
+September 16 went to that, and to a few other things Bob tells [on his side](/en/blog/la-job-etait-verte/). Everything was done with Claude Code, on Opus 5: it proposed the delta, wrote the fixes and extracted the measurements. My part was to refuse re-measuring what we already knew, to rerun the pipeline after each merge, and to ask for the numbers per session. Those numbers are what I am publishing here.
+
+## Some context
+
+The pipeline has four sessions, which run one after the other:
+
+-   **A** reviews the private network document (about 850 lines) against my four infrastructure repositories.
+-   **C** reviews the physical layout document: racks, UPSes, disks.
+-   **B** checks that the drawing at the top of [/architecture](/architecture/) is still true.
+-   **D** does the same for the racks page.
+
+A and C only run if a private repository moved. B and D only run if their public inputs moved. That day, every merge moved a repository, so almost everything ran. That is what makes comparisons possible.
+
+## How I measured
+
+Qwen Code writes a JSON transcript at the end of each session: duration, number of requests to the model, input tokens, tokens served from cache, output tokens. The job log says what the session concluded: document corrected, already matched, refused. I cross-referenced both for the seven runs of the day. Times are Eastern Time.
+
+Two words of vocabulary. A **full review** is the session re-reading the whole document against every repository. A **delta** is the session receiving the computed list of commits since its last successful run and focusing its reading on that. The delta for A arrived mid-morning.
+
+## Session A: the network document
+
+| Start | Reading | Changes | Duration | Requests | Input tokens (cached) | Output | Cost |
+|---|---|---|---:|---:|---:|---:|---:|
+| 04:45 | full | yes | 24.4 min | 95 | 15.1 M (97%) | 52.5 k | $0.25 |
+| 06:34 | full | **no** | **35.4 min** | 149 | 24.9 M (97%) | 110.6 k | **$0.42** |
+| 08:26 | full | yes | 25.2 min | 109 | 16.8 M (97%) | 67.2 k | $0.28 |
+| 15:43 | full | yes | 24.7 min | 109 | 16.7 M (97%) | 81.8 k | $0.28 |
+| 09:43 | delta | yes | 46.0 min | 38 | 2.7 M (94%) | 34.4 k | $0.07 |
+| 11:22 | delta | no | 12.8 min | 43 | 4.1 M (96%) | 39.8 k | $0.09 |
+| 17:12 | delta | yes | **7.5 min** | 24 | 1.9 M (93%) | 26.7 k | **$0.05** |
+| no repository moved | none | no | 0 | 0 | 0 | 0 | $0 |
+
+The row that surprised me is 06:34. I expected a review with no changes to be the cheapest. It is the most expensive: to conclude there is nothing to fix, the model has to check every claim, while a correction gives it a reason to stop earlier. "No change" is therefore not free as long as the session starts.
+
+On a delta, the same session costs five times less. The 09:43 run is the exception: only 38 requests, but 72.5 seconds each, against 13 to 19 seconds usually. Session C, started right after, was at 19.6 seconds per request. We have no explanation, and I would rather leave it in the table than remove the row.
+
+The last row is not a measurement from that day: when no private repository moved, A does not start at all. That is by design in the code, and it did not happen on the 16th because we kept merging.
+
+## Session C: the physical layout
+
+| Start | Reading | Result | Duration | Requests | Input tokens (cached) | Output | Cost |
+|---|---|---|---:|---:|---:|---:|---:|
+| 05:09 | full | no change | 22.1 min | 60 | 6.9 M (97%) | 76.5 k | $0.14 |
+| 07:09 | full | corrected | 14.9 min | 51 | 5.1 M (97%) | 47.4 k | $0.10 |
+| 08:51 | refused by the API, **read as matched** | none | 0.2 min | 3 | 0.02 M | 0.2 k | $0.00 |
+| 10:29 | full, then refused by the API | detected, failed | 31.6 min | 96 | 13.2 M (98%) | 105.0 k | $0.23 |
+| 11:34 | full | no change | 14.1 min | 20 | 1.5 M (91%) | 52.9 k | $0.06 |
+| 16:08 | full | corrected, lost in a redeploy | 10.2 min | 34 | 2.3 M (95%) | 37.6 k | $0.06 |
+| 17:20 | full | no change | 13.0 min | 41 | 5.0 M (96%) | 50.9 k | $0.11 |
+
+C never ran on a delta that day: we were editing its document by hand between runs, and an edit to the document forces a full review. Its delta is still to be measured.
+
+The 08:51 row is the most important in this article, and it costs nothing. Alibaba's content filter refused the request from the start. The session lasted twelve seconds, read no file, and the job reported "already matched the repos". Worse, it recorded that run as the starting point for the next delta. The fix now searches the transcript for the error marker, and it is what caught the 10:29 refusal. The 16:08 session did find a correction, but the job was killed by a redeploy before committing it; it was recovered by hand.
+
+## B and D: the public drawings
+
+| Session | Start | Duration | Requests | Input tokens (cached) | Cost |
+|---|---|---:|---:|---:|---:|
+| B | 05:31 | 15.1 min | 45 | 3.9 M (97%) | $0.09 |
+| B | 07:24 | 16.8 min | 58 | 5.7 M (97%) | $0.11 |
+| B | 08:52 | 21.1 min | 52 | 6.1 M (97%) | $0.13 |
+| B | 11:00 | 20.2 min | 54 | 7.1 M (97%) | $0.14 |
+| B | 11:49 | 15.5 min | 38 | 3.3 M (96%) | $0.08 |
+| B | 17:33, public inputs unchanged | 0 | 0 | 0 | $0 |
+| D | 07:41 | 14.5 min | 39 | 2.5 M (96%) | $0.07 |
+| D | 09:13 | 14.1 min | 41 | 2.6 M (96%) | $0.06 |
+| D | 4 runs, inventory unchanged | 0 | 0 | 0 | $0 |
+
+B and D already had a delta before that day, and it shows: 14 to 21 minutes, never more than $0.14. A fun detail: all five times, B found that nothing structural had moved, and all five times it still found a hard-coded sentence that was no longer true.
+
+## The runs as a whole
+
+| Start | A | C | B | D | Session time | Cost |
+|---|---|---|---|---|---:|---:|
+| 04:45 | full, corrected | full, matched | redrawn | skipped | 61.6 min | $0.48 |
+| 06:34 | full, matched | full, corrected | redrawn | redrawn | 81.6 min | $0.70 |
+| 08:26 | full, corrected | refused in 12 s | redrawn | redrawn | 60.6 min | $0.47 |
+| 09:43 | delta, corrected | refused, detected | redrawn | skipped | 97.8 min | $0.44 |
+| 11:22 | delta, matched | full, matched | redrawn | skipped | 42.4 min | $0.23 |
+| 15:43 | full, corrected | full, corrected | killed | killed | 34.9 min | $0.34 |
+| 17:12 | delta, corrected | full, matched | skipped | skipped | **20.5 min** | **$0.16** |
+
+For comparison, the same pipeline on Opus 5 cost the equivalent of about US$12 per Sunday at API pricing, as I explained in [the liars' bench](/en/blog/le-banc-des-menteurs/).
+
+## What I take from the numbers
+
+**The tokens look impressive, but the number of requests is what costs.** Twenty-five million input tokens to review one document sounds absurd. In fact, every request resends the whole conversation from the start, and the cache serves almost all of it. On the 04:45 run, cached tokens alone make up 64% of A's cost, even at $0.011 per million. Fewer requests means less conversation to resend, which is why the delta cuts cost by five while only cutting time by about three.
+
+**A session that finds nothing is not a free session.** The real gain, when nothing moved, is not starting it.
+
+**A zero in the table deserves a second look.** The cheapest run of the day was a refusal. I would have taken it as good news if nobody had looked at the transcript.
+
+## Final word
+
+On the last run, the pipeline took 20.5 minutes of sessions for 16 cents, and still corrected an error in the network document. It remains to see what C gives on a delta and what a real night with no change at all looks like, and I will let it run a few nights before drawing conclusions. Maybe a topic for another time.

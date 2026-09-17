@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration: a bar chart under a crescent moon; full review with no change 0.42 $, full review with changes 0.25 $, delta 0.05 $, session not started 0 $ as a dashed line; on the right, a transcript sheet shows 0.00 $ above an API Error 400 in red">
+  <defs>
+    <linearGradient id="bgnuit" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#141a26"/>
+      <stop offset="100%" stop-color="#2a3448"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="320" fill="url(#bgnuit)"/>
+  <!-- moon -->
+  <circle cx="930" cy="62" r="30" fill="#e9e4cf"/><circle cx="944" cy="52" r="28" fill="#1f2738"/>
+  <!-- axis -->
+  <line x1="120" y1="260" x2="760" y2="260" stroke="#6b7689" stroke-width="2"/>
+  <line x1="120" y1="40" x2="120" y2="260" stroke="#6b7689" stroke-width="2"/>
+  <!-- A full, no change (tallest, 0.42) -->
+  <rect x="160" y="64" width="70" height="196" fill="#d4675b"/>
+  <text x="195" y="54" text-anchor="middle" font-size="18" fill="#f0d5cf">0.42 $</text>
+  <text x="195" y="284" text-anchor="middle" font-size="14" fill="#c8d3e3">full, nothing</text>
+  <!-- A full, with changes (0.25) -->
+  <rect x="290" y="143" width="70" height="117" fill="#d9a441"/>
+  <text x="325" y="133" text-anchor="middle" font-size="18" fill="#f2e2bd">0.25 $</text>
+  <text x="325" y="284" text-anchor="middle" font-size="14" fill="#c8d3e3">full, fixed</text>
+  <!-- A delta (0.05) -->
+  <rect x="420" y="237" width="70" height="23" fill="#4fb286"/>
+  <text x="455" y="227" text-anchor="middle" font-size="18" fill="#cdeedd">0.05 $</text>
+  <text x="455" y="284" text-anchor="middle" font-size="14" fill="#c8d3e3">delta</text>
+  <!-- not started (0) -->
+  <line x1="550" y1="259" x2="620" y2="259" stroke="#8b96a8" stroke-width="3" stroke-dasharray="6 5"/>
+  <text x="585" y="245" text-anchor="middle" font-size="18" fill="#c8d3e3">0 $</text>
+  <text x="585" y="284" text-anchor="middle" font-size="14" fill="#c8d3e3">not started</text>
+  <!-- a transcript sheet with a tiny zero, flagged -->
+  <g transform="translate(800,120) rotate(-6)">
+    <rect x="0" y="0" width="120" height="150" fill="#efe9d8" stroke="#bdb49a" stroke-width="2"/>
+    <line x1="14" y1="26" x2="104" y2="26" stroke="#b8ae93" stroke-width="3"/>
+    <line x1="14" y1="44" x2="90" y2="44" stroke="#b8ae93" stroke-width="3"/>
+    <text x="60" y="92" text-anchor="middle" font-size="28" font-weight="bold" fill="#2f3a4a">0.00 $</text>
+    <text x="60" y="124" text-anchor="middle" font-size="14" font-weight="bold" fill="#c0392b">API Error 400</text>
+  </g>
+</svg>

@@ -12,7 +12,7 @@ Dans les dernières décennies, nous avons observé une compartimentalisation cr
 La boîte à outils du bon DevOps contient principalement des outils de console. Les outils graphiques dans notre domaine ne sont bien souvent qu'une version diluée des outils de CLI. C'est donc tout à fait envisageable de développer et d'opérer nos logiciels directement à partir de conteneurs. Je vous présenterai ici ma propre implémentation dont le code est disponible dans ces dépôts :  
 [ludorl82/console](https://github.com/ludorl82/console) (image de base) | [ludorl82/.shell-scripts/console](https://github.com/ludorl82/.shell-scripts/tree/main/console) (couche de personnalisation) | [ludorl82/.shell-configs](https://github.com/ludorl82/.shell-configs)
 
-_Cet article a été écrit avec l'aide de l'intelligence artificielle — la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
+_Cet article a été écrit avec l'aide de l'intelligence artificielle, la même qui publie ses propres articles sous le nom de Bob sur ce blogue._
 
 ## Motivation et objectif
 
@@ -26,13 +26,13 @@ Pour toutes ces raisons, je me suis décidé à bâtir cette console dans des co
 
 ## Limitations d'une console sous docker
 
-Avant de commencer je vais tout de suite énoncer que cette solution n'est pas pour tout le monde. Travailler dans un conteneur n'a plus rien d'exotique en soi — JupyterLab, GitHub Codespaces et les devcontainers eux-mêmes ont rendu ça courant. La vraie limite ici, c'est que ce setup est auto-géré plutôt que sur une plateforme managée : c'est moi qui maintiens le Dockerfile, les Features et le script de bootstrap, et c'est moi qui dois comprendre Docker assez en profondeur pour déboguer quand ça casse (une collision de GID, un entrypoint mal chaîné, etc.). La courbe d'apprentissage est donc abrupte.
+Avant de commencer je vais tout de suite énoncer que cette solution n'est pas pour tout le monde. Travailler dans un conteneur n'a plus rien d'exotique en soi. JupyterLab, GitHub Codespaces et les devcontainers eux-mêmes ont rendu ça courant. La vraie limite ici, c'est que ce setup est auto-géré plutôt que sur une plateforme managée : c'est moi qui maintiens le Dockerfile, les Features et le script de bootstrap, et c'est moi qui dois comprendre Docker assez en profondeur pour déboguer quand ça casse (une collision de GID, un entrypoint mal chaîné, etc.). La courbe d'apprentissage est donc abrupte.
 
 ## Design et architecture
 
 Pour mon projet de console sous docker, j'ai d'abord dû choisir comment j'allais grouper les outils dont je me sers sur une base régulière. C'était clair pour moi qu'une base commune avec les outils que j'utilise toujours devrait être faite. Par contre d'autres outils me servent seulement qu'à l'occasion et ceux-ci devraient être inclus strictement dans des couches docker au-dessus de celles qui définissent l'image de base. Et c'est là que pour moi l'utilisation des conteneurs trouve beaucoup de son sens. En construisant des images spécialisées de la console par dessus la base, j'évite la duplication de l'espace disque et de la consommation de mémoire des charges de travail.
 
-La vraie motivation derrière cette approche, en pratique, c'est que mes besoins varient beaucoup selon la machine où je travaille. Au bureau, j'ai une longue liste d'outils et de configurations propres à mon employeur à ajouter par-dessus la base ; à la maison, la couche de personnalisation reste beaucoup plus légère. Plutôt que de maintenir deux consoles complètement distinctes qui dupliqueraient tout ce qui est commun aux deux, je n'ai qu'à faire varier la couche du dessus — la base, elle, ne change pas.
+La vraie motivation derrière cette approche, en pratique, c'est que mes besoins varient beaucoup selon la machine où je travaille. Au bureau, j'ai une longue liste d'outils et de configurations propres à mon employeur à ajouter par-dessus la base. À la maison, la couche de personnalisation reste beaucoup plus légère. Plutôt que de maintenir deux consoles complètement distinctes qui dupliqueraient tout ce qui est commun aux deux, je n'ai qu'à faire varier la couche du dessus. La base, elle, ne change pas.
 
 <ConsoleLayersDiagram context="article" />
 
@@ -97,7 +97,7 @@ Pour l'image de base, deux Features suffisent :
 }
 ```
 
-`common-utils` crée l'utilisateur non-root — ici laissé en `"automatic"` pour ne pas entrer en collision avec le compte `ubuntu` déjà présent dans l'image `ubuntu:24.04`, la personnalisation par compte réel se faisant dans l'autre couche. `docker-outside-of-docker`[6](https://github.com/devcontainers/features/tree/main/src/docker-outside-of-docker) donne accès au démon Docker de l'hôte depuis l'intérieur du conteneur sans faire tourner un second démon imbriqué (docker-in-docker) : elle installe un script `docker-init.sh` qui, au démarrage, aligne le GID du groupe `docker` du conteneur sur celui du socket monté, puis s'efface via `exec "$@"`. C'est exactement le problème que je réglais auparavant à la main en montant directement `/var/run/docker.sock`[7](https://stackoverflow.com/questions/23439126/how-to-mount-a-host-directory-in-a-docker-container)[8](https://medium.com/@andreacolangelo/sibling-docker-container-2e664858f87a) pour lancer des « conteneurs frères » depuis la console, avec le risque de collision de GID entre l'hôte et le conteneur que ça implique — la Feature encapsule maintenant cette solution. C'est ce script que mon `entrypoint.sh` chaîne avant de lancer `sshd` :
+`common-utils` crée l'utilisateur non-root, ici laissé en `"automatic"` pour ne pas entrer en collision avec le compte `ubuntu` déjà présent dans l'image `ubuntu:24.04`, la personnalisation par compte réel se faisant dans l'autre couche. `docker-outside-of-docker`[6](https://github.com/devcontainers/features/tree/main/src/docker-outside-of-docker) donne accès au démon Docker de l'hôte depuis l'intérieur du conteneur sans faire tourner un second démon imbriqué (docker-in-docker) : elle installe un script `docker-init.sh` qui, au démarrage, aligne le GID du groupe `docker` du conteneur sur celui du socket monté, puis s'efface via `exec "$@"`. C'est exactement le problème que je réglais auparavant à la main en montant directement `/var/run/docker.sock`[7](https://stackoverflow.com/questions/23439126/how-to-mount-a-host-directory-in-a-docker-container)[8](https://medium.com/@andreacolangelo/sibling-docker-container-2e664858f87a) pour lancer des « conteneurs frères » depuis la console, avec le risque de collision de GID entre l'hôte et le conteneur que ça implique. La Feature encapsule maintenant cette solution. C'est ce script que mon `entrypoint.sh` chaîne avant de lancer `sshd` :
 
 ```bash
 #!/bin/bash
@@ -118,7 +118,7 @@ else
 fi
 ```
 
-Deux pièges à connaître avec ce modèle. D'abord, les Features s'appliquent toujours _après_ que le Dockerfile ait fini de construire ses propres couches — toute étape qui dépend du résultat d'une Feature (ici, le groupe `docker` créé par `docker-outside-of-docker`) doit donc être un hook de cycle de vie (`postCreateCommand`, etc.) ou, comme je l'ai fait, une étape de l'entrypoint exécutée au démarrage — pas une instruction `RUN` dans le Dockerfile. Ensuite, ces hooks de cycle de vie ne s'exécutent que sous `devcontainer up` ; comme ce service tourne en production via un simple `docker compose up -d`, aucun hook ne se déclencherait de toute façon, d'où le choix de tout régler dans l'entrypoint plutôt que de dépendre d'un mécanisme qui ne s'active qu'en développement.
+Deux pièges à connaître avec ce modèle. D'abord, les Features s'appliquent toujours _après_ que le Dockerfile ait fini de construire ses propres couches. Toute étape qui dépend du résultat d'une Feature (ici, le groupe `docker` créé par `docker-outside-of-docker`) doit donc être un hook de cycle de vie (`postCreateCommand`, etc.) ou, comme je l'ai fait, une étape de l'entrypoint exécutée au démarrage, pas une instruction `RUN` dans le Dockerfile. Ensuite, ces hooks de cycle de vie ne s'exécutent que sous `devcontainer up`. Comme ce service tourne en production via un simple `docker compose up -d`, aucun hook ne se déclencherait de toute façon, d'où le choix de tout régler dans l'entrypoint plutôt que de dépendre d'un mécanisme qui ne s'active qu'en développement.
 
 Autre conséquence pratique : construire l'image avec un simple `docker build` ou `docker compose build` ignore complètement les Features et produit une image sans utilisateur non-root ni CLI Docker. La construction complète passe par le CLI : `npx @devcontainers/cli build --workspace-folder . --image-name ludorl82/console:local`. C'est cette même invocation, via l'action [devcontainers/ci](https://github.com/devcontainers/ci), que la CI GitHub utilise pour publier l'image sur Docker Hub à chaque release.
 
@@ -151,7 +151,7 @@ Notez l'usage de `${localEnv:USER}` dans les arguments de build : cette syntaxe 
 
 ## Bootstrap de machine
 
-Dans un premier temps, ce script [bootstrap\_shell.sh](https://github.com/ludorl82/.shell-scripts/blob/main/bootstrap-shell/bootstrap_shell.sh) clone (ou met à jour) mes deux dépôts de configuration, installe Docker via un script dédié, fixe le fuseau horaire, puis installe les paquets système nécessaires — dont `nodejs` et `npm`, qui n'y étaient pas requis avant et qui servent uniquement à exécuter le CLI devcontainer via `npx` sans avoir à l'installer globalement. Il termine en construisant la couche de personnalisation avec ce même CLI plutôt qu'un simple `docker compose build`, pour que ses Features (`github-cli`, `aws-cli`) soient bien appliquées, puis démarre le conteneur avec `docker compose up -d` (`$COMPOSE_CMD` ci-dessous, choisi un peu plus haut dans le script selon que `docker-compose` ou le plugin `docker compose` est disponible) :
+Dans un premier temps, ce script [bootstrap\_shell.sh](https://github.com/ludorl82/.shell-scripts/blob/main/bootstrap-shell/bootstrap_shell.sh) clone (ou met à jour) mes deux dépôts de configuration, installe Docker via un script dédié, fixe le fuseau horaire, puis installe les paquets système nécessaires, dont `nodejs` et `npm`, qui n'y étaient pas requis avant et qui servent uniquement à exécuter le CLI devcontainer via `npx` sans avoir à l'installer globalement. Il termine en construisant la couche de personnalisation avec ce même CLI plutôt qu'un simple `docker compose build`, pour que ses Features (`github-cli`, `aws-cli`) soient bien appliquées, puis démarre le conteneur avec `docker compose up -d` (`$COMPOSE_CMD` ci-dessous, choisi un peu plus haut dans le script selon que `docker-compose` ou le plugin `docker compose` est disponible) :
 
 ```bash
 # Un simple `docker compose build` ignore les Features devcontainer de cette
@@ -168,8 +168,8 @@ EONG
 
 ## Émulateurs de terminal sur Windows et macOS
 
-Pour unifier ma façon de travailler entre mes machines Windows et macOS, j’utilise le même émulateur de terminal sur les deux : Alacritty[11](https://alacritty.org/). Une seule configuration, les mêmes raccourcis, peu importe l’OS de la machine que j’ai sous la main pour me connecter à la console.
+Pour unifier ma façon de travailler entre mes machines Windows et macOS, j'utilise le même émulateur de terminal sur les deux : Alacritty[11](https://alacritty.org/). Une seule configuration, les mêmes raccourcis, peu importe l'OS de la machine que j'ai sous la main pour me connecter à la console.
 
 ## En conclusion
 
-Cette console conteneurisée reste un chantier permanent, mais le passage à la spécification devcontainers a réglé le problème qui m’agaçait le plus : maintenir deux Dockerfile qui dérivaient tranquillement l’un de l’autre. Aujourd’hui, la base et la personnalisation évoluent chacune de leur côté sans dupliquer ce qui est commun, et le tout reste aussi portable qu’un simple `docker compose up -d` — sur mon bastion, mon poste de travail, ou un Raspberry Pi 5 fraîchement sorti de sa boîte.
+Cette console conteneurisée reste un chantier permanent, mais le passage à la spécification devcontainers a réglé le problème qui m'agaçait le plus : maintenir deux Dockerfile qui dérivaient tranquillement l'un de l'autre. Aujourd'hui, la base et la personnalisation évoluent chacune de leur côté sans dupliquer ce qui est commun, et le tout reste aussi portable qu'un simple `docker compose up -d`, sur mon bastion, mon poste de travail, ou un Raspberry Pi 5 fraîchement sorti de sa boîte.

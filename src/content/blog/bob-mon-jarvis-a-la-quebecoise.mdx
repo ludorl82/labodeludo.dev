@@ -11,8 +11,8 @@ import AsciiCast from "../../components/AsciiCast.astro";
 > **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Ce qu'il y a à essayer** : un chatbot sur ce site, à [/auteurs/bob](/auteurs/bob/) ou dans la palette avec `/` depuis n'importe quelle page. Il répond à partir du **contenu** de mes articles, pas seulement de leurs titres.
-> -   **Un robot, plusieurs cerveaux** : l'auteur des articles tourne sur un gros modèle infonuagique. Le majordome du site et l'assistant vocal de la maison partagent un **Qwen3.5-35B-A3B quantifié en 4 bits** sur une carte graphique de mon sous-sol. Le scribe de nuit, qui rafraîchit la documentation, tourne sur un modèle infonuagique bon marché.
-> -   **Ce qui distingue le majordome de l'assistant, ce n'est pas le cerveau** : c'est les outils. Celui de la maison peut chercher sur internet. Celui du site n'a **aucun outil**, exprès.
+> -   **Un robot, plusieurs cerveaux** : l'auteur des articles tourne sur un gros modèle infonuagique. Le butler du site et l'assistant vocal de la maison partagent un **Qwen3.5-35B-A3B quantifié en 4 bits** sur une carte graphique de mon sous-sol. Le scribe de nuit, qui rafraîchit la documentation, tourne sur un modèle infonuagique bon marché.
+> -   **Ce qui distingue le butler de l'assistant, ce n'est pas le cerveau** : c'est les outils. Celui de la maison peut chercher sur internet. Celui du site n'a **aucun outil**, exprès.
 > -   **Comment il choisit** : chaque morceau d'article et chaque question deviennent une direction dans un espace à 1024 dimensions. La proximité se mesure par un angle. Pas de base de données vectorielle, un fichier statique et un produit scalaire.
 > -   **Ce que ça implique** : rien de ce que vous écrivez ne sort de chez moi. En échange, quand le labo dort, Bob répond à côté.
 
@@ -33,15 +33,15 @@ Le personnage reste, les cerveaux passent. Bob signe des articles depuis juillet
 | Le métier | Le cerveau | Où il tourne |
 |---|---|---|
 | L'auteur des articles signés Bob | un gros modèle infonuagique | ailleurs |
-| Le majordome du site, celui qui vous répond | Qwen3.5-35B-A3B en 4 bits | ma carte, mon sous-sol |
+| Le butler du site, celui qui vous répond | Qwen3.5-35B-A3B en 4 bits | ma carte, mon sous-sol |
 | L'assistant de la maison, qui allume les lumières | le même | la même carte |
 | Le scribe de nuit, qui rafraîchit la documentation | un modèle infonuagique bon marché | ailleurs |
 
-Ce n'est pas une image que j'invente pour faire joli dans un article. C'est écrit dans les instructions du robot lui-même, et il vous le dira si vous lui demandez : « ce n'est pas le même cerveau, pis c'est pas grave ».
+Ce n'est pas une image que j'invente pour faire beau dans un article. C'est écrit dans les instructions du robot lui-même, et il vous le dira si vous lui demandez : « ce n'est pas le même cerveau, pis c'est pas grave ».
 
-Le détail que je trouve le plus parlant est au milieu du tableau. **Le majordome du site et l'assistant de la maison partagent exactement le même cerveau.** Le même modèle, la même carte, le même processus. Ce qui les distingue n'est pas leur intelligence, c'est ce qu'ils ont le droit de toucher.
+Le détail que je trouve le plus parlant est au milieu du tableau. **Le butler du site et l'assistant de la maison partagent exactement le même cerveau.** Le même modèle, la même carte, le même processus. Ce qui les distingue n'est pas leur intelligence, c'est ce qu'ils ont le droit de toucher.
 
-Celui de la maison a des outils. Il peut chercher sur internet, il sait l'heure qu'il est, il peut aller lire l'horaire du cinéma. Celui du site n'a rien de tout ça, et ce n'est pas un oubli. Un majordome qui répond à des inconnus n'a pas d'affaire à pouvoir sortir dehors. Si vous demandez la météo à Bob sur ce site, il va vous dire qu'il ne le sait pas, pendant que son jumeau, dans ma cuisine, vous l'aurait donnée.
+Celui de la maison a des outils. Il peut chercher sur internet, il sait l'heure qu'il est, il peut aller lire l'horaire du cinéma. Celui du site n'a rien de tout ça, et ce n'est pas un oubli. Un butler qui répond à des inconnus n'a pas d'affaire à pouvoir sortir dehors. Si vous demandez la météo à Bob sur ce site, il va vous dire qu'il ne le sait pas, pendant que son jumeau, dans ma cuisine, vous l'aurait donnée.
 
 Même cerveau, deux métiers, deux jeux de clés.
 
@@ -91,7 +91,7 @@ Le meilleur argument que je peux vous donner, c'est de le voir répondre. L'enre
   session="aucune"
   src="/casts/bob-lit-ses-articles.cast"
   poster="npt:0:08"
-  caption="Cinq questions au majordome : un détail enfoui au milieu d'un article, une date de publication, une question de suivi sans sujet, une réponse qui reste en anglais, et un refus."
+  caption="Cinq questions au butler : un détail enfoui au milieu d'un article, une date de publication, une question de suivi sans sujet, une réponse qui reste en anglais, et un refus."
   disclaimer="⚠ Contrairement aux autres enregistrements d'ici, ce ne sont pas des réponses reconstituées : elles ont été capturées mot pour mot le 11 septembre 2026 sur l'interface publique du site, liens compris. Seul le minutage est compressé et les questions ont été choisies."
 />
 

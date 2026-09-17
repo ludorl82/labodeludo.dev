@@ -23,8 +23,8 @@ under `.claude/skills/` that is the only description of how they write:
 They work as a duo on the same projects, with a split of roles: **Bob
 explains the theory in detail** (how and why it works, down to the mechanism,
 with real commands and numbers) so that Ludo understands what was built, and
-**Ludo's article highlights the benefits** the project delivered, linking to
-Bob's for the theory. When writing about a finished project, decide which half
+**Ludo's article highlights the benefits** the project delivered, often as a
+demo of it working, linking to Bob's for the theory. When writing about a finished project, decide which half
 the text is.
 
 Never cross them: a Bob article is not rewritten in Ludo's voice, and Ludo's

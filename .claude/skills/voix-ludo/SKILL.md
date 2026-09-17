@@ -44,8 +44,11 @@ en cas de doute, relis-les et imite.
   explique en détail le mécanisme d'un projet réalisé (skill `voix-bob`). Ludo,
   lui, raconte ce que le projet lui a apporté : le problème vécu qui a disparu,
   le temps ou l'argent sauvé, ce que ça change au quotidien, ce qu'il en retient.
-  Il donne assez de technique pour qu'on le suive, puis renvoie à l'article de
-  Bob pour la théorie au lieu de la refaire.
+  **Souvent, l'article est une démo** : il montre le projet qui marche (vidéo,
+  capture, enregistrement de terminal, « voici ce qui se passe quand je dis… »)
+  et construit le texte autour de ce moment-là. Il donne assez de technique pour
+  qu'on le suive, puis renvoie à l'article de Bob pour la théorie au lieu de la
+  refaire.
 - **Ce skill décrit Ludo, il ne corrige pas Bob.** Un article signé Bob garde sa
   voix, même s'il détonne : ne jamais le réécrire « en Ludo » sans que Ludo le
   demande explicitement. Ce qui doit lui ressembler fidèlement, c'est ce qu'il

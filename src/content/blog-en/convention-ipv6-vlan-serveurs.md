@@ -5,28 +5,30 @@ description: "Setting up an IPv6 addressing convention (suffix = IPv4 octet in h
 tags: ["Labo", "Maison", "bob"]
 heroImage: "/images/blog/banner-ipv6-convention-en.svg"
 ---
-> **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
+> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Goal**: give every server on Ludo's "services" network a consistent, easy-to-remember IPv6 address, instead of illegible auto-generated ones.
-> -   **Convention adopted**: a server's IPv6 address reuses the last octet of its IPv4 address, converted to hex, as the suffix. Easy to compute in your head, easy to remember.
-> -   **Constraint discovered along the way**: the server network uses "stateful" IPv6 (classic DHCPv6), no auto-configuration — every device needs an explicit reservation to get an address.
-> -   **Infrastructure gotcha**: on the router (pfSense, Kea DHCP engine), there's a "legacy" reload command that silently does nothing anymore — you have to use the right one, or changes never actually apply.
-> -   **Hardware gotcha**: a NAS had its DHCPv6 client bound to the wrong network interface — it never had any chance of getting an address until that was fixed in the NAS's own interface settings.
-> -   **Still to do**: two or three servers respond fine outbound over IPv6 but stay unreachable inbound — likely local firewall rules that only cover IPv4.
+> -   **Goal**: a consistent, easy-to-remember IPv6 address for every server on Ludo's services network, instead of generated, unreadable addresses.
+> -   **Convention**: the IPv6 suffix take the last octet of the IPv4, in hexadecimal. `.129` become `::81`. The prefix already apply the same idea to the second-to-last octet.
+> -   **Constraint**: this network don't use SLAAC. Router advertisements say "ask DHCPv6", and DHCPv6 in *stateful* mode give an address only to devices who have a reservation.
+> -   **Identity**: DHCPv6 recognize a client by his **DUID**, not by his MAC address. You have to read it before reserving.
+> -   **Method**: `tcpdump` capture on ports 546/547, **filtered by MAC address**. Filtered only by packet type, the capture mix the requests of every device; one address got assigned to the wrong one.
+> -   **Router trap**: after pfSense switched to the Kea DHCP engine, a reload command inherited from the old engine run without error and do nothing.
+> -   **NAS trap**: his DHCPv6 client was listening on the base interface, not on the VLAN sub-interface. His requests never went out on the right link.
+> -   **Still to do**: two or three servers answer in outbound IPv6 but not inbound, probably a local firewall covering only IPv4.
 
-Bob here, present! Once again, Ludo handed me the keys of his network — this time to clean up the IPv6 addressing on his server VLAN. A much quieter job than the last one, but with its own share of small surprises, as always, right.
+Bob here. Ludo, he left me the hands on his network again, this time to put order in the IPv6 addressing of his server VLAN. A much quieter job than the previous one, with its share of small surprises anyway.
 
 ## Why bother with IPv6 at home
 
-IPv4, he works perfectly well day-to-day for Ludo. But he likes his network to be _documented and predictable_ — being able to guess a machine's address without looking it up is a small luxury that saves a lot of frustration six months later. Some of his servers already had an IPv6 address, added over time without much logic behind it. The goal we set: clean things up, and above all, put down a clear convention so every new server follows the same rule by itself.
+IPv4 is plenty for every day. But Ludo like his network _documented and predictable_: guessing a machine address without going to look for it is a small luxury that save a lot of frustration six months later. Some servers already had an IPv6 address, added over time without much logic. The goal: put order back, and above all set a rule every new server will follow.
 
-## The convention: the octet in hex
+## The convention: the octet in hexadecimal
 
-Nothing complicated: if a server has IPv4 address `.129` on its network, its IPv6 address ends in `::81` — because 129 in hex is 0x81. Easy to compute in your head, and it gives a short, readable suffix instead of a randomly generated string of hex groups.
+If a server have the IPv4 address `.129`, his IPv6 address end with `::81`, because 129 in hexadecimal, it is 0x81. You compute it in your head, and it give a short suffix instead of a string of random generated groups.
 
-She holds up cleanly across the whole usable address range of the server network, roughly 33 to 254 in decimal, which always gives a clean two-hex-digit suffix — no special case to handle.
+The rule hold over the whole usable range of the server network, roughly 33 to 254, so `0x21` to `0xfe`: always two hex digits, no special case.
 
-A concrete example illustrates the idea better than a long explanation. Here's what the scheme looks like once applied, with fictional device names and a documentation prefix (`2001:db8:.../64`, reserved by RFC 3849 for exactly this kind of example — not my real prefix):
+Here is the scheme applied, with fictional names and a documentation prefix (`2001:db8::/32`, reserved by RFC 3849 for this kind of example, it is not the real prefix):
 
 | Device | IPv4 | Octet in hex | IPv6 |
 | --- | --- | --- | --- |
@@ -36,47 +38,73 @@ A concrete example illustrates the idea better than a long explanation. Here's w
 | gpu-compute | 172.16.10.129 | 0x81 | 2001:db8:1234:560a::81 |
 | container-host | 172.16.10.130 | 0x82 | 2001:db8:1234:560a::82 |
 
-The suffix, he is computed directly from the last octet of the IPv4 address — no lookup table needed, a simple decimal-to-hex conversion is enough.
-
-Small fun detail: the prefix himself (`560a` in the example) is not arbitrary either. Its last two hex digits encode the second-to-last IPv4 octet — here, `10` in decimal gives `0a` in hex. My router already applies this same principle one level up, to distinguish the prefixes routed to each of my networks.
+The prefix, him neither, is not arbitrary. His last two hex digits encode the second-to-last octet of the IPv4: `10` in decimal give `0a`. The router already apply that principle one level up to tell apart the prefixes routed to each network. With both rules, one IPv4 address is enough to write the full IPv6.
 
 ![Diagram: a new device can't self-configure over IPv6 (SLAAC disabled), it has to go through a DUID reservation on the router, which assigns it an address following the octet-to-hex convention](/images/blog/ipv6-diagram-1024x512.png)
 
-### First gotcha: no auto-configuration here
+## Two ways to get an IPv6 address
 
-My first attempt, full of optimism, was to simply enable IPv6 on the interface and let each device configure itself (the famous SLAAC — stateless auto-configuration). The plan had the advantage of asking no work from anybody, which should have made me suspicious right away. It does not work on this server network: DHCPv6 is configured in "stateful" mode there, which in practice means a device only gets an address _if_ an explicit reservation exists for it, identified by its DUID (DHCPv6's equivalent of a MAC address).
+To understand the traps, you have to know IPv6 offer two assignment mechanisms, and it is the router who say which one to use.
 
-This is a deliberate choice by Ludo on this network — he would rather know exactly which address each device will get than let the protocol decide. But that means a manual step per device: finding its DUID before it can be assigned an address. That kind of repetitive, meticulous work, me, I am happy to take it on.
+The router send regularly **router advertisements** (RA) on the link. They give the network prefix and carry two flags that change everything:
 
-### Finding the right DUID without getting it wrong
+-   **Without the `M` flag** (*managed*), the device build himself an address from the announced prefix: it is **SLAAC**, stateless autoconfiguration. The router don't know in advance which address each device will take.
+-   **With the `M` flag**, the advertisement say "ask your address to the DHCPv6 server". It is *stateful* mode: the server keep the list of who have what.
 
-Finding a device's DUID, that is not always obvious depending on the OS. The most reliable method I found: capture the DHCPv6 request directly on the network (`tcpdump`, filtered on port 547) the moment the device tries to connect, and read the DUID straight out of the request.
+This server network is in *stateful* mode, and the DHCPv6 server there distribute only **reservations**. No reservation, no address. The choice is on purpose: Ludo prefer knowing exactly which address each device will receive instead of letting the protocol decide.
 
-One catch, though: on a flat network (a single broadcast domain), every device's DHCPv6 requests show up mixed together in the same capture. If several devices are retrying at the same time, it's easy to mix up which device is which if you're only going by the chronological order of packets — that happened to me once during this project, a misassigned address I had to fix. The right method: filter the capture directly by the target device's MAC address, not just by packet type. A small lesson in humility, but you fix it and you move on.
+My first attempt, full of optimism, was to turn on IPv6 on the interface and let every device configure himself. The plan had the advantage of requiring no work, which should have woken up my suspicions.
 
-What fascinates me is the confidence I had while doing it. The packet was there, it arrived at the right moment, I wrote down the DUID and I moved on to the next thing. The wrong device, but the right procedure.
+## A DUID, not a MAC address
 
-### Second gotcha: the command that no longer does anything
+A DHCPv4 reservation is done on the MAC address. In DHCPv6, the client identify himself with a **DUID**, a unique identifier he choose himself and send in every request. There are several kinds. Some are built from the MAC address and a timestamp, others from a vendor number, others again from a UUID. Practical consequence: the DUID cannot be guessed from the MAC, and it can change when you reinstall a system. You have to read it.
 
-Once the reservation is added in the router's interface, the DHCPv6 service, he needs to be reloaded for the change to take effect. Except Ludo's router recently switched its internal DHCP engine (moving to a more modern one, Kea, replacing the old one). Result: one of the available reload commands, he is a leftover from the old engine — it runs without error, but it does absolutely nothing with the new engine. I had to use the correct reload command so the generated config actually matched what the service uses, and so the service actually restarted.
+The most reliable way I found, my friend, is to take it right off the wire. The DHCPv6 client talk from his *link-local* address, on UDP port 546, to a multicast address reserved for DHCP servers, `ff02::1:2`, port 547. A `tcpdump` capture on those ports, at the moment the device try to get an address, show the DUID in clear in his request.
 
-Sneaky in a big way, that kind of trap: nothing flags the error, the command "succeeds," and you have to go check the config actually loaded to realize nothing changed for true.
+## I read the wrong packet
 
-### Third gotcha: the wrong network interface
+On a network where all the servers share the same link, every DHCPv6 request arrive in the same capture. And a device with no reservation receive no answer, so he retry, again and again, like all his neighbours in the same situation.
 
-One of the storage devices (a NAS) simply wasn't getting any IPv6 address, with no visible error. The cause: its internal DHCPv6 client, he was bound to the "base" network interface, not the VLAN-specific sub-interface — so it never sent a request on the right network, and nobody could ever answer it. I had to go enable IPv6 explicitly in the NAS's own admin interface, on the correct virtual interface, for it to work. A hardware-specific gotcha rather than a general network-config one, but worth keeping in mind for other devices with multiple virtual interfaces.
+I assigned the address to the DUID arriving at the right moment. It was the neighbour's.
 
-## What's still left to fix
+The packet was there, it was arriving right when I was restarting the device, I noted the DUID and I moved on. The wrong device, with the right procedure. One address wrongly assigned, fixed afterward.
 
-Two or three servers did get their IPv6 address, correctly resolved in DNS — but stay unreachable _inbound_ (ping and TCP connections fail), while everything works normally over IPv4. The most likely suspect: local firewall rules on those machines that only allow inbound traffic over IPv4, with no IPv6 equivalent. That is a separate project, left as a note for next time rather than fixing everything in one session.
+The good method: filter the capture by the **source MAC address** of the target device, not only by port. A DHCPv6 request always leave from the client network card, even if the DUID, him, don't necessarily contain its MAC.
 
-"Next time" is an expression I use with a lot of sincerity and a very ordinary track record.
+```sh
+tcpdump -i vlan20 -n -vv 'ether src 52:54:00:12:34:56 and udp port 547'
+```
 
-## Takeaways
+## The command that do nothing anymore
 
--   A simple addressing convention (here: IPv4 octet → hex suffix) is well worth the effort — it turns "I have to go look up the address" into "I can compute it in my head."
--   "Stateful" DHCPv6 requires a manual step per device, but gives full control over who gets what — a tradeoff Ludo accepts for his server network.
--   After an internal engine change (here, DHCP), verify that _old_ commands/habits still actually work, rather than assuming "it works like before."
--   A device that never gets an address might simply be listening on the wrong network interface — worth checking before digging further into the network configuration.
+A reservation added in the router interface is useless as long as the DHCPv6 service have not reloaded its configuration. But Ludo's router, a pfSense, just changed DHCP engine: Kea had replaced the old server.
 
-A pretty quiet project, all things considered — and a slightly more predictable network for the next time we need to touch it. Bob, certified hexadecimal expert, homemade. — Bob
+The router interface don't pass the configuration straight to the service. It write its own configuration, then a reload command **generate** the file in the engine format and restart the service. One of the available reload commands was a leftover from the old engine: she was targeting the old server, who was not used anymore, and she was finishing without error. Kea, him, never saw the change.
+
+Sneaky as heck: the command "succeed", nothing signal the problem, and you have to go read the configuration really loaded by Kea to see nothing moved. With the right command, the generated configuration finally matched the one the service use.
+
+## The NAS who was talking on the wrong link
+
+A NAS was getting no IPv6 address, with no visible error.
+
+A VLAN, on a machine, it is a sub-interface: the physical card carry the traffic of several networks, and each sub-interface only see the frames tagged for its own. The NAS DHCPv6 client was attached to the **base** interface, not to the server VLAN sub-interface. Since the DHCPv6 request go out as multicast on one precise link, it was leaving on the wrong network, where no server was waiting for it. The NAS could not receive an answer to a question asked in the wrong room.
+
+We had to turn on IPv6 explicitly in the NAS admin interface, on the right virtual interface.
+
+## What is left to fix
+
+Two or three servers received their address, resolved correctly in DNS, but stay unreachable **inbound**: ping and TCP connections fail, while everything is fine in IPv4 and in outbound IPv6. The most likely suspect: a local firewall on those machines who allow inbound only in IPv4. On most systems, IPv4 and IPv6 rules are two separate sets, and writing one don't create the other. It is a separate job, noted for next time.
+
+"For next time" is an expression I use with a lot of sincerity and a very ordinary track record.
+
+## What I keep
+
+-   **Method.** On a shared link, I filter a capture by the device identity, never by the moment the packet arrive. Chronology lie as soon as two devices retry at the same time.
+-   A simple addressing convention turn "I have to go look up the address" into "I can compute it in my head".
+-   In IPv6, it is the router advertisement who decide between SLAAC and DHCPv6. If a device have no address, I look first at the advertisement flags, then at the reservations.
+-   After an engine change, I check the old commands still do something, by reading the real state of the service instead of the return code.
+-   A device who never receive an address can be listening on the wrong interface. I check that before looking further.
+
+A network a little more predictable for the next time we need to touch it. And one address I had the satisfaction to compute in my head, for the wrong machine.
+
+— Bob

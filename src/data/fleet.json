@@ -240,20 +240,20 @@
         {
           "die": "GA106",
           "model": "RTX 3050",
-          "passthrough": true,
-          "vram": ""
+          "passthrough": false,
+          "vram": "8 Go"
         },
         {
           "die": "GA107",
           "model": "RTX 3050 6GB",
           "passthrough": true,
-          "vram": ""
+          "vram": "6 Go"
         },
         {
           "die": "GM206",
           "model": "GTX 960",
           "passthrough": true,
-          "vram": ""
+          "vram": "4 Go"
         }
       ],
       "iacDeclared": true,
@@ -264,7 +264,7 @@
       "power": "ups-03",
       "rackOrder": 2,
       "role": "agent k3s à la demande, hôte de jeu (libvirt)",
-      "spec": "RTX 3050 (GA106, vfio) + RTX 3050 6GB (GA107, vfio) + GTX 960 (GM206, vfio)"
+      "spec": "RTX 3050 (GA106, 8 Go) + RTX 3050 6GB (GA107, 6 Go, vfio) + GTX 960 (GM206, 4 Go, vfio)"
     },
     {
       "class": "server",
@@ -389,10 +389,10 @@
       "gpu": true,
       "gpus": [
         {
-          "die": "GA106",
-          "model": "RTX 3050",
+          "die": "GA107",
+          "model": "RTX 3050 6GB",
           "passthrough": true,
-          "vram": ""
+          "vram": "6 Go"
         }
       ],
       "hostedBy": "gaming-01",
@@ -400,17 +400,17 @@
       "name": "arcade1",
       "network": "vlan10",
       "role": "VM de jeu, GPU en passthrough, streamée par Steam Remote Play — pas un nœud k3s",
-      "spec": "RTX 3050 (GA106, vfio)"
+      "spec": "RTX 3050 6GB (GA107, 6 Go, vfio)"
     },
     {
       "class": "vm",
       "gpu": true,
       "gpus": [
         {
-          "die": "GA107",
-          "model": "RTX 3050 6GB",
+          "die": "GM206",
+          "model": "GTX 960",
           "passthrough": true,
-          "vram": ""
+          "vram": "4 Go"
         }
       ],
       "hostedBy": "gaming-01",
@@ -418,7 +418,7 @@
       "name": "arcade2",
       "network": "vlan10",
       "role": "VM de jeu, GPU en passthrough, streamée par Steam Remote Play — pas un nœud k3s",
-      "spec": "RTX 3050 6GB (GA107, vfio)"
+      "spec": "GTX 960 (GM206, 4 Go, vfio)"
     },
     {
       "class": "vm",
@@ -452,22 +452,16 @@
       "gpu": true,
       "gpus": [
         {
-          "die": "GA106",
-          "model": "RTX 3050",
-          "passthrough": true,
-          "vram": ""
-        },
-        {
           "die": "GA107",
           "model": "RTX 3050 6GB",
           "passthrough": true,
-          "vram": ""
+          "vram": "6 Go"
         },
         {
           "die": "GM206",
           "model": "GTX 960",
           "passthrough": true,
-          "vram": ""
+          "vram": "4 Go"
         }
       ],
       "hostedBy": "gaming-01",
@@ -475,11 +469,11 @@
       "name": "vm-03",
       "network": "vlan10",
       "role": "agent k3s (GPU)",
-      "spec": "RTX 3050 (GA106, vfio) + RTX 3050 6GB (GA107, vfio) + GTX 960 (GM206, vfio)"
+      "spec": "RTX 3050 6GB (GA107, 6 Go, vfio) + GTX 960 (GM206, 4 Go, vfio)"
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-09-16T15:49:13Z",
+  "generated": "2026-09-18T09:30:51Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

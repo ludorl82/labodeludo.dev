@@ -1,24 +1,24 @@
 {
   "curated": [
-    "D'où vient le nom de Bob ?",
     "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
     "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
     "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "What is the last thing still running when everything else is down?",
+    "Comment tes dessins se redessinent tout seuls la nuit ?",
     "How do you publish your infrastructure without leaking secrets?",
     "Why did the cheapest model score like the biggest one?",
-    "How does Bob pick which parts of your articles to quote?"
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
-  "generated": "2026-09-17T19:57:28Z",
+  "generated": "2026-09-18T10:02:34Z",
   "openers": [
-    "D'où vient le nom de Bob ?",
     "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
     "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
     "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "What is the last thing still running when everything else is down?",
+    "Comment tes dessins se redessinent tout seuls la nuit ?",
     "How do you publish your infrastructure without leaking secrets?",
     "Why did the cheapest model score like the biggest one?",
-    "How does Bob pick which parts of your articles to quote?"
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
   "written": []
 }

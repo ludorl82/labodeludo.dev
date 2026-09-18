@@ -104,6 +104,19 @@ const NETWORK_LABEL: Record<string, string> = {
   "out-of-band": "hors réseau",
   aws: "hors site",
 };
+// the network, spelled out. On the page it is a gray bar at the left of a row
+// and one line of the legend — and a bar is exactly the fact the reader who
+// gets this drawing as a sentence cannot recover: `role="img"` closes the
+// subtree, so the legend they read in the picture is not read aloud here. The
+// value is the seed's, the French is the label map's, and a key the map does
+// not know is spoken as it arrives rather than paraphrased. A label that
+// already carries the word is not doubled: « réseau hors réseau » is a
+// riddle, not a fact.
+const networkWord = (d: Device) => {
+  if (!d.network) return "";
+  const net = NETWORK_LABEL[d.network] ?? d.network;
+  return net.includes("réseau") ? net : `réseau ${net}`;
+};
 
 // the only hand-written strings left, and they name the rack key, nothing
 // else: no room, no floor, no fact the seed does not carry.
@@ -331,13 +344,20 @@ const shownGpu = RACKS.some((r) => {
   );
 });
 
-// a hosted box written out in words, with the cards the seed named for it
+// a hosted box written out in words, with the cards the seed named for it and
+// the réseau the chip is coloured by
 const hostedWord = (d: Device) => {
   const list = gpuList(d);
-  if (!list.length)
-    return gpuOn(d) ? `${d.name} (avec une carte ${GPU_TAG})` : d.name;
   const n = cards(d).length;
-  return `${d.name} (avec la${n > 1 ? "s" : ""} carte${n > 1 ? "s" : ""} ${GPU_TAG} ${list.join(", ")})`;
+  const bits = [
+    !list.length
+      ? gpuOn(d)
+        ? `avec une carte ${GPU_TAG}`
+        : ""
+      : `avec la${n > 1 ? "s" : ""} carte${n > 1 ? "s" : ""} ${GPU_TAG} ${list.join(", ")}`,
+    networkWord(d),
+  ].filter(Boolean);
+  return bits.length ? `${d.name} (${bits.join(", ")})` : d.name;
 };
 
 const legend = [
@@ -397,6 +417,7 @@ const ariaLabel = hasRacks
             return [
               label(d),
               hardware(d),
+              networkWord(d),
               gpuSpoken(d),
               detailOf(d),
               d.power ? `alimenté par ${d.power}` : "",
@@ -420,6 +441,9 @@ const ariaLabel = hasRacks
       );
     }).join(" ") +
     " Les rangées suivent l'ordre de l'inventaire, pas une position en U, et aucune échelle en U n'est dessinée." +
+    (shownNetworks.length
+      ? " La barre grise à gauche d'une rangée ou d'une puce porte son réseau, et la légende la traduit en bas du dessin ; une couleur ne se lit pas à l'oreille, alors ce réseau est écrit en mots, boîte par boîte."
+      : "") +
     (shownGpu
       ? " Le drapeau GPU écrit près d'un nom vient de l'inventaire : le champ gpu quand le document répond oui sans détailler, et le champ gpus quand il énumère les cartes — le nombre écrit après le drapeau est alors le compte de cette énumération, carte par carte. Une carte passée en passthrough à une machine invitée est celle de son hôte : elle est comptée une fois, sur la rangée de la boîte où elle est vissée, jamais reprise sous la puce."
       : "")

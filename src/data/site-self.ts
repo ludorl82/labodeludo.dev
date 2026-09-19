@@ -37,6 +37,16 @@ export const SITE_SELF = [
   // site and look for x-amz-request-id.
   "Publication : une fusion vers la branche `main` déclenche GitHub Actions, qui bâtit le site et le téléverse dans un compartiment S3, servi au travers de Cloudflare. La branche `dev` déploie la préproduction sur Cloudflare Pages, derrière Cloudflare Access.",
   "La recherche et la palette de commandes lisent /search-index.json, généré au moment du build ; il n'y a pas de moteur de recherche côté serveur.",
+  // La sélection des EXTRAITS n'était décrite nulle part ici. Le 2026-09-19,
+  // « quel modèle utilises-tu pour choisir les articles ? » a donné « une tâche
+  // nocturne chez Alibaba fait ça avant ta question » : la ligne au-dessus dit
+  // « pas de moteur côté serveur », la ligne sur la tâche nocturne est voisine,
+  // et Bob a recollé les deux. Les articles qui expliquent bge-m3 étaient en
+  // prod ; ils ne suffisent pas quand la récupération tombe ou que l'index en
+  // mémoire du Worker date d'avant le déploiement. Mesuré contre qwen35-q4kl,
+  // trois questions, trois essais chacune : sans extraits 0/9 avant, 9/9 avec
+  // cette ligne ; avec extraits 9/9. Borné à CE CHAT, comme les autres.
+  "Dans ce chat, avant chaque réponse, la question est vectorisée en direct par bge-m3, un modèle d'embeddings servi par le même Ollama, puis comparée à un index des tronçons d'articles bâti au build ; les extraits les plus proches sont ajoutés au prompt. La tâche nocturne n'y participe pas : elle ne choisit aucun article.",
   "Cette conversation-ci passe par /api/bob/chat, un Worker Cloudflare qui assemble la personnalité de Bob et ce document, puis interroge le modèle.",
   // The model's NAME is deliberately absent: it lives in the Worker, in
   // another repo, and changes on a different day. Written here it went stale

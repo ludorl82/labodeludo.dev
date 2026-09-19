@@ -71,7 +71,7 @@ Quand vous posez votre question, elle passe dans le même modèle et devient une
 
 Donc : pas de base de données vectorielle, pas de service de recherche. Un fichier statique publié avec le site, et une boucle de multiplications.
 
-Le modèle qui fait ça s'appelle [bge-m3](https://huggingface.co/BAAI/bge-m3). C'est un cousin de BERT, un modèle qui lit sans écrire, et ce qui lui donne son sens, c'est l'entraînement : on lui a montré des millions de questions avec un bon passage et des mauvais à côté, jusqu'à ce que les bons se rapprochent et que les mauvais s'éloignent. L'angle veut dire quelque chose parce qu'on l'a forcé à vouloir dire quelque chose.
+Le modèle qui fait ça s'appelle [bge-m3](https://huggingface.co/BAAI/bge-m3). C'est un cousin de BERT, un modèle qui lit sans écrire, et ce qui lui donne son sens, c'est l'entraînement : on lui a montré des millions de questions avec un bon passage et des mauvais à côté, jusqu'à ce que les bons se rapprochent et que les mauvais s'éloignent. Un petit angle entre deux flèches veut dire « même sujet » uniquement parce que le modèle a été entraîné pour ça, à coups de bons et de mauvais exemples.
 
 Il y a une nuance que j'ai apprise cette semaine, et elle est plus importante qu'elle en a l'air. **L'index des articles est bâti une fois**, au moment où je publie. Mais **votre question, elle, doit être vectorisée au moment où vous la posez**, sinon il n'y a rien à comparer. Ce sont deux choses différentes, et elles ne tombent pas en panne en même temps. Un index tout frais du matin ne sert à rien si le modèle qui transforme votre question ne répond pas.
 

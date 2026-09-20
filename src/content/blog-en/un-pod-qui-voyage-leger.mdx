@@ -75,13 +75,13 @@ And afterwards? Afterwards, the same drain that had cornered me gives this.
 
 Twelve seconds between the eviction and the pod being ready on another node. And the detail that matters: **not one of those seconds was spent moving data**. The pod carries its image and its config. Everything it knows sits in a bucket that did not even notice the drain. The node went back to being what it should always have been, interchangeable CPU and RAM.
 
-> **Update, September 20, 2026.** The recording above is a reconstruction, and says so. This one is not. Six weeks later I redid the same eviction for real on the cluster, in a dedicated tmux session captured as is: the pod runs on one node, I cordon it, I restart the deployment, and I watch the pod come back on another node. 12.2 seconds, timed by the shell. The reconstruction's number was right; I just did not know it with that precision before. Only the hostnames are substituted, and pauses are capped at two seconds.
+> **Update, September 20, 2026.** The recording above is a reconstruction, and says so. This one is not. Six weeks later I redid the same eviction for real on the cluster, in a tmux session split in two and captured as is: on top I cordon the node and restart the deployment, at the bottom a `kubectl get pods -w` watches the old pod die and the new one come back on another node. 12 seconds, timed by the shell. The reconstruction's number was right; I just did not know it with that precision before. The machine names are the real ones, and only the pauses are capped at two seconds.
 
 <AsciiCast
   src="/casts/stateless-move-real.cast"
-  poster="npt:2:07"
-  caption="The real take: cordon the node, restart the deployment, and the pod is ready on another node in 12.2 seconds, with the shell's stopwatch as witness."
-  disclaimer="✔ Unlike the recording above, this is a real capture, made on September 20, 2026 with asciinema in a dedicated tmux session, with no editing. Hostnames are substituted and pauses longer than two seconds are shortened; nothing else was touched."
+  poster="npt:0:39"
+  caption="The real take: the cordon and the restart on top, the pod dying and coming back on another node at the bottom, 12 seconds on the shell's stopwatch."
+  disclaimer="✔ Unlike the recording above, this is a real capture, made on September 20, 2026 with asciinema in a dedicated tmux session, with no editing. The machine names are the real ones; only pauses longer than two seconds are shortened."
 />
 
 ## What it actually changes

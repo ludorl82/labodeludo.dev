@@ -8,7 +8,7 @@ caption: "En haut, cinq commandes ; en bas, le pod qui meurt et renaît en direc
 article: "un-pod-qui-voyage-leger"
 session: "aucune"
 frame: "none"
-disclaimer: "✔ Ceci est une capture réelle, pas une reconstitution : enregistrée le 20 septembre 2026 avec asciinema dans une session tmux dédiée, sans montage. Les noms de machines sont les vrais ; seules les pauses de plus de deux secondes sont raccourcies."
+disclaimer: "✔ Ceci est une capture réelle, pas une reconstitution : enregistrée le 20 septembre 2026 avec asciinema dans une session tmux dédiée, sans montage. Les noms de machines sont les vrais, le nom d'utilisateur est raccourci en « ludo », et seules les pauses de plus de deux secondes sont raccourcies."
 ---
 
 C'est le premier enregistrement de ce site qui n'est pas une reconstitution.
@@ -28,8 +28,9 @@ exactement la séquence d'une éviction. Le `time` du shell donne le chiffre :
 disait douze. Elle avait raison.
 
 Ce qui a été touché après la prise, et rien d'autre : les pauses de plus de
-deux secondes, raccourcies, et l'identifiant du conteneur dans la barre tmux,
-remplacé par un nom de la même longueur. Bob et stella sont les vrais noms des
+deux secondes, raccourcies, l'identifiant du conteneur dans la barre tmux,
+remplacé par un nom de la même longueur, et mon nom d'utilisateur, raccourci
+en « ludo » à la même longueur aussi, pour rester cohérent avec le site. Bob et stella sont les vrais noms des
 machines, qui sont ceux de mes chiens. Il a fallu sept prises : les premières
 ont montré qu'une substitution de nom après coup casse le calcul du curseur de
 zsh dès qu'elle change la longueur d'un mot dans une ligne en cours d'édition,

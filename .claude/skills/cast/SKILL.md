@@ -55,12 +55,14 @@ Le script fait, dans l'ordre : session `cast` sur `-L console` à taille
 FIXÉE (`window-size manual` + `resize-window` AVANT le recorder, sinon tmux
 la calque sur le dernier client attaché et le cast sort en 137×40) ; deux
 panneaux (commandes en haut, suivi en bas) ; fenêtre nommée comme le cast ;
-prompt et barre qui affichent « ludo » (`cast-prompt-ludo.zsh` redéfinit le
-segment p10k, `#(whoami)` est remplacé dans `status-left` de la session) ;
+invite SANS thème (`cast-prompt-ludo.zsh` démonte p10k et pose
+`ludo@labo:~$`, deux couleurs de la palette ; `#(whoami)` devient « ludo »
+dans `status-left` de la session) ;
 recorder `asciinema rec --idle-time-limit 2` dans un pty de taille fixe
 ATTACHÉ à la session (`cast-rec-attach.py`), pour que la barre tmux soit dans
-l'image. Il refuse de continuer si une invite ne dit pas « ludo » ou si le
-recorder voit le vrai nom d'utilisateur.
+l'image. Sans dépôt en argument, les panneaux s'ouvrent dans `~` et l'invite est
+`ludo@labo:~$` tout court. Il refuse de continuer si une invite ne dit pas
+« ludo@labo: » ou si le recorder voit le vrai nom d'utilisateur.
 
 asciinema vient de `python3 -m pip install --user --break-system-packages
 asciinema` sur la console (le pip nu est refusé, « externally-managed »).

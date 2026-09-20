@@ -17,6 +17,10 @@ pourquoi chaque ordre a été appris.
 
 ## 0. Avant de monter quoi que ce soit
 
+- **Décision de Ludo (2026-09-20) : les interactions avec Claude Code GARDENT
+  leur reconstitution.** La vraie prise sert à montrer la console — barre
+  tmux, prompt, suggestions, deux panneaux, vrai chronomètre. Donc du shell
+  pur : un mécanisme qu'on rejoue, jamais une session qu'on rejouerait.
 - **Choisir un scénario dont la commande mesure elle-même.** `time (kubectl
   rollout restart … && kubectl rollout status …)` donne le chiffre ; `kubectl
   wait -l` attrape aussi le pod qui meurt et sort en erreur. Stratégie
@@ -50,7 +54,20 @@ recorder voit le vrai nom d'utilisateur.
 asciinema vient de `python3 -m pip install --user --break-system-packages
 asciinema` sur la console (le pip nu est refusé, « externally-managed »).
 
-## 2. La prise : Ludo au clavier, moi en régie
+## 2. La prise : Ludo au clavier, moi en régie — ou moi au clavier
+
+Deux modes. Ludo tape (le pod stateless), ou je tape à sa place avec
+`scripts/cast-type.sh <cible tmux> <ligne>` (la vérification qui refuse de
+publier) : un caractère à la fois à 45–115 ms, puis Entrée, la cadence des
+reconstitutions. Alors le disclaimer le dit : « frappes envoyées par script,
+pas tapées par Ludo ; commandes et sorties réelles ». Quand je tape, la
+prise entière tient dans UNE commande Bash avec des `sleep` entre les
+étapes ; faire une répétition d'abord, elle révèle ce que l'invite montre
+(branche du clone, chemin) et ce que les sorties impriment. Rejouer sur une
+COPIE du dépôt (`git clone` dans `~/tmp/…`, sur master), jamais dans l'arbre
+de travail, et ne jamais `ls` un dossier dont les noms de fichiers sont
+sensibles (les zones DNS portent les vrais domaines).
+
 
 Ludo bascule avec `tmux switch-client -t cast` (ou `prefix s`). Lui donner le
 déroulement en clair : quoi lancer en bas, les commandes en haut dans l'ordre

@@ -39,6 +39,9 @@ const castSchema = z.object({
   /* « aucune » pour les enregistrements du chat du site : le cadre par défaut
      reproduit une session Claude Code, et le chat n'en est pas une. */
   session: z.enum(["claude-code", "aucune"]).optional(),
+  /* « none » quand la vraie barre tmux est dans l'enregistrement (prise
+     réelle attachée à la session) : l'habillage en ferait une deuxième. */
+  frame: z.enum(["alacritty", "none"]).optional(),
 });
 
 const casts = defineCollection({

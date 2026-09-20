@@ -17,10 +17,17 @@ interface Props {
    * Code : emprunter sa présentation y ferait passer un outil pour un autre.
    */
   session?: "claude-code" | "aucune";
+  /**
+   * « none » retire tout l'habillage — barre de titre, pied Claude Code et
+   * fausse barre tmux. Pour une PRISE RÉELLE faite en attachant le recorder
+   * à la session, la vraie barre tmux est DANS l'enregistrement : la
+   * reproduire autour ferait deux barres, dont une fabriquée (2026-09-20).
+   */
+  frame?: "alacritty" | "none";
 }
 
 const { src, caption, disclaimer, poster = "npt:0:06", containerId,
-        session = "claude-code" } = Astro.props;
+        session = "claude-code", frame = "alacritty" } = Astro.props;
 
 /* Each recording ran in its own throwaway container at its own moment, so the
    id and the clock in the status line have to differ from one cast to the
@@ -76,23 +83,26 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
 <figure class="cast">
   <p class="disclaimer">{disclaimer}</p>
 
-  <div class="term">
-    <div class="titlebar">
-      <span class="app">Alacritty</span>
-      <span class="btns"><i></i></span>
-    </div>
+  <div class:list={["term", { bare: frame === "none" }]}>
+    {frame !== "none" && (
+      <div class="titlebar">
+        <span class="app">Alacritty</span>
+        <span class="btns"><i></i></span>
+      </div>
+    )}
 
     <div class="screen">
       <div data-cast-src={src} data-cast-poster={poster}></div>
     </div>
 
-    {session === "claude-code" && (
+    {frame !== "none" && session === "claude-code" && (
       <div class="hint">
         <span><b>▶▶ auto mode on</b> (shift+tab to cycle) · esc to interrupt</span>
         <span class="rc">/rc</span>
       </div>
     )}
 
+    {frame !== "none" && (
     <div class="tmux">
       <span class="seg s0">{left[0]}</span>
       <span class="seg s1">{left[1]}</span>
@@ -102,6 +112,7 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
       </span>
       {right.map((r, i) => <span class:list={["seg", `r${i}`]}>{r}</span>)}
     </div>
+    )}
   </div>
 
   <figcaption>
@@ -136,6 +147,26 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
   .asciinema-player-theme-labo {
     --term-color-background: #181818;
     --term-color-foreground: #d8d8d8;
+    /* Les seize couleurs de base, celles que p10k demande par numéro (0, 3,
+       4, 254…) : sans elles le lecteur les rendait en gris. Fond et texte
+       ci-dessus sont les valeurs par défaut d'Alacritty, donc la palette est
+       la sienne aussi (2026-09-20) — à resampler si le terminal change. */
+    --term-color-0: #181818;
+    --term-color-1: #ac4242;
+    --term-color-2: #90a959;
+    --term-color-3: #f4bf75;
+    --term-color-4: #6a9fb5;
+    --term-color-5: #aa759f;
+    --term-color-6: #75b5aa;
+    --term-color-7: #d0d0d0;
+    --term-color-8: #6b6b6b;
+    --term-color-9: #c55555;
+    --term-color-10: #aac474;
+    --term-color-11: #feca88;
+    --term-color-12: #82b8c8;
+    --term-color-13: #c28cb8;
+    --term-color-14: #93d3c3;
+    --term-color-15: #f5f5f5;
   }
 
   .cast .ap-player {

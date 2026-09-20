@@ -3,8 +3,8 @@ title: "Un pod stateless change de noeud, pour vrai"
 pubDate: 2026-09-20
 description: "La même éviction que dans la reconstitution, refaite pour vrai sur le cluster et captée telle quelle : cordon du noeud, redémarrage du déploiement, et le pod prêt sur un autre noeud en 11,5 secondes, chronomètre du shell à l'appui, et un second panneau qui le regarde renaître en direct."
 cast: "/casts/stateless-move-real.cast"
-poster: "npt:0:28"
-caption: "En haut, cinq commandes ; en bas, le pod qui meurt et renaît en direct. 11,5 secondes entre l'ordre et le pod prêt ailleurs. Aucune de ces secondes ne déplace des données : il n'y en a plus dans le pod."
+poster: "npt:0:43"
+caption: "Trois panneaux : les commandes en haut, le pod qui meurt et renaît en direct au milieu, la narration en bas. 11,5 secondes entre l'ordre et le pod prêt ailleurs. Aucune de ces secondes ne déplace des données : il n'y en a plus dans le pod."
 article: "un-pod-qui-voyage-leger"
 session: "aucune"
 frame: "none"
@@ -17,15 +17,17 @@ disent. Celui-ci a été capté tel quel, dans une session tmux ouverte pour
 l'occasion, avec asciinema qui écoutait.
 
 Le scénario est celui de [l'article](/blog/un-pod-qui-voyage-leger/), six
-semaines plus tard, dans une session tmux coupée en deux : en haut les
-commandes, en bas un `kubectl get pods -w` qui regarde. Le planificateur de
-tâches tourne sur stella, je cordonne stella, je redémarre le déploiement, et le
-panneau du bas montre l'ancien pod passer à Terminating pendant que le nouveau
-passe par Pending, ContainerCreating et Running sur bob. Le déploiement est
-en stratégie Recreate, donc l'ancien meurt avant que le nouveau soit créé,
-exactement la séquence d'une éviction. Le `time` du shell donne le chiffre :
-12,0 secondes entre l'ordre et le pod prêt sur l'autre noeud. La reconstitution
-disait douze. Elle avait raison.
+semaines plus tard, dans une session tmux coupée en trois : les commandes en
+haut, un `kubectl get pods -w` qui regarde au milieu, et en bas un panneau
+réservé à la narration, qui dit en une phrase ce qu'on est en train de faire.
+Le planificateur de tâches tourne sur stella, je cordonne stella, je redémarre
+le déploiement, et le panneau du milieu montre l'ancien pod passer à
+Terminating pendant que le nouveau passe par Pending, ContainerCreating et
+Running sur bob. Le déploiement est en stratégie Recreate, donc l'ancien meurt
+avant que le nouveau soit créé, exactement la séquence d'une éviction. Le
+`time` du shell donne le chiffre : 11,5 secondes entre l'ordre et le pod prêt
+sur l'autre noeud. La reconstitution disait douze. Elle avait raison, à une
+demi-seconde près.
 
 Ce qui a été touché après la prise, et rien d'autre : les pauses de plus de
 deux secondes, raccourcies, et l'identifiant du conteneur dans la barre tmux,

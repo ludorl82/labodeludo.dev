@@ -95,6 +95,26 @@ la session de Claude (rc 144). Puis remettre l'état de départ, puis relancer
 `cast-stage.sh`. Garder chaque prise (`take<N>.cast`) : la bonne est souvent
 une prise antérieure.
 
+## 2 bis. La narration, dans un panneau qui lui est réservé
+
+Ludo, 2026-09-20 : « on peut garder le panneau du bas pour la narration ».
+`cast-stage.sh` le crée toujours (5 lignes ; 4 avec `CAST_WATCH=1`, qui
+insère au milieu un panneau de suivi du genre `kubectl get pods -w`), et
+`scripts/cast-narrate.sh` l'alimente :
+
+```bash
+scripts/cast-narrate.sh open cast:1.<dernier>      # plus d'invite, plus de commande
+scripts/cast-narrate.sh say  "Ce qu'on fait, en une phrase."
+scripts/cast-narrate.sh close cast:1.<dernier>
+```
+
+Une phrase apparaît d'un COUP, en gris pâle (246, le « dim » de la palette) :
+on la lit, on ne la regarde pas s'écrire. Elles s'accumulent, donc le panneau
+garde le fil. La poser AVANT la commande qu'elle annonce, puis laisser deux
+secondes de lecture. Ne pas narrer dans le panneau des commandes avec des
+`#` : ça marche (`setopt interactive_comments`, posé par
+`cast-prompt-ludo.zsh`) mais ça noie les commandes.
+
 ## 3. Assainir, et vérifier à l'ÉCRAN
 
 ```bash
@@ -102,13 +122,19 @@ CAST_SUBS='[["<id-du-conteneur>","console-labo"]]' \
   python3 scripts/sanitize-cast.py <prise.cast> public/casts/<slug>.cast
 ```
 
-Ce que le script fait : coupe avant le premier `clear` puis avant la première
-vraie frappe ; fond les suites où seule la barre tmux change (son horloge bat
+Ce que le script fait : coupe avant le premier `clear` ; fond les suites où seule la barre tmux change (son horloge bat
 chaque seconde et défait `--idle-time-limit`) en 2 s ; préfixe le préambule
 maison (« Prise réelle — pas une reconstitution … ») ; applique `CAST_SUBS` ;
 puis **rejoue le cast dans pyte et refuse (rc 1) si un motif interdit est à
 l'écran à un moment quelconque**. Le grep sur le fichier ne prouve rien : zsh
 émet les lettres une à une entre séquences d'échappement.
+
+Il ne coupe RIEN par le temps au-delà de ça : une coupe « juste avant la
+première activité » tombe au milieu d'une commande en train d'être tapée,
+puisque les caractères partent un par un — « watch -n 1 -t git diff --stat »
+est ressorti en « t diff -- », dans le mauvais panneau, et personne ne l'a vu
+avant le staging. C'est la compression « barre seulement » qui raccourcit
+l'attente du départ, et elle ne supprime jamais un caractère.
 
 Règles de substitution, apprises à la dure :
 - **même longueur seulement** (`dae8265a7fd2` → `console-labo`, 12 pour 12).

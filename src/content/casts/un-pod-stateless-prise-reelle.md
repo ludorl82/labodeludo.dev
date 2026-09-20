@@ -1,10 +1,10 @@
 ---
 title: "Un pod stateless change de noeud, pour vrai"
 pubDate: 2026-09-20
-description: "La même éviction que dans la reconstitution, refaite pour vrai sur le cluster et captée telle quelle : cordon du noeud, redémarrage du déploiement, et le pod prêt sur un autre noeud en 12,7 secondes, chronomètre du shell à l'appui, et un second panneau qui le regarde renaître en direct."
+description: "La même éviction que dans la reconstitution, refaite pour vrai sur le cluster et captée telle quelle : cordon du noeud, redémarrage du déploiement, et le pod prêt sur un autre noeud en 12,2 secondes, chronomètre du shell à l'appui, et un second panneau qui le regarde renaître en direct."
 cast: "/casts/stateless-move-real.cast"
-poster: "npt:0:29"
-caption: "En haut, cinq commandes ; en bas, le pod qui meurt et renaît en direct. 12,7 secondes entre l'ordre et le pod prêt ailleurs. Aucune de ces secondes ne déplace des données : il n'y en a plus dans le pod."
+poster: "npt:0:28"
+caption: "En haut, cinq commandes ; en bas, le pod qui meurt et renaît en direct. 12,2 secondes entre l'ordre et le pod prêt ailleurs. Aucune de ces secondes ne déplace des données : il n'y en a plus dans le pod."
 article: "un-pod-qui-voyage-leger"
 session: "aucune"
 frame: "none"
@@ -19,9 +19,9 @@ l'occasion, avec asciinema qui écoutait.
 Le scénario est celui de [l'article](/blog/un-pod-qui-voyage-leger/), six
 semaines plus tard, dans une session tmux coupée en deux : en haut les
 commandes, en bas un `kubectl get pods -w` qui regarde. Le planificateur de
-tâches tourne sur stella, je cordonne stella, je redémarre le déploiement, et le
+tâches tourne sur bob, je cordonne bob, je redémarre le déploiement, et le
 panneau du bas montre l'ancien pod passer à Terminating pendant que le nouveau
-passe par Pending, ContainerCreating et Running sur bob. Le déploiement est
+passe par Pending, ContainerCreating et Running sur stella. Le déploiement est
 en stratégie Recreate, donc l'ancien meurt avant que le nouveau soit créé,
 exactement la séquence d'une éviction. Le `time` du shell donne le chiffre :
 12,0 secondes entre l'ordre et le pod prêt sur l'autre noeud. La reconstitution
@@ -34,7 +34,7 @@ thème : pour l'enregistrement, Ludo a préféré retirer son thème de shell et
 garder une invite classique au nom du site, la commande commence trente
 colonnes plus tôt. Bob et stella sont les vrais noms des machines, qui sont
 ceux de mes chiens. Les frappes, cette fois, ont été envoyées par script :
-Ludo a tapé les dix premières prises, la onzième est la mienne, avec son
+Ludo a tapé les dix premières prises, les suivantes sont les miennes, avec son
 plateau et ses commandes. Il a fallu ces prises pour apprendre qu'une
 substitution de nom après coup casse le calcul du curseur de zsh dès qu'elle
 change la longueur d'un mot dans une ligne en cours d'édition, et qu'un grep

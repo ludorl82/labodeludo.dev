@@ -22,7 +22,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Dépôt de travail : un clone JETABLE directement sous ~/<nom>, sur master,
 # pour que l'invite reste courte (« ludo@labo:~/cloudflare-iac$ ») et que rien ne touche l'arbre de travail réel
 # (~/git/ludorl82/…). Refuse d'écraser un dossier existant ; à effacer après.
-cwd="$HOME/tmp"
+cwd="$HOME"   # sans dépôt : l'invite est « ludo@labo:~$ » tout court
 if [ -n "$repo" ]; then
   cwd="$HOME/$(basename "$repo" .git)"
   [ -e "$cwd" ] && { echo "existe déjà, je n'écrase pas : $cwd" >&2; exit 1; }

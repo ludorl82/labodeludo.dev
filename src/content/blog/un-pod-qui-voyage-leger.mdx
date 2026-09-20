@@ -67,13 +67,16 @@ Les 1 136 enregistrements ont pris 21 secondes à copier. La partie la plus dél
 Et après? Après, le même drain qui m'avait coincé donne ceci.
 
 <AsciiCast
-  src="/casts/stateless-move.cast"
-  poster="npt:0:12"
-  caption="Le même drain, avant et après : le pod riveté à son disque qui reste Pending devant huit noeuds libres, puis le pod stateless qui est prêt sur un autre noeud 12 secondes après l'éviction, parce qu'il n'y a plus rien à déménager."
-  disclaimer="⚠ Ceci n'est pas une capture en direct : c'est une simulation pédagogique. La migration vers S3 est réelle et les deux comportements montrés sont les comportements véridiques de ces deux configurations, mais les drains ont été rejoués pour l'enregistrement, le minutage est condensé, le stockage d'origine est simplifié en « disque local », et les noms d'hôte sont fictifs."
+  src="/casts/stateless-move-real.cast"
+  frame="none"
+  poster="npt:0:42"
+  caption="Pour vrai, six semaines après la migration : en haut je cordonne le noeud et je redémarre le déploiement, en bas un kubectl get pods -w regarde l'ancien pod mourir et le nouveau renaître sur un autre noeud, 12 secondes au chronomètre du shell."
+  disclaimer="✔ Ceci est une capture réelle, faite le 20 septembre 2026 avec asciinema dans une session tmux dédiée, sans montage. Les noms de machines sont les vrais, le prompt affiche « ludo », le nom court du site, et seules les pauses de plus de deux secondes sont raccourcies."
 />
 
 Douze secondes entre l'éviction et le pod prêt sur un autre noeud. Et le détail qui compte : **aucune de ces secondes n'a servi à déplacer des données**. Le pod transporte son image et sa config. Tout ce qu'il sait est dans un bucket qui n'a même pas remarqué le drain. Le noeud est redevenu ce qu'il aurait toujours dû être, du CPU et de la RAM interchangeables.
+
+> **Note du 20 septembre 2026.** Cet enregistrement a remplacé la reconstitution qui était ici depuis la publication. Elle reste sur [sa page](/casts/deplacer-un-pod-stateless/), avec son avertissement, et elle montre une chose que la vraie prise ne peut plus montrer : l'« avant », le pod riveté à son disque qui restait Pending devant huit noeuds libres. Le chiffre, lui, était le bon.
 
 ## Ce que ça change pour vrai
 

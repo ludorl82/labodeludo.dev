@@ -1,4 +1,4 @@
-import json, re, sys
+import json, os, re, sys
 src, dst = sys.argv[1], sys.argv[2]
 lines = open(src).read().splitlines()
 hdr = json.loads(lines[0]); ev = [json.loads(l) for l in lines[1:]]
@@ -107,7 +107,9 @@ if seen_full is not None:
     ev = ev[:cut]
     ev.append([round(ev[-1][0] + 3.0, 3), "o", "\x1b[0m"])
 
-hdr["title"] = "Un pod stateless change de nœud en 12 secondes (prise réelle)"
+# Le titre est DANS le fichier : c'est lui que reprend asciinema.org, et un
+# titre figé dans ce script a donné deux casts publiés sous le même nom.
+hdr["title"] = os.environ.get("CAST_TITLE", "Prise réelle — labodeludo.dev")
 hdr.pop("timestamp", None)
 with open(dst,"w") as f:
     f.write(json.dumps(hdr, ensure_ascii=False)+"\n")

@@ -118,9 +118,15 @@ secondes de lecture. Ne pas narrer dans le panneau des commandes avec des
 ## 3. Assainir, et vérifier à l'ÉCRAN
 
 ```bash
+CAST_TITLE="Le titre du cast" \
 CAST_SUBS='[["<id-du-conteneur>","console-labo"]]' \
   python3 scripts/sanitize-cast.py <prise.cast> public/casts/<slug>.cast
 ```
+
+`CAST_TITLE` n'est pas décoratif : c'est le titre que reprend asciinema.org,
+et un titre oublié laisse le cast sous le nom du précédent — deux casts ont
+été publiés sous le même nom avant qu'on s'en aperçoive. Reprendre le titre
+de la page de cast, sans « œ » ligaturé.
 
 Ce que le script fait : coupe avant le premier `clear` ; fond les suites où seule la barre tmux change (son horloge bat
 chaque seconde et défait `--idle-time-limit`) en 2 s ; préfixe le préambule

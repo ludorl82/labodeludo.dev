@@ -95,6 +95,26 @@ la session de Claude (rc 144). Puis remettre l'état de départ, puis relancer
 `cast-stage.sh`. Garder chaque prise (`take<N>.cast`) : la bonne est souvent
 une prise antérieure.
 
+## 2 bis. La narration, dans un panneau qui lui est réservé
+
+Ludo, 2026-09-20 : « on peut garder le panneau du bas pour la narration ».
+`cast-stage.sh` le crée toujours (5 lignes ; 4 avec `CAST_WATCH=1`, qui
+insère au milieu un panneau de suivi du genre `kubectl get pods -w`), et
+`scripts/cast-narrate.sh` l'alimente :
+
+```bash
+scripts/cast-narrate.sh open cast:1.<dernier>      # plus d'invite, plus de commande
+scripts/cast-narrate.sh say  "Ce qu'on fait, en une phrase."
+scripts/cast-narrate.sh close cast:1.<dernier>
+```
+
+Une phrase apparaît d'un COUP, en gris pâle (246, le « dim » de la palette) :
+on la lit, on ne la regarde pas s'écrire. Elles s'accumulent, donc le panneau
+garde le fil. La poser AVANT la commande qu'elle annonce, puis laisser deux
+secondes de lecture. Ne pas narrer dans le panneau des commandes avec des
+`#` : ça marche (`setopt interactive_comments`, posé par
+`cast-prompt-ludo.zsh`) mais ça noie les commandes.
+
 ## 3. Assainir, et vérifier à l'ÉCRAN
 
 ```bash

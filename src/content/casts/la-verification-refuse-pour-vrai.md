@@ -3,8 +3,8 @@ title: "La vérification qui refuse de publier, pour vrai"
 pubDate: 2026-09-20
 description: "Le même filet que dans la reconstitution, rejoué pour vrai sur une copie du dépôt : un passage propre, un domaine planté dans une zone DNS, le refus net, une ligne de correction, et la preuve dans l'arbre assaini."
 cast: "/casts/iac-sanitize-gate-real.cast"
-poster: "npt:0:38"
-caption: "En haut, le script d'assainissement ; en bas, git diff --stat qui regarde. Un domaine oublié suffit pour qu'il refuse, une ligne suffit pour qu'il repasse."
+poster: "npt:0:47"
+caption: "En haut, le script d'assainissement ; en bas, un panneau réservé à la narration. Un domaine oublié suffit pour qu'il refuse, une ligne suffit pour qu'il repasse."
 article: "quatre-depots-pour-un-labo-au-complet"
 session: "aucune"
 frame: "none"
@@ -23,7 +23,8 @@ plante un enregistrement DNS dans la zone publique du site, avec un domaine
 que le script ne connaît pas : `chalet.lac-des-iles.ca`, fictif, choisi pour
 la prise. Deuxième passage : la barrière ne dit qu'une chose, la valeur
 fautive, puis « REFUSING to declare this tree publishable ». Le panneau du
-bas confirme que le seul changement est le fichier de zone.
+bas, lui, ne sert qu'à la narration : il dit ce qu'on est en train de faire,
+une phrase à la fois.
 
 La correction tient sur une ligne, une règle de remplacement insérée avant
 les barrières. Troisième passage : propre. Et la preuve, dans l'arbre

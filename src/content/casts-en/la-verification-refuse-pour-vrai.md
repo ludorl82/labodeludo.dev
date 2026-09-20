@@ -3,8 +3,8 @@ title: "The check that refuses to publish, for real"
 pubDate: 2026-09-20
 description: "The same net as in the reconstruction, replayed for real on a copy of the repository: a clean pass, a domain planted in a DNS zone, the hard refusal, a one-line fix, and the proof in the sanitized tree."
 cast: "/casts/iac-sanitize-gate-real.cast"
-poster: "npt:0:38"
-caption: "On top, the sanitizing script; at the bottom, git diff --stat watching. One forgotten domain is enough for it to refuse, one line is enough for it to pass again."
+poster: "npt:0:47"
+caption: "On top, the sanitizing script; at the bottom, a pane kept for the narration. One forgotten domain is enough for it to refuse, one line is enough for it to pass again."
 article: "quatre-depots-pour-un-labo-au-complet"
 session: "aucune"
 frame: "none"
@@ -22,8 +22,8 @@ sanitizing script: "verification gates passed" in seven seconds. Then I plant
 a DNS record in the public zone of the site, with a domain the script does
 not know: `chalet.lac-des-iles.ca`, fictional, chosen for the take. Second
 pass: the gate say one thing only, the offending value, then "REFUSING to
-declare this tree publishable". The bottom pane confirm the only change is
-the zone file.
+declare this tree publishable". The bottom pane, him, he is kept for the narration only: he say what we are
+doing, one sentence at a time.
 
 The fix fit on one line, a replacement rule inserted before the gates. Third
 pass: clean. And the proof, in the sanitized tree: the record still exist,

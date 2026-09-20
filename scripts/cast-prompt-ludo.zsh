@@ -7,3 +7,10 @@
 prompt_powerlevel9k_teardown 2>/dev/null
 unset RPROMPT
 PROMPT='%F{15}ludo@labo:%~$%f '
+
+# Commentaires interactifs, pour narrer la prise : « # ce qu'on fait » tapé
+# dans la console s'affiche sans rien exécuter. zsh ne les accepte pas par
+# défaut. La coloration les met en gris pâle (246, le « dim » de la palette
+# maison) pour qu'ils se distinguent des commandes, en vert.
+setopt interactive_comments
+ZSH_HIGHLIGHT_STYLES[comment]='fg=246'

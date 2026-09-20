@@ -7,6 +7,7 @@ poster: "npt:0:39"
 caption: "En haut, cinq commandes ; en bas, le pod qui meurt et renaît en direct. 12 secondes entre l'ordre et le pod prêt ailleurs. Aucune de ces secondes ne déplace des données : il n'y en a plus dans le pod."
 article: "un-pod-qui-voyage-leger"
 session: "aucune"
+frame: "none"
 disclaimer: "✔ Ceci est une capture réelle, pas une reconstitution : enregistrée le 20 septembre 2026 avec asciinema dans une session tmux dédiée, sans montage. Les noms de machines sont les vrais ; seules les pauses de plus de deux secondes sont raccourcies."
 ---
 

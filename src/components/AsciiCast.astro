@@ -17,10 +17,17 @@ interface Props {
    * Code : emprunter sa présentation y ferait passer un outil pour un autre.
    */
   session?: "claude-code" | "aucune";
+  /**
+   * « none » retire tout l'habillage — barre de titre, pied Claude Code et
+   * fausse barre tmux. Pour une PRISE RÉELLE faite en attachant le recorder
+   * à la session, la vraie barre tmux est DANS l'enregistrement : la
+   * reproduire autour ferait deux barres, dont une fabriquée (2026-09-20).
+   */
+  frame?: "alacritty" | "none";
 }
 
 const { src, caption, disclaimer, poster = "npt:0:06", containerId,
-        session = "claude-code" } = Astro.props;
+        session = "claude-code", frame = "alacritty" } = Astro.props;
 
 /* Each recording ran in its own throwaway container at its own moment, so the
    id and the clock in the status line have to differ from one cast to the
@@ -76,23 +83,26 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
 <figure class="cast">
   <p class="disclaimer">{disclaimer}</p>
 
-  <div class="term">
-    <div class="titlebar">
-      <span class="app">Alacritty</span>
-      <span class="btns"><i></i></span>
-    </div>
+  <div class:list={["term", { bare: frame === "none" }]}>
+    {frame !== "none" && (
+      <div class="titlebar">
+        <span class="app">Alacritty</span>
+        <span class="btns"><i></i></span>
+      </div>
+    )}
 
     <div class="screen">
       <div data-cast-src={src} data-cast-poster={poster}></div>
     </div>
 
-    {session === "claude-code" && (
+    {frame !== "none" && session === "claude-code" && (
       <div class="hint">
         <span><b>▶▶ auto mode on</b> (shift+tab to cycle) · esc to interrupt</span>
         <span class="rc">/rc</span>
       </div>
     )}
 
+    {frame !== "none" && (
     <div class="tmux">
       <span class="seg s0">{left[0]}</span>
       <span class="seg s1">{left[1]}</span>
@@ -102,6 +112,7 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
       </span>
       {right.map((r, i) => <span class:list={["seg", `r${i}`]}>{r}</span>)}
     </div>
+    )}
   </div>
 
   <figcaption>

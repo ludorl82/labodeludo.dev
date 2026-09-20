@@ -137,6 +137,10 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
       idleTimeLimit: 2,
       fit: "width",
       theme: "labo",
+      // Le lecteur impose sinon sa propre liste (Cascadia Code en tête), qui a
+      // les flèches powerline mais pas les icônes Nerd Font du prompt : l'icône
+      // de dossier sortait en rectangle vide. La police du site les a toutes.
+      terminalFontFamily: '"Hack Nerd Font Mono", ui-monospace, "SFMono-Regular", monospace',
     });
   });
 </script>

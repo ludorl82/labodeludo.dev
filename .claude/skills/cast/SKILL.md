@@ -56,8 +56,10 @@ FIXÉE (`window-size manual` + `resize-window` AVANT le recorder, sinon tmux
 la calque sur le dernier client attaché et le cast sort en 137×40) ; deux
 panneaux (commandes en haut, suivi en bas) ; fenêtre nommée comme le cast ;
 invite SANS thème (`cast-prompt-ludo.zsh` démonte p10k et pose
-`ludo@labo:~$`, deux couleurs de la palette ; `#(whoami)` devient « ludo »
-dans `status-left` de la session) ;
+`ludo@labo:~$` tout en blanc — pas de vert, la coloration syntaxique peint la
+commande en vert et l'invite se fondait dedans ; pas de gras, ça prend de la
+place ; les plugins restent — `#(whoami)` devient « ludo » dans `status-left`
+de la session) ;
 recorder `asciinema rec --idle-time-limit 2` dans un pty de taille fixe
 ATTACHÉ à la session (`cast-rec-attach.py`), pour que la barre tmux soit dans
 l'image. Sans dépôt en argument, les panneaux s'ouvrent dans `~` et l'invite est

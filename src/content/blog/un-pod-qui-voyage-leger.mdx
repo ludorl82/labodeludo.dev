@@ -75,6 +75,15 @@ Et après? Après, le même drain qui m'avait coincé donne ceci.
 
 Douze secondes entre l'éviction et le pod prêt sur un autre noeud. Et le détail qui compte : **aucune de ces secondes n'a servi à déplacer des données**. Le pod transporte son image et sa config. Tout ce qu'il sait est dans un bucket qui n'a même pas remarqué le drain. Le noeud est redevenu ce qu'il aurait toujours dû être, du CPU et de la RAM interchangeables.
 
+> **Mise à jour du 20 septembre 2026.** L'enregistrement au-dessus est une reconstitution, et il le dit. Celui-ci n'en est pas une. Six semaines plus tard, j'ai refait la même éviction pour vrai sur le cluster, dans une session tmux dédiée captée telle quelle : le pod tourne sur un noeud, je le cordonne, je redémarre le déploiement, et je regarde le pod renaître sur un autre noeud. 12,2 secondes, chronométrées par le shell. Le chiffre de la reconstitution était le bon, je ne le savais pas avec cette précision-là avant. Seuls les noms d'hôte sont substitués, et les pauses sont plafonnées à deux secondes.
+
+<AsciiCast
+  src="/casts/stateless-move-real.cast"
+  poster="npt:2:07"
+  caption="La vraie prise : cordon du noeud, redémarrage du déploiement, et le pod prêt sur un autre noeud en 12,2 secondes, chronomètre du shell à l'appui."
+  disclaimer="✔ Contrairement à l'enregistrement au-dessus, ceci est une capture réelle, faite le 20 septembre 2026 avec asciinema dans une session tmux dédiée, sans montage. Les noms d'hôte sont substitués et les pauses de plus de deux secondes sont raccourcies ; rien d'autre n'a été touché."
+/>
+
 ## Ce que ça change pour vrai
 
 La vitesse du drain, c'est la démonstration spectaculaire, mais ce n'est pas le vrai gain. Le vrai gain, c'est tout ce qui cesse d'être une opération spéciale :

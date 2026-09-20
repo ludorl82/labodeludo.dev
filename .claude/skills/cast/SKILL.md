@@ -129,6 +129,13 @@ puis **rejoue le cast dans pyte et refuse (rc 1) si un motif interdit est à
 l'écran à un moment quelconque**. Le grep sur le fichier ne prouve rien : zsh
 émet les lettres une à une entre séquences d'échappement.
 
+Il coupe aussi la FIN, juste avant la sortie de scène — le premier `exit`
+tapé ou le premier `^C` — et tient la dernière image trois secondes, pour
+qu'on lise le résultat sans regarder fermer les panneaux (Ludo, 2026-09-20 :
+« c'est pas nécessaire de voir les exit »). Là encore par l'écran : on repère
+l'image où une invite se termine par « $ exit », puis on remonte tant qu'elle
+montre le mot en train d'être tapé.
+
 Il ne coupe RIEN par le temps au-delà de ça : une coupe « juste avant la
 première activité » tombe au milieu d'une commande en train d'être tapée,
 puisque les caractères partent un par un — « watch -n 1 -t git diff --stat »

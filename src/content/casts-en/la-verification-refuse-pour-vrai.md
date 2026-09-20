@@ -3,7 +3,7 @@ title: "The check that refuses to publish, for real"
 pubDate: 2026-09-20
 description: "The same net as in the reconstruction, replayed for real on a copy of the repository: a clean pass, a domain planted in a DNS zone, the hard refusal, a one-line fix, and the proof in the sanitized tree."
 cast: "/casts/iac-sanitize-gate-real.cast"
-poster: "npt:0:36"
+poster: "npt:0:38"
 caption: "On top, the sanitizing script; at the bottom, git diff --stat watching. One forgotten domain is enough for it to refuse, one line is enough for it to pass again."
 article: "quatre-depots-pour-un-labo-au-complet"
 session: "aucune"

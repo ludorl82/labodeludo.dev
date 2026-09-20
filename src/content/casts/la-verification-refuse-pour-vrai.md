@@ -3,7 +3,7 @@ title: "La vérification qui refuse de publier, pour vrai"
 pubDate: 2026-09-20
 description: "Le même filet que dans la reconstitution, rejoué pour vrai sur une copie du dépôt : un passage propre, un domaine planté dans une zone DNS, le refus net, une ligne de correction, et la preuve dans l'arbre assaini."
 cast: "/casts/iac-sanitize-gate-real.cast"
-poster: "npt:0:36"
+poster: "npt:0:38"
 caption: "En haut, le script d'assainissement ; en bas, git diff --stat qui regarde. Un domaine oublié suffit pour qu'il refuse, une ligne suffit pour qu'il repasse."
 article: "quatre-depots-pour-un-labo-au-complet"
 session: "aucune"

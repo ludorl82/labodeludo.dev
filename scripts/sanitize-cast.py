@@ -19,11 +19,14 @@ prev = list(scr.display); tagged = []
 for e in ev:
     st.feed(e[2]); cur = list(scr.display)
     tagged.append((e[0], e[1], e[2], cur[:-1] == prev[:-1])); prev = cur
-first = next((i for i, x in enumerate(tagged) if x[0] > tagged[0][0] + 5 and not x[3]), 0)
-tcut = max(tagged[0][0], tagged[first][0] - 1.5)
-head = [x for x in tagged[:3]]                       # les premiers dessinent l'écran
-body = [x for x in tagged[3:] if x[0] >= tcut]
-tagged = head + body
+# PAS de coupe par le TEMPS. Une coupe « 1,5 s avant la première activité »
+# tombe au milieu d'une commande en train d'être tapée (les caractères partent
+# un par un) : les premiers caractères disparaissent, les survivants
+# s'impriment au curseur laissé par l'en-tête — « watch -n 1 -t git diff
+# --stat » devenait « t diff -- » dans le MAUVAIS panneau (vu par Ludo sur le
+# staging, 2026-09-20). Aucun événement n'est donc supprimé : la compression
+# « barre seulement » ci-dessous raccourcit d'elle-même l'attente du départ,
+# sans jamais couper une rafale de frappes.
 keep, i, shift = [], 0, 0.0
 while i < len(tagged):
     j = i

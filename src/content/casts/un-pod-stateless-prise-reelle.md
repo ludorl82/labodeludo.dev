@@ -3,7 +3,7 @@ title: "Un pod stateless change de noeud, pour vrai"
 pubDate: 2026-09-20
 description: "La même éviction que dans la reconstitution, refaite pour vrai sur le cluster et captée telle quelle : cordon du noeud, redémarrage du déploiement, et le pod prêt sur un autre noeud en 11,5 secondes, chronomètre du shell à l'appui, et un second panneau qui le regarde renaître en direct."
 cast: "/casts/stateless-move-real.cast"
-poster: "npt:0:28"
+poster: "npt:0:31"
 caption: "En haut, cinq commandes ; en bas, le pod qui meurt et renaît en direct. 11,5 secondes entre l'ordre et le pod prêt ailleurs. Aucune de ces secondes ne déplace des données : il n'y en a plus dans le pod."
 article: "un-pod-qui-voyage-leger"
 session: "aucune"

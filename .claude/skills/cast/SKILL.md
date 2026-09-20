@@ -102,13 +102,19 @@ CAST_SUBS='[["<id-du-conteneur>","console-labo"]]' \
   python3 scripts/sanitize-cast.py <prise.cast> public/casts/<slug>.cast
 ```
 
-Ce que le script fait : coupe avant le premier `clear` puis avant la première
-vraie frappe ; fond les suites où seule la barre tmux change (son horloge bat
+Ce que le script fait : coupe avant le premier `clear` ; fond les suites où seule la barre tmux change (son horloge bat
 chaque seconde et défait `--idle-time-limit`) en 2 s ; préfixe le préambule
 maison (« Prise réelle — pas une reconstitution … ») ; applique `CAST_SUBS` ;
 puis **rejoue le cast dans pyte et refuse (rc 1) si un motif interdit est à
 l'écran à un moment quelconque**. Le grep sur le fichier ne prouve rien : zsh
 émet les lettres une à une entre séquences d'échappement.
+
+Il ne coupe RIEN par le temps au-delà de ça : une coupe « juste avant la
+première activité » tombe au milieu d'une commande en train d'être tapée,
+puisque les caractères partent un par un — « watch -n 1 -t git diff --stat »
+est ressorti en « t diff -- », dans le mauvais panneau, et personne ne l'a vu
+avant le staging. C'est la compression « barre seulement » qui raccourcit
+l'attente du départ, et elle ne supprime jamais un caractère.
 
 Règles de substitution, apprises à la dure :
 - **même longueur seulement** (`dae8265a7fd2` → `console-labo`, 12 pour 12).

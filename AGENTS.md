@@ -32,6 +32,11 @@ prose never borrows Bob's catchphrases. When a request does not say who
 signs, the tag on the article decides. The skills are the source; the copies
 under `~/.claude/skills/` on the console are symlinks to these files.
 
+A third skill, `cast`, is not a voice: it is the procedure for recording a
+terminal cast **for real** (stage, take, sanitize with an on-screen check,
+integrate, PR). Load it whenever a cast is to be recorded, redone or
+published; the look itself is documented in `net-cfgs/asciicast-style.md`.
+
 ## Development
 
 When starting the dev server, use background mode:

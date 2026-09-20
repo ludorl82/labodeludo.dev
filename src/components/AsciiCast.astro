@@ -147,6 +147,26 @@ const right = [fakeClock(src), stamp, containerId ?? fakeContainerId(src)];
   .asciinema-player-theme-labo {
     --term-color-background: #181818;
     --term-color-foreground: #d8d8d8;
+    /* Les seize couleurs de base, celles que p10k demande par numéro (0, 3,
+       4, 254…) : sans elles le lecteur les rendait en gris. Fond et texte
+       ci-dessus sont les valeurs par défaut d'Alacritty, donc la palette est
+       la sienne aussi (2026-09-20) — à resampler si le terminal change. */
+    --term-color-0: #181818;
+    --term-color-1: #ac4242;
+    --term-color-2: #90a959;
+    --term-color-3: #f4bf75;
+    --term-color-4: #6a9fb5;
+    --term-color-5: #aa759f;
+    --term-color-6: #75b5aa;
+    --term-color-7: #d0d0d0;
+    --term-color-8: #6b6b6b;
+    --term-color-9: #c55555;
+    --term-color-10: #aac474;
+    --term-color-11: #feca88;
+    --term-color-12: #82b8c8;
+    --term-color-13: #c28cb8;
+    --term-color-14: #93d3c3;
+    --term-color-15: #f5f5f5;
   }
 
   .cast .ap-player {

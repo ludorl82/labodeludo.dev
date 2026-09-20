@@ -69,9 +69,9 @@ And afterwards? Afterwards, the same drain that had cornered me gives this.
 <AsciiCast
   src="/casts/stateless-move-real.cast"
   frame="none"
-  poster="npt:0:39"
+  poster="npt:0:42"
   caption="For real, six weeks after the migration: on top I cordon the node and restart the deployment, at the bottom a kubectl get pods -w watches the old pod die and the new one come back on another node, 12 seconds on the shell's stopwatch."
-  disclaimer="✔ This is a real capture, made on September 20, 2026 with asciinema in a dedicated tmux session, with no editing. The machine names are the real ones; only pauses longer than two seconds are shortened."
+  disclaimer="✔ This is a real capture, made on September 20, 2026 with asciinema in a dedicated tmux session, with no editing. The machine names are the real ones, the prompt shows “ludo”, the site's short name, and only pauses longer than two seconds are shortened."
 />
 
 Twelve seconds between the eviction and the pod being ready on another node. And the detail that matters: **not one of those seconds was spent moving data**. The pod carries its image and its config. Everything it knows sits in a bucket that did not even notice the drain. The node went back to being what it should always have been, interchangeable CPU and RAM.

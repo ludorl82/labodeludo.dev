@@ -38,18 +38,30 @@ envargs=(); for kv in ${CAST_ENV:-}; do envargs+=(-e "$kv"); done
 "${T[@]}" new -d -s cast "${envargs[@]}" -x "$cols" -y "$pane_rows" -c "$cwd"
 "${T[@]}" set -t cast window-size manual
 "${T[@]}" resize-window -t cast -x "$cols" -y "$pane_rows"
-"${T[@]}" split-window -v -l 9 -t cast -c "$cwd"
+# Disposition, de haut en bas : les COMMANDES, un panneau de suivi optionnel
+# (CAST_WATCH=1 : un `get pods -w` qui montre l'effet en direct), et le
+# panneau de NARRATION, réservé au texte — ni invite ni commande, voir
+# cast-narrate.sh. Ludo, 2026-09-20 : « on peut garder le panneau du bas pour
+# la narration ».
+if [ "${CAST_WATCH:-0}" = 1 ]; then
+  # `-l` donne la taille du NOUVEAU panneau, et le second split porte sur le
+  # panneau qui vient de naître : 13 d'abord (8 + 4 + la séparatrice), puis 4.
+  "${T[@]}" split-window -v -l 13 -t cast -c "$cwd"
+  "${T[@]}" split-window -v -l 4 -t cast -c "$cwd"
+else
+  "${T[@]}" split-window -v -l 5 -t cast -c "$cwd"
+fi
 win="$("${T[@]}" display -p -t cast '#{window_index}')"
 "${T[@]}" rename-window -t "cast:$win" "$name"
 "${T[@]}" set -t "cast:$win" automatic-rename off
 sl="$("${T[@]}" show -gv status-left)"
 "${T[@]}" set -t cast status-left "$(printf '%s' "$sl" | sed 's/#(whoami)/ludo/')"
-for p in 1 2; do
+for p in $("${T[@]}" list-panes -t "cast:$win" -F "#{pane_index}"); do
   "${T[@]}" send-keys -t "cast:$win.$p" " source $here/cast-prompt-ludo.zsh; clear" Enter
 done
 "${T[@]}" select-pane -t "cast:$win.1"
 sleep 2
-for p in 1 2; do
+for p in $("${T[@]}" list-panes -t "cast:$win" -F "#{pane_index}"); do
   line="$("${T[@]}" capture-pane -p -t "cast:$win.$p" | grep -v '^\s*$' | head -1)"
   case "$line" in *"ludo@labo:"*) ;; *) echo "panneau $p : invite inattendue : $line" >&2; exit 1;; esac
 done

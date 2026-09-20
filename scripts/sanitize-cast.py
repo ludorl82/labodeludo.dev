@@ -19,11 +19,14 @@ prev = list(scr.display); tagged = []
 for e in ev:
     st.feed(e[2]); cur = list(scr.display)
     tagged.append((e[0], e[1], e[2], cur[:-1] == prev[:-1])); prev = cur
-first = next((i for i, x in enumerate(tagged) if x[0] > tagged[0][0] + 5 and not x[3]), 0)
-tcut = max(tagged[0][0], tagged[first][0] - 1.5)
-head = [x for x in tagged[:3]]                       # les premiers dessinent l'écran
-body = [x for x in tagged[3:] if x[0] >= tcut]
-tagged = head + body
+# PAS de coupe par le TEMPS. Une coupe « 1,5 s avant la première activité »
+# tombe au milieu d'une commande en train d'être tapée (les caractères partent
+# un par un) : les premiers caractères disparaissent, les survivants
+# s'impriment au curseur laissé par l'en-tête — « watch -n 1 -t git diff
+# --stat » devenait « t diff -- » dans le MAUVAIS panneau (vu par Ludo sur le
+# staging, 2026-09-20). Aucun événement n'est donc supprimé : la compression
+# « barre seulement » ci-dessous raccourcit d'elle-même l'attente du départ,
+# sans jamais couper une rafale de frappes.
 keep, i, shift = [], 0, 0.0
 while i < len(tagged):
     j = i
@@ -79,6 +82,31 @@ pre = ("\x1b[H\x1b[2J\r\n"
        f"     {DIM}avec asciinema dans une session tmux dédiée, telle quelle. Seules les pauses{R}\r\n"
        f"     {DIM}de plus de deux secondes sont raccourcies.  labodeludo.dev/casts/{R}\r\n")
 ev = [[0.0,"o",pre]] + ev
+# 1c. La sortie de scène ne s'enregistre pas. On coupe juste avant le premier
+#     `exit` tapé, et on tient la dernière image trois secondes : le lecteur a
+#     le temps de lire le résultat, et personne n'a besoin de voir fermer les
+#     panneaux. Détection par l'ÉCRAN, jamais par le temps (voir 1b) : on
+#     repère la première image où une invite se termine par « $ exit », puis on
+#     remonte tant qu'elle montre le mot en train d'être tapé.
+scr = pyte.Screen(W, H); st = pyte.Stream(scr)
+partial = re.compile(r"\$ e(x(i(t)?)?)?\s*$")
+full = re.compile(r"\$ exit\s*$")
+# Le `^C` qui arrête le panneau de narration fait partie de la sortie de
+# scène, lui aussi : on coupe au PREMIER des deux.
+seen_full = None; flags = []
+for i, e in enumerate(ev):
+    st.feed(e[2])
+    lines = [l.rstrip() for l in scr.display]
+    flags.append(any(partial.search(l) for l in lines))
+    if seen_full is None and (any(full.search(l) for l in lines)
+                              or any("^C" in l for l in lines)):
+        seen_full = i
+if seen_full is not None:
+    cut = seen_full
+    while cut > 0 and flags[cut - 1]: cut -= 1
+    ev = ev[:cut]
+    ev.append([round(ev[-1][0] + 3.0, 3), "o", "\x1b[0m"])
+
 hdr["title"] = "Un pod stateless change de nœud en 12 secondes (prise réelle)"
 hdr.pop("timestamp", None)
 with open(dst,"w") as f:

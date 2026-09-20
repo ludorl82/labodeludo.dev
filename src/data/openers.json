@@ -1,17 +1,18 @@
 {
   "curated": [
-    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?"
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
+    "Comment tes dessins se redessinent tout seuls la nuit ?"
   ],
-  "generated": "2026-09-19T09:11:27Z",
+  "generated": "2026-09-20T08:33:56Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "How do you back up your cluster?",
     "which model powers you?",
+    "How do you back up your cluster?",
     "c'est quoi ton setup complet ?",
     "Quels articles parlent de Kubernetes ?",
-    "Comment tu as fait pour que Frigate utilise le GPU?",
-    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?"
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
+    "Comment tes dessins se redessinent tout seuls la nuit ?"
   ],
   "written": []
 }

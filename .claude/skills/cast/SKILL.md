@@ -37,8 +37,19 @@ pourquoi chaque ordre a été appris.
 ## 1. Le plateau
 
 ```bash
-scripts/cast-stage.sh <nom-du-cast> <prise.cast>        # 96×26 par défaut
+scripts/cast-stage.sh <nom-du-cast> <prise.cast> [96] [26] [dépôt à cloner]
 ```
+
+Avec un dépôt en cinquième argument, le script le clone JETABLE directement
+sous `~/<nom>` sur master et y ouvre les deux panneaux : l'invite reste
+courte (« ludo@labo:~/cloudflare-iac$ »), rien ne touche l'arbre réel sous
+`~/git/ludorl82/`, et on efface le clone après la prise. Un clone n'a plus ses dépôts frères :
+ce que le script attend d'eux se passe par `CAST_ENV="VAR=valeur"` (poussé
+dans la session tmux, jamais tapé), par exemple `LAB_HOST_MAP` pour les
+scripts d'assainissement — sinon leur message d'erreur imprime un chemin
+complet avec le vrai nom d'utilisateur, et la prise est bonne à jeter. Le prompt du plateau est SANS thème : p10k est démonté pour la session et
+l'invite redevient « ludo@labo:~/cloudflare-iac$ », au branding du site
+(Ludo, 2026-09-20 : « retire les thèmes que j'utilise pour l'enregistrement »).
 
 Le script fait, dans l'ordre : session `cast` sur `-L console` à taille
 FIXÉE (`window-size manual` + `resize-window` AVANT le recorder, sinon tmux
@@ -64,7 +75,7 @@ pas tapées par Ludo ; commandes et sorties réelles ». Quand je tape, la
 prise entière tient dans UNE commande Bash avec des `sleep` entre les
 étapes ; faire une répétition d'abord, elle révèle ce que l'invite montre
 (branche du clone, chemin) et ce que les sorties impriment. Rejouer sur une
-COPIE du dépôt (`git clone` dans `~/tmp/…`, sur master), jamais dans l'arbre
+COPIE du dépôt (le cinquième argument de `cast-stage.sh`), jamais dans l'arbre
 de travail, et ne jamais `ls` un dossier dont les noms de fichiers sont
 sensibles (les zones DNS portent les vrais domaines).
 

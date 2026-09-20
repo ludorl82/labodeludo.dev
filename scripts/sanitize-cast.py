@@ -87,7 +87,7 @@ with open(dst,"w") as f:
 # 4. grep bloquant : rejouer dans un émulateur et lire l'ÉCRAN après chaque événement
 import pyte
 scr = pyte.Screen(hdr["width"], hdr["height"]); st = pyte.Stream(scr)
-BAD = ["worker","coquille","tptpt","172.16.","10.10.","labodeludo.dev/api"]
+BAD = [__import__("os").environ.get("USER","ludorl82"),"worker","coquille","tptpt","172.16.","10.10.","labodeludo.dev/api"]
 seen = {}
 for e in ev:
     st.feed(e[2])

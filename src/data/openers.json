@@ -1,18 +1,15 @@
 {
-  "curated": [
-    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "Comment tes dessins se redessinent tout seuls la nuit ?"
-  ],
-  "generated": "2026-09-20T08:33:56Z",
+  "curated": [],
+  "generated": "2026-09-21T08:33:39Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "which model powers you?",
     "How do you back up your cluster?",
-    "c'est quoi ton setup complet ?",
+    "What model runs your chat?",
     "Quels articles parlent de Kubernetes ?",
-    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "Comment tes dessins se redessinent tout seuls la nuit ?"
+    "T'as un article sur Proxmox ?",
+    "C'est quoi ton modèle ?",
+    "Comment tu as fait pour que Frigate utilise le GPU?"
   ],
   "written": []
 }

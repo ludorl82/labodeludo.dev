@@ -1,15 +1,15 @@
 {
   "curated": [],
-  "generated": "2026-09-21T08:33:39Z",
+  "generated": "2026-09-22T08:33:17Z",
   "openers": [
     "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "How do you back up your cluster?",
     "What model runs your chat?",
+    "which model powers you?",
+    "c'est quoi ton setup complet ?",
     "Quels articles parlent de Kubernetes ?",
     "T'as un article sur Proxmox ?",
-    "C'est quoi ton modèle ?",
-    "Comment tu as fait pour que Frigate utilise le GPU?"
+    "cest quoi qui fait rouler le blogue ?"
   ],
   "written": []
 }

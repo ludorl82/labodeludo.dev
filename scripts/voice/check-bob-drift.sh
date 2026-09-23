@@ -23,8 +23,21 @@ rc=0
 if out=$(scripts/voice/apply-voice-prompt.sh --check 2>&1); then
   echo "voice: ok"
 else
+  vrc=$?
   echo "$out" | sed 's/^/voice: /'
-  rc=1
+  # apply-voice-prompt.sh exits 1 ONLY on a real prompt difference. Anything
+  # else means the comparison never happened: it runs under `set -e`, so an
+  # unreachable or unauthenticated automatron dies at the `live=$(ssh ...)`
+  # line carrying ssh's own 255. Collapsing every non-zero into 1 turned that
+  # into "Bob has drifted" -- on 2026-09-22 the fleet-wide key rotation locked
+  # this check out of HA and Kuma 76 went red with the persona untouched and
+  # the chat fingerprint green. That is the exact case the header promises to
+  # map to 2.
+  if [ "$vrc" = 1 ]; then
+    rc=1
+  else
+    [ "$rc" = 0 ] && rc=2
+  fi
 fi
 
 want=$(node scripts/voice/persona-fingerprint.mjs) || { echo "chat: cannot compute fingerprint"; exit 2; }

@@ -205,13 +205,16 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     //
     // The chatbot's retrieval side landed in September 2026 and is the same
     // thing this role already names — local LLM inference. `external:ollama`
-    // is the endpoint serving the chat model; `app:embeddings` vectorises a
-    // question before it is answered.
+    // is the endpoint serving the chat model, and it vectorises the question
+    // too: the embedding model moved back into the HOST's ollama on
+    // 2026-09-15, when the third card stopped being reserved for the cluster.
+    // `app:embeddings` was the k3s workload that used to do it, and it left
+    // the topology with that move — the work did not go away, it went one
+    // layer down into a node this role already claims.
     nodes: [
       "host:gpu-01",
       "host:gaming-01",
       "external:ollama",
-      "app:embeddings",
     ],
   },
   "hote-conteneurs": {
@@ -247,6 +250,11 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "host:vm-02",
       "host:vm-03",
       "app:argocd",
+      // The gate that reverts a red commit and blocks the branch for thirty
+      // days. Same family as ArgoCD and it belongs beside it: both are the
+      // cluster's own GitOps machinery rather than a workload it hosts for
+      // somebody else.
+      "app:iac-gate",
     ],
   },
   domotique: {

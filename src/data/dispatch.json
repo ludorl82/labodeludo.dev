@@ -1,11 +1,11 @@
 {
   "counts": {
-    "added": 5,
-    "edgesAdded": 7,
-    "edgesRemoved": 0,
-    "removed": 0,
+    "added": 2,
+    "edgesAdded": 2,
+    "edgesRemoved": 4,
+    "removed": 2,
     "renamed": 0
   },
-  "dispatch": "Y'a un nouveau service embeddings sur vm-03, avec le DNS ollama.pub.example.com qui pointe vers lui et l'external ollama. Sept liens de plus dans le parc depuis à matin.",
-  "generated": "2026-09-15T11:47:53Z"
+  "dispatch": "On a viré embeddings pis ajouté iac-gate dans le parc. Ça fait deux liens de plus, mais quatre de moins au total.",
+  "generated": "2026-09-23T13:30:36Z"
 }

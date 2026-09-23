@@ -81,12 +81,12 @@
       "to": "cluster:k3s"
     },
     {
-      "from": "app:embeddings",
+      "from": "app:frigate",
       "kind": "part-of",
       "to": "cluster:k3s"
     },
     {
-      "from": "app:frigate",
+      "from": "app:iac-gate",
       "kind": "part-of",
       "to": "cluster:k3s"
     },
@@ -278,17 +278,7 @@
     {
       "from": "dns:ollama.pub.example.com",
       "kind": "routes-to",
-      "to": "app:embeddings"
-    },
-    {
-      "from": "dns:ollama.pub.example.com",
-      "kind": "routes-to",
       "to": "external:ollama"
-    },
-    {
-      "from": "dns:ollama.pub.example.com",
-      "kind": "routes-to",
-      "to": "tunnel:k3s"
     },
     {
       "from": "dns:ollama.pub.example.com",
@@ -601,16 +591,6 @@
       "to": "app:cronicle"
     },
     {
-      "from": "workload:embeddings/embeddings",
-      "kind": "part-of",
-      "to": "app:embeddings"
-    },
-    {
-      "from": "workload:embeddings/embeddings",
-      "kind": "pinned-to",
-      "to": "host:gpu-01"
-    },
-    {
       "from": "workload:frigate/frigate",
       "kind": "part-of",
       "to": "app:frigate"
@@ -619,6 +599,11 @@
       "from": "workload:frigate/frigate",
       "kind": "pinned-to",
       "to": "host:gpu-02"
+    },
+    {
+      "from": "workload:iac-gate/iac-gate",
+      "kind": "part-of",
+      "to": "app:iac-gate"
     },
     {
       "from": "workload:keepass-webdav/webdav",
@@ -731,7 +716,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-09-23T08:46:03+00:00",
+  "generated": "2026-09-23T13:30:32+00:00",
   "nodes": [
     {
       "id": "access:cronicle",
@@ -907,18 +892,6 @@
       "source": "argocd/apps/cronicle.yaml"
     },
     {
-      "id": "app:embeddings",
-      "kind": "app",
-      "label": "embeddings",
-      "layer": "cluster",
-      "meta": {
-        "namespace": "embeddings",
-        "path": "embeddings"
-      },
-      "repo": "k3s-iac-public",
-      "source": "argocd/apps/embeddings.yaml"
-    },
-    {
       "id": "app:frigate",
       "kind": "app",
       "label": "frigate",
@@ -929,6 +902,18 @@
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/frigate.yaml"
+    },
+    {
+      "id": "app:iac-gate",
+      "kind": "app",
+      "label": "iac-gate",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "iac-gate",
+        "path": "iac-gate"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/iac-gate.yaml"
     },
     {
       "id": "app:keepass-webdav",
@@ -1281,7 +1266,7 @@
       "label": "ollama.pub.example.com",
       "layer": "edge",
       "meta": {
-        "origin": "http://embeddings.embeddings.svc.cluster.local:11434"
+        "origin": "http://192.0.2.129:11434"
       },
       "repo": "cloudflare-iac-public",
       "source": "live/tunnels.tf"
@@ -1442,6 +1427,7 @@
         "class": "vm",
         "modules": [
           "console-container",
+          "console-log-shipping",
           "jumphost-tools",
           "private-ca"
         ],
@@ -1461,6 +1447,7 @@
         "k3sRole": "agent",
         "modules": [
           "k3s-agent",
+          "labo-gpus",
           "private-ca",
           "ups-client"
         ],
@@ -1595,6 +1582,7 @@
         "class": "vm",
         "k3sRole": "agent",
         "modules": [
+          "comin",
           "k3s-agent",
           "private-ca"
         ],
@@ -1613,6 +1601,7 @@
         "class": "vm",
         "k3sRole": "agent",
         "modules": [
+          "comin",
           "k3s-agent",
           "private-ca"
         ],
@@ -2034,17 +2023,6 @@
       "source": "cronicle/deployment.yaml"
     },
     {
-      "id": "workload:embeddings/embeddings",
-      "kind": "workload",
-      "label": "embeddings",
-      "layer": "cluster",
-      "meta": {
-        "kind": "Deployment"
-      },
-      "repo": "k3s-iac-public",
-      "source": "embeddings/deployment.yaml"
-    },
-    {
       "id": "workload:frigate/frigate",
       "kind": "workload",
       "label": "frigate",
@@ -2055,6 +2033,17 @@
       },
       "repo": "k3s-iac-public",
       "source": "frigate/deployment.yaml"
+    },
+    {
+      "id": "workload:iac-gate/iac-gate",
+      "kind": "workload",
+      "label": "iac-gate",
+      "layer": "cluster",
+      "meta": {
+        "kind": "CronJob"
+      },
+      "repo": "k3s-iac-public",
+      "source": "iac-gate/cronjob.yaml"
     },
     {
       "id": "workload:keepass-webdav/webdav",
@@ -2237,20 +2226,20 @@
   ],
   "sources": {
     "aws-iac-public": {
-      "commit": "a0fe189",
-      "date": "2026-09-15T07:36:15-04:00"
+      "commit": "7413f50",
+      "date": "2026-09-23T07:26:37-04:00"
     },
     "cloudflare-iac-public": {
-      "commit": "026e775",
-      "date": "2026-09-15T07:36:25-04:00"
+      "commit": "9a74760",
+      "date": "2026-09-23T07:26:48-04:00"
     },
     "k3s-iac-public": {
-      "commit": "3290faf",
-      "date": "2026-09-15T07:36:10-04:00"
+      "commit": "0647ac5",
+      "date": "2026-09-23T07:26:32-04:00"
     },
     "nixos-iac-public": {
-      "commit": "5f9275f",
-      "date": "2026-09-15T07:36:06-04:00"
+      "commit": "6a5b3f3",
+      "date": "2026-09-23T07:26:27-04:00"
     }
   },
   "topologyVersion": 1

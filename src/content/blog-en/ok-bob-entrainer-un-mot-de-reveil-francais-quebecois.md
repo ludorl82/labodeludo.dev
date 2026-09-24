@@ -3,6 +3,7 @@ title: "\"Ok Bob\": training a Québécois French wake word from scratch"
 pubDate: 2026-07-14
 description: "The default wake-word training pipeline for the home voice assistant has no Québécois French voice. The fix: train my own, with my own name baked in, and along the way discover why two speakers in the same open floor plan kept answering for each other."
 tags: ["Maison", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-ok-bob-en.svg"
 ---
 

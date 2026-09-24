@@ -3,6 +3,7 @@ title: "Donner une adresse IPv6 propre et prévisible à chaque serveur de mon r
 pubDate: 2026-07-02
 description: "Mise en place d'une convention d'adressage IPv6 (suffixe = octet IPv4 en hexadécimal) sur un réseau de serveurs en DHCPv6 stateful. Couvre la découverte de DUID par capture réseau, un piège de rechargement de configuration après changement de moteur DHCP, et un cas de client DHCPv6 attaché à la mauvaise interface."
 tags: ["Labo", "Maison", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-ipv6-convention.png"
 ---
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_

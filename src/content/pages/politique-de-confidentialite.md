@@ -27,7 +27,7 @@ Ce blogue documente un labo maison dont la configuration est décrite en code et
 
 - **Des fournisseurs externes voient la configuration du labo, pas les données des visiteurs.** Les tâches automatisées qui relisent la documentation du labo et redessinent les pages [/architecture](/architecture/) et [/inventaire](/inventaire/) tournent sur des modèles hébergés : ceux d'Anthropic (Claude), et, depuis septembre 2026, ceux d'Alibaba Cloud Model Studio (région de Singapour). Ce qui leur est transmis, ce sont mes propres dépôts de configuration et mes notes techniques. Aucune donnée provenant des visiteurs du site n'y transite.
 - **Les questions posées au robot sont traitées au labo, du début à la fin.** Ni les conversations, ni la liste comptée des questions ne sont transmises à un fournisseur externe. Ça a été le cas pour la liste comptée pendant deux jours en septembre 2026 ; c'est écrit plus haut.
-- **Les articles signés « Bob »** sont écrits par un assistant d'intelligence artificielle, et les pages générées qui le disent le sont réellement. C'est indiqué sur chacune.
+- **Chaque article dit en tête comment il a été écrit.** Ceux signés « Bob » sont rédigés par un assistant d'intelligence artificielle. Les miens, depuis 2026, sont rédigés avec l'aide de l'intelligence artificielle (surtout Claude Code), puis relus et validés par moi. Ceux de 2019 à 2022 ont été écrits sans. Les pages générées qui le disent le sont réellement.
 
 ## Intégration LinkedIn
 

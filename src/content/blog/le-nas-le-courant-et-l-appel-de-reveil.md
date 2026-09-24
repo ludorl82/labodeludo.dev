@@ -3,6 +3,7 @@ title: "Le NAS, le courant, et l'appel de réveil : mettre le stockage sur batte
 pubDate: 2026-08-04
 description: "Lundi matin, le NAS est tombé raide mort pendant que le courant clignotait dans toute la maison — et il est resté couché, par configuration. Le lendemain, on a mis les deux onduleurs sous surveillance NUT depuis les Raspberry Pi, abonné le NAS à son propre onduleur pour qu'il s'éteigne proprement, puis découvert le paradoxe : un arrêt propre, c'est exactement ce qui l'empêche de se rallumer tout seul. La solution tient en un paquet magique."
 tags: ["Labo", "DevOps", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-nas-ups-wake.svg"
 ---
 

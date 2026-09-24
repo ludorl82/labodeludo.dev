@@ -3,6 +3,7 @@ title: "Créer son réducteur d'URL sur AWS"
 pubDate: 2019-08-27
 description: "Dans cette publication, je vais vous montrer comment on peut créer simplement un réducteur d'URL hébergé dans S3. Pour ce faire, nous aurons besoin d'un petit nom de domaine et d'un compte AWS."
 tags: ["Cloud", "ludo"]
+ia: "aucune"
 heroImage: "/images/blog/2019/08/reducteur-d-url-sans-serveur-compresse.jpg"
 ---
 Dans cette publication, je vais vous montrer comment on peut créer simplement un réducteur d'URL hébergé dans **S3**. Pour ce faire, nous aurons besoin d'un petit nom de domaine et d'un compte **AWS**.

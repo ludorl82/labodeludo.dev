@@ -3,6 +3,7 @@ title: "Automatiser le déploiement de son réducteur d'URL avec Terraform"
 pubDate: 2019-10-24
 description: "Dans cette deuxième partie, nous allons automatiser le déploiement de l'infrastructure du réducteur d'URL présenté précédemment, à laquelle nous allons ajouter quelques morceaux. Je vous présenterai l'architecture et…"
 tags: ["Cloud", "Labo", "ludo"]
+ia: "aucune"
 heroImage: "/images/blog/2019/10/og-image-large-e60c82fe1.png"
 ---
 Dans cette deuxième partie, nous allons automatiser le déploiement de l'infrastructure du réducteur d'URL présenté précédemment, à laquelle nous allons ajouter quelques morceaux. Je vous présenterai l'architecture et les coûts totaux et je vous guiderai dans son déploiement avec **Terraform**. Suite à ce laboratoire vous aurez un réducteur d'URL que vous pourrez gérer facilement avec la console de AWS.

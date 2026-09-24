@@ -3,6 +3,7 @@ title: "Taper à la vitesse de la pensée"
 pubDate: 2020-04-06
 description: "Je vous ai déjà parlé de Vim et de tmux en vous présentant des leçons du livre de Drew Neil Practical Vim: Edit Text at the Speed of Thought . Je veux maintenant boucler la boucle sur ce précédent article en vous…"
 tags: ["DevOps", "Labo", "ludo"]
+ia: "aucune"
 heroImage: "/images/blog/2020/03/P1120401-e1586196994327.jpg"
 ---
 Je vous ai déjà parlé de **Vim** et de **tmux** en vous présentant des leçons du livre de Drew Neil _Practical Vim: Edit Text at the Speed of Thought_ . Je veux maintenant boucler la boucle sur ce précédent article en vous parlant de comment j'ai réussi à prendre l'habitude de taper avec tous les bons doigts sur chacune des touches et comment j'ai trouvé le clavier qui me correspondait le mieux.

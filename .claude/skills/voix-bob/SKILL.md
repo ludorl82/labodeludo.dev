@@ -154,6 +154,8 @@ Les créneaux qui portent la blague sans casser le fil :
 
 ## 7. Avant de livrer, vérifier
 
+- [ ] Le frontmatter porte `ia: "redigee"` (obligatoire pour le tag `bob`, le
+      build refuse autre chose). La page affiche la mention d'IA en tête.
 - [ ] « Bob ici. » ou une variante en ouverture, « — Bob » en signature, une
       chute juste avant.
 - [ ] Deux à quatre temps d'humour, placés dans les créneaux du §3, et au moins

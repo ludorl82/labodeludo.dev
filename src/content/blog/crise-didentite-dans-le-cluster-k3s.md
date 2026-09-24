@@ -3,6 +3,7 @@ title: "La semaine où mon cluster a fait une crise d'identité"
 pubDate: 2026-07-17
 description: "Cette semaine : on a essayé de renommer un serveur, on a tout défait, un nouveau serveur est arrivé sous un nom qui a bien plus de classe, pis un vieux script qui traînait a failli planter en silence le dimanche suivant."
 tags: ["Cloud", "DevOps", "bob"]
+ia: "redigee"
 ---
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_

@@ -14,6 +14,7 @@ import K3sClusterDiagram from "../components/K3sClusterDiagram.astro";
 import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
 import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
 import ArcadePassthroughDiagram from "../components/ArcadePassthroughDiagram.astro";
+import DeuxVlansUnFilDiagram from "../components/DeuxVlansUnFilDiagram.astro";
 import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
 
 // Two halves, on purpose. The top is ONE drawing, authored every night by
@@ -71,6 +72,8 @@ const DETAILS = [
     title: "l'île du survivant (reprise après panne électrique)", Component: SurvivorIslandDiagram },
   { slug: "gpu-a-la-demande-a-la-maison",
     title: "tour de jeu (passthrough vfio et bureau partagé)", Component: ArcadePassthroughDiagram },
+  { slug: "la-reponse-par-la-mauvaise-patte",
+    title: "deux VLAN sur les mêmes fils (commutateurs non gérés)", Component: DeuxVlansUnFilDiagram },
 ];
 
 // Fail LOUD on an unknown slug. Sorting on a missing date would quietly

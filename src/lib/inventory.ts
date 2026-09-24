@@ -114,6 +114,8 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "convention-ipv6-vlan-serveurs",
       "decommissionner-un-serveur-dns-maison-de-ca-a-lair-simple-a-on-a-casse-sa-propre-resolution-dns",
       "renumeroter-les-adresses-ip-de-mon-cluster-k3s",
+      "la-reponse-par-la-mauvaise-patte",
+      "corollaire-la-porte-d-en-arriere",
     ],
     nodes: [
       "external:router",
@@ -272,7 +274,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
   "postes-personnels": {
     name: "Postes personnels",
     description: "Ordinateurs et téléphones personnels sur le réseau local.",
-    articles: [],
+    articles: ["la-reponse-par-la-mauvaise-patte"],
     // The exception to the note on `nodes` above: these two ARE declared
     // (NixOS gaming VMs), so they get a role even though the rest of this
     // one — laptops, phones — stays deliberately invisible to the IaC.

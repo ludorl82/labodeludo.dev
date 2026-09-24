@@ -1,0 +1,180 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+  lang?: "fr" | "en";
+}
+
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma : un seul module NixOS, dual-homed-routing.nix, pose trois règles de routage sur neuf hôtes. Chaque hôte ne déclare que son dernier octet et, au besoin, le nom de ses deux unités réseau. comin, sur chaque hôte, tire la branche principale du dépôt et bascule en moins de deux minutes. Les neuf hôtes se rangent en trois façons d'être câblés : trois VM à deux cartes, trois machines physiques dont le VLAN 50 est la carte nue et le VLAN 10 une sous-interface étiquetée, et trois hyperviseurs libvirt dont les adresses vivent sur des macvlan. Les machines à une seule patte importent le module sans l'activer.",
+    module: "modules/dual-homed-routing.nix",
+    decl: "ce qu'un hôte déclare",
+    r100: "100 · de 203.0.113.N : table principale,",
+    r100b: "sans sa route par défaut",
+    r101: "101 · de 203.0.113.N : table 50 (pfSense)",
+    r102: "102 · de 192.0.2.N vers le LAN :",
+    r102b: "table 10 (pfSense)",
+    comin1: "comin tire master,",
+    comin2: "construit, bascule",
+    comin3: "moins de 2 min",
+    g1: "VM à deux cartes",
+    g1h: "console-vm · vm-01 · vm-02",
+    g1u: "20-vlan50 et 10-lan (les défauts)",
+    g2: "machines physiques : 50 nu, 10 étiqueté",
+    g2h: "pi-01 · pi-02 · gpu-02",
+    g2u: "10-end0 ou 10-eno1, et 20-vlan10",
+    g3: "hyperviseurs libvirt (macvtap)",
+    g3h: "gpu-01 · srv-01 · gaming-01",
+    g3u: "25-mvhost50 et 30-mvhost (macvlan)",
+    inerte: "importé partout, inerte ailleurs : cloud-01, vm-03, arcade1 et arcade2 n'ont qu'une patte",
+  },
+  en: {
+    ariaLabel:
+      "Diagram: a single NixOS module, dual-homed-routing.nix, sets three routing rules on nine hosts. Each host declares only its last octet and, when needed, the names of its two network units. comin, on every host, pulls the repository's main branch and switches in under two minutes. The nine hosts fall into three wiring shapes: three VMs with two NICs, three physical machines whose VLAN 50 is the untagged NIC and VLAN 10 a tagged sub-interface, and three libvirt hypervisors whose addresses live on macvlans. Single-leg machines import the module without enabling it.",
+    module: "modules/dual-homed-routing.nix",
+    decl: "what a host declares",
+    r100: "100 · from 203.0.113.N: main table,",
+    r100b: "minus its default route",
+    r101: "101 · from 203.0.113.N: table 50 (pfSense)",
+    r102: "102 · from 192.0.2.N to the LAN:",
+    r102b: "table 10 (pfSense)",
+    comin1: "comin pulls master,",
+    comin2: "builds, switches",
+    comin3: "under 2 min",
+    g1: "VMs with two NICs",
+    g1h: "console-vm · vm-01 · vm-02",
+    g1u: "20-vlan50 and 10-lan (the defaults)",
+    g2: "physical: 50 untagged, 10 tagged",
+    g2h: "pi-01 · pi-02 · gpu-02",
+    g2u: "10-end0 or 10-eno1, and 20-vlan10",
+    g3: "libvirt hypervisors (macvtap)",
+    g3h: "gpu-01 · srv-01 · gaming-01",
+    g3u: "25-mvhost50 and 30-mvhost (macvlan)",
+    inerte: "imported everywhere, inert elsewhere: cloud-01, vm-03, arcade1 and arcade2 have a single leg",
+  },
+} as const;
+
+const t = copy[lang];
+---
+
+<figure class="module-flotte-diagram">
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 370" role="img" aria-label={t.ariaLabel}>
+      <defs>
+        <marker id="mf-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- le module -->
+      <rect x="16" y="30" width="300" height="262" rx="6" fill="var(--panel)" stroke="var(--accent-live)" stroke-width="1.5" />
+      <text x="166" y="54" text-anchor="middle" font-family="var(--font-mono)" font-size="11" font-weight="600" fill="var(--accent-live)">{t.module}</text>
+      <text x="34" y="82" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.decl}</text>
+      <text x="34" y="102" font-family="var(--font-mono)" font-size="11" fill="var(--text)">labo.dualHomed = {"{"}</text>
+      <text x="54" y="118" font-family="var(--font-mono)" font-size="11" fill="var(--text)">enable = true;</text>
+      <text x="54" y="134" font-family="var(--font-mono)" font-size="11" fill="var(--text)">octet = 134;</text>
+      <text x="34" y="150" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{"};"}</text>
+      <line x1="34" y1="168" x2="298" y2="168" stroke="var(--panel-border)" stroke-width="1" />
+      <text x="34" y="190" font-family="var(--font-mono)" font-size="9.5" fill="var(--text)">{t.r100}</text>
+      <text x="68" y="204" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.r100b}</text>
+      <text x="34" y="226" font-family="var(--font-mono)" font-size="9.5" fill="var(--text)">{t.r101}</text>
+      <text x="34" y="248" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.r102}</text>
+      <text x="68" y="262" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.r102b}</text>
+
+      <!-- comin -->
+      <path d="M316,160 L426,160" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" />
+      <text x="368" y="126" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">{t.comin1}</text>
+      <text x="368" y="140" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">{t.comin2}</text>
+      <text x="368" y="182" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.comin3}</text>
+      <path d="M426,160 L426,64 L446,64" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mf-arrow-live)" />
+      <path d="M426,160 L446,160" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mf-arrow-live)" />
+      <path d="M426,160 L426,256 L446,256" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mf-arrow-live)" />
+
+      <!-- les trois façons d'être câblé -->
+      <rect x="448" y="26" width="436" height="76" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="666" y="48" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.g1}</text>
+      <text x="666" y="68" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.g1h}</text>
+      <text x="666" y="88" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.g1u}</text>
+
+      <rect x="448" y="122" width="436" height="76" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="666" y="144" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.g2}</text>
+      <text x="666" y="164" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.g2h}</text>
+      <text x="666" y="184" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.g2u}</text>
+
+      <rect x="448" y="218" width="436" height="76" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="666" y="240" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.g3}</text>
+      <text x="666" y="260" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.g3h}</text>
+      <text x="666" y="280" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.g3u}</text>
+
+      <text x="450" y="336" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.inerte}</text>
+    </svg>
+  </div>
+  <figcaption>
+    {
+      lang === "en" ? (
+        <>
+          One file, nine hosts, three wiring shapes. The only thing that changes from one host to the next is its last
+          octet and the names of the two units that carry its addresses. The module is published as is in the{" "}
+          <a href="https://github.com/ludorl82/nixos-iac-public/tree/article/la-reponse-par-la-mauvaise-patte/modules/dual-homed-routing.nix">
+            public repository
+          </a>.
+          {context === "architecture" && (
+            <>
+              {" "}See the article: <a href="/blog/la-reponse-par-la-mauvaise-patte/">the reply that left by the wrong leg</a>.
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          Un fichier, neuf hôtes, trois façons d'être câblé. D'un hôte à l'autre, seuls changent le dernier octet et le
+          nom des deux unités qui portent ses adresses. Le module est publié tel quel dans le{" "}
+          <a href="https://github.com/ludorl82/nixos-iac-public/tree/article/la-reponse-par-la-mauvaise-patte/modules/dual-homed-routing.nix">
+            dépôt public
+          </a>.
+          {context === "architecture" && (
+            <>
+              {" "}Voir l'article : <a href="/blog/la-reponse-par-la-mauvaise-patte/">la réponse par la mauvaise patte</a>.
+            </>
+          )}
+        </>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .module-flotte-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+</style>

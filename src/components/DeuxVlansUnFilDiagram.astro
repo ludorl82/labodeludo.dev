@@ -1,0 +1,224 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+  lang?: "fr" | "en";
+}
+
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma du réseau domicile. Le pare-feu pfSense, un Netgate 1100, sort ses deux VLAN sur les mêmes ports : le VLAN 50 de la maison sans étiquette, le VLAN 10 des serveurs avec l'étiquette 802.1Q numéro 10. Deux commutateurs Netgear non gérés, un GS348 et un GS324, transportent les deux sortes de trames sans lire les étiquettes. À droite, trois sortes de machines : le Mac, par la borne Wi-Fi, n'est que sur le VLAN 50 ; neuf hôtes ont une patte sur chaque VLAN, avec leur seule route par défaut côté VLAN 10 ; quelques invités n'ont qu'une patte sur le VLAN 10. La VM cloud-01 arrive par un tunnel WireGuard, hors des deux VLAN.",
+    pfsense: "pfSense · Netgate 1100",
+    v50: "mvneta0.50 · VLAN 50",
+    v50ip: "203.0.113.254/23",
+    v10: "mvneta0.10 · VLAN 10",
+    v10ip: "192.0.2.254/23",
+    ports1: "ports 1 et 2 : le 50 nu,",
+    ports2: "le 10 étiqueté",
+    cloud: "cloud-01 (AWS)",
+    cloudSub: "WireGuard, hors des deux VLAN",
+    tunnel: "tunnel",
+    gs348: "Netgear GS348",
+    gs348Sub: "48 ports · non géré",
+    gs324: "Netgear GS324",
+    gs324Sub: "24 ports · non géré",
+    aveugle: "ne lisent pas les étiquettes",
+    unFil: "un fil, deux VLAN",
+    mac: "le Mac, par la borne Wi-Fi",
+    macSub: "VLAN 50 seulement · 203.0.113.37",
+    macSub2: "la borne ne prend que les trames nues",
+    bi: "neuf hôtes à deux pattes",
+    biSub1: "patte nue → 203.0.113.N (VLAN 50)",
+    biSub2: "patte 10 → 192.0.2.N (VLAN 10)",
+    biSub3: "route par défaut : VLAN 10 seulement",
+    mono: "invités à une seule patte",
+    monoSub: "vm-03, arcade1, arcade2 · 192.0.2.N",
+    monoSub2: "VLAN 10 seulement, rien à régler",
+    legend50: "VLAN 50 : trames sans étiquette (la maison)",
+    legend10: "VLAN 10 : trames étiquetées 802.1Q (les serveurs)",
+  },
+  en: {
+    ariaLabel:
+      "Diagram of the home network. The pfSense firewall, a Netgate 1100, puts both VLANs on the same ports: the house's VLAN 50 untagged, the servers' VLAN 10 with 802.1Q tag 10. Two unmanaged Netgear switches, a GS348 and a GS324, carry both kinds of frames without reading the tags. On the right, three kinds of machines: the Mac, through the Wi-Fi access point, is on VLAN 50 only; nine hosts have a leg on each VLAN, with their only default route on VLAN 10; a few guests have a single leg on VLAN 10. The cloud-01 VM comes in through a WireGuard tunnel, outside both VLANs.",
+    pfsense: "pfSense · Netgate 1100",
+    v50: "mvneta0.50 · VLAN 50",
+    v50ip: "203.0.113.254/23",
+    v10: "mvneta0.10 · VLAN 10",
+    v10ip: "192.0.2.254/23",
+    ports1: "ports 1 and 2: 50 untagged,",
+    ports2: "10 tagged",
+    cloud: "cloud-01 (AWS)",
+    cloudSub: "WireGuard, outside both VLANs",
+    tunnel: "tunnel",
+    gs348: "Netgear GS348",
+    gs348Sub: "48 ports · unmanaged",
+    gs324: "Netgear GS324",
+    gs324Sub: "24 ports · unmanaged",
+    aveugle: "they don't read tags",
+    unFil: "one wire, two VLANs",
+    mac: "the Mac, over Wi-Fi",
+    macSub: "VLAN 50 only · 203.0.113.37",
+    macSub2: "the AP only bridges untagged frames",
+    bi: "nine hosts with two legs",
+    biSub1: "untagged leg → 203.0.113.N (VLAN 50)",
+    biSub2: "leg 10 → 192.0.2.N (VLAN 10)",
+    biSub3: "default route: VLAN 10 only",
+    mono: "single-leg guests",
+    monoSub: "vm-03, arcade1, arcade2 · 192.0.2.N",
+    monoSub2: "VLAN 10 only, nothing to fix",
+    legend50: "VLAN 50: untagged frames (the house)",
+    legend10: "VLAN 10: 802.1Q-tagged frames (the servers)",
+  },
+} as const;
+
+const t = copy[lang];
+const slug = "la-reponse-par-la-mauvaise-patte";
+---
+
+<figure class="deux-vlans-diagram">
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 450" role="img" aria-label={t.ariaLabel}>
+      <defs>
+        <marker id="dv-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+      </defs>
+
+      <!-- pfSense -->
+      <rect x="20" y="150" width="230" height="150" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="135" y="174" text-anchor="middle" font-family="var(--font-display)" font-size="12.5" font-weight="600" fill="var(--text)">{t.pfsense}</text>
+      <text x="135" y="200" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.v50}</text>
+      <text x="135" y="215" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.v50ip}</text>
+      <text x="135" y="239" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">{t.v10}</text>
+      <text x="135" y="254" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.v10ip}</text>
+      <text x="135" y="276" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.ports1}</text>
+      <text x="135" y="289" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.ports2}</text>
+
+      <!-- cloud-01, par le tunnel -->
+      <path d="M135,300 L135,352" fill="none" stroke="var(--text-faint)" stroke-width="1.5" stroke-dasharray="2 4" />
+      <text x="145" y="330" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.tunnel}</text>
+      <rect x="40" y="354" width="190" height="52" rx="4" fill="none" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="135" y="376" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text)">{t.cloud}</text>
+      <text x="135" y="393" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.cloudSub}</text>
+
+      <!-- le fil entre pfSense et le GS348 : deux VLAN sur le même câble -->
+      <path d="M250,215 L292,215 L292,92 L330,92" fill="none" stroke="var(--text-faint)" stroke-width="2" />
+      <path d="M250,235 L304,235 L304,104 L330,104" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" />
+      <text x="312" y="160" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.unFil}</text>
+
+      <!-- GS348 -->
+      <rect x="330" y="62" width="200" height="66" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="430" y="86" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.gs348}</text>
+      <text x="430" y="104" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.gs348Sub}</text>
+
+      <!-- GS348 → GS324 -->
+      <path d="M420,128 L420,300" fill="none" stroke="var(--text-faint)" stroke-width="2" />
+      <path d="M440,128 L440,300" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" />
+      <text x="452" y="218" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.aveugle}</text>
+
+      <!-- GS324 -->
+      <rect x="330" y="300" width="200" height="66" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="430" y="324" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.gs324}</text>
+      <text x="430" y="342" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.gs324Sub}</text>
+
+      <!-- le Mac : trames nues seulement -->
+      <path d="M530,78 L620,58" fill="none" stroke="var(--text-faint)" stroke-width="2" marker-end="url(#dv-arrow)" />
+      <rect x="622" y="24" width="258" height="78" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="751" y="46" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.mac}</text>
+      <text x="751" y="66" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text)">{t.macSub}</text>
+      <text x="751" y="84" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.macSub2}</text>
+
+      <!-- hôtes à deux pattes : les deux sortes de trames -->
+      <path d="M530,112 L574,112 L574,176 L620,176" fill="none" stroke="var(--text-faint)" stroke-width="2" marker-end="url(#dv-arrow)" />
+      <path d="M530,122 L562,122 L562,196 L620,196" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" />
+      <rect x="622" y="130" width="258" height="112" rx="4" fill="var(--panel)" stroke="var(--accent-live)" stroke-width="1.5" />
+      <text x="751" y="153" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.bi}</text>
+      <text x="751" y="175" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text)">{t.biSub1}</text>
+      <text x="751" y="195" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{t.biSub2}</text>
+      <text x="751" y="223" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.biSub3}</text>
+
+      <!-- invités à une seule patte : trames étiquetées seulement -->
+      <path d="M530,334 L620,316" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" />
+      <rect x="622" y="276" width="258" height="80" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="751" y="298" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.mono}</text>
+      <text x="751" y="318" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{t.monoSub}</text>
+      <text x="751" y="337" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.monoSub2}</text>
+
+      <!-- légende -->
+      <path d="M440,392 L480,392" stroke="var(--text-faint)" stroke-width="2" />
+      <text x="490" y="396" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.legend50}</text>
+      <path d="M440,420 L480,420" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" />
+      <text x="490" y="424" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{t.legend10}</text>
+    </svg>
+  </div>
+  <figcaption>
+    {
+      context === "architecture" ? (
+        lang === "en" ? (
+          <>
+            Detail of the <a href="/inventaire/pare-feu/">home firewall</a> and the wires behind it: both VLANs share
+            every cable, and the unmanaged switches carry tagged and untagged frames alike without reading them. Nine
+            hosts listen to both, which is exactly where replies started leaving by the wrong leg. See the article:{" "}
+            <a href={`/blog/${slug}/`}>the reply that left by the wrong leg</a>.
+          </>
+        ) : (
+          <>
+            Détail du <a href="/inventaire/pare-feu/">pare-feu domicile</a> et des fils derrière lui : les deux VLAN
+            partagent chaque câble, et les commutateurs non gérés transportent les trames étiquetées comme les autres,
+            sans les lire. Neuf hôtes écoutent les deux, et c'est exactement là que des réponses se sont mises à sortir
+            par la mauvaise patte. Voir l'article :{" "}
+            <a href={`/blog/${slug}/`}>la réponse par la mauvaise patte</a>.
+          </>
+        )
+      ) : lang === "en" ? (
+        <>
+          One wire carries both VLANs: the house's frames untagged, the servers' frames tagged 10. The switches never
+          read the tags; each machine decides what it listens to. See the{" "}
+          <a href="/architecture/">architecture overview</a>.
+        </>
+      ) : (
+        <>
+          Un seul fil porte les deux VLAN : les trames de la maison sans étiquette, celles des serveurs avec l'étiquette
+          10. Les commutateurs ne lisent jamais les étiquettes; c'est chaque machine qui décide ce qu'elle écoute. Voir la{" "}
+          <a href="/architecture/">vue d'ensemble de l'architecture</a>.
+        </>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .deux-vlans-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+</style>

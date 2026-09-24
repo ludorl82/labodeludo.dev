@@ -77,8 +77,11 @@ if 'b' in STEPS and SUBS:
     ev = [[e[0], e[1], parts[i]] for i,e in enumerate(ev)]
 # 3. préambule maison (DIM), 3 s, puis effacement
 DIM="\x1b[38;5;246m"; YEL="\x1b[38;5;220m"; R="\x1b[0m"
+# La date de la prise : écrite en dur au 20 septembre 2026 jusqu'à la deuxième
+# prise réelle (24 septembre), qui l'aurait affichée à tort. CAST_DATE la donne.
+CAST_DATE = __import__("os").environ.get("CAST_DATE", "20 septembre 2026")
 pre = ("\x1b[H\x1b[2J\r\n"
-       f"  {YEL}⚠{R}  {DIM}Prise réelle — pas une reconstitution. Enregistrée le 20 septembre 2026{R}\r\n"
+       f"  {YEL}⚠{R}  {DIM}Prise réelle — pas une reconstitution. Enregistrée le {CAST_DATE}{R}\r\n"
        f"     {DIM}avec asciinema dans une session tmux dédiée, telle quelle. Seules les pauses{R}\r\n"
        f"     {DIM}de plus de deux secondes sont raccourcies.  labodeludo.dev/casts/{R}\r\n")
 ev = [[0.0,"o",pre]] + ev

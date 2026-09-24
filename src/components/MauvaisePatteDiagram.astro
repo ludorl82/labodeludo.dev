@@ -1,0 +1,200 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+  lang?: "fr" | "en";
+}
+
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma en deux panneaux, avant et après la règle 102. Dans les deux, le Mac, sur le VLAN 50, ouvre une session SSH vers l'adresse VLAN 10 d'un hôte à deux pattes, et sa demande passe par pfSense. Avant : l'hôte répond directement au Mac par sa patte VLAN 50, sans repasser par pfSense ; pfSense ne voit qu'un sens de la conversation, sa fiche reste à SYN_SENT:CLOSED avec 22 paquets dans un sens et zéro dans l'autre, et il l'oublie après 30 secondes de silence. Après : la réponse repart par la patte VLAN 10 et repasse par pfSense ; la fiche devient ESTABLISHED:ESTABLISHED, avec des paquets dans les deux sens, et elle est gardée 24 heures.",
+    avant: "avant : sans la règle 102",
+    apres: "après : avec la règle 102",
+    pfsense: "pfSense",
+    ifaces: "mvneta0.50 │ mvneta0.10",
+    mac: "le Mac",
+    macIp: "203.0.113.37",
+    hote: "l'hôte",
+    hote10: "192.0.2.N · VLAN 10",
+    hote50: "203.0.113.N · VLAN 50",
+    demande: "demande",
+    reponse: "réponse",
+    directe1: "réponse directe par la patte 50 :",
+    directe2: "pfSense ne la voit jamais",
+    avantEtat1: "SYN_SENT:CLOSED · 22:0 pkts",
+    avantEtat2: "oubliée après 30 s de silence",
+    apresEtat1: "ESTABLISHED:ESTABLISHED · 24:17 pkts",
+    apresEtat2: "gardée 24 h",
+    retour1: "la réponse repasse",
+    retour2: "par pfSense",
+  },
+  en: {
+    ariaLabel:
+      "Two-panel diagram, before and after rule 102. In both, the Mac, on VLAN 50, opens an SSH session to the VLAN 10 address of a host with two legs, and its request goes through pfSense. Before: the host answers the Mac directly through its VLAN 50 leg, without going back through pfSense; pfSense sees only one direction of the conversation, its state stays at SYN_SENT:CLOSED with 22 packets one way and zero the other, and it forgets it after 30 seconds of silence. After: the reply leaves through the VLAN 10 leg and goes back through pfSense; the state becomes ESTABLISHED:ESTABLISHED, with packets both ways, and it is kept for 24 hours.",
+    avant: "before: without rule 102",
+    apres: "after: with rule 102",
+    pfsense: "pfSense",
+    ifaces: "mvneta0.50 │ mvneta0.10",
+    mac: "the Mac",
+    macIp: "203.0.113.37",
+    hote: "the host",
+    hote10: "192.0.2.N · VLAN 10",
+    hote50: "203.0.113.N · VLAN 50",
+    demande: "request",
+    reponse: "reply",
+    directe1: "direct reply through leg 50:",
+    directe2: "pfSense never sees it",
+    avantEtat1: "SYN_SENT:CLOSED · 22:0 pkts",
+    avantEtat2: "forgotten after 30 s of silence",
+    apresEtat1: "ESTABLISHED:ESTABLISHED · 24:17 pkts",
+    apresEtat2: "kept 24 h",
+    retour1: "the reply goes back",
+    retour2: "through pfSense",
+  },
+} as const;
+
+const t = copy[lang];
+---
+
+<figure class="mauvaise-patte-diagram">
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 390" role="img" aria-label={t.ariaLabel}>
+      <defs>
+        <marker id="mp-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)" />
+        </marker>
+        <marker id="mp-arrow-live" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <line x1="450" y1="16" x2="450" y2="374" stroke="var(--panel-border)" stroke-width="1.5" stroke-dasharray="4 6" />
+
+      <!-- ===================== AVANT ===================== -->
+      <text x="225" y="30" text-anchor="middle" font-family="var(--font-display)" font-size="12.5" font-weight="600" fill="var(--text-faint)">{t.avant}</text>
+
+      <rect x="150" y="52" width="150" height="56" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="225" y="75" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.pfsense}</text>
+      <text x="225" y="94" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.ifaces}</text>
+      <text x="225" y="130" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text)">{t.avantEtat1}</text>
+      <text x="225" y="146" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.avantEtat2}</text>
+
+      <rect x="20" y="262" width="120" height="56" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="80" y="285" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.mac}</text>
+      <text x="80" y="303" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.macIp}</text>
+
+      <rect x="290" y="252" width="150" height="76" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="365" y="274" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.hote}</text>
+      <text x="365" y="293" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text)">{t.hote10}</text>
+      <text x="365" y="310" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.hote50}</text>
+
+      <!-- la demande : Mac → pfSense → patte 10 -->
+      <path d="M80,262 L80,80 L148,80" fill="none" stroke="var(--text-faint)" stroke-width="1.8" marker-end="url(#mp-arrow)" />
+      <path d="M300,80 L400,80 L400,250" fill="none" stroke="var(--text-faint)" stroke-width="1.8" marker-end="url(#mp-arrow)" />
+      <text x="88" y="175" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.demande}</text>
+
+      <!-- la réponse : directement par la patte 50 -->
+      <path d="M290,300 L142,300" fill="none" stroke="var(--text-faint)" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#mp-arrow)" />
+      <text x="216" y="342" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.directe1}</text>
+      <text x="216" y="357" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.directe2}</text>
+
+      <!-- ===================== APRÈS ===================== -->
+      <text x="675" y="30" text-anchor="middle" font-family="var(--font-display)" font-size="12.5" font-weight="600" fill="var(--accent-live)">{t.apres}</text>
+
+      <rect x="600" y="52" width="150" height="56" rx="4" fill="var(--panel)" stroke="var(--accent-live)" stroke-width="1.5" />
+      <text x="675" y="75" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.pfsense}</text>
+      <text x="675" y="94" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{t.ifaces}</text>
+      <text x="675" y="130" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent-live)">{t.apresEtat1}</text>
+      <text x="675" y="146" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.apresEtat2}</text>
+
+      <rect x="470" y="262" width="120" height="56" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="530" y="285" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.mac}</text>
+      <text x="530" y="303" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.macIp}</text>
+
+      <rect x="740" y="252" width="150" height="76" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
+      <text x="815" y="274" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{t.hote}</text>
+      <text x="815" y="293" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--accent-live)">{t.hote10}</text>
+      <text x="815" y="310" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.hote50}</text>
+
+      <!-- la demande, même chemin -->
+      <path d="M530,262 L530,72 L598,72" fill="none" stroke="var(--text-faint)" stroke-width="1.8" marker-end="url(#mp-arrow)" />
+      <path d="M750,72 L850,72 L850,250" fill="none" stroke="var(--text-faint)" stroke-width="1.8" marker-end="url(#mp-arrow)" />
+      <text x="538" y="175" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.demande}</text>
+
+      <!-- la réponse : patte 10 → pfSense → Mac -->
+      <path d="M870,252 L870,94 L752,94" fill="none" stroke="var(--accent-live)" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#mp-arrow-live)" />
+      <path d="M600,94 L512,94 L512,260" fill="none" stroke="var(--accent-live)" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#mp-arrow-live)" />
+      <text x="506" y="200" text-anchor="end" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.reponse}</text>
+      <text x="676" y="342" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.retour1}</text>
+      <text x="676" y="357" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-live)">{t.retour2}</text>
+    </svg>
+  </div>
+  <figcaption>
+    {
+      lang === "en" ? (
+        <>
+          The same request, the same pfSense, two different ways back. The state counters are the real ones, read with{" "}
+          <code>pfctl -ss -vv</code> on September 24, 2026: before the fix on console-vm, after it on vm-02.
+          {context === "architecture" && (
+            <>
+              {" "}See the article: <a href="/blog/la-reponse-par-la-mauvaise-patte/">the reply that left by the wrong leg</a>.
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          La même demande, le même pfSense, deux chemins de retour. Les compteurs des fiches sont les vrais, lus avec{" "}
+          <code>pfctl -ss -vv</code> le 24 septembre 2026 : avant le correctif sur console-vm, après sur vm-02.
+          {context === "architecture" && (
+            <>
+              {" "}Voir l'article : <a href="/blog/la-reponse-par-la-mauvaise-patte/">la réponse par la mauvaise patte</a>.
+            </>
+          )}
+        </>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .mauvaise-patte-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+
+  figcaption code {
+    font-family: var(--font-mono);
+    background: var(--panel);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+</style>

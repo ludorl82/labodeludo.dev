@@ -1,0 +1,169 @@
+---
+title: "La réponse par la mauvaise patte : pourquoi mes sessions SSH gelaient après une minute"
+pubDate: 2026-09-25
+description: "Depuis mon nouveau Mac, mes sessions SSH vers mes serveurs gelaient après une minute ou deux. La cause tient en une phrase : la réponse revenait par une autre porte que la demande, et mon pare-feu pfSense, qui ne voyait que la moitié de la conversation, l'oubliait après 30 secondes de silence. Trois règles de routage, posées par un seul module NixOS, ont réglé ça sur neuf machines en moins de deux minutes. Débogué en session avec Claude Code (Opus 5.5), avec une fausse piste macOS en prime."
+tags: ["Réseau", "Labo", "ludo"]
+ia: "assistee"
+iaOutils: "Claude Code"
+heroImage: "/images/blog/banner-mauvaise-patte.svg"
+---
+
+import DeuxVlansUnFilDiagram from "../../components/DeuxVlansUnFilDiagram.astro";
+import MauvaisePatteDiagram from "../../components/MauvaisePatteDiagram.astro";
+import ModuleFlotteDiagram from "../../components/ModuleFlotteDiagram.astro";
+import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Symptôme** : depuis mon Mac, branché sur le VLAN de la maison, une session SSH vers un serveur gèle dès qu'elle reste inactive un moment. Pas d'erreur, pas de déconnexion, le curseur attend.
+> -   **Le terrain** : deux VLAN sur les mêmes fils, avec des commutateurs Netgear non gérés : le VLAN 50 de la maison sans étiquette, le VLAN 10 des serveurs étiqueté. Neuf serveurs ont une « patte », une adresse, dans chacun des deux.
+> -   **La cause** : je joins un serveur par son nom, donc par son adresse VLAN 10, en passant par pfSense. Le serveur, lui, me répond directement par sa patte VLAN 50. pfSense ne voit qu'un sens de la conversation (`22:0 pkts`), la considère comme jamais ouverte et l'oublie après 30 secondes de silence. Le paquet suivant est jeté.
+> -   **La fausse piste** : juste avant, mon Mac ne pinguait plus le réseau local du tout. Ce n'était pas le réseau : c'était la confidentialité « Réseau local » de macOS, qui bloquait mon terminal, Alacritty, sans jamais me poser la question.
+> -   **Le correctif** : du routage par source. Trois règles `ip rule` font repartir chaque réponse par la patte par laquelle la demande est arrivée. Un module NixOS, `labo.dualHomed`, les pose; chaque serveur déclare son dernier octet et, au besoin, le nom de ses interfaces.
+> -   **Le déploiement** : neuf machines câblées de trois façons différentes (VM à deux cartes, machines physiques avec une sous-interface étiquetée, hyperviseurs libvirt), un seul fichier. comin l'a déployé partout en moins de deux minutes.
+> -   **La leçon** : un essai court ne rencontre jamais un délai d'inactivité. Un transfert de 200 Mo, bouclé en dix secondes, avait « prouvé » que ce cas-là fonctionnait.
+> -   **Transparence** : le diagnostic et le correctif ont été menés en session avec Claude Code (Opus 5.5). J'ai posé les questions, validé les règles et fusionné les PR. La théorie complète, RFC à l'appui, est dans [le corollaire de Bob](/blog/corollaire-la-porte-d-en-arriere/).
+
+Je viens d'ajouter un MacBook Air à mon labo, configuré avec Nix comme le reste. Et assez vite, un irritant : mes sessions SSH vers mes serveurs gelaient. Je lisais un journal, je revenais au terminal une minute plus tard, je tapais une commande, et plus rien. Pas d'erreur, pas de déconnexion, juste un curseur qui attend.
+
+C'est exactement le genre de problème que j'aime que mon labo me donne. Pas une panne spectaculaire : un problème simple, classique, qui oblige à ressortir des notions de base, le routage, les pare-feu à états, la pile TCP/IP, et à les regarder travailler pour vrai. Ce sont des notions qu'on perd si on ne les pratique pas, et le labo me les ramène. Le diagnostic a été fait en session avec Claude Code (Opus 5.5), et je vais vous montrer comment on s'y est pris, fausse piste comprise.
+
+## Un peu de contexte : deux VLAN sur les mêmes fils
+
+Mon réseau tient sur un pare-feu pfSense, un Netgate 1100, et deux commutateurs Netgear non gérés : un GS348 au sous-sol et un GS324 au bureau. Il est séparé en deux VLAN : le VLAN 50 pour la maison (le Mac, les téléphones, l'imprimante) et le VLAN 10 pour les serveurs.
+
+Un VLAN, c'est un réseau logique qui partage les mêmes fils qu'un autre. Pour savoir à quel VLAN appartient une trame, on lui colle une étiquette, définie par la norme 802.1Q, qui porte le numéro du VLAN. Chez moi, pfSense sort les deux VLAN sur les mêmes ports : le VLAN 50 sans étiquette, le VLAN 10 étiqueté. Et comme mes commutateurs sont non gérés, ils ne lisent pas les étiquettes : ils transportent tout, partout. C'est chaque machine qui décide ce qu'elle écoute. Le Mac, par la borne Wi-Fi, ne voit que les trames sans étiquette, donc le VLAN 50.
+
+<DeuxVlansUnFilDiagram />
+
+Neuf de mes serveurs écoutent les deux. Dans le labo, on dit qu'ils ont deux pattes : une adresse `192.0.2.N` côté serveurs et une adresse `203.0.113.N` côté maison, avec le même dernier octet. Et il y a une règle d'or : une seule route par défaut, toujours côté VLAN 10. La patte 50 porte une adresse, rien de plus.
+
+Avoir deux pattes, c'est pratique, mais ce n'est pas gratuit, et ce n'est pas la première fois que je le constate. En août, mes deux machines virtuelles de jeu ont perdu leur patte VLAN 50, parce que Steam Remote Play ne tolérait pas une machine avec plusieurs adresses.
+
+## Première fausse piste : macOS
+
+Avant même le gel, j'avais un autre symptôme. Depuis le Mac, un simple `ping` vers un serveur du réseau local donnait ceci :
+
+```
+$ ping -c 10 203.0.113.134
+ping: sendto: No route to host
+10 packets transmitted, 0 packets received, 100.0% packet loss
+```
+
+« No route to host », pour moi c'était clair : un problème de routage. Claude Code s'est donc connecté à mon Mac par SSH pour regarder. Il a comparé la table ARP du Mac, qui associe chaque adresse IP à l'adresse matérielle d'une carte réseau, avec les vraies cartes de la machine visée : elles correspondaient. Puis il a effacé l'entrée ARP et relancé le ping, douze fois de suite. Douze réussites.
+
+<ConversationExcerpt
+  disclaimer="Extraits réels de la session Claude Code du 23 septembre 2026, dans l'ordre, légèrement raccourcis. Mes messages sont dictés; j'ai corrigé l'orthographe, pas les mots."
+  caption="Le moment où la fausse piste tombe : même machine, même table ARP, deux résultats. La différence n'est pas le réseau, c'est le programme qui lance le ping."
+  turns={[
+    { speaker: "ludo", text: "Tu ne peux pas te connecter par SSH sur mon Mac pour diagnostiquer?" },
+    { speaker: "claude", text: "Je le fais déjà : toutes mes mesures depuis tantôt passent par ssh macbook. Et c'est justement ça, l'indice. Même machine, même utilisateur, mêmes routes, même table ARP, et mon ping passe pendant que le tien échoue. La différence n'est pas dans le réseau, elle est dans qui lance le ping." },
+    { speaker: "ludo", text: "Tu as raison, dans Alacritty ça fonctionne pas mais ça fonctionne dans Terminal. Tu ne peux pas ajouter la permission déclarativement?" },
+  ]}
+/>
+
+Depuis macOS 15, la confidentialité « Réseau local » décide, programme par programme, qui a le droit de parler aux machines du réseau local. Terminal, les services système et tout ce qui arrive par SSH sont exemptés d'office. Alacritty, installé par Nix, ne l'est pas. Et comme son paquet ne déclarait pas la clé `NSLocalNetworkUsageDescription`, macOS ne m'a jamais posé la question : il refusait en silence, avec une erreur qui ressemble à une panne de routage.
+
+Le correctif est déclaré dans ma config nix-darwin, comme je le voulais : la clé est ajoutée au paquet d'Alacritty, et l'application est re-signée avec son identifiant, `org.alacritty`, sans quoi macOS ne relie pas la permission au bon programme. Moralité : quand la même commande marche d'un côté et pas de l'autre sur la même machine, la différence n'est pas dans le réseau.
+
+## Le vrai problème : une conversation à sens unique
+
+Une fois le ping réglé, restait le gel. Cette fois, c'était bien le réseau. Pour le reproduire, Claude Code a monté un essai super simple : envoyer une ligne dans une session SSH après 45 secondes de silence.
+
+```
+( sleep 45; echo ping ) | ssh console-vm.lab.example 'read l; echo "reçu : $l"'
+```
+
+Sur un réseau en santé, on reçoit « reçu : ping ». Chez moi, rien : la session restait figée jusqu'à ce que le délai de l'essai la coupe.
+
+Ensuite, il est allé lire la table d'états de pfSense. Un pare-feu à états garde une fiche pour chaque connexion qui le traverse : qui parle à qui, dans quel état, combien de paquets dans chaque sens. Voici la fiche de ma session, six secondes après son ouverture :
+
+```
+mvneta0.10 tcp 203.0.113.37:50346 -> 192.0.2.136:22       SYN_SENT:CLOSED
+   age 00:00:06, expires in 00:00:24, 22:0 pkts, 5222:0 bytes
+```
+
+Deux chiffres racontent tout : `22:0 pkts`. Vingt-deux paquets du Mac vers le serveur, zéro dans l'autre sens. Pour pfSense, le serveur n'a jamais répondu, donc la connexion n'a jamais fini de s'ouvrir, et une connexion qui s'ouvre, il la garde 30 secondes. Chaque paquet du Mac remet le compteur à zéro. Tant que je tape, tout va bien. Dès que je lis mon journal plus de 30 secondes, pfSense oublie la connexion, et le prochain caractère que je tape est jeté. D'où « une minute ou deux ».
+
+Pourquoi zéro paquet dans l'autre sens? Parce que le serveur ne répond pas par la même porte. Je le joins par son nom, donc par son adresse VLAN 10, et ma demande passe par pfSense. Mais la réponse est destinée au Mac, sur le VLAN 50, et le serveur a justement une patte dans ce réseau-là. Il prend le chemin le plus court et me répond directement, sans repasser par pfSense.
+
+<MauvaisePatteDiagram />
+
+C'est ça, du routage asymétrique : la demande et la réponse ne prennent pas le même chemin. Le Mac, lui, s'en fiche, il reçoit ses réponses. C'est le pare-feu entre les deux qui ne voit que la moitié de la conversation.
+
+Le plus intéressant, c'est que Claude Code avait regardé ce cas-là la veille, et qu'il l'avait écarté. Un transfert de 200 Mo du Mac vers une patte VLAN 10 avait passé sans broncher. Il avait passé parce qu'il avait duré dix secondes, et qu'en dix secondes, un compteur de 30 secondes n'expire jamais. Un essai court ne rencontre jamais un délai d'inactivité. Si je ne retiens qu'une phrase de toute l'affaire, c'est celle-là.
+
+## Le correctif : répondre par la porte d'entrée
+
+Dès le début du diagnostic, j'avais posé la question qui m'intéressait vraiment : est-ce qu'on ne peut pas faire en sorte que les machines à deux pattes répondent par l'interface d'où vient leur trafic? Sinon, on n'en finira plus. Ma question a amené Claude Code à chercher qui souffrait vraiment de l'asymétrie, et le premier cas prouvé n'était pas le Mac. C'était cloud-01, ma VM chez AWS, qui entre dans le labo par un tunnel WireGuard. Quand elle joignait la patte VLAN 50 d'un serveur, le ping passait, mais aucune connexion TCP ne s'ouvrait : la réponse suivait la route par défaut, côté VLAN 10, et pfSense jetait une réponse qui revenait par une autre porte que la demande.
+
+La réponse à ma question s'appelle le routage par source. D'habitude, Linux choisit la sortie d'après la destination seulement. Avec des règles `ip rule`, il peut aussi regarder l'adresse de départ. Trois règles suffisent :
+
+| Règle | Pour quel trafic | Ce qu'elle fait |
+|---|---|---|
+| 100 | ce qui part de l'adresse VLAN 50 | consulte la table normale, mais sans sa route par défaut : le réseau local et les pods Kubernetes gardent leur chemin |
+| 101 | ce qui part de l'adresse VLAN 50, et que la 100 n'a pas placé | sort par pfSense, côté VLAN 50 |
+| 102 | ce qui part de l'adresse VLAN 10 vers la maison | sort par pfSense, côté VLAN 10 |
+
+Les règles 100 et 101 ont réglé le cas de cloud-01, la 102 mon SSH. Elles ne changent le chemin que des réponses qui échouaient avant; tout le reste garde le sien. Avant d'écrire une seule ligne de config, Claude Code a posé chaque règle à la main sur une machine, refait l'essai, retiré la règle et refait l'essai. Sans la règle : gel. Avec : « reçu : ping ». Retirée : gel de nouveau. Pour le détail de chaque règle, et le piège que la règle 100 évite sur un noeud Kubernetes, je vous invite à lire [le corollaire de Bob](/blog/corollaire-la-porte-d-en-arriere/).
+
+Et pour vrai, le 24 septembre, la même panne rejouée sur vm-02 : la règle 102 retirée, puis remise.
+
+<AsciiCast
+  src="/casts/la-mauvaise-patte-real.cast"
+  frame="none"
+  poster="npt:0:58"
+  caption="Pour vrai : en haut les commandes, au milieu la fiche que pfSense tient sur la session, en bas la narration. Sans la règle 102, vingt paquets dans un sens, zéro dans l'autre, et une fiche qui expire à 30 secondes; avec la règle, les deux sens, et une fiche gardée 24 heures."
+  disclaimer="✔ Ceci est une capture réelle, faite le 24 septembre 2026 avec asciinema dans une session tmux dédiée, sans montage. vm-02, mac et routeur sont des alias SSH vers les vraies machines, et le filtre anonymise remplace à la volée les vraies adresses par celles de l'article. La règle 102 a été retirée de vm-02 le temps de la prise, puis remise. Les frappes ont été envoyées par script, et seules les pauses de plus de deux secondes sont raccourcies."
+/>
+
+## Un module, neuf machines
+
+Réglé à la main sur une machine, c'est une chose. Mais j'en ai neuf, et elles ne sont pas câblées pareil :
+
+-   des VM à deux cartes réseau, une par VLAN;
+-   des machines physiques, dont deux Raspberry Pi, avec le VLAN 50 directement sur la carte et le VLAN 10 sur une sous-interface étiquetée;
+-   trois hyperviseurs libvirt. Leurs VM sont branchées en macvtap, et avec macvtap, un hôte ne peut pas parler à ses propres VM par sa carte réseau. Ses adresses à lui vivent donc sur une interface à part, un macvlan nommé `mvhost`.
+
+Trois formes, trois façons de nommer les interfaces, neuf occasions de se tromper. C'est là que Nix fait toute la différence. Mes serveurs sont sous NixOS, décrits dans un dépôt git, et le correctif est devenu un module : un fichier qui déclare une option, `labo.dualHomed`, et les trois règles qui en découlent. Chaque machine n'a qu'à dire son dernier octet :
+
+```nix
+labo.dualHomed = {
+  enable = true;
+  octet = 134;
+};
+```
+
+et, quand son câblage n'est pas celui par défaut, le nom de ses deux interfaces :
+
+```nix
+labo.dualHomed = {
+  enable = true;
+  octet = 97;
+  vlan10Network = "30-mvhost";
+  vlan50Network = "25-mvhost50";
+};
+```
+
+<ModuleFlotteDiagram />
+
+Le module est importé sur toutes les machines, mais il ne fait rien tant qu'une machine ne l'active pas : ma VM chez AWS et mes invités à une seule patte l'ignorent. Le déploiement, lui, je ne le fais même pas. Chaque machine roule comin, qui surveille la branche principale du dépôt, construit sa nouvelle configuration et bascule dessus. J'ai fusionné la PR, et en moins de deux minutes, les neuf machines portaient leurs règles. Vérifié depuis cloud-01 : les 18 pattes répondent en TCP. Vérifié depuis le Mac : une ligne envoyée après 45 secondes de silence arrive. Seul mon NAS reste de côté : il a lui aussi deux pattes, mais il n'est pas sous NixOS, et son cas devra se régler autrement.
+
+Pour ceux qui aiment lire du vrai code, le module est publié tel quel dans [mon dépôt public](https://github.com/ludorl82/nixos-iac-public/tree/article/la-reponse-par-la-mauvaise-patte), sous l'étiquette de cet article. Il fait 144 lignes, dont 81 de commentaires, et ce ratio-là n'est pas un accident : chaque cas prouvé y est écrit, avec l'essai qui le prouve.
+
+## Claude Code, comme outil de débogage
+
+Je veux prendre un moment pour ça, parce que c'est la partie qui m'a le plus appris. Claude Code n'a pas seulement proposé des commandes : il est allé les lancer. Il s'est connecté à mon Mac, à pfSense, à ma VM chez AWS et aux serveurs. Il a lu les tables d'états, posé des règles à la main, mesuré, retiré les règles, remesuré. Il a ouvert les PR avec la preuve dans la description, et c'est moi qui les ai relues et fusionnées.
+
+Il s'est aussi trompé, et il l'a écrit. Il a passé une heure sur l'asymétrie de routage pendant que mon ping était bloqué par macOS. Deux de ses relevés avaient été pris pendant que mon Mac n'avait pas de réseau. Et il avait écarté le cas du gel avec un essai trop court. Ce qui m'a frappé, c'est que ces erreurs se retrouvent dans les messages de commit et dans les commentaires du module, avec la leçon qui va avec. C'est exactement ce que j'attendrais d'un bon collègue.
+
+## Mot de la fin
+
+Au final, le correctif tient en trois règles et un fichier. Ce n'est pas un gros projet, et c'est justement pour ça que je l'aime : un problème simple, une notion de base, une réponse doit revenir par où la demande est entrée, et un labo qui me donne l'occasion de la voir travailler. Le routage, les pare-feu à états, la table ARP, c'est le genre de notions qui s'effacent si on ne les pratique pas. Le labo les garde vivantes.
+
+Alors si vous avez des machines à deux pattes, je vous dirais de vérifier par où elles répondent avant que vos sessions se mettent à geler.
+
+---
+
+_Le diagnostic et le correctif décrits ici ont été réalisés en session avec Claude Code (Opus 5.5), du 22 au 24 septembre 2026 : relevés, essais à la main, module NixOS et vérifications. Les questions, les décisions et les fusions sont les miennes. La session complète n'est pas publiée, parce qu'elle contient les vraies adresses du labo; les extraits cités sont réels, avec les noms et les adresses de l'article. Les noms d'hôtes et les adresses sont fictifs (plages de documentation de la RFC 5737), comme d'habitude sur ce blogue._

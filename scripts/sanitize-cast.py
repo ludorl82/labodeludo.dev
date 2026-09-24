@@ -80,10 +80,18 @@ DIM="\x1b[38;5;246m"; YEL="\x1b[38;5;220m"; R="\x1b[0m"
 # La date de la prise : écrite en dur au 20 septembre 2026 jusqu'à la deuxième
 # prise réelle (24 septembre), qui l'aurait affichée à tort. CAST_DATE la donne.
 CAST_DATE = __import__("os").environ.get("CAST_DATE", "20 septembre 2026")
-pre = ("\x1b[H\x1b[2J\r\n"
-       f"  {YEL}⚠{R}  {DIM}Prise réelle — pas une reconstitution. Enregistrée le {CAST_DATE}{R}\r\n"
-       f"     {DIM}avec asciinema dans une session tmux dédiée, telle quelle. Seules les pauses{R}\r\n"
-       f"     {DIM}de plus de deux secondes sont raccourcies.  labodeludo.dev/casts/{R}\r\n")
+# CAST_LANG=en : le même avertissement en anglais, pour les prises refaites
+# avec une narration anglaise (la date vient alors de CAST_DATE, en anglais).
+if __import__("os").environ.get("CAST_LANG") == "en":
+    pre = ("\x1b[H\x1b[2J\r\n"
+           f"  {YEL}⚠{R}  {DIM}Real take — not a reconstruction. Recorded on {CAST_DATE}{R}\r\n"
+           f"     {DIM}with asciinema in a dedicated tmux session, as is. Only pauses longer{R}\r\n"
+           f"     {DIM}than two seconds are shortened.  labodeludo.dev/en/casts/{R}\r\n")
+else:
+    pre = ("\x1b[H\x1b[2J\r\n"
+           f"  {YEL}⚠{R}  {DIM}Prise réelle — pas une reconstitution. Enregistrée le {CAST_DATE}{R}\r\n"
+           f"     {DIM}avec asciinema dans une session tmux dédiée, telle quelle. Seules les pauses{R}\r\n"
+           f"     {DIM}de plus de deux secondes sont raccourcies.  labodeludo.dev/casts/{R}\r\n")
 ev = [[0.0,"o",pre]] + ev
 # 1c. La sortie de scène ne s'enregistre pas. On coupe juste avant le premier
 #     `exit` tapé, et on tient la dernière image trois secondes : le lecteur a

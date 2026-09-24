@@ -189,6 +189,22 @@ const extOrigins = extBoxes.filter((b) => b.origin);
 // les pointillés qui ne sont pas du matériel inconnu, mais un service posé
 // sur une machine déclarée — c'est cette liste qui garde l'aria-label vrai
 const hostedOrigins = extBoxes.filter((b) => b.onHost);
+// « le nom se partage entre un pod et le service du host » n'est pas une
+// déduction, c'est une arête. Ça a été vrai : le tunnel portait une règle
+// /api/embed vers un pod du cluster et le reste du nom partait à l'adresse LAN
+// du host. La règle est retirée (cloudflare-iac, live/tunnels.tf, 2026-09-15)
+// et le join ne porte plus aucune arête `app:` sur ce nom — `sharedPath` est
+// vide, et l'aria-label ne doit pas raconter un chemin que plus aucune arête
+// ne déclare. Le partage se vérifie donc sur l'origine hébergée elle-même, pas
+// sur le bucket global : un autre nom pourrait être coupé par chemin d'URL que
+// celui-ci resterait entier.
+const hostedSplit = hostedOrigins.some((b) =>
+  routesTo
+    .filter((e) => e.to === b.n.id)
+    .some((e) =>
+      routesTo.some((f) => f.from === e.from && f.to.startsWith("app:")),
+    ),
+);
 const railY = (row: number) => EXT_Y0 + row * H_PITCH_Y - 16;
 const railBottom = railY(
   extOrigins.length ? Math.max(...extOrigins.map((b) => b.row)) : 0,
@@ -424,9 +440,13 @@ const ariaLabel =
   (hostedOrigins.length
     ? ` Le pointillé ne veut pas dire « rien derrière » : ` +
       `${hostedOrigins.map((b) => `${b.n.label} est un service que le repo NixOS déclare sur ${b.onHost}`).join(", ")}. ` +
-      `Même châssis que la machine en trait plein de la grille du haut : ` +
-      `le nom public se partage entre un pod du cluster et le service du ` +
-      `host, et le visiteur ne voit jamais qu'un seul nom.`
+      `Même châssis que la machine en trait plein de la grille du haut` +
+      (hostedSplit
+        ? ` — et sur ce nom le tunnel trie par chemin d'URL : un pod du ` +
+          `cluster d'un côté, le service du host de l'autre, et le visiteur ` +
+          `ne voit jamais qu'un seul nom.`
+        : ` — mais rien ne descend du cluster sur ce nom : le connecteur ` +
+          `compose le service du host, et aucun workload déclaré ne le sert.`)
     : "") +
   ` Chaque boîte cliquable répond à une seule question : le chemin qu'elle ` +
   `emprunte, d'un nom public jusqu'à la machine qui le sert — et l'inverse ` +

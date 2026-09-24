@@ -1,20 +1,15 @@
 {
-  "curated": [
-    "Qu'est-ce qui a mal tourné quand tu as migré tes neuf machines vers NixOS ?",
-    "Pourquoi tu as débranché le NAS exprès ?",
-    "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?"
-  ],
-  "generated": "2026-09-23T08:33:10Z",
+  "curated": [],
+  "generated": "2026-09-24T08:33:44Z",
   "openers": [
-    "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "cest quoi ton stockage pour le cluster?",
+    "What went wrong when you moved your NFS shares to an SSD?",
+    "How do you back up your cluster?",
+    "which model powers you?",
+    "c'est quoi ton setup complet ?",
     "Quels articles parlent de Kubernetes ?",
-    "Qu'est-ce qui a mal tourné quand tu as migré tes neuf machines vers NixOS ?",
-    "Pourquoi tu as débranché le NAS exprès ?",
-    "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?"
+    "T'as un article sur Proxmox ?",
+    "Comment Frigate utilise le GPU ?"
   ],
   "written": []
 }

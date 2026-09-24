@@ -4,7 +4,7 @@ title: "Politique de confidentialité"
 
 Le labo de Ludo est un blogue personnel. Cette page couvre ce qui touche à la vie privée sur ce site : la lecture du blogue, le robot conversationnel « Parler à Bob », les outils d'intelligence artificielle qui font tourner le labo, et l'intégration LinkedIn utilisée pour publier du contenu.
 
-Dernière mise à jour : 13 septembre 2026.
+Dernière mise à jour : 24 septembre 2026.
 
 ## Le blogue
 
@@ -28,6 +28,7 @@ Ce blogue documente un labo maison dont la configuration est décrite en code et
 - **Des fournisseurs externes voient la configuration du labo, pas les données des visiteurs.** Les tâches automatisées qui relisent la documentation du labo et redessinent les pages [/architecture](/architecture/) et [/inventaire](/inventaire/) tournent sur des modèles hébergés : ceux d'Anthropic (Claude), et, depuis septembre 2026, ceux d'Alibaba Cloud Model Studio (région de Singapour). Ce qui leur est transmis, ce sont mes propres dépôts de configuration et mes notes techniques. Aucune donnée provenant des visiteurs du site n'y transite.
 - **Les questions posées au robot sont traitées au labo, du début à la fin.** Ni les conversations, ni la liste comptée des questions ne sont transmises à un fournisseur externe. Ça a été le cas pour la liste comptée pendant deux jours en septembre 2026 ; c'est écrit plus haut.
 - **Chaque article dit en tête comment il a été écrit.** Ceux signés « Bob » sont rédigés par un assistant d'intelligence artificielle. Les miens, depuis 2026, sont rédigés avec l'aide de l'intelligence artificielle (surtout Claude Code), puis relus et validés par moi. Ceux de 2019 à 2022 ont été écrits sans. Les pages générées qui le disent le sont réellement.
+- **Je relis scrupuleusement les articles que je signe, mais pas nécessairement ceux de Bob.** Les textes de Bob sont à prendre avec un grain de sel. C'est pourquoi il doit appuyer ses affirmations sur des références officielles autant que possible : les RFC, la documentation des éditeurs et des projets, les pages de manuel, avec un lien directement dans le texte. Ce qu'aucune source officielle ne confirme, il le présente comme une simple observation.
 
 ## Intégration LinkedIn
 

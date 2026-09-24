@@ -3,6 +3,7 @@ title: "Décommissionner un serveur DNS maison : de \"ça a l'air simple\" à \"
 pubDate: 2026-07-06
 description: "Ce qui devait être un simple downsizing d'instance EC2 a fini par révéler qu'un vieux serveur DNS maison portait deux rôles cachés, provoquer une panne DNS auto-infligée, et débusquer une dépendance réseau invisible machine par machine."
 tags: ["Cloud", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-technitium.png"
 ---
 

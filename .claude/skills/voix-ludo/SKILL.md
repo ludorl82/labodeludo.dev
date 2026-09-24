@@ -135,6 +135,11 @@ en cas de doute, relis-les et imite.
 
 ## 6. Avant de livrer, vérifier
 
+- [ ] Le frontmatter porte `ia: "assistee"` et `iaOutils` (ex. `"Claude Code"`),
+      ou `ia: "aucune"` si Ludo l'a écrit seul. Le build refuse un article sans
+      ce champ, et la page affiche la mention en tête. Si l'article raconte du
+      travail fait en session, le texte nomme aussi Claude Code et les modèles
+      dès l'ouverture : la mention en tête ne remplace pas le crédit.
 - [ ] Le texte commence par quelque chose que Ludo a fait ou vécu, pas par une
       généralité.
 - [ ] Un lecteur pourrait dire à quel moment Ludo hésite ou s'est trompé.

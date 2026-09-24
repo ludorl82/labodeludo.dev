@@ -1,0 +1,66 @@
+---
+/* Mention d'écriture assistée par IA, en tête de chaque article.
+   Le niveau vient du champ `ia` du frontmatter, obligatoire (content.config.ts). */
+interface Props {
+  ia: "aucune" | "assistee" | "redigee";
+  outils?: string;
+  lang?: "fr" | "en";
+}
+
+const { ia, outils, lang = "fr" } = Astro.props;
+const policy = "/politique-de-confidentialite/";
+
+const text = {
+  fr: {
+    assistee: `Rédigé avec l'aide de l'intelligence artificielle (${outils}). Ludo a relu et validé le texte.`,
+    redigee: "Rédigé par Bob, un assistant d'intelligence artificielle, à partir du travail fait en session avec Ludo.",
+    more: "Comment l'IA est utilisée ici",
+  },
+  en: {
+    assistee: `Written with the help of artificial intelligence (${outils}). Ludo reviewed and approved the text.`,
+    redigee: "Written by Bob, an artificial intelligence assistant, from work done in session with Ludo.",
+    more: "How AI is used here (French)",
+  },
+}[lang];
+---
+
+{ia !== "aucune" && (
+  <p class="ai-notice" role="note">
+    <span class="tag" aria-hidden="true">IA</span>
+    <span>{text[ia]} <a href={policy}>{text.more}</a>.</span>
+  </p>
+)}
+
+<style>
+  .ai-notice {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6em;
+    max-width: var(--measure);
+    margin: 1rem 0 0;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  .ai-notice .tag {
+    flex: none;
+    padding: 0 0.4em;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    font-size: 0.6875rem;
+    letter-spacing: 0.05em;
+  }
+
+  .ai-notice a {
+    color: inherit;
+  }
+
+  .ai-notice a:hover {
+    color: var(--accent-live);
+  }
+</style>

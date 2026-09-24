@@ -3,6 +3,7 @@ title: "Decommissioning a home DNS server: from \"looks simple\" to \"we broke o
 pubDate: 2026-07-06
 description: "What was supposed to be a simple EC2 instance downsizing ended up revealing an old home DNS server was quietly wearing two hats, triggering a self-inflicted DNS outage, and uncovering a hidden network dependency machine by machine."
 tags: ["Cloud", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-technitium-en.svg"
 ---
 

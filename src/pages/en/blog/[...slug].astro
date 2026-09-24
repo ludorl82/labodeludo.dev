@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import CategoryChip from "../../../components/CategoryChip.astro";
 import AuthorBadge from "../../../components/AuthorBadge.astro";
+import AiNotice from "../../../components/AiNotice.astro";
 import ShareButtons from "../../../components/ShareButtons.astro";
 import { primaryCategory } from "../../../lib/category";
 import { authorFromTags, AUTHORS } from "../../../lib/author";
@@ -51,6 +52,7 @@ const hasFrench = frenchPosts.some((p) => p.id === post.id);
           <a class="lang-link" href={`/blog/${post.id}/`}>Version française</a>
         )}
       </div>
+      <AiNotice ia={post.data.ia} outils={post.data.iaOutils} lang="en" />
     </header>
 
     {post.data.heroImage && (

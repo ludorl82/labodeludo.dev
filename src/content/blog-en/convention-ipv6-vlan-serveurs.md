@@ -3,6 +3,7 @@ title: "Giving every server on my network a clean, predictable IPv6 address"
 pubDate: 2026-07-02
 description: "Setting up an IPv6 addressing convention (suffix = IPv4 octet in hex) on a stateful-DHCPv6 server network. Covers finding DUIDs via packet capture, a config-reload gotcha after a DHCP engine change, and a case of a DHCPv6 client bound to the wrong interface."
 tags: ["Labo", "Maison", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-ipv6-convention-en.svg"
 ---
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_

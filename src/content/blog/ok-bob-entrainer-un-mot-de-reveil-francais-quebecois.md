@@ -3,6 +3,7 @@ title: "« Ok Bob » : entraîner un mot de réveil en français québécois, à
 pubDate: 2026-07-14
 description: "Le fournisseur par défaut de mots de réveil pour l'assistant vocal maison n'a pas de voix en français québécois. Solution : entraîner le mien, avec mon propre nom dedans, et découvrir en chemin pourquoi deux haut-parleurs dans la même pièce ouverte s'obstinaient à se répondre l'un à l'autre."
 tags: ["Maison", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-ok-bob.svg"
 ---
 

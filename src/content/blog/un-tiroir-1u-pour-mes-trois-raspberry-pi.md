@@ -3,6 +3,8 @@ title: "Un tiroir 1U pour mes trois Raspberry Pi : fini le fouillis sur la table
 pubDate: 2026-07-21
 description: "Coquille, worker1 et worker2 vivaient chacun dans son boîtier, empilés sur une tablette du rack mural. Un support 1U GeeekPi pour Raspberry Pi 5 plus tard, les trois noeuds sont enfin montés proprement, étiquetés, et accessibles sans démêler un nid de câbles."
 tags: ["Labo", "Maison", "ludo"]
+ia: "assistee"
+iaOutils: "Claude Code"
 ---
 
 > **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_

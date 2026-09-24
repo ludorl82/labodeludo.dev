@@ -26,7 +26,7 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 Je viens d'ajouter un MacBook Air à mon labo, configuré avec Nix comme le reste. Et assez vite, un irritant : mes sessions SSH vers mes serveurs gelaient. Je lisais un journal, je revenais au terminal une minute plus tard, je tapais une commande, et plus rien. Pas d'erreur, pas de déconnexion, juste un curseur qui attend.
 
-C'est exactement le genre de problème que j'aime que mon labo me donne. Pas une panne spectaculaire : un problème simple, classique, qui oblige à ressortir des notions de base, le routage, les pare-feu à états, la pile TCP/IP, et à les regarder travailler pour vrai. Ce sont des notions qu'on perd si on ne les pratique pas. Le labo me les ramène, et en les écrivant ici puis sur LinkedIn, je les fixe dans ma mémoire. Le diagnostic a été fait en session avec Claude Code (Opus 5.5), et je vais vous montrer comment on s'y est pris, fausse piste comprise.
+C'est exactement le genre de problème que j'aime que mon labo me donne. Pas une panne spectaculaire : un problème simple, classique, qui oblige à ressortir des notions de base, le routage, les pare-feu à états, la pile TCP/IP, et à les regarder travailler pour vrai. Ce sont des notions qu'on perd si on ne les pratique pas, et le labo me les ramène. Le diagnostic a été fait en session avec Claude Code (Opus 5.5), et je vais vous montrer comment on s'y est pris, fausse piste comprise.
 
 ## Un peu de contexte : deux VLAN sur les mêmes fils
 
@@ -149,7 +149,7 @@ Il s'est aussi trompé, et il l'a écrit. Il a passé une heure sur l'asymétrie
 
 ## Mot de la fin
 
-Au final, le correctif tient en trois règles et un fichier. Ce n'est pas un gros projet, et c'est justement pour ça que je l'aime : un problème simple, une notion de base, une réponse doit revenir par où la demande est entrée, et un labo qui me donne l'occasion de la voir travailler. Le routage, les pare-feu à états, la table ARP, c'est le genre de notions qui s'effacent si on ne les pratique pas. Le labo les garde vivantes, et les écrire ici, puis sur LinkedIn, c'est ma façon de les graver dans ma mémoire.
+Au final, le correctif tient en trois règles et un fichier. Ce n'est pas un gros projet, et c'est justement pour ça que je l'aime : un problème simple, une notion de base, une réponse doit revenir par où la demande est entrée, et un labo qui me donne l'occasion de la voir travailler. Le routage, les pare-feu à états, la table ARP, c'est le genre de notions qui s'effacent si on ne les pratique pas. Le labo les garde vivantes.
 
 Alors si vous avez des machines à deux pattes, je vous dirais de vérifier par où elles répondent avant que vos sessions se mettent à geler.
 

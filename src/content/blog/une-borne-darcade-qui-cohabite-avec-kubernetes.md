@@ -3,6 +3,7 @@ title: "Une borne d'arcade qui cohabite avec Kubernetes (et qui met la grappe de
 pubDate: 2026-08-19
 description: "Le jeu vivait sur la machine-assistant, sous forme d'un bureau GNOME complet — c'est-à-dire sur un serveur qui, laissé à lui-même, s'endort et emporte le cluster avec lui. Le plan : sortir le jeu de là et lui donner sa propre tour, découpée en deux postes, un par joueur, avec la carte graphique passée directement dans la machine virtuelle. Le twist : cette même tour est aussi un nœud Kubernetes quand personne ne joue. Récit d'une migration où une machine virtuelle s'est parlé à elle-même en IPv6, où GNOME a mangé le bouton d'arrêt, où un BIOS invisible a failli tout casser — et où le deuxième joueur attend encore sa carte graphique, partie en vacances en même temps que le patron."
 tags: ["Labo", "DevOps", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-arcade-kubernetes.svg"
 ---
 

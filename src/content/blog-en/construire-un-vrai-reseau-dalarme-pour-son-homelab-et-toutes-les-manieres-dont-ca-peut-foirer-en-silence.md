@@ -3,6 +3,7 @@ title: "Building real alerting for a homelab (and every quiet way it can fail)"
 pubDate: 2026-07-06
 description: "Building a centralized monitoring dashboard (Uptime Kuma + ntfy) for a homelab ended up uncovering a mis-scoped Windows firewall rule, DNS rebinding protection, a JSONata bug, a UTC trap, and a parallel session that had quietly renamed an admin account."
 tags: ["DevOps", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-kuma-en.svg"
 ---
 

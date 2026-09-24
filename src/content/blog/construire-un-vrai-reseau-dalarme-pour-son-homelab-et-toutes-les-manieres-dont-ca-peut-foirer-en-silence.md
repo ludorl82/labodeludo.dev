@@ -3,6 +3,7 @@ title: "Construire un vrai réseau d'alarme pour son homelab (et toutes les mani
 pubDate: 2026-07-06
 description: "La construction d'un dashboard de monitoring centralisé (Uptime Kuma + ntfy) pour un homelab a fini par débusquer un pare-feu Windows mal scope, une protection DNS anti-rebinding, un bug JSONata, un piège UTC et une session parallèle qui avait renommé un compte admin en douce."
 tags: ["DevOps", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-kuma.png"
 ---
 

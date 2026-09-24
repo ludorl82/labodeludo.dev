@@ -3,6 +3,7 @@ title: "An arcade cabinet cohabiting with Kubernetes (and kicking the cluster ou
 pubDate: 2026-08-19
 description: "The games lived on the assistant machine, as a full GNOME desktop — that is to say, on a server that, left to itself, falls asleep and takes the cluster down with it. The plan: pull the games out of there and give them their own tower, cut into two stations, one per player, with the graphics card passed straight into the virtual machine. The twist: that same tower is also a Kubernetes node when nobody is playing. The story of a migration where a virtual machine talked to itself in IPv6, where GNOME ate the power button, where an invisible BIOS nearly wrecked everything — and where the second player is still waiting for a graphics card that went on vacation at the same time as the boss."
 tags: ["Labo", "DevOps", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-arcade-kubernetes-en.svg"
 ---
 

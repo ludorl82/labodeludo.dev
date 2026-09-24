@@ -3,6 +3,7 @@ title: "Intégration de plugins asynchrones avec Neovim"
 pubDate: 2022-06-02
 description: "Ça fait un bon bout que j'utilise Vim au travail. Ça me permet d'être très prolifique quand je dois manipuler des configurations ou du code. Pour vrai j'espère plus jamais avoir à changer de mode d'édition de texte,…"
 tags: ["DevOps", "ludo"]
+ia: "aucune"
 heroImage: "/images/blog/Screenshot_20220418-162737_Termux.jpg"
 ---
 Ça fait un bon bout que j'utilise Vim au travail. Ça me permet d'être très prolifique quand je dois manipuler des configurations ou du code. Pour vrai j'espère plus jamais avoir à changer de mode d'édition de texte, comme plusieurs d'ailleurs qui ont adopté la philosophie de Vim. J'ai intégré le mode Vim dans tous mes outils qui demandent de manipuler du texte. Le plugin zsh-vi-mode de oh-my-zsh fait mon bonheur quand je dois éditer des commandes. J'utilise le mode vi dans tmux pour parcourir le buffer de ma console et pour copier du texte.

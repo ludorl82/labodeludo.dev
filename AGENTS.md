@@ -32,6 +32,15 @@ prose never borrows Bob's catchphrases. When a request does not say who
 signs, the tag on the article decides. The skills are the source; the copies
 under `~/.claude/skills/` on the console are symlinks to these files.
 
+**Every article declares its use of AI.** The frontmatter field `ia` is
+required by the content schema (`src/content.config.ts`), and the page shows a
+notice at the top (`src/components/AiNotice.astro`): `aucune` (written without
+AI, the 2019–2022 posts), `assistee` (Ludo, with `iaOutils` naming the tool,
+e.g. `"Claude Code"`), or `redigee` (Bob, always). A missing field fails the
+build, in both languages. The notice does not replace the credit in the text:
+a Ludo article about session work still names Claude Code and the models in
+its opening.
+
 A third skill, `cast`, is not a voice: it is the procedure for recording a
 terminal cast **for real** (stage, take, sanitize with an on-screen check,
 integrate, PR). Load it whenever a cast is to be recorded, redone or

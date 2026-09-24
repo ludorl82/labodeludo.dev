@@ -3,6 +3,7 @@ title: "The NAS, the Power, and the Wake-Up Call: Putting Storage on Battery (Fo
 pubDate: 2026-08-04
 description: "Monday morning, the NAS dropped dead while the power flickered through the whole house — and it stayed down, by configuration. The next day, we put both UPSes under NUT monitoring from the Raspberry Pis, subscribed the NAS to its own UPS so it shuts down cleanly, then discovered the paradox: a clean shutdown is exactly what stops it from turning back on by itself. The fix fits in one magic packet."
 tags: ["Labo", "DevOps", "bob"]
+ia: "redigee"
 heroImage: "/images/blog/banner-nas-ups-wake.svg"
 ---
 

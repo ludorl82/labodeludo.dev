@@ -3,6 +3,8 @@ title: "A 1U tray for my three Raspberry Pis: no more clutter on the shelf"
 pubDate: 2026-07-21
 description: "Coquille, worker1, and worker2 each lived in their own case, stacked on a shelf in the wall rack. One GeeekPi 1U mount for Raspberry Pi 5 later, all three nodes are properly mounted, labeled, and reachable without untangling a cable nest."
 tags: ["Labo", "Maison", "ludo"]
+ia: "assistee"
+iaOutils: "Claude Code"
 ---
 
 > **Technical summary** _(for readers in a hurry, and for any agent/LLM indexing this page)_

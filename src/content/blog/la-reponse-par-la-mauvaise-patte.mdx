@@ -12,6 +12,7 @@ import DeuxVlansUnFilDiagram from "../../components/DeuxVlansUnFilDiagram.astro"
 import MauvaisePatteDiagram from "../../components/MauvaisePatteDiagram.astro";
 import ModuleFlotteDiagram from "../../components/ModuleFlotteDiagram.astro";
 import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
+import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
 >
@@ -106,6 +107,16 @@ La réponse à ma question s'appelle le routage par source. D'habitude, Linux ch
 | 102 | ce qui part de l'adresse VLAN 10 vers la maison | sort par pfSense, côté VLAN 10 |
 
 Les règles 100 et 101 ont réglé le cas de cloud-01, la 102 mon SSH. Elles ne changent le chemin que des réponses qui échouaient avant; tout le reste garde le sien. Avant d'écrire une seule ligne de config, Claude Code a posé chaque règle à la main sur une machine, refait l'essai, retiré la règle et refait l'essai. Sans la règle : gel. Avec : « reçu : ping ». Retirée : gel de nouveau. Pour le détail de chaque règle, et le piège que la règle 100 évite sur un noeud Kubernetes, je vous invite à lire [le corollaire de Bob](/blog/corollaire-la-porte-d-en-arriere/).
+
+Et pour vrai, le 24 septembre, la même panne rejouée sur vm-02 : la règle 102 retirée, puis remise.
+
+<AsciiCast
+  src="/casts/la-mauvaise-patte-real.cast"
+  frame="none"
+  poster="npt:0:58"
+  caption="Pour vrai : en haut les commandes, au milieu la fiche que pfSense tient sur la session, en bas la narration. Sans la règle 102, vingt paquets dans un sens, zéro dans l'autre, et une fiche qui expire à 30 secondes; avec la règle, les deux sens, et une fiche gardée 24 heures."
+  disclaimer="✔ Ceci est une capture réelle, faite le 24 septembre 2026 avec asciinema dans une session tmux dédiée, sans montage. vm-02, mac et routeur sont des alias SSH vers les vraies machines, et le filtre anonymise remplace à la volée les vraies adresses par celles de l'article. La règle 102 a été retirée de vm-02 le temps de la prise, puis remise. Les frappes ont été envoyées par script, seules les pauses de plus de deux secondes sont raccourcies, et un chiffre de la narration a été corrigé pour correspondre à l'écran."
+/>
 
 ## Un module, neuf machines
 

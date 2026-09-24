@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration: a laptop sends a request to a server through a firewall; the server, which has two network legs, answers through the other leg, straight back to the laptop, and the firewall, which only sees the request, keeps a record reading 22 packets against 0 with a 30-second stopwatch">
+  <defs>
+    <linearGradient id="bgmp" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2333"/>
+      <stop offset="100%" stop-color="#2e3f5c"/>
+    </linearGradient>
+    <marker id="mpb-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8fa3c8"/>
+    </marker>
+    <marker id="mpb-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ffd166"/>
+    </marker>
+  </defs>
+
+  <rect width="1024" height="320" fill="url(#bgmp)"/>
+
+  <!-- le portable -->
+  <g>
+    <rect x="70" y="182" width="150" height="92" rx="8" fill="#243149" stroke="#5a6f96" stroke-width="3"/>
+    <rect x="84" y="195" width="122" height="66" rx="3" fill="#162033"/>
+    <text x="96" y="222" fill="#7ec8ff" font-family="Menlo, Consolas, monospace" font-size="15">$ ssh</text>
+    <rect x="152" y="210" width="10" height="16" fill="#7ec8ff" opacity="0.8"/>
+    <path d="M50,274 L240,274 L226,290 L64,290 z" fill="#3a4a68" stroke="#5a6f96" stroke-width="2"/>
+    <text x="145" y="312" fill="#8fa3c8" font-size="15" text-anchor="middle">VLAN 50</text>
+  </g>
+
+  <!-- le pare-feu -->
+  <g>
+    <rect x="410" y="36" width="200" height="84" rx="10" fill="#243149" stroke="#5a6f96" stroke-width="3"/>
+    <rect x="428" y="52" width="36" height="12" rx="2" fill="#8fa3c8"/>
+    <rect x="470" y="52" width="36" height="12" rx="2" fill="#8fa3c8"/>
+    <rect x="512" y="52" width="36" height="12" rx="2" fill="#8fa3c8"/>
+    <rect x="554" y="52" width="36" height="12" rx="2" fill="#8fa3c8"/>
+    <text x="510" y="98" fill="#dfe8f7" font-size="20" font-weight="bold" text-anchor="middle">pfSense</text>
+    <!-- la fiche à moitié vide -->
+    <rect x="632" y="30" width="150" height="72" rx="6" fill="#fdf6e3" stroke="#e0a832" stroke-width="2"/>
+    <text x="707" y="58" fill="#6b5a2e" font-family="Menlo, Consolas, monospace" font-size="17" text-anchor="middle">22 : 0</text>
+    <text x="707" y="84" fill="#6b5a2e" font-size="13" text-anchor="middle">packets</text>
+    <!-- le chronomètre -->
+    <circle cx="838" cy="68" r="34" fill="#243149" stroke="#ffd166" stroke-width="3"/>
+    <rect x="832" y="24" width="12" height="10" rx="2" fill="#ffd166"/>
+    <path d="M838,68 L838,44" stroke="#ffd166" stroke-width="3" stroke-linecap="round"/>
+    <path d="M838,68 A24,24 0 0 1 862,68" fill="none" stroke="#ffd166" stroke-width="3"/>
+    <text x="838" y="126" fill="#ffd166" font-size="17" font-weight="bold" text-anchor="middle">30 s</text>
+  </g>
+
+  <!-- le serveur à deux pattes -->
+  <g>
+    <rect x="780" y="176" width="150" height="104" rx="8" fill="#243149" stroke="#5a6f96" stroke-width="3"/>
+    <rect x="796" y="194" width="118" height="14" rx="3" fill="#3a4a68"/>
+    <rect x="796" y="216" width="118" height="14" rx="3" fill="#3a4a68"/>
+    <circle cx="902" cy="201" r="4" fill="#7ec8ff"/>
+    <circle cx="902" cy="223" r="4" fill="#7ec8ff"/>
+    <!-- patte VLAN 10, en haut -->
+    <rect x="828" y="160" width="26" height="18" rx="3" fill="#7ec8ff"/>
+    <text x="870" y="152" fill="#7ec8ff" font-size="15">VLAN 10</text>
+    <!-- patte VLAN 50, à gauche -->
+    <rect x="764" y="246" width="18" height="26" rx="3" fill="#ffd166"/>
+    <text x="855" y="306" fill="#8fa3c8" font-size="15" text-anchor="middle">server</text>
+  </g>
+
+  <!-- la demande : portable → pfSense → patte 10 -->
+  <path d="M170,180 C200,120 300,78 404,78" fill="none" stroke="#8fa3c8" stroke-width="4" marker-end="url(#mpb-a)"/>
+  <path d="M614,110 C700,140 820,120 840,158" fill="none" stroke="#8fa3c8" stroke-width="4" marker-end="url(#mpb-a)"/>
+  <text x="232" y="160" fill="#8fa3c8" font-size="17">request</text>
+
+  <!-- la réponse : patte 50 → directement au portable -->
+  <path d="M762,258 C600,262 420,250 244,236" fill="none" stroke="#ffd166" stroke-width="4" stroke-dasharray="12 8" marker-end="url(#mpb-b)"/>
+  <text x="500" y="236" fill="#ffd166" font-size="17" text-anchor="middle">reply, through the other leg</text>
+</svg>

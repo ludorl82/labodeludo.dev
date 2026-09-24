@@ -50,6 +50,12 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     nodes: [
       "tunnel:k3s",
       "app:traefik",
+      // The certificate chain Traefik serves inside the house: cert-manager
+      // (Let's Encrypt, DNS-01) and the tls app that holds its issuers, the
+      // wildcard Certificate and the default TLSStore. Unclaimed, they failed
+      // check-diagram-highlight the day k3s-iac-public first shipped them.
+      "app:cert-manager",
+      "app:tls",
       "app:cloudflared",
       "host:cloud-01",
       "instance:aws_node",

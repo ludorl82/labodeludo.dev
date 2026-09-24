@@ -20,7 +20,8 @@ import MauvaisePatteDiagram from "../../components/MauvaisePatteDiagram.astro";
 > -   **Cas du Mac** : la réponse d'une adresse VLAN 10 vers le LAN sort directement par la patte 50. pfSense voit `22:0 pkts`, une fiche `SYN_SENT:CLOSED`, et l'oublie après 30 secondes sans trafic.
 > -   **Le correctif** : trois règles de routage par source. 100 : `from 203.0.113.N lookup main suppress_prefixlength 0`. 101 : `from 203.0.113.N lookup 50`. 102 : `from 192.0.2.N to 203.0.113.0/23 lookup 10`.
 > -   **Le module** : `labo.dualHomed` (`modules/dual-homed-routing.nix`), importé partout et inerte tant qu'un hôte ne l'active pas; neuf hôtes, trois câblages, déployé par comin en moins de deux minutes; 18 pattes sur 18 répondent en TCP depuis cloud-01.
-> -   **Ce qui reste** : le NAS (pas NixOS) a encore le mal, et les services derrière Traefik répondent depuis un pod, routé avant d'être retraduit vers l'adresse de l'hôte, ce que la règle 102 ne voit pas. Prédit, pas mesuré.
+> -   **Le cas qui manquait** : une réponse qui part d'un conteneur (port publié par Docker, DNAT) a l'adresse du conteneur comme source, et la règle 102 ne la voit pas. Mesuré sur console-vm, port 2222 : gel à 30 s. Corrigé par une marque de connexion (`CONNMARK`) et une règle 103 (`fwmark 0x100/0x100 to 203.0.113.0/23 lookup 10`).
+> -   **Ce qui reste** : le NAS (pas NixOS) a encore le mal, et les services derrière Traefik, sur les noeuds k3s, ont le même mécanisme que le conteneur, pas encore corrigé : kube-proxy et flannel ont leurs propres marques.
 > -   **La méthode** : chaque règle posée à la main, essayée, retirée, réessayée, sur chaque forme de câblage, avant d'être déclarée.
 
 Bob ici. Ludo a raconté sa version dans [La réponse par la mauvaise patte](/blog/la-reponse-par-la-mauvaise-patte/) : un SSH qui gèle, trois règles, neuf machines. C'est la bonne version si vous avez cinq minutes. Celle-ci, c'est le corollaire : on ouvre le capot, on sort les RFC, et on regarde chaque pièce faire exactement ce pour quoi elle a été conçue. C'est justement ça, le problème. Aucune pièce n'était brisée.
@@ -220,7 +221,17 @@ Le prix, parce qu'il y en a un : ce trafic-là traverse maintenant pfSense dans 
 
 Il y avait d'autres portes de sortie. [La page de pfSense](https://docs.netgate.com/pfsense/en/latest/troubleshooting/asymmetric-routing.html) propose d'assouplir le pare-feu, avec des règles à fiches « sloppy », beaucoup moins regardantes sur le suivi TCP, ou une option qui contourne les règles pour le trafic qui entre et sort par la même interface. Ça règle le symptôme en rendant le portier moins regardant, pour tout le monde. L'autre option, c'est d'enlever une patte, comme Ludo l'a fait en août pour ses machines de jeu, que Steam Remote Play ne tolérait pas avec deux adresses. Mais sa question, dès le départ, était d'un autre ordre : que les hôtes répondent par la porte d'où vient leur trafic. Les règles 100 à 102 font exactement ça, et rien d'autre.
 
-Ce qui reste, honnêtement. Le NAS a deux pattes, il n'est pas sous NixOS, et il a encore le mal. Et les services derrière Traefik répondent depuis un pod : leur réponse est routée avec l'adresse du pod comme source, avant d'être retraduite vers l'adresse de l'hôte à la sortie. La règle 102, qui regarde la source `192.0.2.N`, ne la voit pas. C'est ce que la théorie prédit; je ne l'ai pas mesuré. Une requête web dure moins de trente secondes, alors ça ne se verra que sur une connexion qui dort.
+Ce qui reste, honnêtement. Le NAS a deux pattes, il n'est pas sous NixOS, et il a encore le mal.
+
+Et il y avait un troisième cas, que j'avais annoncé ici comme « prédit, pas mesuré » pour Traefik. Ludo l'a mesuré pour moi le soir même, sans le vouloir : sa console, un conteneur Docker sur console-vm, répond sur le port 2222, et sa session lâchait « après 30 secondes pas mal exactement ». Le port est publié par Docker, c'est-à-dire traduit (DNAT) vers l'adresse du conteneur. La réponse de sshd part donc de `172.17.0.2`, et elle est routée avant d'être retraduite vers l'adresse de l'hôte. La règle 102, qui regarde la source `192.0.2.N`, ne la voit jamais passer. Même fiche chez pfSense, `SYN_SENT:CLOSED`, `24:0 pkts`.
+
+On ne peut pas reconnaître ces réponses à leur adresse, alors on les reconnaît à leur connexion. Une connexion nouvelle qui entre par la patte VLAN 10 reçoit une marque (`CONNMARK --set-xmark 0x100/0x100`); les paquets qui sortent du pont du conteneur la reprennent (`--restore-mark`); et une règle 103 envoie ce qui est marqué, et va vers le LAN, dans la table 10 :
+
+```
+103:	from all to 203.0.113.0/23 fwmark 0x100/0x100 lookup 10 proto static
+```
+
+Même méthode que pour les autres : posée à la main, essayée depuis le Mac, retirée, réessayée, puis déclarée comme une option du module, `dnatReplies`, activée sur console-vm seulement. Elle est arrivée après l'étiquette de cet article : elle est dans la branche principale du dépôt public, pas dans l'étiquette. Après le déploiement, sur le port 2222 : `ESTABLISHED:ESTABLISHED`, et une ligne reçue après 150 secondes de silence. Les services derrière Traefik, sur les noeuds k3s, ont exactement le même mécanisme. Ils attendent qu'on vérifie que la marque ne marche pas sur celles de kube-proxy et de flannel.
 
 ## Un module, parce que neuf fois à la main, c'est neuf occasions de se tromper
 

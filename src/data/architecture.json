@@ -61,6 +61,11 @@
       "to": "cluster:k3s"
     },
     {
+      "from": "app:cert-manager",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
       "from": "app:cloudflared",
       "kind": "part-of",
       "to": "cluster:k3s"
@@ -179,6 +184,11 @@
       "from": "app:plex",
       "kind": "uses",
       "to": "external:nas"
+    },
+    {
+      "from": "app:tls",
+      "kind": "part-of",
+      "to": "cluster:k3s"
     },
     {
       "from": "app:traefik",
@@ -716,7 +726,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-09-24T09:30:03+00:00",
+  "generated": "2026-09-25T01:47:40+00:00",
   "nodes": [
     {
       "id": "access:cronicle",
@@ -851,6 +861,18 @@
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/argocd.yaml"
+    },
+    {
+      "id": "app:cert-manager",
+      "kind": "app",
+      "label": "cert-manager",
+      "layer": "cluster",
+      "meta": {
+        "chart": "cert-manager@v1.21.2",
+        "namespace": "cert-manager"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/cert-manager.yaml"
     },
     {
       "id": "app:cloudflared",
@@ -1027,6 +1049,18 @@
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/plex.yaml"
+    },
+    {
+      "id": "app:tls",
+      "kind": "app",
+      "label": "tls",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "kube-system",
+        "path": "tls"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/tls.yaml"
     },
     {
       "id": "app:traefik",
@@ -1428,6 +1462,7 @@
         "modules": [
           "console-container",
           "console-log-shipping",
+          "dual-homed-routing",
           "jumphost-tools",
           "private-ca"
         ],
@@ -1446,6 +1481,7 @@
         "class": "server",
         "k3sRole": "agent",
         "modules": [
+          "dual-homed-routing",
           "k3s-agent",
           "labo-gpus",
           "private-ca",
@@ -1468,6 +1504,7 @@
         "class": "server",
         "k3sRole": "agent",
         "modules": [
+          "dual-homed-routing",
           "k3s-agent",
           "private-ca",
           "rack-wake",
@@ -1490,6 +1527,7 @@
         "class": "server",
         "k3sRole": "agent",
         "modules": [
+          "dual-homed-routing",
           "k3s-agent",
           "private-ca",
           "ups-client"
@@ -1511,6 +1549,7 @@
         "class": "sbc",
         "k3sRole": "agent",
         "modules": [
+          "dual-homed-routing",
           "k3s-agent",
           "k3s-upstream",
           "nas-wake",
@@ -1535,6 +1574,7 @@
         "k3sRole": "agent",
         "modules": [
           "console-container",
+          "dual-homed-routing",
           "ha-backup",
           "house-heartbeat",
           "jumphost",
@@ -1561,6 +1601,7 @@
         "class": "server",
         "k3sRole": "agent",
         "modules": [
+          "dual-homed-routing",
           "k3s-agent",
           "private-ca",
           "ups-client"
@@ -1583,6 +1624,7 @@
         "k3sRole": "agent",
         "modules": [
           "comin",
+          "dual-homed-routing",
           "k3s-agent",
           "private-ca"
         ],
@@ -1602,6 +1644,7 @@
         "k3sRole": "agent",
         "modules": [
           "comin",
+          "dual-homed-routing",
           "k3s-agent",
           "private-ca"
         ],
@@ -2226,20 +2269,20 @@
   ],
   "sources": {
     "aws-iac-public": {
-      "commit": "7413f50",
-      "date": "2026-09-23T07:26:37-04:00"
+      "commit": "e01f181",
+      "date": "2026-09-24T11:25:08-04:00"
     },
     "cloudflare-iac-public": {
-      "commit": "9a74760",
-      "date": "2026-09-23T07:26:48-04:00"
+      "commit": "0e3524f",
+      "date": "2026-09-24T11:25:20-04:00"
     },
     "k3s-iac-public": {
-      "commit": "0647ac5",
-      "date": "2026-09-23T07:26:32-04:00"
+      "commit": "cc11dc6",
+      "date": "2026-09-24T11:25:02-04:00"
     },
     "nixos-iac-public": {
-      "commit": "6a5b3f3",
-      "date": "2026-09-23T07:26:27-04:00"
+      "commit": "845852e",
+      "date": "2026-09-24T11:24:57-04:00"
     }
   },
   "topologyVersion": 1

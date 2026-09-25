@@ -1,15 +1,24 @@
 {
-  "curated": [],
-  "generated": "2026-09-24T08:33:44Z",
+  "curated": [
+    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
+    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?",
+    "Pourquoi tu as séparé le bastion de la console ?",
+    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?",
+    "What happens to the cluster when you start a game?",
+    "Why did you split the bastion from the console?"
+  ],
+  "generated": "2026-09-25T08:33:51Z",
   "openers": [
-    "How did you get Frigate to use the GPU?",
-    "What went wrong when you moved your NFS shares to an SSD?",
-    "How do you back up your cluster?",
-    "which model powers you?",
-    "c'est quoi ton setup complet ?",
-    "Quels articles parlent de Kubernetes ?",
-    "T'as un article sur Proxmox ?",
-    "Comment Frigate utilise le GPU ?"
+    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
+    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?",
+    "Pourquoi tu as séparé le bastion de la console ?",
+    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?",
+    "What happens to the cluster when you start a game?",
+    "Why did you split the bastion from the console?"
   ],
   "written": []
 }

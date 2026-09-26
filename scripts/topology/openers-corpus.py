@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build what the generation prompt writes from, and what the gate checks against.
 
-Usage: openers-corpus.py <grounding.json> <kept.json> <content-dir> <out-dir>
+Usage: openers-corpus.py [--fresh-days N] <grounding.json> <kept.json> <content-dir> <out-dir>
 
 Files come out for two readers that need different things:
 
@@ -31,7 +31,17 @@ searches, so the two agree by construction.
 out is the gap, per language, capped at the panel's four buttons: a morning
 where four real French questions survived asks for zero French. The generated
 ones fill a gap; they never compete with a question somebody really asked.
+
+`--fresh-days N` is the OTHER reason Bob writes (2026-09-26). The gap alone
+never opened: real and curated questions filled all eight buttons every night
+from 2026-09-20 on, so Bob wrote nothing, and a new article reached the panel
+only if a visitor happened to ask about it. In fresh mode the corpus keeps only
+the articles dated within the last N days of the grounding, and asks for ONE
+question per language — English only if one of them has an English version.
+No recent article, nothing asked, exit 3: "from time to time" means when there
+is something new to talk about, not every night.
 """
+import datetime
 import json
 import os
 import pathlib
@@ -85,11 +95,21 @@ def parse_table(block, fields):
 
 
 def main():
-    if len(sys.argv) != 5:
-        print("usage: openers-corpus.py <grounding.json> <kept.json> <content-dir> <out-dir>",
-              file=sys.stderr)
+    argv = sys.argv[1:]
+    fresh_days = None
+    if "--fresh-days" in argv:
+        i = argv.index("--fresh-days")
+        try:
+            fresh_days = int(argv[i + 1])
+        except (IndexError, ValueError):
+            print("openers-corpus: --fresh-days needs a number of days", file=sys.stderr)
+            return 1
+        del argv[i:i + 2]
+    if len(argv) != 4:
+        print("usage: openers-corpus.py [--fresh-days N] <grounding.json> <kept.json> "
+              "<content-dir> <out-dir>", file=sys.stderr)
         return 1
-    grounding_path, kept_path, content_dir, out_dir = sys.argv[1:5]
+    grounding_path, kept_path, content_dir, out_dir = argv
 
     grounding = json.load(open(grounding_path, encoding="utf-8"))
     try:
@@ -120,10 +140,24 @@ def main():
     for name in fleet:
         fleet_words |= set(WORD.findall(name.lower())) | {name.lower()}
 
+    if fresh_days is not None:
+        # Measured from the grounding's own date, not the clock: the grounding
+        # is what production knows, and an article it does not list yet is one
+        # Bob cannot answer about.
+        try:
+            today = datetime.date.fromisoformat(str(grounding.get("generated", ""))[:10])
+        except ValueError:
+            today = datetime.datetime.now(datetime.timezone.utc).date()
+        since = (today - datetime.timedelta(days=fresh_days)).isoformat()
+        articles = [a for a in articles if a["date"] >= since]
+
     co = _load_openers_module()
     have_en = sum(1 for q in kept if co.looks_english(q))
     have_fr = len(kept) - have_en
     need = {"fr": max(0, TARGET - have_fr), "en": max(0, TARGET - have_en)}
+    if fresh_days is not None:
+        need = {"fr": min(need["fr"], 1 if articles else 0),
+                "en": min(need["en"], 1)}
     if not any(a["en"] for a in articles):
         need["en"] = 0
 
@@ -135,6 +169,8 @@ def main():
         "need": need,
         "generated": grounding.get("generated"),
     }
+    if fresh_days is not None:
+        corpus["fresh"] = True
     def write(name, doc):
         with open(os.path.join(out_dir, name), "w", encoding="utf-8") as fh:
             json.dump(doc, fh, ensure_ascii=False, indent=2)
@@ -148,7 +184,7 @@ def main():
                    "en": sorted(en_words | fleet_words)}, fh, ensure_ascii=False)
         fh.write("\n")
 
-    print(f"openers-corpus: {len(articles)} article(s), {len(fleet)} device(s), "
+    print(f"openers-corpus: {len(articles)} {'recent ' if fresh_days is not None else ''}article(s), {len(fleet)} device(s), "
           f"{len(fr_words)} fr / {len(en_words)} en words; "
           f"kept {have_fr} fr + {have_en} en, need {need['fr']} fr + {need['en']} en")
     # Nothing missing is a good morning, and the caller skips the model call

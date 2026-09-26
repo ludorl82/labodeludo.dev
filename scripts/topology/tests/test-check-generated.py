@@ -86,7 +86,7 @@ PADDING = " ".join(f"remplissage{i:04d}" for i in range(700))
 _builds = itertools.count()
 
 
-def build(kept, tmp):
+def build(kept, tmp, extra=()):
     """Run openers-corpus.py over the fake tree; return (corpus, vocab) paths."""
     root = pathlib.Path(tmp) / f"build{next(_builds)}"
     content = root / "content"
@@ -96,7 +96,7 @@ def build(kept, tmp):
         (content / sub / "a.md").write_text(body + "\n" + PADDING, encoding="utf-8")
     (root / "grounding.json").write_text(json.dumps(GROUNDING), encoding="utf-8")
     (root / "kept.json").write_text(json.dumps({"openers": kept}), encoding="utf-8")
-    r = subprocess.run([sys.executable, str(CORPUS), str(root / "grounding.json"),
+    r = subprocess.run([sys.executable, str(CORPUS), *extra, str(root / "grounding.json"),
                         str(root / "kept.json"), str(content), str(root / "out")],
                        capture_output=True, text=True)
     return r, root / "out" / "corpus.json", root / "out" / "vocabulary.json"
@@ -247,6 +247,34 @@ with tempfile.TemporaryDirectory() as tmp:
                          capture_output=True, text=True).stderr
     check("says no such machine", "no such machine" in msg, True)
     check("and names the offender", "worker9" in msg, True)
+
+    print("\n\033[1m== a written question never speaks as the lab's owner\033[0m")
+    check("« mes » is refused",
+          ok(["Comment Frigate enregistre mes images ?"], {"fr": 1, "en": 0}), 1)
+    check("\"my\" is refused",
+          ok(["How does my cluster share a card?"], {"fr": 0, "en": 1}), 1)
+    check("« ton » is the visitor's voice and passes",
+          ok(["Comment ton Frigate enregistre ses images ?"], {"fr": 1, "en": 0}), 0)
+
+    print("\n\033[1m== --fresh-days keeps only this week's articles, one question each\033[0m")
+    # The grounding is dated 2026-09-15; the articles 09-01 (with English) and
+    # 09-02 (French only). The window is counted from the grounding, not the clock.
+    rf, cf, _ = build([], tmp, ["--fresh-days", "14"])
+    c = json.loads(cf.read_text(encoding="utf-8"))
+    check("both articles inside fourteen days", len(c["articles"]), 2)
+    check("one question per language, not four", c["need"], {"fr": 1, "en": 1})
+    check("the corpus says it is fresh", c.get("fresh"), True)
+    rf, cf, _ = build([], tmp, ["--fresh-days", "13"])
+    c = json.loads(cf.read_text(encoding="utf-8"))
+    check("thirteen days keeps only the newer one", [a["slug"] for a in c["articles"]],
+          ["la-depeche-du-matin"])
+    check("French-only article asks no English", c["need"], {"fr": 1, "en": 0})
+    rf, _, _ = build([], tmp, ["--fresh-days", "5"])
+    check("nothing recent exits 3, no model call", rf.returncode, 3)
+    full_fr = [f"Comment Frigate enregistre ses images numéro {i} ?" for i in range(4)]
+    rf, cf, _ = build(full_fr, tmp, ["--fresh-days", "14"])
+    c = json.loads(cf.read_text(encoding="utf-8"))
+    check("a language already full stays at zero", c["need"]["fr"], 0)
 
     print("\n\033[1m== a vocabulary too small to check anything is refused\033[0m")
     # Every content word of the probe IS in this vocabulary, so the ONLY thing

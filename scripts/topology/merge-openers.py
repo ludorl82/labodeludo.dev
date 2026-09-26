@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Assemble the panel from its sources, and record which is which.
 
-Usage: merge-openers.py [--curated <curated.json>] <kept.json> <written.json>
-                        <out.json> <timestamp>
+Usage: merge-openers.py [--fresh <fresh.json>] [--curated <curated.json>]
+                        <kept.json> <written.json> <out.json> <timestamp>
 
 The suggested questions come from three places: questions visitors really
 asked, gated verbatim; questions Ludo curated by hand, gated only on whether
@@ -15,6 +15,12 @@ belong to none of them.
 actually asked is evidence about what people want to know. A curated one is a
 person's judgement, which beats a guess. A written one is a guess, however
 well grounded. When two sources offer a slot, the stronger claim wins.
+
+**`--fresh` sits between asked and curated** (2026-09-26): a question Bob
+wrote about an article published this week. Curated questions filled every
+free button from 2026-09-20 on, so without a slot of its own a new article
+never reached the panel unless a visitor asked about it first. It is still a
+written question, gated the same way, and listed in `written` with the others.
 
 `--curated` is optional and the positional form is unchanged, because this
 same script also joins the written half's two languages — a call that has no
@@ -60,9 +66,9 @@ def load(path):
         return []
 
 
-def merge(real, written, max_per_lang, looks_english, curated=()):
+def merge(real, written, max_per_lang, looks_english, curated=(), fresh=()):
     out, per = [], {True: 0, False: 0}
-    for q in list(real) + list(curated) + list(written):
+    for q in list(real) + list(fresh) + list(curated) + list(written):
         if q in out:
             continue
         en = looks_english(q)
@@ -75,33 +81,37 @@ def merge(real, written, max_per_lang, looks_english, curated=()):
 
 def main():
     argv = sys.argv[1:]
-    curated_p = None
-    if "--curated" in argv:
-        i = argv.index("--curated")
-        try:
-            curated_p = argv[i + 1]
-        except IndexError:
-            print("merge-openers: --curated needs a path", file=sys.stderr)
-            return 1
-        del argv[i:i + 2]
+    opt = {}
+    for flag in ("--curated", "--fresh"):
+        if flag in argv:
+            i = argv.index(flag)
+            try:
+                opt[flag] = argv[i + 1]
+            except IndexError:
+                print(f"merge-openers: {flag} needs a path", file=sys.stderr)
+                return 1
+            del argv[i:i + 2]
+    curated_p, fresh_p = opt.get("--curated"), opt.get("--fresh")
     if len(argv) != 4:
-        print("usage: merge-openers.py [--curated <f>] <kept.json> <written.json> "
-              "<out.json> <timestamp>", file=sys.stderr)
+        print("usage: merge-openers.py [--fresh <f>] [--curated <f>] <kept.json> "
+              "<written.json> <out.json> <timestamp>", file=sys.stderr)
         return 1
     kept_p, written_p, out_p, stamp = argv
     co = _openers_gate()
 
     real, written = load(kept_p), load(written_p)
     curated = load(curated_p) if curated_p else []
-    out = merge(real, written, co.MAX_PER_LANG, co.looks_english, curated)
+    fresh = load(fresh_p) if fresh_p else []
+    out = merge(real, written, co.MAX_PER_LANG, co.looks_english, curated, fresh)
     # Labels are assigned by PRECEDENCE, not by membership: the same string can
     # sit in two lists (a visitor may well ask what Ludo curated), and calling
     # it curated then would quietly shrink the count of real questions the
     # whole pipeline rests on. First source to claim it, keeps it.
     doc = {"generated": stamp, "openers": out,
-           "curated": [q for q in out if q in curated and q not in real],
-           "written": [q for q in out if q in written
-                       and q not in real and q not in curated]}
+           "curated": [q for q in out if q in curated and q not in real
+                       and q not in fresh],
+           "written": [q for q in out if q not in real
+                       and (q in fresh or (q in written and q not in curated))]}
 
     with open(out_p, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True, ensure_ascii=False)

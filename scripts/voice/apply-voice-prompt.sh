@@ -18,7 +18,13 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 HOST="${HA_HOST:-automatron}"
 STORE=/config/.storage/core.config_entries
-JQ_READ='.data.entries[] | select(.domain=="ollama") | .subentries[] | select(.subentry_type=="conversation") | .data.prompt'
+# Only Bob's Ollama entry, the one on bob. Since 2026-09-26 there is a second
+# Ollama entry: the office Voice PE's bridge to the console's `qwen` tmux
+# session (nixos-iac, qwen-voice-bridge.py). Its prompt is empty on purpose —
+# the bridge forwards only the last sentence — so reading every entry turned
+# the check red, and --apply would have written Bob's prompt into it.
+BOB='select(.domain=="ollama" and (.data.url | startswith("http://bob.tptpt.in:")))'
+JQ_READ='.data.entries[] | '"$BOB"' | .subentries[] | select(.subentry_type=="conversation") | .data.prompt'
 render=$(mktemp); trap 'rm -f "$render"' EXIT
 node scripts/voice/render-voice-prompt.mjs > "$render"
 
@@ -38,7 +44,7 @@ case "${1:-}" in
       trap "ha core start --no-progress >/dev/null 2>&1 || true" EXIT
       ha core stop --no-progress >/dev/null
       cp '"$STORE"' '"$STORE"'.bak-$(date +%Y%m%d%H%M)
-      jq --rawfile p /config/.bob-voice-prompt.txt '"'"'.data.entries |= map(if .domain=="ollama" then (.subentries |= map(if .subentry_type=="conversation" then (.data.prompt=$p) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
+      jq --rawfile p /config/.bob-voice-prompt.txt '"'"'.data.entries |= map(if .domain=="ollama" and (.data.url | startswith("http://bob.tptpt.in:")) then (.subentries |= map(if .subentry_type=="conversation" then (.data.prompt=$p) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
       mv '"$STORE"'.new '"$STORE"'
       rm -f /config/.bob-voice-prompt.txt'
     echo "voice prompt written; Home Assistant restarting"

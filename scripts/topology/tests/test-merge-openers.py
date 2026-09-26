@@ -34,7 +34,7 @@ def check(label, got, want):
         print(f"  \033[31mFAIL\033[0m {label}: got {got!r}, wanted {want!r}")
 
 
-def run(real, written, tmp, skip_written=False, curated=None):
+def run(real, written, tmp, skip_written=False, curated=None, fresh=None):
     d = pathlib.Path(tmp)
     (d / "kept.json").write_text(json.dumps({"openers": real}, ensure_ascii=False),
                                  encoding="utf-8")
@@ -49,6 +49,10 @@ def run(real, written, tmp, skip_written=False, curated=None):
         cp = d / "curated.json"
         cp.write_text(json.dumps({"openers": curated}, ensure_ascii=False), encoding="utf-8")
         extra = ["--curated", str(cp)]
+    if fresh is not None:
+        fp = d / "fresh.json"
+        fp.write_text(json.dumps({"openers": fresh}, ensure_ascii=False), encoding="utf-8")
+        extra += ["--fresh", str(fp)]
     r = subprocess.run([sys.executable, str(MERGE), *extra, str(d / "kept.json"), str(wp),
                         str(out), "2026-09-15T04:30:00Z"], capture_output=True, text=True)
     if r.returncode != 0:
@@ -130,6 +134,25 @@ with tempfile.TemporaryDirectory() as tmp:
     check("exit 0 without the flag", rc, 0)
     check("curated is present and empty", d["curated"], [])
     check("written is unchanged", d["written"], FR[1:2])
+
+    print("\n\033[1m== a question about a new article sits between asked and curated\033[0m")
+    # Curated questions filled every free button from 2026-09-20 on; without
+    # a slot ahead of them, a new article never reached the panel.
+    rc, d = run(FR[:1], FR[3:4], tmp, curated=FR[2:3] + FR[4:6], fresh=FR[1:2])
+    check("exit 0", rc, 0)
+    check("asked, fresh, curated, written — in that order",
+          d["openers"], FR[:1] + FR[1:2] + FR[2:3] + FR[4:5])
+    check("the fresh one is recorded as written, it is Bob's", d["written"], FR[1:2])
+    check("and not as curated", d["curated"], FR[2:3] + FR[4:5])
+    rc, d = run([], [], tmp, curated=FR[:4], fresh=FR[4:5])
+    check("with the curated source full, fresh still takes its button",
+          FR[4] in d["openers"], True)
+    check("and a curated one gives way", len(d["curated"]), 3)
+    rc, d = run([], [], tmp, curated=FR[:1], fresh=FR[:1])
+    check("a string both fresh and curated counts once, as fresh (written)",
+          (d["openers"], d["written"], d["curated"]), (FR[:1], FR[:1], []))
+    rc, d = run(FR[:1], [], tmp, fresh=FR[:1])
+    check("a fresh string a visitor also asked stays asked", d["written"], [])
 
     print("\n\033[1m== the timestamp is the caller's, not the clock's\033[0m")
     rc, d = run(FR[:1], [], tmp)

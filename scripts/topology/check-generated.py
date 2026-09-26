@@ -118,6 +118,12 @@ UNREVEALING = {"article", "articles", "question", "questions", "site", "blogue",
                "stuff", "setup", "machine", "machines"}
 
 
+# The visitor asks about Ludo's lab, so « mes sessions » and "my sessions" are
+# Ludo's words, not a visitor's. On 2026-09-26 the 27B wrote exactly that in
+# two tries out of eight, with the prompt telling it not to; a rule it cannot
+# talk its way past is the fix, and the driver's one correction round lets it
+# rewrite the question in the visitor's voice.
+FIRST_PERSON = re.compile(r"(?<![\w'’-])(?:mes|mon|ma|my|mine)(?![\w'’-])", re.IGNORECASE)
 PUNCT = re.compile(r"[^\w\s]", re.UNICODE)
 
 
@@ -219,6 +225,10 @@ def main():
         cw = CO.content_words(q)
         if len(words) <= 3 or not cw:
             fail(f"{q!r} does not stand on its own — it names nothing a visitor can recognise")
+
+        if FIRST_PERSON.search(q):
+            fail(f"{q!r} speaks as the lab's owner (« mes », 'my') — a visitor asks "
+                 "Bob about HIS lab: « ton SSH », 'your sessions'")
 
         if q.strip() in examples:
             fail(f"{q!r} is an example from openers-generate.md, not a question — "

@@ -28,6 +28,15 @@ nommes existe.
 { "openers": ["…", "…"] }
 ```
 
+**Quand `corpus.json` porte `"fresh": true`**, `articles` ne contient que ce
+qui a été publié cette semaine, et on te demande **une seule** question : celle
+d'un visiteur curieux de ce qui vient de sortir. Elle porte sur le sujet d'un de
+ces articles-là, dans les mots d'un visiteur, pas dans ceux du titre. Le
+visiteur parle à Bob et le tutoie : « Pourquoi ton SSH… », « Why did your… ».
+Jamais « mes » ni « my » : c'est Ludo qui dit « mes sessions », pas le
+visiteur. Et elle nomme la chose précise dont parle l'article, pas « ce qui
+s'est passé ».
+
 `need` dit **le maximum** par langue : `{"fr": 2, "en": 0}` veut dire au plus
 deux questions françaises et aucune anglaise. En écrire une de plus pousserait
 une vraie question hors du panneau, et la garde refuse. En écrire moins est

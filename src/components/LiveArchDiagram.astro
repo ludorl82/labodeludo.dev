@@ -275,9 +275,26 @@ const unpowered = fleetExtras.filter((d) =>
   /\bhors tension\b/i.test(d.role ?? ""),
 );
 const oneUnpowered = unpowered.length === 1;
-const pluggedIn = unpowered.length
-  ? "sous tension pour la plupart"
-  : "bien branchés";
+// Le même adjectif se vérifie une deuxième façon : un `class` qui finit par
+// « vm » n'a jamais eu de prise à lui. La puce de la bande l'affiche déjà
+// (CLASS_FR plus bas), donc le sous-titre ne peut pas promettre « bien
+// branchés » à ces cases-là sans se contredire lui-même. L'hôte n'est nommé
+// que s'il est dessiné plus haut — c'est le seul rapprochement que la graine
+// du parc permet, et le seul que ce schéma puisse attester.
+const virtuals = fleetExtras.filter((d) => /(^|-)vm$/.test(d.class));
+const oneVirtual = virtuals.length === 1;
+const guestHost = (d: FDevice) =>
+  d.hostedBy && drawnNames.has(d.hostedBy) ? d.hostedBy : undefined;
+const virtualList = virtuals
+  .map((d) => {
+    const host = guestHost(d);
+    return host ? `${d.name}, posée sur ${host}` : d.name;
+  })
+  .join(", ");
+const pluggedIn =
+  unpowered.length || virtuals.length
+    ? "sous tension pour la plupart"
+    : "bien branchés";
 const offDuty = unpowered.length
   ? ` — ${oneUnpowered ? "une exception" : `${unpowered.length} exceptions`}, ${unpowered
       .map((d) => d.name)
@@ -285,6 +302,12 @@ const offDuty = unpowered.length
       oneUnpowered ? "compte" : "comptent"
     } quand même —`
   : "";
+// « qui tire du courant », dans la légende, se vérifie comme l'adjectif du
+// sous-titre : un domaine invité n'a pas de fiche quelque part, et c'est le
+// `class` du seed qui le dit — pas l'allure de la bande.
+const pluggedClause = virtuals.length
+  ? "tire du courant pour la plupart"
+  : "tire du courant";
 // the seam worth naming: an undeclared machine that nonetheless carries a
 // declared k3s agent — a layer crossing only the fleet seed can see
 const agentNames = new Set(agents.map((a) => a.label));
@@ -379,6 +402,18 @@ const fleetNotes = [
           : []),
       ]
     : []),
+  // la couture inverse de `carriers` : un appareil que la graine dit posé sur
+  // une machine, elle, déclarée. Le haut du schéma dessine le châssis, le bas
+  // dessine l'invité, et personne ne dessine le lien — c'est donc ici qu'il se
+  // nomme, avec l'hôte seulement quand il est vraiment dessiné plus haut.
+  ...virtuals.map(
+    (d) =>
+      `↑ ${d.name} : domaine invité, pas une prise — ${
+        guestHost(d)
+          ? `son hôte ${guestHost(d)}, lui, est dessiné plus haut`
+          : "la graine ne lui connaît pas d'hôte dessiné ici"
+      }.`,
+  ),
 ];
 // « jamais déclarés » serait faux deux fois. D'abord dès qu'un orphelin est
 // dans la bande : lui, le drapeau du parc le dit déclaré — ce que les repos
@@ -454,7 +489,15 @@ const ariaLabel =
   `machine sans lien déclaré n'a pas de chemin à allumer.` +
   (fleetExtras.length
     ? ` Une dernière bande montre le reste du parc : ${fleetUnits} ` +
-      `appareils bien réels — ${fleetClasses.join(", ")} — qu'aucun des quatre ` +
+      `appareils ${
+        virtuals.length
+          ? `${
+              oneVirtual
+                ? "dont une machine virtuelle"
+                : `dont ${virtuals.length} machines virtuelles`
+            } (${virtualList})`
+          : "bien réels"
+      } — ${fleetClasses.join(", ")} — qu'aucun des quatre ` +
       `repos publics ne déclare dans sa topologie, répartis sur ` +
       `${netKeys.length} segments réseau. Ceux-là ` +
       `n'ont pas de source à ouvrir, donc pas de clic.` +
@@ -704,7 +747,8 @@ const ariaLabel =
     machine. Un deuxième clic ouvre son fichier source.
     {fleetExtras.length > 0 &&
       " La bande du bas, elle, ne clique pas : c'est le reste du parc, qui " +
-        "existe, qui tire du courant" +
+        "existe, qui " +
+        pluggedClause +
         (offDuty ? `${offDuty} et ` : ", et ") +
         (orphans.length
           ? "que l'inventaire croit déjà déclarés, alors qu'aucun repo public " +

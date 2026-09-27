@@ -1,19 +1,18 @@
 {
-  "curated": [
-    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?"
-  ],
-  "generated": "2026-09-26T08:34:16Z",
+  "curated": [],
+  "generated": "2026-09-27T08:33:49Z",
   "openers": [
     "Comment Frigate utilise le GPU ?",
-    "c'est quoi ton setup complet ?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "Pourquoi tu as débranché le NAS exprès ?",
     "How do you back up your cluster?",
-    "What went wrong when you moved your NFS shares to an SSD?",
     "How did you get Frigate to use the GPU?",
-    "which model powers you?",
-    "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
-    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?"
+    "What went wrong when you moved your NFS shares to an SSD?",
+    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
+    "Why did your SSH sessions freeze?"
   ],
   "written": [
-    "Pourquoi tes connexions SSH gelaient-elles après une minute ?"
+    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
+    "Why did your SSH sessions freeze?"
   ]
 }

@@ -1,18 +1,21 @@
 {
-  "curated": [],
-  "generated": "2026-09-27T08:33:49Z",
+  "curated": [
+    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
+    "Why did you split the bastion from the console?"
+  ],
+  "generated": "2026-09-28T08:33:12Z",
   "openers": [
     "Comment Frigate utilise le GPU ?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "Pourquoi tu as débranché le NAS exprès ?",
+    "Quels articles parlent de Kubernetes ?",
     "How do you back up your cluster?",
-    "How did you get Frigate to use the GPU?",
     "What went wrong when you moved your NFS shares to an SSD?",
     "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
-    "Why did your SSH sessions freeze?"
+    "Why do your SSH sessions freeze after a minute?",
+    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
+    "Why did you split the bastion from the console?"
   ],
   "written": [
     "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
-    "Why did your SSH sessions freeze?"
+    "Why do your SSH sessions freeze after a minute?"
   ]
 }

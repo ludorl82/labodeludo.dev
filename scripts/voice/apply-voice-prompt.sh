@@ -54,6 +54,16 @@ case "${1:-}" in
       if ssh "$HOST" "jq -r '$JQ_READ' $STORE" >/dev/null 2>&1 && ssh "$HOST" 'ha core info --no-progress 2>/dev/null | grep -q "state: started"'; then break; fi
       sleep 10
     done
-    exec "$0" --check ;;
+    "$0" --check || exit 1
+    # The prompt lives in core.config_entries, which ha-iac (private, next to
+    # this repo) mirrors and checks every morning: without a catch-up there,
+    # every prompt change reads as drift. pull-config opens the PR; a missing
+    # checkout or a failure does not undo the apply, it only says so.
+    if [ -f "${HA_IAC_DIR:-../ha-iac}/scripts/pull-config.sh" ]; then
+      ( cd "${HA_IAC_DIR:-../ha-iac}" && sh scripts/pull-config.sh ) \
+        || echo "ha-iac: pull-config failed — run it by hand" >&2
+    else
+      echo "ha-iac: no checkout at ${HA_IAC_DIR:-../ha-iac} — run its scripts/pull-config.sh by hand" >&2
+    fi ;;
   *) echo "usage: $0 --check | --apply" >&2; exit 2 ;;
 esac

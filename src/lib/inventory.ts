@@ -246,23 +246,29 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "tout-ca-pour-un-script-bash",
       "un-pod-qui-voyage-leger",
     ],
-    // host:docker was retired out from under this list. host:vm-03 was too,
-    // and came BACK in September 2026 as a new VM declared with `k3s-agent`
-    // and nothing else — so it is claimed here, as a cluster node, rather
-    // than under calcul-gpu: whatever it is eventually for, what the repo
-    // declares today is an agent. Move it the day the declaration says more.
+    // host:docker was retired out from under this list. host:vm-03 was too —
+    // twice: it came back in September 2026 as a GPU k3s agent on
+    // gaming-01, and was retired and purged again on 2026-09-26 (its card
+    // went to a Windows VM). The first snapshot published after that, on
+    // 2026-09-28, dropped it from the topology and turned the nightly chain
+    // red on this very line.
     nodes: [
       "cluster:k3s",
       "host:pi-01",
       "host:vm-01",
       "host:vm-02",
-      "host:vm-03",
       "app:argocd",
       // The gate that reverts a red commit and blocks the branch for thirty
       // days. Same family as ArgoCD and it belongs beside it: both are the
       // cluster's own GitOps machinery rather than a workload it hosts for
       // somebody else.
       "app:iac-gate",
+      // A read-only service account for Qwen Code (k3s-iac qwen-readonly/:
+      // namespace + RBAC, cluster-scoped reads of nodes, volumes and Argo CD
+      // applications) — how the local agents look at the cluster without
+      // being able to touch it. The cluster's own machinery, like the two
+      // above, not a workload it hosts for somebody else.
+      "app:qwen-readonly",
     ],
   },
   domotique: {

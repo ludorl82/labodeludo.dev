@@ -1,11 +1,11 @@
 {
   "counts": {
-    "added": 2,
-    "edgesAdded": 2,
-    "edgesRemoved": 0,
-    "removed": 0,
+    "added": 1,
+    "edgesAdded": 1,
+    "edgesRemoved": 1,
+    "removed": 1,
     "renamed": 0
   },
-  "dispatch": "Y'a cert-manager pis tls qui ont fait leur apparition dans le parc. Ça a ajouté deux liens de câblage au passage. Rien d'autre à signaler.",
-  "generated": "2026-09-25T01:47:44Z"
+  "dispatch": "Le vm-03 est parti et le qwen-readonly est arrivé, pis y'a eu du câblage qui a changé avec. Rien d'autre.",
+  "generated": "2026-09-29T16:57:02Z"
 }

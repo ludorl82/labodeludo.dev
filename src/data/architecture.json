@@ -186,6 +186,11 @@
       "to": "external:nas"
     },
     {
+      "from": "app:qwen-readonly",
+      "kind": "part-of",
+      "to": "cluster:k3s"
+    },
+    {
       "from": "app:tls",
       "kind": "part-of",
       "to": "cluster:k3s"
@@ -382,11 +387,6 @@
     },
     {
       "from": "host:vm-02",
-      "kind": "member-of",
-      "to": "cluster:k3s"
-    },
-    {
-      "from": "host:vm-03",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
@@ -726,7 +726,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-09-28T09:46:22+00:00",
+  "generated": "2026-09-29T16:56:54+00:00",
   "nodes": [
     {
       "id": "access:cronicle",
@@ -1049,6 +1049,18 @@
       },
       "repo": "k3s-iac-public",
       "source": "argocd/apps/plex.yaml"
+    },
+    {
+      "id": "app:qwen-readonly",
+      "kind": "app",
+      "label": "qwen-readonly",
+      "layer": "cluster",
+      "meta": {
+        "namespace": "qwen-readonly",
+        "path": "qwen-readonly"
+      },
+      "repo": "k3s-iac-public",
+      "source": "argocd/apps/qwen-readonly.yaml"
     },
     {
       "id": "app:tls",
@@ -1441,6 +1453,7 @@
         "class": "cloud-vm",
         "k3sRole": "server",
         "modules": [
+          "k3s-agent",
           "k3s-upstream",
           "private-ca"
         ],
@@ -1652,24 +1665,6 @@
       },
       "repo": "nixos-iac-public",
       "source": "hosts/vm-02/configuration.nix"
-    },
-    {
-      "id": "host:vm-03",
-      "kind": "host",
-      "label": "vm-03",
-      "layer": "hardware",
-      "meta": {
-        "arch": "x86_64-linux",
-        "class": "vm",
-        "k3sRole": "agent",
-        "modules": [
-          "k3s-agent",
-          "private-ca"
-        ],
-        "networks": []
-      },
-      "repo": "nixos-iac-public",
-      "source": "hosts/vm-03/configuration.nix"
     },
     {
       "id": "instance:aws_node",
@@ -2269,20 +2264,20 @@
   ],
   "sources": {
     "aws-iac-public": {
-      "commit": "e01f181",
-      "date": "2026-09-24T11:25:08-04:00"
+      "commit": "63ecb26",
+      "date": "2026-09-28T16:56:16-04:00"
     },
     "cloudflare-iac-public": {
-      "commit": "0e3524f",
-      "date": "2026-09-24T11:25:20-04:00"
+      "commit": "e8dff20",
+      "date": "2026-09-28T16:56:26-04:00"
     },
     "k3s-iac-public": {
-      "commit": "cc11dc6",
-      "date": "2026-09-24T11:25:02-04:00"
+      "commit": "f60a214",
+      "date": "2026-09-28T16:56:11-04:00"
     },
     "nixos-iac-public": {
-      "commit": "845852e",
-      "date": "2026-09-24T11:24:57-04:00"
+      "commit": "f19f525",
+      "date": "2026-09-28T16:56:06-04:00"
     }
   },
   "topologyVersion": 1

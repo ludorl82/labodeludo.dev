@@ -1,21 +1,21 @@
 {
   "curated": [
-    "How do you publish your infrastructure without leaking secrets?",
-    "Why did the cheapest model score like the biggest one?"
+    "Why did the cheapest model score like the biggest one?",
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
-  "generated": "2026-09-30T08:33:50Z",
+  "generated": "2026-10-01T08:33:56Z",
   "openers": [
     "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tu as séparé le bastion de la console ?",
-    "How do you back up your cluster?",
-    "Pourquoi ton SSH répondait-il par la porte de derrière ?",
-    "Why does Linux answer politely through the back door?",
-    "How do you publish your infrastructure without leaking secrets?",
-    "Why did the cheapest model score like the biggest one?"
+    "Comment Frigate utilise le GPU ?",
+    "How does Linux answer from the back door?",
+    "Why did the cheapest model score like the biggest one?",
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
   "written": [
-    "Pourquoi ton SSH répondait-il par la porte de derrière ?",
-    "Why does Linux answer politely through the back door?"
+    "How does Linux answer from the back door?"
   ]
 }

@@ -1,21 +1,21 @@
 {
   "curated": [
-    "Why did the cheapest model score like the biggest one?",
     "How does Bob pick which parts of your articles to quote?",
-    "What broke on a Thursday night with MongoDB?"
+    "What broke on a Thursday night with MongoDB?",
+    "Why is renumbering a k3s cluster harder than it looks?"
   ],
-  "generated": "2026-10-01T08:33:56Z",
+  "generated": "2026-10-02T08:33:08Z",
   "openers": [
     "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tu as séparé le bastion de la console ?",
-    "Comment Frigate utilise le GPU ?",
-    "How does Linux answer from the back door?",
-    "Why did the cheapest model score like the biggest one?",
+    "C'est quoi la carte graphique qui permet de rouler le modèle?",
+    "Why did your SSH sessions freeze after a minute?",
     "How does Bob pick which parts of your articles to quote?",
-    "What broke on a Thursday night with MongoDB?"
+    "What broke on a Thursday night with MongoDB?",
+    "Why is renumbering a k3s cluster harder than it looks?"
   ],
   "written": [
-    "How does Linux answer from the back door?"
+    "Why did your SSH sessions freeze after a minute?"
   ]
 }

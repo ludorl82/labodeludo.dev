@@ -251,19 +251,33 @@ const fleetExtras = fleetDevices.filter(
   (d) => !drawnNames.has(d.name) && !(d.class === "ups" && upsCount > 0),
 );
 // La dérive dans l'autre sens : le drapeau `iacDeclared` du parc dit « déjà
-// dans architecture.json » et, pour ceux-là, les quatre repos publics ne les
-// nomment pas. Ils restent branchés, ils tirent du courant — ça se dit, et
-// rien de plus : le drapeau est posé par une session privée, l'instantané
-// public n'est pas tenu au même rythme que le repo privé, et le join ne lit
-// que le public. Donc ni « l'IaC a cessé de les nommer » ni « jamais déclarés »
-// ne sont décidables d'ici — seul le désaccord des deux graines est un fait.
+// dans architecture.json » et, pour ceux-là, la topologie des quatre repos
+// publics ne leur connaît aucun nœud. Ne pas dire de plus : pas « aucun repo
+// ne les nomme ». Ça s'est vérifié dans l'instantané et ça fait tomber la
+// phrase — win11 se lit bel et bien dans nixos-iac-public (guests/win11/libvirt-
+// domain.xml, et le hook de game mode de hosts/gaming-01), seulement sous
+// guests/ et non sous hosts/, là où emit-topology ne regarde pas : le script ne
+// marche que les nixosConfigurations. Les deux graines peuvent donc avoir raison
+// chacune dans son registre, et « l'inventaire a tort » n'est pas décidable
+// d'ici. Ils restent branchés, ils tirent du courant — ça se dit, et rien de
+// plus : le drapeau est posé par une session privée, l'instantané public n'est
+// pas tenu au même rythme que le repo privé, et le join ne lit que le public.
+// Donc ni « l'IaC a cessé de les nommer » ni « jamais déclarés » ne tiennent —
+// seul le désaccord des deux graines est un fait, et il porte sur un nœud.
 const orphans = fleetDevices.filter(
   (d) => d.iacDeclared === true && !drawnNames.has(d.name),
 );
 const oneOrphan = orphans.length === 1;
 // un orphelin que l'inventaire dit agent k3s est le seul cas où la bande du bas
-// contredit un compte dessiné plus haut : ce compte-là est celui des déclarés
-const orphanAgents = orphans.filter((d) => /k3s/i.test(d.role ?? ""));
+// contredit un compte dessiné plus haut : ce compte-là est celui des déclarés.
+// Le mot « k3s » tout seul ne suffit pas à le dire — le parc écrit aussi « pas
+// un nœud k3s », et citer la négation à l'endroit faisait affirmer au schéma le
+// contraire exact de ce que l'inventaire déclare. C'est la formule `agent k3s`
+// qu'il faut lire, et rien qui la nie à côté.
+const orphanAgents = orphans.filter((d) => {
+  const role = d.role ?? "";
+  return /agent k3s/i.test(role) && !/pas un|n'est pas|jamais un/i.test(role);
+});
 const fleetUnits = fleetExtras.reduce((n, d) => n + (d.count ?? 1), 0);
 // « bien branchés » n'est pas une déduction, c'est un fait que la graine sait
 // dire ou taire : le `role` d'une boîte peut la déclarer à l'arrêt. Une carte
@@ -291,6 +305,27 @@ const virtualList = virtuals
     return host ? `${d.name}, posée sur ${host}` : d.name;
   })
   .join(", ");
+// Le mot de classe des châssis du haut se vérifie, lui aussi, contre le parc.
+// `meta.class` sort d'un heuristic de PRÉFIXE DE NOM dans nixos-iac
+// (scripts/emit-topology.py : « gpu- », « vm- », « console- »…), et « arcade- »
+// ne matche rien — arcade1 et arcade2 étaient étiquetés « server » sur le
+// dessin. L'instantané dit autre chose, et les deux graines tombent d'accord :
+// `class: vm`, `hostedBy: gaming-01` dans fleet.json, et
+// hosts/arcade1/configuration.nix s'ouvre par « a NixOS libvirt guest on
+// gaming-01 ». Le châssis qui les porte étant déjà dessiné juste à côté, la
+// grille du haut est la seule case du schéma où ce lien pouvait se lire : la
+// bande du bas, elle, les dédoublonne et ne les note donc nulle part.
+const fleetIsGuest = (h: TNode) => {
+  const d = fleetDevices.find((f) => f.name === h.label);
+  const host = d?.hostedBy;
+  return host &&
+    /(^|-)vm$/.test(d?.class ?? "") &&
+    !/(^|-)vm$/.test(String(h.meta.class ?? "")) &&
+    drawnNames.has(host)
+    ? host
+    : undefined;
+};
+const homeGuests = homeHosts.filter((h) => fleetIsGuest(h));
 const pluggedIn =
   unpowered.length || virtuals.length
     ? "sous tension pour la plupart"
@@ -389,9 +424,9 @@ const fleetNotes = [
     ? [
         `↑ ${orphans.map((d) => d.name).join(", ")} : l'inventaire ${
           oneOrphan ? "le croit" : "les croit"
-        } déclaré${oneOrphan ? "" : "s"}, aucun repo public ne ${
-          oneOrphan ? "le nomme" : "les nomme"
-        }.`,
+        } déclaré${oneOrphan ? "" : "s"}, la topologie publique ne ${
+          oneOrphan ? "lui connaît" : "leur connaît"
+        } aucun nœud.`,
         ...(orphanAgents.length
           ? [
               `↑ ${orphanAgents
@@ -416,14 +451,16 @@ const fleetNotes = [
   ),
 ];
 // « jamais déclarés » serait faux deux fois. D'abord dès qu'un orphelin est
-// dans la bande : lui, le drapeau du parc le dit déclaré — ce que les repos
-// publics, eux, ne confirment pas. Ensuite pour les onduleurs, redescendus ici
-// parce qu'aucun nœud de topologie ne les nomme plus, alors que le repo NixOS
-// les pilote toujours, module NUT par module NUT. Le seul fait que la graine
-// garantisse, c'est l'absence de nœud — et c'est déjà tout ce qui explique
-// qu'il n'y ait rien à cliquer.
+// dans la bande : lui, le drapeau du parc le dit déclaré, et la topologie
+// publique ne le confirme pas — sans le nier non plus, car un repo peut fort
+// bien le nommer hors des nœuds qu'emit-topology ramasse (win11, encore, tenu
+// par le hook de game mode dans hosts/gaming-01). Ensuite pour les
+// onduleurs, redescendus ici parce qu'aucun nœud de topologie ne les nomme
+// plus, alors que le repo NixOS les pilote toujours, module NUT par module
+// NUT. Le seul fait que la graine garantisse, c'est l'absence de nœud — et
+// c'est déjà tout ce qui explique qu'il n'y ait rien à cliquer.
 const fleetSubtitle = orphans.length
-  ? `${pluggedIn}, déclarés par l'inventaire seulement : rien à allumer, aucune source à ouvrir`
+  ? `${pluggedIn}, déclarés par l'inventaire mais sans nœud : rien à allumer, aucune source à ouvrir`
   : `${pluggedIn}, hors de la topologie : rien à allumer, aucune source à ouvrir`;
 const svgH = fleetExtras.length
   ? fleetBottom + 26 + fleetNotes.length * 14
@@ -466,11 +503,21 @@ const ariaLabel =
       `(${homeOutside.map((h) => h.label).join(", ")}) sont gérées par l'IaC ` +
       `sans jamais joindre k3s.`
     : "") +
+  (homeGuests.length
+    ? ` Méfie-toi du mot « machines » : ${homeGuests.length} des ` +
+      `${homeHosts.length} de la grille ne sont pas du fer mais des invitées ` +
+      `libvirt, posées sur un châssis dessiné dans la même grille (${homeGuests
+        .map((h) => `${h.label} sur ${fleetIsGuest(h)}`)
+        .join(", ")}). Le nombre ne bouge pas — elles sont bien NixOS et bien ` +
+      `gérées par l'IaC ; c'est la nature de la case qui se corrige, pas le ` +
+      `compte.`
+    : "") +
   (externals.length
     ? ` Toujours côté maison, ${externals.length} boîtes en pointillés ` +
-      `(${externals.map((n) => n.label).join(", ")}) ne sont gérées par ` +
-      `aucun repo : elles n'existent dans la topologie que parce que l'IaC ` +
-      `les nomme en passant, et c'est ce qui les rend cliquables.`
+      `(${externals.map((n) => n.label).join(", ")}) ne sont déclarées par ` +
+      `aucun repo comme machines : elles n'existent dans la topologie que ` +
+      `parce que l'IaC les nomme en passant, et c'est ce qui les rend ` +
+      `cliquables.`
     : "") +
   (hostedOrigins.length
     ? ` Le pointillé ne veut pas dire « rien derrière » : ` +
@@ -507,9 +554,13 @@ const ariaLabel =
             oneOrphan ? "" : "nt"
           } parce que l'inventaire ${
             oneOrphan ? "le croit" : "les croit"
-          } déclaré${oneOrphan ? "" : "s"} alors qu'aucun des quatre repos ` +
-          `publics ne ${oneOrphan ? "le nomme" : "les nomme"} — lequel des ` +
-          `deux a raison, je ne peux pas le voir d'ici.` +
+          } déclaré${oneOrphan ? "" : "s"} alors que la topologie des quatre ` +
+          `repos publics ne ${
+            oneOrphan ? "lui connaît" : "leur connaît"
+          } aucun nœud — et l'instantané me laisse voir que le nom, lui, peut ` +
+          `fort bien se lire dans un repo : ce qui manque est le nœud, pas la ` +
+          `trace. Les deux graines peuvent avoir raison chacune dans son ` +
+          `registre ; laquelle croit trop, je ne peux pas le trancher d'ici.` +
           (orphanAgents.length
             ? ` Et ${orphanAgents
                 .map((d) => d.name)
@@ -663,12 +714,13 @@ const ariaLabel =
       {
         homeHosts.map((h, i) => {
           const c = cell(i, HOST_Y0);
+          const guest = fleetIsGuest(h);
           return (
             <a class="svg-node" data-node={h.id} href={src(h)}>
-              <title>{h.label} — {h.meta.class} · {inK3s(h) ? "nœud du cluster" : "gérée par l'IaC, hors cluster"} · cliquer pour allumer les chemins qui y aboutissent</title>
+              <title>{h.label} — {guest ? `invitée libvirt sur ${guest}` : h.meta.class} · {inK3s(h) ? "nœud du cluster" : "gérée par l'IaC, hors cluster"} · cliquer pour allumer les chemins qui y aboutissent</title>
               <rect x={c.x} y={c.y} width={H_W} height={H_H} rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
               <text x={c.x + H_W / 2} y={c.y + 18} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{h.label}</text>
-              <text x={c.x + H_W / 2} y={c.y + 30} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{h.meta.class}{inK3s(h) ? " · k3s" : ""}</text>
+              <text x={c.x + H_W / 2} y={c.y + 30} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{guest ? `vm · ${guest}` : h.meta.class}{inK3s(h) ? " · k3s" : ""}</text>
             </a>
           );
         })
@@ -678,7 +730,7 @@ const ariaLabel =
            `externals`, elle n'énumère plus personne à la main -->
       {extBoxes.map(({ n, x, y, note, onHost }) => (
         <a class="svg-node" data-node={n.id} href={src(n)}>
-          <title>{n.label} — {onHost ? "service déclaré par l'IaC, mais hors topologie" : "hors IaC"}, {note}{n.meta.via ? ` · ${n.meta.via}` : ""} · cliquer pour allumer les chemins qui y aboutissent</title>
+          <title>{n.label} — {onHost ? "origine de tunnel : un service que l'IaC déclare sur une machine déclarée, pas une machine en soi" : "matériel qu'aucun repo ne déclare"}, {note}{n.meta.via ? ` · ${n.meta.via}` : ""} · cliquer pour allumer les chemins qui y aboutissent</title>
           <rect x={x} y={y} width={H_W} height={H_H} rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
           <text x={x + H_W / 2} y={y + 18} text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{n.label}</text>
           <text x={x + H_W / 2} y={y + 30} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{note}</text>
@@ -687,7 +739,7 @@ const ariaLabel =
       {homeOutside.length > 0 && (
         <text x="64" y={noteY1} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">« · k3s » : dans le cluster — {homeMembers.length} des {homeHosts.length} ; les autres : NixOS, zéro pod</text>
       )}
-      <text x="64" y={noteY2} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : hors topologie déclarée — l'IaC les référence, donc cliquables</text>
+      <text x="64" y={noteY2} font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">pointillés : matériel non déclaré, mais que l'IaC nomme — donc cliquable</text>
 
       <!-- AWS -->
       <rect x="490" y={SITE_TOP} width="230" height={SITE_BOTTOM - SITE_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
@@ -751,8 +803,11 @@ const ariaLabel =
         pluggedClause +
         (offDuty ? `${offDuty} et ` : ", et ") +
         (orphans.length
-          ? "que l'inventaire croit déjà déclarés, alors qu'aucun repo public " +
-            "ne les nomme."
+          ? `que l'inventaire croit ${
+              oneOrphan ? "déjà déclaré" : "déjà déclarés"
+            }, alors que la topologie publique ne ${
+              oneOrphan ? "lui connaît" : "leur connaît"
+            } aucun nœud — le nom, lui, se lit peut-être ailleurs dans un repo.`
           : "que nul repo public ne compte dans sa topologie.")}
   </figcaption>
 </figure>

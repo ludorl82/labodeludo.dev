@@ -1,21 +1,21 @@
 {
   "curated": [
-    "How does Bob pick which parts of your articles to quote?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
     "What broke on a Thursday night with MongoDB?",
-    "Why is renumbering a k3s cluster harder than it looks?"
+    "Why is renumbering a k3s cluster harder than it looks?",
+    "How do your diagrams redraw themselves every night?",
+    "What did you learn moving your NFS shares to an SSD?"
   ],
-  "generated": "2026-10-02T08:33:08Z",
+  "generated": "2026-10-03T08:33:06Z",
   "openers": [
     "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tu as séparé le bastion de la console ?",
-    "C'est quoi la carte graphique qui permet de rouler le modèle?",
-    "Why did your SSH sessions freeze after a minute?",
-    "How does Bob pick which parts of your articles to quote?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
     "What broke on a Thursday night with MongoDB?",
-    "Why is renumbering a k3s cluster harder than it looks?"
+    "Why is renumbering a k3s cluster harder than it looks?",
+    "How do your diagrams redraw themselves every night?",
+    "What did you learn moving your NFS shares to an SSD?"
   ],
-  "written": [
-    "Why did your SSH sessions freeze after a minute?"
-  ]
+  "written": []
 }

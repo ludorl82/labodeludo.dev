@@ -64,7 +64,20 @@ Le tableau dit l'essentiel. Pour une voix, la vitesse d'écriture compte peu : u
 
 Quand Ollama lit un prompt, il garde le résultat de ce calcul en mémoire. À la question suivante, il compare le nouveau prompt à l'ancien, depuis le début, et réutilise tout ce qui est identique. Dès la première différence, il recalcule tout ce qui suit, même si le reste est pareil. C'est la règle à retenir : la cache ne garde que le début commun.
 
-Mes modèles ajoutent une subtilité. Les Qwen récents sont hybrides : trois couches sur quatre gardent une sorte de résumé de ce qu'elles ont lu, et un résumé ne se rembobine pas. Le serveur prend donc des points de contrôle à quelques endroits seulement, au début de la question et un peu plus de 1 000 jetons avant la fin du prompt, et ne peut reprendre qu'à l'un d'eux. Une différence placée avant ces points de contrôle fait tout relire. Le pourquoi, avec le code à l'appui, est dans [l'article de Bob](/blog/trois-cartes-deux-cerveaux-une-horloge/).
+Si vous avez déjà écrit un Dockerfile, vous connaissez déjà ce principe. Docker construit une image en couches, une par instruction, et garde chacune en cache. Sa [documentation](https://docs.docker.com/build/cache/) le dit en une phrase : si une couche change, toutes celles qui viennent après sont touchées aussi. C'est pour ça qu'on copie la liste des dépendances et qu'on les installe avant de copier le code, comme dans [l'exemple de Docker lui-même](https://docs.docker.com/build/cache/optimize/) :
+
+```dockerfile
+FROM node
+WORKDIR /app
+COPY package.json yarn.lock .    # change rarement
+RUN npm install                  # reste en cache
+COPY . .                         # change à chaque commit
+RUN npm build
+```
+
+Un prompt fonctionne de la même façon. Les consignes et la description des appareils, ce sont les dépendances : elles changent rarement, elles vont en haut. L'heure, la météo et la question, c'est le code : elles changent à chaque fois, elles vont en bas. Mettre l'heure en tête du prompt, c'est comme faire `COPY . .` en première ligne : chaque build réinstalle tout.
+
+Mes modèles ajoutent une subtilité, et la comparaison tient encore. Avec un modèle classique, chaque jeton est une couche : le serveur reprend exactement là où la différence commence. Les Qwen récents sont hybrides : dans trois couches du réseau sur quatre, le modèle garde une sorte de résumé de ce qu'il a lu, et un résumé ne se rembobine pas. C'est comme un Dockerfile qui n'aurait que quelques grosses couches. Le serveur prend des points de contrôle à quelques endroits seulement, au début de la question et un peu plus de 1 000 jetons avant la fin du prompt, et ne peut reprendre qu'à l'un d'eux. Si quelque chose change dans la dernière grosse couche, il la refait au complet; si ça change plus haut, il refait tout. Le pourquoi, avec le code à l'appui, est dans [l'article de Bob](/blog/trois-cartes-deux-cerveaux-une-horloge/).
 
 ## Premier piège : ce qui change en haut du prompt
 
@@ -105,7 +118,7 @@ Les trois cas, en clair :
 -   l'heure à la fin du prompt système : 1 024 jetons relus, 2,3 s;
 -   l'heure dans la question : 29 jetons relus, 0,37 s.
 
-Le cas du milieu est le plus instructif : l'heure à la fin du prompt système, ça ne suffit pas. Le modèle ne peut reprendre qu'à un point de contrôle, et le plus proche était un peu plus de 1 000 jetons avant la fin. Ce qui change doit aller dans la question elle-même, ou dans la réponse d'un outil.
+Le cas du milieu est le plus instructif : l'heure à la fin du prompt système, ça ne suffit pas. Le modèle ne peut reprendre qu'à un point de contrôle, et le plus proche était un peu plus de 1 000 jetons avant la fin : c'est la dernière grosse couche, refaite au complet à chaque question. Ce qui change doit aller dans la question elle-même, ou dans la réponse d'un outil.
 
 ## Deuxième piège : un prompt par appareil
 
@@ -118,7 +131,7 @@ Le correctif est un petit service sur une autre machine du labo, qui pose chaque
 ## Les règles que j'en tire
 
 1.  **Mesurez les deux vitesses séparément.** Le temps avant le premier mot et la vitesse d'écriture n'ont ni les mêmes causes ni les mêmes remèdes. Une carte plus rapide aide l'écriture; la cache aide la lecture.
-2.  **Ce qui change va après ce qui ne change pas.** Les consignes et la description des appareils d'abord; l'heure, la météo et la question à la fin.
+2.  **Ce qui change va après ce qui ne change pas.** Les consignes et la description des appareils d'abord; l'heure, la météo et la question à la fin. Comme dans un Dockerfile : les dépendances avant le code.
 3.  **Sur un modèle hybride, « à la fin » veut dire dans la question ou dans la réponse d'un outil.** La fin du prompt système ne suffit pas.
 4.  **Ce qui change rarement peut rester en haut.** La date change une fois par jour : une relecture complète par jour, c'est un prix acceptable.
 5.  **Réchauffez le prompt exact.** Un réchauffement qui ne construit pas le même prompt, appareil compris, ne réchauffe rien.

@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : une balance posée sur trois cartes graphiques RTX 3060. Dans le plateau de gauche, un modèle MoE de 35 milliards de paramètres dont seuls quelques experts s'allument, à 77 jetons par seconde. Dans le plateau de droite, un modèle dense de 27 milliards dont tout s'allume, à 18 jetons par seconde. La balance reste à niveau : à gauche, un haut-parleur qui entend « Ok Bob », à droite, une horloge marquée cache.">
+  <defs>
+    <linearGradient id="bgcb" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2333"/>
+      <stop offset="100%" stop-color="#2e3f5c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="320" fill="url(#bgcb)"/>
+
+  <g transform="translate(0,-24)">
+
+  <!-- les trois cartes graphiques, en socle -->
+  <g>
+    <rect x="337" y="252" width="110" height="40" rx="5" fill="#243149" stroke="#5a6f96" stroke-width="2.5"/>
+    <circle cx="370" cy="272" r="13" fill="#162033" stroke="#5a6f96" stroke-width="2"/>
+    <circle cx="414" cy="272" r="13" fill="#162033" stroke="#5a6f96" stroke-width="2"/>
+    <rect x="457" y="252" width="110" height="40" rx="5" fill="#243149" stroke="#5a6f96" stroke-width="2.5"/>
+    <circle cx="490" cy="272" r="13" fill="#162033" stroke="#5a6f96" stroke-width="2"/>
+    <circle cx="534" cy="272" r="13" fill="#162033" stroke="#5a6f96" stroke-width="2"/>
+    <rect x="577" y="252" width="110" height="40" rx="5" fill="#243149" stroke="#5a6f96" stroke-width="2.5"/>
+    <circle cx="610" cy="272" r="13" fill="#162033" stroke="#5a6f96" stroke-width="2"/>
+    <circle cx="654" cy="272" r="13" fill="#162033" stroke="#5a6f96" stroke-width="2"/>
+    <text x="512" y="313" fill="#8fa3c8" font-size="15" text-anchor="middle">3 × RTX 3060, 12 Go</text>
+  </g>
+
+  <!-- le pied et le fléau -->
+  <path d="M494,252 L512,190 L530,252 z" fill="#3a4a68" stroke="#5a6f96" stroke-width="2.5"/>
+  <rect x="252" y="181" width="520" height="10" rx="5" fill="#8fa3c8"/>
+  <circle cx="512" cy="186" r="11" fill="#ffd166"/>
+
+  <!-- plateau de gauche : le MoE, quelques experts allumés -->
+  <g>
+    <rect x="258" y="160" width="8" height="22" fill="#8fa3c8"/>
+    <g fill="#3a4a68" stroke="#5a6f96" stroke-width="1.5">
+      <rect x="194" y="96" width="14" height="14" rx="2"/><rect x="212" y="96" width="14" height="14" rx="2"/><rect x="230" y="96" width="14" height="14" rx="2"/><rect x="248" y="96" width="14" height="14" rx="2"/><rect x="266" y="96" width="14" height="14" rx="2"/><rect x="284" y="96" width="14" height="14" rx="2"/><rect x="302" y="96" width="14" height="14" rx="2"/><rect x="320" y="96" width="14" height="14" rx="2"/>
+      <rect x="194" y="114" width="14" height="14" rx="2"/><rect x="212" y="114" width="14" height="14" rx="2"/><rect x="230" y="114" width="14" height="14" rx="2"/><rect x="248" y="114" width="14" height="14" rx="2"/><rect x="266" y="114" width="14" height="14" rx="2"/><rect x="284" y="114" width="14" height="14" rx="2"/><rect x="302" y="114" width="14" height="14" rx="2"/><rect x="320" y="114" width="14" height="14" rx="2"/>
+      <rect x="194" y="132" width="14" height="14" rx="2"/><rect x="212" y="132" width="14" height="14" rx="2"/><rect x="230" y="132" width="14" height="14" rx="2"/><rect x="248" y="132" width="14" height="14" rx="2"/><rect x="266" y="132" width="14" height="14" rx="2"/><rect x="284" y="132" width="14" height="14" rx="2"/><rect x="302" y="132" width="14" height="14" rx="2"/><rect x="320" y="132" width="14" height="14" rx="2"/>
+    </g>
+    <g fill="#ffd166">
+      <rect x="230" y="96" width="14" height="14" rx="2"/>
+      <rect x="302" y="114" width="14" height="14" rx="2"/>
+      <rect x="212" y="132" width="14" height="14" rx="2"/>
+    </g>
+    <path d="M176,148 L348,148 Q340,160 322,162 L202,162 Q184,160 176,148 z" fill="#5a6f96"/>
+    <text x="262" y="222" fill="#dfe8f7" font-size="19" font-weight="bold" text-anchor="middle">35B-A3B · MoE</text>
+    <text x="262" y="246" fill="#7ec8ff" font-family="Menlo, Consolas, monospace" font-size="16" text-anchor="middle">77 jetons/s</text>
+  </g>
+
+  <!-- plateau de droite : le dense, tout s'allume -->
+  <g>
+    <rect x="758" y="160" width="8" height="22" fill="#8fa3c8"/>
+    <g fill="#ffd166" stroke="#e0a832" stroke-width="1.5">
+      <rect x="694" y="96" width="14" height="14" rx="2"/><rect x="712" y="96" width="14" height="14" rx="2"/><rect x="730" y="96" width="14" height="14" rx="2"/><rect x="748" y="96" width="14" height="14" rx="2"/><rect x="766" y="96" width="14" height="14" rx="2"/><rect x="784" y="96" width="14" height="14" rx="2"/><rect x="802" y="96" width="14" height="14" rx="2"/><rect x="820" y="96" width="14" height="14" rx="2"/>
+      <rect x="694" y="114" width="14" height="14" rx="2"/><rect x="712" y="114" width="14" height="14" rx="2"/><rect x="730" y="114" width="14" height="14" rx="2"/><rect x="748" y="114" width="14" height="14" rx="2"/><rect x="766" y="114" width="14" height="14" rx="2"/><rect x="784" y="114" width="14" height="14" rx="2"/><rect x="802" y="114" width="14" height="14" rx="2"/><rect x="820" y="114" width="14" height="14" rx="2"/>
+      <rect x="694" y="132" width="14" height="14" rx="2"/><rect x="712" y="132" width="14" height="14" rx="2"/><rect x="730" y="132" width="14" height="14" rx="2"/><rect x="748" y="132" width="14" height="14" rx="2"/><rect x="766" y="132" width="14" height="14" rx="2"/><rect x="784" y="132" width="14" height="14" rx="2"/><rect x="802" y="132" width="14" height="14" rx="2"/><rect x="820" y="132" width="14" height="14" rx="2"/>
+    </g>
+    <path d="M676,148 L848,148 Q840,160 822,162 L702,162 Q684,160 676,148 z" fill="#5a6f96"/>
+    <text x="762" y="222" fill="#dfe8f7" font-size="19" font-weight="bold" text-anchor="middle">27B · dense</text>
+    <text x="762" y="246" fill="#7ec8ff" font-family="Menlo, Consolas, monospace" font-size="16" text-anchor="middle">18 jetons/s</text>
+  </g>
+
+  <!-- à gauche : le haut-parleur de la maison -->
+  <g>
+    <ellipse cx="86" cy="150" rx="46" ry="15" fill="#3a4a68" stroke="#5a6f96" stroke-width="2.5"/>
+    <path d="M40,150 L40,170 Q86,190 132,170 L132,150" fill="#243149" stroke="#5a6f96" stroke-width="2.5"/>
+    <ellipse cx="86" cy="150" rx="30" ry="9" fill="none" stroke="#7ec8ff" stroke-width="2"/>
+    <path d="M58,116 Q86,98 114,116" fill="none" stroke="#7ec8ff" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M48,100 Q86,74 124,100" fill="none" stroke="#7ec8ff" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+    <text x="86" y="216" fill="#dfe8f7" font-size="17" text-anchor="middle">« Ok Bob »</text>
+  </g>
+
+  <!-- à droite : l'horloge de la cache -->
+  <g>
+    <circle cx="940" cy="140" r="40" fill="#243149" stroke="#ffd166" stroke-width="3"/>
+    <rect x="933" y="91" width="14" height="10" rx="2" fill="#ffd166"/>
+    <path d="M940,140 L940,112" stroke="#ffd166" stroke-width="3" stroke-linecap="round"/>
+    <path d="M940,140 L960,152" stroke="#ffd166" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="940" cy="140" r="4" fill="#ffd166"/>
+    <text x="940" y="216" fill="#ffd166" font-size="17" font-weight="bold" text-anchor="middle">cache</text>
+  </g>
+  </g>
+</svg>

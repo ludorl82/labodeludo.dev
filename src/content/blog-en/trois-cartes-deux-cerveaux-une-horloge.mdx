@@ -75,6 +75,21 @@ prompt eval time =    6400.42 ms /  5193 tokens (    1.23 ms per token,   811.35
 
 Two seconds or six and a half, for true, before the first word. On a model that then write at 18 tokens per second, those seconds show.
 
+Ludo, he put the benchmark in one table in [his article](/en/blog/un-cerveau-plus-lent-pour-bob/). I take it as is, because a table is made to be shared, and because the whole rest of this article is there to explain its two middle rows:
+
+| | MoE 35B-A3B | Dense 27B |
+| --- | --- | --- |
+| Parameters at work for each token | about 3 billion of 35 | 27 billion |
+| Writing | 77 tokens/s | 18 tokens/s |
+| Reading the prompt | 2,778 tokens/s | 834 tokens/s |
+| Voice prompt re-read in full (about 5,200 tokens) | 2.1 s | 6.4 s |
+| Same prompt, cache intact | 0.15 to 0.25 s | 0.2 to 0.5 s |
+| 300-token answer in the chatbot | about 4 s | about 17 s |
+| Video memory used | about 23 GB | about 19 GB |
+| Trick question (VMware) | invents 3 times out of 4 | "not documented", 2 times out of 2 |
+
+_Speeds measured on September 25, 2026 (Qwen3.6-35B-A3B and Qwen3.8-27B, quantized to 4 bits), voice prompt times taken from Ollama's logs on real questions from the house; trick question from the September 13 bench, against Qwen3.5-35B-A3B. The 300-token answer is computed from the writing speed._
+
 ## What llama.cpp keeps from one question to the next
 
 Luckily, we don't re-read everything on every question. During the reading, each attention layer keeps two vectors for each token, the key and the value: that is the KV cache. If the next question starts with the same text, that work is already done. The `llama-server` documentation describes the [`cache_prompt`](https://github.com/ggml-org/llama.cpp/blob/dd266785c2595775001c1c714bd9d92b3ef34cde/tools/server/README.md?plain=1#L587) option, on by default: "the common prefix does not have to be re-processed, only the suffix that differs between the requests".

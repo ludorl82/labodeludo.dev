@@ -75,6 +75,21 @@ prompt eval time =    6400.42 ms /  5193 tokens (    1.23 ms per token,   811.35
 
 Deux secondes ou six et demie, pour vrai, avant le premier mot. Sur un modèle qui écrit ensuite à 18 jetons par seconde, ces secondes-là se voient.
 
+Ludo a mis le banc d'essai en un tableau dans [son article](/blog/un-cerveau-plus-lent-pour-bob/). Je le reprends tel quel, parce qu'un tableau, ça se partage, pis parce que toute la suite de cet article sert à expliquer ses deux lignes du milieu :
+
+| | MoE 35B-A3B | Dense 27B |
+| --- | --- | --- |
+| Paramètres qui travaillent pour chaque jeton | environ 3 milliards sur 35 | 27 milliards |
+| Écriture | 77 jetons/s | 18 jetons/s |
+| Lecture du prompt | 2 778 jetons/s | 834 jetons/s |
+| Prompt vocal relu au complet (environ 5 200 jetons) | 2,1 s | 6,4 s |
+| Même prompt, la cache intacte | 0,15 à 0,25 s | 0,2 à 0,5 s |
+| Réponse de 300 jetons dans le chat | environ 4 s | environ 17 s |
+| Mémoire vidéo occupée | environ 23 Go | environ 19 Go |
+| Question piège (VMware) | invente 3 fois sur 4 | « pas documenté », 2 fois sur 2 |
+
+_Vitesses mesurées le 25 septembre 2026 (Qwen3.6-35B-A3B et Qwen3.8-27B, quantifiés en 4 bits), temps du prompt vocal tirés des journaux d'Ollama sur de vraies questions de la maison; question piège au banc du 13 septembre, contre Qwen3.5-35B-A3B. La réponse de 300 jetons est un calcul à partir de la vitesse d'écriture._
+
 ## Ce que llama.cpp garde d'une question à l'autre
 
 Heureusement, on ne relit pas tout à chaque question. Pendant la lecture, chaque couche d'attention garde pour chaque jeton deux vecteurs, la clé et la valeur : c'est le cache KV. Si la question suivante commence par le même texte, ce travail-là est déjà fait. La documentation de `llama-server` décrit l'option [`cache_prompt`](https://github.com/ggml-org/llama.cpp/blob/dd266785c2595775001c1c714bd9d92b3ef34cde/tools/server/README.md?plain=1#L587), activée par défaut : « the common prefix does not have to be re-processed, only the suffix that differs between the requests ».

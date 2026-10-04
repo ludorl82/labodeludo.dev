@@ -74,17 +74,17 @@ if [ -n "$EN" ]; then
     bas)      echo "the time at the end of the system prompt" ;;
     question) echo "the time in the question" ;;
   esac
-  ligne='"  question \($i): prompt read in " + $s + " s"'
 else
   case $OU in
     haut)     echo "l'heure en tête du prompt système" ;;
     bas)      echo "l'heure à la fin du prompt système" ;;
     question) echo "l'heure dans la question" ;;
   esac
-  ligne='"  question \($i) : prompt lu en " + ($s | sub("\\."; ",")) + " s"'
 fi
 for i in 1 2 3; do
-  question | jq -r --arg i "$i" \
-    "((.prompt_eval_duration / 1e7 | round) / 100 | tostring) as \$s | $ligne"
+  ns=$(question | jq '.prompt_eval_duration')
+  s=$(awk -v ns="$ns" 'BEGIN { printf "%.2f", ns / 1e9 }')
+  if [ -n "$EN" ]; then echo "  question $i: prompt read in $s s"
+  else echo "  question $i : prompt lu en ${s/./,} s"; fi
   sleep 2
 done

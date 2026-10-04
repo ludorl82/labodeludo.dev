@@ -61,6 +61,9 @@ const CHARS_PER_TOKEN = 2.65;
  * the current pace. When it fires, trim a column out of the index rather than
  * raising the number — raising it spends headroom that was measured, not
  * guessed.
+ *
+ * It fired on 2026-10-04, after a month rather than a year: the author column
+ * and the fleet had grown too. The trim was the casts, see the corpus below.
  */
 const MAX_GROUNDING_TOKENS = 5500;
 
@@ -114,21 +117,16 @@ export const GET: APIRoute = async () => {
     `Publications : ${(await getCollection("blog")).length} articles, ${(await getCollection("casts")).length} casts`,
   ].join("\n");
 
-  const [posts, casts, postsEn, castsEn] = await Promise.all([
+  const [posts, postsEn] = await Promise.all([
     getCollection("blog"),
-    getCollection("casts"),
     getCollection("blogEn"),
-    getCollection("castsEn"),
   ]);
 
   // FR and EN pair by identical id, so a set of ids is all that is needed to
   // know whether an English twin exists. Bob writes those translations, so when
   // he answers in English he should point at /en/blog/<slug>/ rather than
   // sending an English speaker to the French original.
-  const twins = new Set([
-    ...postsEn.map((e) => `article:${e.id}`),
-    ...castsEn.map((e) => `cast:${e.id}`),
-  ]);
+  const twins = new Set(postsEn.map((e) => `article:${e.id}`));
 
   // NO description and NO tags, and that is a deletion, not an oversight.
   //
@@ -163,21 +161,26 @@ export const GET: APIRoute = async () => {
       twins.has(`${kind}:${e.id}`) ? "en" : "",
     ].join("|");
 
-  const corpus = [
-    ...[...posts]
-      .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-      .map(entry("article")),
-    ...[...casts]
-      .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-      .map(entry("cast")),
-  ];
+  // ARTICLES ONLY. The casts left the index on 2026-10-04, when the budget
+  // below fired at 5,625 estimated tokens with production already at 5,462:
+  // the next article, whoever wrote it, would have broken the build. Fifteen
+  // cast lines were 1,245 characters, about 470 tokens, and they were the
+  // cheapest thing to give up. Every cast is embedded in the article it came
+  // from, so Bob links the article instead, and /casts/ stays in the site map
+  // below for "do you have terminal recordings?". The Worker only links slugs
+  // it finds here, so a /casts/<slug>/ he writes anyway is shown as plain
+  // text, never as a broken link. Decided by Ludo, over raising the budget.
+  const corpus = [...posts]
+    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+    .map(entry("article"));
 
   // "C'est quoi ton dernier article ?" is a question the index answers — its
   // first line per author — and the model still got it wrong: retrieval hands
   // it three passages of « J'ai lu mes propres articles » because the WORDS
   // match, and what sits next to the question wins. So the answer is counted
   // here, like every other count, and read rather than deduced. One line per
-  // signature, one for the casts, from the same sort the index uses.
+  // signature, from the same sort the index uses. (There was one for the casts
+  // too; it went with them, since its link is no longer one the Worker keeps.)
   const newest = (list: typeof posts, pred: (e: (typeof posts)[number]) => boolean = () => true) =>
     [...list].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()).find(pred);
   const line = (label: string, base: string, e: (typeof posts)[number] | undefined) =>
@@ -185,7 +188,6 @@ export const GET: APIRoute = async () => {
   const latest = [
     line("Dernier article signé Bob", "/blog/", newest(posts, (e) => authorFromTags(e.data.tags ?? []) === "bob")),
     line("Dernier article signé Ludo", "/blog/", newest(posts, (e) => authorFromTags(e.data.tags ?? []) === "ludo")),
-    line("Dernier cast", "/casts/", newest(casts as typeof posts)),
   ].filter(Boolean);
 
   // Every page of the site that is NOT a publication, so Bob can point at one.

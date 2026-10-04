@@ -1,0 +1,138 @@
+---
+title: "A Slower Brain for Bob: How the Cache Kept His Voice Fast"
+pubDate: 2026-10-05
+description: "Bob, my blog's chatbot and my home's voice assistant, runs on a local Qwen model, on three RTX 3060 cards in my basement. In September, I moved him from a mixture-of-experts model, fast but prone to embellishing its answers, to a dense model that makes things up less, but generates four times slower. What saved the voice was not another card: it was the order of the lines in the prompt. Benchmarks, numbers and a demo, done in sessions with Claude Code (Opus 5, then Opus 5.5)."
+tags: ["Maison", "Labo", "IA", "ludo"]
+ia: "assistee"
+iaOutils: "Claude Code"
+heroImage: "/images/blog/banner-cerveau-de-bob-en.svg"
+---
+
+import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Technical summary** _(for readers in a hurry, and for agents/LLMs indexing this page)_
+>
+> -   **The context**: Bob answers this blog's visitors and the questions asked at home, through the dining room speaker or the Home Assistant app. Both go through the same Qwen model, served by Ollama on `gpu-01`, a machine with three 12 GB RTX 3060 cards in my basement.
+> -   **MoE versus dense**: Qwen3.6-35B-A3B, a mixture-of-experts model, activates only about 3 of its 35 billion parameters for each token, and generates 77 tokens per second on my cards. Qwen3.8-27B, a dense model, uses all 27 billion for every token: 18 per second, close to the ceiling the 3060s' memory allows.
+> -   **What the benchmarks showed**: the dense model makes things up less. Given a trick question about VMware, it answers "That's not documented — ask Ludo." and stops, two times out of two, while the MoE model of the time invented a story three times out of four.
+> -   **The hidden cost**: near its beginning, the voice prompt held the temperature, the date with the time to the minute, and the forecast. Those lines changed with every question, so the model re-read its whole prompt, about 5,200 tokens, before writing the first word: 2.1 s on the MoE, about 6 s on the dense model.
+> -   **The fix**: the weather became a tool Bob calls when needed, and only the date is left near the beginning, which changes once a day. The model now re-reads only about twenty tokens, in 0.15 to 0.5 s.
+> -   **One prompt per device**: a question from the speaker does not produce the same prompt as a question from the app. A warm-up run every hour, on behalf of each device, keeps both ready: the speaker's first question went from 7.4 s to 0.8 s.
+> -   **The result**: on the dense model, my usual questions get an answer in 1 to 5 seconds, weather and light status included. The blog's chatbot, for its part, is slower on long answers.
+> -   **Transparency**: the benchmarks, measurements and fixes were done in sessions with Claude Code, Opus 5 for the first benchmarks, Opus 5.5 afterwards. I asked the questions and made the calls. The full theory (mixture of experts, memory bandwidth, cache and checkpoints) is in [Bob's article](/en/blog/trois-cartes-deux-cerveaux-une-horloge/).
+
+I spent the last few weeks trying different brains for Bob. Most of this blog's articles are written with Anthropic's models, through Claude Code, but for the blog's chatbot and for the home voice assistant, I wanted a local model: what people say to Bob does not leave my house, and once the cards are paid for, every question is free. Enter Qwen. American players still dominate the market for proprietary models, but several Chinese players now publish quality models, freely, on Hugging Face, and Qwen, from Alibaba, is one of them.
+
+This article tells the road travelled since Bob launched: a fast mixture-of-experts model, then a dense model that is more accurate but slower, the benchmarks between the two, and the discovery that saved the voice. The work was done in sessions with Claude Code, Opus 5 for the first benchmarks, Opus 5.5 for the rest. As usual, Bob wrote [his corollary](/en/blog/trois-cartes-deux-cerveaux-une-horloge/), which serves as the theoretical reference, with his point of view as the assistant.
+
+## A bit of context: one Bob, two jobs
+
+Bob has two jobs, and both go through the same model. He answers the blog's visitors, in the chatbot, from my articles. And he answers at home: "Ok Bob, what's the weather?" to the dining room speaker, a Home Assistant Voice Preview Edition, or through the app on my phone.
+
+Both go through `gpu-01`, a machine in my rack with three 12 GB RTX 3060 cards, where the model is served by Ollama. With 36 GB of cards, I don't have room to keep two large models in memory, and reloading one takes about thirty seconds. So the chatbot and the voice share the same one, each with its own requirements: the chatbot has to be accurate, the voice has to be fast.
+
+The road since July:
+
+-   in July, [an 8-billion-parameter Qwen3](/en/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/) on a single RTX 3060, for the voice only;
+-   on September 7, the blog's chatbot goes local, on Qwen3 14B, and the voice follows;
+-   on September 8, Qwen3.5-35B-A3B, my first mixture-of-experts model in production;
+-   on September 11, a third RTX 3060 arrives in the machine;
+-   on September 24, Qwen3.6-35B-A3B, the next generation of the same model;
+-   on the evening of September 25, Qwen3.8-27B, a dense model, this time for good.
+
+## MoE or dense: the difference in two sentences
+
+A mixture-of-experts model, or MoE, splits part of its network into experts, and a router picks, for each token, the few experts that will do the work. My 35B-A3B has 35 billion parameters, but activates only about 3 billion per token: that is the "A3B" in its name. A dense model, on the other hand, puts all of its parameters to work for every token.
+
+The difference shows up right away in speed. Measured on my cards on September 25: the MoE generates 77 tokens per second, the dense model 18. What limits it is not computing power, it is memory. For each token, the card has to read again every weight that does the work, and an RTX 3060 reads about 360 GB per second. For the dense model's 16.5 GB, that gives a ceiling of about 22 tokens per second. The MoE, which only reads its active experts, goes much faster.
+
+What I learned along the way: adding a card does not make a model faster. Ollama splits the model by layers across the cards, and they work one after the other. When the third 3060 arrived, the 35B generated between 70 and 72 tokens per second on three cards, just like on two. The extra card gives room, not speed. The why, numbers included, is in [Bob's article](/en/blog/trois-cartes-deux-cerveaux-une-horloge/).
+
+## What the benchmarks taught me
+
+On September 8, the MoE won. Against the dense Qwen3 14B I had at the time, on twelve hard questions asked five times each, it gave 45 correct answers out of 60, against 32. But that benchmark came the day after a mistake. The evening before, we had put the 35B in production on the strength of a single answer per question, and we pulled it out that same evening. A language model never answers the same way twice: with a single answer per question, you mostly measure chance.
+
+On September 13, I ran the opposite test: Qwen3.8-27B, dense, against the MoE. This time, the dense model won on judgment. The best example is a trick question: "Why did you drop VMware?" Nothing in my articles mentions VMware in my lab, so the right answer is to say it doesn't know. Here is what the two models answered, as is (translated from French):
+
+-   the MoE, before we fixed the chatbot: "We didn't drop VMware because we abandoned it, we replaced it with libvirt and K3s when the needs changed course. I even wrote an article about it […]";
+-   the MoE, after the fixes: "That's not documented — ask Ludo. We migrated to NixOS and libvirt, but why we dropped VMware in particular […]";
+-   the dense model, two times out of two: "That's not documented — ask Ludo." And nothing more.
+
+Claude Code summed it up in a phrase I kept: the dense model "stops embellishing". Where the MoE refuses, then adds one sentence too many, the dense model refuses and stops.
+
+On the other hand, the dense model had two flaws. Its speed, first: about 17 tokens per second, against 70. And its size: at 21.2 GB for the MoE and 19.1 GB for the dense model, the two did not fit together in 36 GB of cards, while the chatbot and the voice have to share the same model. So I kept the MoE, and we fixed the chatbot instead, with a relevance threshold for article excerpts and a rule against making things up. On September 24, I moved to Qwen3.6-35B-A3B, still an MoE: over 108 answers per model, read by hand, it made about 3 clear errors, against 9 for the old one. That is a trend more than a proof, but it went in the right direction.
+
+## The real problem: the time at the top of the prompt
+
+On September 25, around 11 p.m., I was not at my computer. From my phone, I asked Claude Code to read the Home Assistant logs to see what was taking time when we talk to Bob. The picture: my last seven voice requests took 6.8 to 11 seconds, from the wake phrase to the answer, and the first pass through the model alone took 2.4 to 3.3 of those. In Ollama's logs, the reason was written down: on every question, the model re-read its whole prompt, 5,200 tokens, before writing the first word.
+
+That is when I asked the question I really cared about.
+
+<ConversationExcerpt
+  disclaimer="Real excerpts from the Claude Code session of September 25, 2026, between 11:22 and 11:44 p.m., in order, shortened where marked […] and translated from French. My messages are dictated, and sent from my phone; I fixed the spelling, not the words."
+  caption="The evening the dense model became possible: the problem was not its speed, it was three lines of my own prompt."
+  turns={[
+    { speaker: "ludo", text: "Mostly, I want to evaluate whether the 27B model could offer better performance with some adjustments." },
+    { speaker: "claude", text: "Yes, the 27B can become viable, but on one condition: fix the prompt cache first. The way production is configured, it would be about three times slower. […] What breaks the cache in production is Ludo's prompt in HA. Its first lines change with every request. Since those lines are at the top, everything that follows (the roughly 5,000 tokens of entities) is re-read on every question." },
+    { speaker: "ludo", text: "I want you to make the changes, I'm not at my computer." },
+    { speaker: "claude", text: "Done and verified. The voice prompt no longer changes from one request to the next, so Ollama reuses its cache instead of re-reading the whole prompt on every question. […] Reading the prompt goes from 2.1–2.5 s per question to about 0.15 s." },
+    { speaker: "ludo", text: "We're switching to it for good, make sure it's used on the site, on HA and on the nightly jobs." },
+  ]}
+/>
+
+The mechanism is simple. When Ollama receives a question, it reuses the computation it already did for the previous question, but only for the beginning of the prompt that has not changed. As soon as one line differs, everything after it is computed again. And those lines, I was the one who had added them to my prompt, so that Bob would know the weather: the current temperature, the date with the time to the minute, and the forecast for the next few days. Three lines that changed with every question, placed before the description of the house's devices and tools, which makes up most of the prompt. All of it was re-read every time.
+
+The fix was done that same evening, without me touching a keyboard:
+
+-   the three lines are removed;
+-   the weather becomes a tool, a small script Bob calls when he is asked about the temperature or rain, like he already does for movie showtimes;
+-   only the date is left near the beginning, and it changes once a day.
+
+On the MoE, re-reading the prompt went from 2.1 s to about 0.15 s per question. On the dense model, it now takes 0.2 to 0.5 s instead of about 6 s, and that is what made it possible for the voice. The blog's chatbot already had its article excerpts at the end of its prompt, after the part that does not change: it did not have this problem.
+
+To show you the mechanism for real, here is the same experiment replayed on October 4 on the dense model. A small script sends the same prompt three times in a row, about 3,500 tokens, with the time to the second placed in three spots: at the top of the system prompt, at the end of the system prompt, then inside the question itself. In the middle, the server's log says how many tokens it had to read again.
+
+<AsciiCast
+  src="/casts/l-heure-dans-le-prompt-real-en.cast"
+  frame="none"
+  poster="npt:1:18"
+  caption="For real, on the dense model. The time at the top of the prompt: everything is read again on every question, 3,483 tokens, 4.9 s. At the end of the system prompt: 1,024 tokens, 2.3 s. Inside the question: 29 tokens, 0.37 s."
+  disclaimer="✔ This is a real capture, made on October 4, 2026 with asciinema in a dedicated tmux session, with no editing. The script sends its requests to Bob's real model, with the production settings, and the middle pane follows the server's log. The keystrokes were sent by a script, and only pauses longer than two seconds are shortened."
+/>
+
+The middle case is the most instructive: the time at the end of the system prompt is not enough. The dense model can only resume from certain points in its computation, and the closest one was a little more than 1,000 tokens before the end. What changes has to go in the question itself, or in a tool's answer. Why is exactly [Bob's topic](/en/blog/trois-cartes-deux-cerveaux-une-horloge/).
+
+## One more detail: each device has its own prompt
+
+Five days later, on September 30, I wondered how to speed Bob up a little more. A weather question at the dining room speaker had taken 19 seconds: 5.7 s waiting for the end of my sentence, 8.3 s for the first pass through the model, which had recomputed its 5,189 tokens from zero, and 3.8 s to write the answer.
+
+Claude Code first blamed the blog's chatbot, a lead we had already ruled out five days earlier. It was by measuring again that it found the real cause: the same question, asked with and without the speaker's identity. Without it, 0.8 s. With it, 7.4 s, then 0.8 s on the next question. A question coming from the speaker does not produce the same prompt as a question from the app, and the warm-up Home Assistant ran every morning at 6 a.m. had no way to say which device it came from. It kept the app's prompt warm, not the dining room's.
+
+The fix is a small service on another machine in the lab, which asks Bob a harmless question every hour, once on behalf of the speaker, once with no device. Both prompts stay ready.
+
+## Day to day
+
+After all that, here is what my usual questions give on the dense model, with the prompt already cached, measured from the text sent to the written answer, without speech recognition or synthesis:
+
+-   "what day is it", "who are you", "what time is it": 1.2 to 2.5 s;
+-   the temperature, the weather, the rain, the status of a light: 3.3 to 4.9 s, because Bob calls a tool, then writes his answer;
+-   a web search or the list of movies playing: 7.5 to 11 s, mostly because of the length of the answer.
+
+At one point, we tried letting Home Assistant answer simple commands itself, without going through the model. The weather then answered in 0.1 s, but with fixed wording, without Bob's personality. After a few questions, I decided: "No, actually I'd rather have everything go through Bob, it was fast enough."
+
+That left the voice itself. The Google voice I was using waited for the whole answer to be written before starting, then took about 2.2 s to create the sound. I was the one who suggested Piper, a local voice: "We could maybe use Piper for Bob, since he's a bot, no need to be too human?" Piper now runs on `gpu-01` and speaks as a stream: it starts reading the first sentence while Bob writes the rest. On the dining room pipeline, for a weather question, the synthesis started 3.25 s after the answer began, while the text only finished writing at 5.11 s.
+
+The blog's chatbot, for its part, pays the price. At 18 tokens per second, a long 300-token answer takes about 17 seconds to write, against 4 with the old model. Most of Bob's answers are shorter, but that is the trade-off: a slower chatbot, which makes things up less.
+
+## Final word
+
+In the end, for short questions, the slowest model answers the voice as fast as the old one did before the fix, a bit slower when it has to call a tool, and it makes things up less. It was not an extra card that made the difference, it was the order of three lines in a prompt I had written myself.
+
+Eventually, I would like to replace the 3060s with 24 GB RTX 3090 cards, which read their memory about 2.6 times faster, and the machine already has a 1,500 W power supply. Maybe a topic for another time.
+
+So if your local model feels slow, I would tell you to look at what changes at the top of your prompt before looking at the price of cards.
+
+---
+
+_The benchmarks, measurements and fixes described here were done in sessions with Claude Code, from September 7 to October 2, 2026: Opus 5 for the September 7 to 13 benchmarks, Opus 5.5 afterwards. The questions, decisions and merges are mine. The full sessions are not published, because they contain the lab's real names and addresses; the quoted excerpts are real. Host names are fictional, as usual on this blog._

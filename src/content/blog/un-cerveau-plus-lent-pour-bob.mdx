@@ -1,7 +1,7 @@
 ---
 title: "Un cerveau plus lent pour Bob : comment la cache a gardé sa voix rapide"
 pubDate: 2026-10-05
-description: "Bob, le chat de mon blogue et l'assistant vocal de ma maison, roule sur un modèle Qwen local, sur trois RTX 3060 dans mon sous-sol. En septembre, je l'ai fait passer d'un modèle à mélange d'experts, rapide mais qui décorait ses réponses, à un modèle dense qui invente moins, mais qui génère quatre fois moins vite. Ce qui a sauvé la voix, ce n'est pas une carte de plus : c'est l'ordre des lignes dans le prompt. Bancs d'essai, chiffres et démonstration, faits en sessions avec Claude Code (Opus 5, puis Opus 5.5)."
+description: "Une leçon apprise dans mon labo en faisant passer Bob, le chat de mon blogue et l'assistant vocal de ma maison, d'un modèle Qwen à mélange d'experts à un modèle dense qui invente moins mais écrit quatre fois moins vite. Un modèle local a deux vitesses, lire et écrire, et la plus coûteuse pour une voix dépend presque entièrement de la façon dont on gère sa cache. Le banc d'essai en un tableau, une démonstration réelle et les règles que j'en tire, avec le travail fait en sessions avec Claude Code (Opus 5, puis Opus 5.5)."
 tags: ["Maison", "Labo", "IA", "ludo"]
 ia: "assistee"
 iaOutils: "Claude Code"
@@ -13,85 +13,83 @@ import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Le contexte** : Bob répond aux visiteurs de ce blogue et aux questions de la maison, par le haut-parleur de la salle à manger ou par l'appli Home Assistant. Les deux passent par le même modèle Qwen, servi par Ollama sur `gpu-01`, une machine à trois RTX 3060 de 12 Go dans mon sous-sol.
-> -   **MoE contre dense** : Qwen3.6-35B-A3B, un modèle à mélange d'experts, n'active qu'environ 3 de ses 35 milliards de paramètres pour chaque jeton, et génère 77 jetons par seconde sur mes cartes. Qwen3.8-27B, un modèle dense, se sert de ses 27 milliards à chaque jeton : 18 par seconde, près du plafond que la mémoire des 3060 permet.
-> -   **Ce que les bancs d'essai ont montré** : le dense invente moins. À une question piège sur VMware, il répond « Ça, c'est pas documenté — demande à Ludo. » et s'arrête, deux fois sur deux, alors que le modèle MoE de l'époque inventait une histoire trois fois sur quatre.
-> -   **Le coût caché** : le prompt de la voix contenait, près du début, la température, la date avec l'heure à la minute et les prévisions. Ces lignes changeaient à chaque question, alors le modèle relisait tout son prompt, environ 5 200 jetons, avant d'écrire le premier mot : 2,1 s sur le MoE, environ 6 s sur le dense.
-> -   **Le correctif** : la météo est devenue un outil que Bob appelle au besoin, et il ne reste près du début que la date, qui change une fois par jour. Le modèle ne relit plus qu'une vingtaine de jetons, en 0,15 à 0,5 s.
-> -   **Un prompt par appareil** : une question du haut-parleur ne produit pas le même prompt qu'une question de l'appli. Un réchauffement fait chaque heure, au nom de chaque appareil, garde les deux prêts : la première question du haut-parleur est passée de 7,4 s à 0,8 s.
-> -   **Le résultat** : sur le modèle dense, mes questions habituelles répondent en 1 à 5 secondes, météo et état des lumières compris. Le chat du blogue, lui, est plus lent sur les longues réponses.
-> -   **Transparence** : les bancs d'essai, les mesures et les correctifs ont été faits en sessions avec Claude Code, Opus 5 pour les premiers bancs, Opus 5.5 ensuite. J'ai posé les questions et tranché. La théorie complète (mélange d'experts, bande passante mémoire, cache et points de contrôle) est dans [l'article de Bob](/blog/trois-cartes-deux-cerveaux-une-horloge/).
+> -   **La leçon** : un modèle local a deux vitesses. Écrire est limité par la mémoire de la carte graphique; lire le prompt est limité par le calcul, et ce temps-là, celui qui passe avant le premier mot, peut presque disparaître si la cache est bien gérée.
+> -   **Le terrain** : Bob répond aux visiteurs de ce blogue et aux questions de la maison. Les deux passent par le même modèle Qwen, servi par Ollama sur `gpu-01`, une machine à trois RTX 3060 de 12 Go dans mon sous-sol.
+> -   **MoE contre dense** : Qwen3.6-35B-A3B, à mélange d'experts, écrit 77 jetons par seconde et lit le prompt à 2 778 jetons par seconde. Qwen3.8-27B, dense, écrit à 18 et lit à 834, mais invente moins.
+> -   **La cache** : Ollama (llama.cpp) ne réutilise que le début du prompt qui n'a pas changé depuis la question précédente. Une ligne qui change fait recalculer tout ce qui la suit.
+> -   **Le premier piège** : la température, la date avec l'heure à la minute et les prévisions, près du début du prompt de la voix. Environ 5 200 jetons relus à chaque question : 2,1 s sur le MoE, 6,4 s sur le dense.
+> -   **La démonstration** : sur le dense, l'heure en tête du prompt fait relire 3 483 jetons (4,9 s), à la fin du prompt système 1 024 (2,3 s), dans la question 29 (0,37 s).
+> -   **Le deuxième piège** : une question du haut-parleur ne produit pas le même prompt qu'une question de l'appli. Réchauffer chaque heure le prompt exact de chaque appareil : 7,4 s devient 0,8 s.
+> -   **Le résultat** : sur le modèle dense, mes questions habituelles à la voix répondent en 1 à 5 secondes. Le chat du blogue, lui, est plus lent sur les longues réponses.
+> -   **Transparence** : les bancs d'essai, les mesures et les correctifs ont été faits en sessions avec Claude Code, Opus 5 pour les premiers bancs, Opus 5.5 ensuite. J'ai posé les questions et tranché. La théorie complète, sources à l'appui, est dans [l'article de Bob](/blog/trois-cartes-deux-cerveaux-une-horloge/).
 
-Ces dernières semaines, je les ai passées à essayer différents cerveaux pour Bob. Les articles de ce blogue sont écrits pour la plupart avec les modèles d'Anthropic, par Claude Code, mais pour le chat du blogue et pour l'assistant vocal de la maison, je voulais un modèle local : ce qu'on dit à Bob ne sort pas de chez moi, et une fois les cartes achetées, chaque question est gratuite. Entre en scène Qwen. Les acteurs américains dominent encore le marché des modèles propriétaires, mais plusieurs acteurs chinois publient maintenant des modèles de qualité, librement, sur Hugging Face, et Qwen, d'Alibaba, en est un.
+Ces dernières semaines, j'ai essayé différents cerveaux pour Bob, le chat de ce blogue et l'assistant vocal de ma maison. Les articles du blogue sont écrits pour la plupart avec les modèles d'Anthropic, par Claude Code, mais pour Bob, je voulais un modèle local : ce qu'on lui dit ne sort pas de chez moi, et une fois les cartes achetées, chaque question est gratuite. Entre en scène Qwen. Les acteurs américains dominent encore le marché des modèles propriétaires, mais plusieurs acteurs chinois publient maintenant des modèles de qualité, librement, sur Hugging Face, et Qwen, d'Alibaba, en est un.
 
-Cet article raconte le bout de chemin parcouru depuis le lancement de Bob : un modèle à mélange d'experts rapide, puis un modèle dense plus juste mais plus lent, les bancs d'essai entre les deux, et la découverte qui a sauvé la voix. Le travail s'est fait en sessions avec Claude Code, Opus 5 pour les premiers bancs d'essai, Opus 5.5 pour la suite. Comme d'habitude, Bob a écrit [son corollaire](/blog/trois-cartes-deux-cerveaux-une-horloge/), qui sert de référence théorique, avec son point de vue d'assistant.
+En chemin, j'ai appris une leçon qui dépasse Bob, et c'est elle que je veux partager ici : un modèle local a deux vitesses, et pour un assistant vocal, la plus coûteuse des deux dépend presque entièrement de la façon dont on gère sa cache. Je vais vous montrer ces deux vitesses, le banc d'essai qui les mesure, ce que la cache garde d'une question à l'autre, les deux pièges dans lesquels je suis tombé, et les règles que j'en tire. Le travail s'est fait en sessions avec Claude Code, Opus 5 pour les premiers bancs d'essai, Opus 5.5 pour la suite. Comme d'habitude, Bob a écrit [son corollaire](/blog/trois-cartes-deux-cerveaux-une-horloge/), qui sert de référence théorique, avec son point de vue d'assistant.
 
-## Un peu de contexte : un Bob, deux métiers
+## Un peu de contexte : un modèle, deux métiers
 
-Bob a deux métiers, et les deux passent par le même modèle. Il répond aux visiteurs du blogue, dans le chat, à partir de mes articles. Et il répond à la maison : « Ok Bob, quelle est la météo ? » au haut-parleur de la salle à manger, un Home Assistant Voice Preview Edition, ou par l'appli sur mon téléphone.
+Bob a deux métiers, et les deux passent par le même modèle. Il répond aux visiteurs du blogue, dans le chat, à partir de mes articles. Et il répond à la maison : « Ok Bob, quelle est la météo ? » au haut-parleur de la salle à manger, ou par l'appli Home Assistant sur mon téléphone. Les deux passent par `gpu-01`, une machine de mon rack avec trois RTX 3060 de 12 Go, où le modèle est servi par Ollama. Avec 36 Go de cartes, je n'ai pas la place de garder deux gros modèles en mémoire : le chat et la voix partagent le même, et chacun a ses exigences. Le chat doit être juste, la voix doit être rapide.
 
-Les deux passent par `gpu-01`, une machine de mon rack avec trois RTX 3060 de 12 Go, où le modèle est servi par Ollama. Avec 36 Go de cartes, je n'ai pas la place de garder deux gros modèles en mémoire, et en recharger un prend une trentaine de secondes. Le chat et la voix partagent donc le même, chacun avec ses exigences : le chat doit être juste, la voix doit être rapide.
+J'avais le choix entre deux familles de modèles. Un modèle à mélange d'experts, ou MoE pour _mixture of experts_, découpe une partie de son réseau en experts, et un aiguilleur choisit pour chaque jeton les quelques experts qui vont travailler : mon Qwen3.6-35B-A3B a 35 milliards de paramètres, mais n'en active qu'environ 3 milliards par jeton, c'est le « A3B » de son nom. Un modèle dense, comme le Qwen3.8-27B, fait travailler tous ses paramètres pour chaque jeton.
 
-Le chemin depuis juillet :
+À mes bancs d'essai, le dense inventait moins. Le meilleur exemple est une question piège : « Pourquoi t'as laissé tomber VMware ? » Rien dans mes articles ne parle de VMware dans mon labo, donc la bonne réponse, c'est de dire qu'il ne sait pas. Le dense a répondu deux fois sur deux « Ça, c'est pas documenté — demande à Ludo. », et rien de plus. Le MoE de l'époque, lui, inventait une histoire trois fois sur quatre. Par contre, le dense écrit quatre fois moins vite. Pour un chat, c'est acceptable. Pour une voix, il fallait comprendre où le temps passait vraiment.
 
--   en juillet, [un Qwen3 de 8 milliards de paramètres](/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/) sur une seule RTX 3060, pour la voix seulement;
--   le 7 septembre, le chat du blogue devient local, sur Qwen3 14B, et la voix le suit;
--   le 8 septembre, Qwen3.5-35B-A3B, mon premier modèle à mélange d'experts en production;
--   le 11 septembre, une troisième RTX 3060 arrive dans la machine;
--   le 24 septembre, Qwen3.6-35B-A3B, la génération suivante du même modèle;
--   le 25 septembre au soir, Qwen3.8-27B, un modèle dense, cette fois pour de bon.
+## Deux vitesses : lire et écrire
 
-## MoE ou dense : la différence en deux phrases
+Avant d'écrire quoi que ce soit, un modèle lit tout son prompt : les consignes, la description des appareils de la maison, l'historique et la question. Ensuite seulement, il écrit sa réponse, un jeton à la fois. Ces deux étapes n'ont pas les mêmes limites.
 
-Un modèle à mélange d'experts, ou MoE pour _mixture of experts_, découpe une partie de son réseau en experts, et un aiguilleur choisit pour chaque jeton les quelques experts qui vont travailler. Mon 35B-A3B a 35 milliards de paramètres, mais n'en active qu'environ 3 milliards par jeton : c'est le « A3B » de son nom. Un modèle dense, lui, fait travailler tous ses paramètres pour chaque jeton.
+Pour écrire, la carte doit relire, à chaque jeton, tous les poids qui travaillent. C'est la mémoire qui limite : une RTX 3060 en lit environ 360 Go par seconde. Pour les 16,5 Go du modèle dense, ça donne un plafond d'environ 22 jetons par seconde; on en mesure 18. Le MoE, qui ne relit que ses experts actifs, en écrit 77. Et ajouter une carte n'y change rien : Ollama répartit le modèle par couches, et les cartes travaillent chacune leur tour. Sur trois cartes, le MoE écrivait entre 70 et 72 jetons par seconde, comme sur deux.
 
-La différence se voit tout de suite dans la vitesse. Mesuré sur mes cartes le 25 septembre : le MoE génère 77 jetons par seconde, le dense 18. Ce qui limite, ce n'est pas la puissance de calcul, c'est la mémoire. Pour chaque jeton, la carte doit relire tous les poids qui travaillent, et une RTX 3060 en lit environ 360 Go par seconde. Pour les 16,5 Go du modèle dense, ça donne un plafond d'environ 22 jetons par seconde. Le MoE, qui ne relit que ses experts actifs, va beaucoup plus vite.
+Pour lire, c'est l'inverse : tous les jetons du prompt sont connus d'avance, la carte les traite par lots, et c'est la puissance de calcul qui limite. Le dense lit 834 jetons par seconde, le MoE 2 778.
 
-Ce que j'ai appris en chemin : ajouter une carte ne rend pas un modèle plus rapide. Ollama répartit le modèle par couches entre les cartes, et elles travaillent chacune leur tour. Quand la troisième 3060 est arrivée, le 35B a généré entre 70 et 72 jetons par seconde sur trois cartes, comme sur deux. La carte de plus donne de la place, pas de la vitesse. Le pourquoi, chiffres à l'appui, est dans [l'article de Bob](/blog/trois-cartes-deux-cerveaux-une-horloge/).
+Voici le banc d'essai en un tableau, mesuré sur `gpu-01` :
 
-## Ce que les bancs d'essai m'ont appris
+| | MoE 35B-A3B | Dense 27B |
+| --- | --- | --- |
+| Paramètres qui travaillent pour chaque jeton | environ 3 milliards sur 35 | 27 milliards |
+| Écriture | 77 jetons/s | 18 jetons/s |
+| Lecture du prompt | 2 778 jetons/s | 834 jetons/s |
+| Prompt vocal relu au complet (environ 5 200 jetons) | 2,1 s | 6,4 s |
+| Même prompt, la cache intacte | 0,15 à 0,25 s | 0,2 à 0,5 s |
+| Réponse de 300 jetons dans le chat | environ 4 s | environ 17 s |
+| Mémoire vidéo occupée | environ 23 Go | environ 19 Go |
+| Question piège (VMware) | invente 3 fois sur 4 | « pas documenté », 2 fois sur 2 |
 
-Le 8 septembre, le MoE gagnait. Contre le Qwen3 14B dense que j'avais à ce moment-là, sur douze questions difficiles posées cinq fois chacune, il a donné 45 bonnes réponses sur 60, contre 32. Mais ce banc-là venait le lendemain d'une erreur. La veille au soir, on avait mis le 35B en production sur la foi d'une seule réponse par question, et on l'a retiré le soir même. Un modèle de langue ne répond pas deux fois pareil : avec une seule réponse par question, on mesure surtout le hasard.
+_Vitesses mesurées le 25 septembre 2026 (Qwen3.6-35B-A3B et Qwen3.8-27B, quantifiés en 4 bits), temps du prompt vocal tirés des journaux d'Ollama sur de vraies questions de la maison; question piège au banc du 13 septembre, contre Qwen3.5-35B-A3B. La réponse de 300 jetons est un calcul à partir de la vitesse d'écriture._
 
-Le 13 septembre, j'ai fait l'essai inverse : le Qwen3.8-27B, dense, contre le MoE. Cette fois, le dense gagnait en jugement. Le meilleur exemple est une question piège : « Pourquoi t'as laissé tomber VMware ? » Rien dans mes articles ne parle de VMware dans mon labo, donc la bonne réponse, c'est de dire qu'il ne sait pas. Voici ce que les deux modèles ont répondu, tels quels :
+Le tableau dit l'essentiel. Pour une voix, la vitesse d'écriture compte peu : une réponse vocale fait une ou deux phrases. Ce qui compte, c'est le temps avant le premier mot, et ce temps-là, c'est la lecture du prompt. Sur le dense, relire tout le prompt vocal coûte 6,4 secondes; avec la cache intacte, moins d'une demi-seconde. Toute la question devient donc : qu'est-ce qui garde la cache intacte ?
 
--   le MoE, avant qu'on corrige le chat : « On a pas laissé tomber VMware parce qu'on l'a abandonné, on l'a remplacé par libvirt pis K3s quand les besoins ont changé de cap. J'ai même écrit un article sur ça […] »;
--   le MoE, après les correctifs : « Ça, c'est pas documenté — demande à Ludo. On a migré vers NixOS pis libvirt, mais pourquoi on a laissé tomber VMware en particulier […] »;
--   le dense, deux fois sur deux : « Ça, c'est pas documenté — demande à Ludo. » Et rien de plus.
+## La cache : ce qu'un modèle garde d'une question à l'autre
 
-Claude Code a résumé ça en une phrase que j'ai gardée : le dense « arrête de décorer ». Là où le MoE refuse, puis ajoute une phrase de trop, le dense refuse et s'arrête.
+Quand Ollama lit un prompt, il garde le résultat de ce calcul en mémoire. À la question suivante, il compare le nouveau prompt à l'ancien, depuis le début, et réutilise tout ce qui est identique. Dès la première différence, il recalcule tout ce qui suit, même si le reste est pareil. C'est la règle à retenir : la cache ne garde que le début commun.
 
-Par contre, le dense avait deux défauts. Sa vitesse, d'abord : environ 17 jetons par seconde, contre 70. Et sa taille : avec 21,2 Go pour le MoE et 19,1 Go pour le dense, les deux ne tenaient pas ensemble dans 36 Go de cartes, alors que le chat et la voix doivent partager le même modèle. J'ai donc gardé le MoE, et on a plutôt corrigé le chat, avec un seuil de pertinence pour les extraits d'articles et une règle contre l'invention. Le 24 septembre, je suis passé à Qwen3.6-35B-A3B, toujours un MoE : sur 108 réponses par modèle, relues à la main, il faisait environ 3 erreurs nettes, contre 9 pour l'ancien. C'est une tendance plus qu'une preuve, mais elle allait dans le bon sens.
+Mes modèles ajoutent une subtilité. Les Qwen récents sont hybrides : trois couches sur quatre gardent une sorte de résumé de ce qu'elles ont lu, et un résumé ne se rembobine pas. Le serveur prend donc des points de contrôle à quelques endroits seulement, au début de la question et un peu plus de 1 000 jetons avant la fin du prompt, et ne peut reprendre qu'à l'un d'eux. Une différence placée avant ces points de contrôle fait tout relire. Le pourquoi, avec le code à l'appui, est dans [l'article de Bob](/blog/trois-cartes-deux-cerveaux-une-horloge/).
 
-## Le vrai problème : l'heure en haut du prompt
+## Premier piège : ce qui change en haut du prompt
 
-Le 25 septembre, vers 23 h, je n'étais pas à mon ordi. De mon téléphone, j'ai demandé à Claude Code de lire les journaux de Home Assistant pour voir ce qui prenait du temps quand on parle à Bob. Le portrait : mes sept dernières demandes vocales prenaient de 6,8 à 11 secondes, de la phrase de réveil jusqu'à la réponse, et le premier passage dans le modèle en prenait à lui seul de 2,4 à 3,3. Dans les journaux d'Ollama, la raison était écrite : à chaque question, le modèle relisait son prompt au complet, 5 200 jetons, avant d'écrire le premier mot.
-
-C'est là que j'ai posé la question qui m'intéressait vraiment.
+Dans mon labo, le premier passage dans le modèle prenait de 2,4 à 3,3 secondes à chaque question vocale, sur le MoE. J'ai demandé à Claude Code de lire les journaux de Home Assistant et d'Ollama pour comprendre pourquoi, et de voir si le modèle dense pouvait devenir viable avec des ajustements.
 
 <ConversationExcerpt
-  disclaimer="Extraits réels de la session Claude Code du 25 septembre 2026, entre 23 h 22 et 23 h 44, dans l'ordre, raccourcis là où c'est marqué […]. Mes messages sont dictés, et envoyés de mon téléphone; j'ai corrigé l'orthographe, pas les mots."
-  caption="Le soir où le modèle dense est devenu possible : le problème n'était pas sa vitesse, c'était trois lignes de mon propre prompt."
+  disclaimer="Extraits réels de la session Claude Code du 25 septembre 2026, raccourcis là où c'est marqué […]. Mes messages sont dictés; j'ai corrigé l'orthographe, pas les mots."
+  caption="Le problème n'était pas la vitesse du modèle, c'était trois lignes de mon propre prompt."
   turns={[
     { speaker: "ludo", text: "Je veux surtout évaluer si le modèle 27B pourrait offrir des meilleures performances avec des ajustements." },
     { speaker: "claude", text: "Oui, le 27B peut devenir viable, mais à une condition : régler d'abord le cache du prompt. Tel que la prod est configurée, il serait environ trois fois plus lent. […] Ce qui casse le cache en prod, c'est le prompt de Ludo dans HA. Ses premières lignes changent à chaque requête. Comme ces lignes sont en tête, tout ce qui suit (les environ 5 000 jetons d'entités) est relu à chaque question." },
-    { speaker: "ludo", text: "Je veux que tu fasses les changements, je ne suis pas à mon ordi." },
-    { speaker: "claude", text: "C'est fait et vérifié. Le prompt vocal ne change plus d'une requête à l'autre, donc Ollama réutilise son cache au lieu de relire tout le prompt à chaque question. […] La lecture du prompt passe de 2,1 à 2,5 s par question à environ 0,15 s." },
-    { speaker: "ludo", text: "On va le changer pour de bon, assure-toi qu'il est utilisé sur le site, sur HA et sur les jobs nocturnes." },
   ]}
 />
 
-Le mécanisme est simple. Quand Ollama reçoit une question, il réutilise le calcul qu'il a déjà fait pour la question précédente, mais seulement pour le début du prompt qui n'a pas changé. Dès qu'une ligne diffère, tout ce qui la suit est recalculé. Et ces lignes-là, c'est moi qui les avais ajoutées à mon prompt, pour que Bob connaisse la météo : la température actuelle, la date avec l'heure à la minute, et les prévisions des prochains jours. Trois lignes qui changeaient à chaque question, placées avant la description des appareils de la maison et des outils, qui fait l'essentiel du prompt. Tout ça était relu à chaque fois.
+Ces lignes-là, c'est moi qui les avais ajoutées à mon prompt, pour que Bob connaisse la météo sans avoir à la chercher : la température actuelle, la date avec l'heure à la minute, et les prévisions des prochains jours. Elles changeaient à chaque question, et elles étaient placées avant la description des appareils de la maison et des outils, qui fait l'essentiel du prompt. Tout ça était relu à chaque fois.
 
-Le correctif a été fait le soir même, sans que je touche à un clavier :
+Le correctif tient en trois gestes :
 
--   les trois lignes sont retirées;
+-   les trois lignes sont retirées du prompt;
 -   la météo devient un outil, un petit script que Bob appelle quand on lui parle de température ou de pluie, comme il le fait déjà pour les horaires du cinéma;
 -   il ne reste près du début que la date, qui ne change qu'une fois par jour.
 
-Sur le MoE, la relecture du prompt est passée de 2,1 s à environ 0,15 s par question. Sur le dense, elle prend maintenant de 0,2 à 0,5 s au lieu d'environ 6 s, et c'est ce qui l'a rendu possible pour la voix. Le chat du blogue, lui, avait déjà ses extraits d'articles à la fin de son prompt, après la partie qui ne change pas : il n'avait pas ce problème.
+Sur le MoE, la relecture du prompt est passée de 2,1 s à environ 0,15 s par question. Sur le dense, elle prend de 0,2 à 0,5 s, et c'est ce qui l'a rendu possible pour la voix. Le chat du blogue, lui, avait déjà ses extraits d'articles à la fin de son prompt, après la partie qui ne change pas : il n'avait pas ce problème.
 
-Pour vous montrer le mécanisme pour vrai, voici la même expérience rejouée le 4 octobre sur le modèle dense. Un petit script envoie trois fois de suite le même prompt, environ 3 500 jetons, avec l'heure à la seconde placée à trois endroits : en tête du prompt système, à la fin du prompt système, puis dans la question elle-même. Au milieu, le journal du serveur dit combien de jetons il a dû relire.
+Pour vous montrer le mécanisme pour vrai, voici la même expérience rejouée sur le modèle dense. Un petit script envoie trois fois de suite le même prompt, environ 3 500 jetons, avec l'heure à la seconde placée à trois endroits : en tête du prompt système, à la fin du prompt système, puis dans la question elle-même. Au milieu, le journal du serveur dit combien de jetons il a dû relire.
 
 <AsciiCast
   src="/casts/l-heure-dans-le-prompt-real.cast"
@@ -101,35 +99,48 @@ Pour vous montrer le mécanisme pour vrai, voici la même expérience rejouée l
   disclaimer="✔ Ceci est une capture réelle, faite le 4 octobre 2026 avec asciinema dans une session tmux dédiée, sans montage. Le script envoie ses requêtes au vrai modèle de Bob, avec les réglages de la production, et le panneau du milieu suit le journal du serveur. Les frappes ont été envoyées par script, et seules les pauses de plus de deux secondes sont raccourcies."
 />
 
-Le cas du milieu est le plus instructif : l'heure à la fin du prompt système, ça ne suffit pas. Le modèle dense ne peut reprendre qu'à certains points de son calcul, et le plus proche était un peu plus de 1 000 jetons avant la fin. Ce qui change doit aller dans la question elle-même, ou dans la réponse d'un outil. Pourquoi, c'est justement [le sujet de Bob](/blog/trois-cartes-deux-cerveaux-une-horloge/).
+Les trois cas, en clair :
 
-## Un détail de plus : chaque appareil a son prompt
+-   l'heure en tête du prompt système : 3 483 jetons relus à chaque question, 4,9 s;
+-   l'heure à la fin du prompt système : 1 024 jetons relus, 2,3 s;
+-   l'heure dans la question : 29 jetons relus, 0,37 s.
 
-Cinq jours plus tard, le 30 septembre, je me suis demandé comment accélérer Bob encore un peu. Une question météo, au haut-parleur de la salle à manger, avait pris 19 secondes : 5,7 s à attendre la fin de ma phrase, 8,3 s pour le premier passage dans le modèle, qui avait recalculé ses 5 189 jetons à partir de zéro, et 3,8 s pour écrire la réponse.
+Le cas du milieu est le plus instructif : l'heure à la fin du prompt système, ça ne suffit pas. Le modèle ne peut reprendre qu'à un point de contrôle, et le plus proche était un peu plus de 1 000 jetons avant la fin. Ce qui change doit aller dans la question elle-même, ou dans la réponse d'un outil.
 
-Claude Code a d'abord accusé le chat du blogue, une piste qu'on avait pourtant écartée cinq jours plus tôt. C'est en refaisant la mesure qu'il a trouvé la vraie cause : la même question, posée avec et sans l'identité du haut-parleur. Sans, 0,8 s. Avec, 7,4 s, puis 0,8 s à la question suivante. Une question qui vient du haut-parleur ne produit pas le même prompt qu'une question de l'appli, et le réchauffement que Home Assistant faisait chaque matin à 6 h, lui, ne pouvait pas dire de quel appareil il venait. Il gardait au chaud le prompt de l'appli, pas celui de la salle à manger.
+## Deuxième piège : un prompt par appareil
+
+Même avec un prompt stable, la première question au haut-parleur de la salle à manger restait parfois lente : jusqu'à 8,3 secondes pour le premier passage dans le modèle, qui recalculait ses 5 189 jetons à partir de zéro.
+
+Claude Code a d'abord accusé le chat du blogue, une piste qu'on avait pourtant déjà écartée. C'est en refaisant la mesure qu'il a trouvé la vraie cause : la même question, posée avec et sans l'identité du haut-parleur. Sans, 0,8 s. Avec, 7,4 s, puis 0,8 s à la question suivante. Une question qui vient du haut-parleur ne produit pas le même prompt qu'une question de l'appli : Home Assistant y ajoute la pièce de l'appareil et ses minuteries. Et le réchauffement que je faisais chaque matin ne pouvait pas dire de quel appareil il venait. Il gardait au chaud le prompt de l'appli, pas celui de la salle à manger.
 
 Le correctif est un petit service sur une autre machine du labo, qui pose chaque heure une question anodine à Bob, une fois au nom du haut-parleur, une fois sans appareil. Les deux prompts restent prêts.
 
+## Les règles que j'en tire
+
+1.  **Mesurez les deux vitesses séparément.** Le temps avant le premier mot et la vitesse d'écriture n'ont ni les mêmes causes ni les mêmes remèdes. Une carte plus rapide aide l'écriture; la cache aide la lecture.
+2.  **Ce qui change va après ce qui ne change pas.** Les consignes et la description des appareils d'abord; l'heure, la météo et la question à la fin.
+3.  **Sur un modèle hybride, « à la fin » veut dire dans la question ou dans la réponse d'un outil.** La fin du prompt système ne suffit pas.
+4.  **Ce qui change rarement peut rester en haut.** La date change une fois par jour : une relecture complète par jour, c'est un prix acceptable.
+5.  **Réchauffez le prompt exact.** Un réchauffement qui ne construit pas le même prompt, appareil compris, ne réchauffe rien.
+6.  **Lisez le journal du serveur.** L'API d'Ollama annonce toujours la taille complète du prompt, même quand presque tout vient de la cache. Le nombre de jetons vraiment relus est dans le journal de llama-server.
+
 ## Au quotidien
 
-Après tout ça, voici ce que donnent mes questions habituelles sur le modèle dense, le prompt déjà en cache, mesurées du texte envoyé à la réponse écrite, sans la reconnaissance de la voix ni la synthèse :
+Avec la cache bien gérée, voici ce que donnent mes questions habituelles sur le modèle dense, mesurées du texte envoyé à la réponse écrite, sans la reconnaissance de la voix ni la synthèse :
 
 -   « quel jour on est », « qui es-tu », « quelle heure est-il » : de 1,2 à 2,5 s;
 -   la température, la météo, la pluie, l'état d'une lumière : de 3,3 à 4,9 s, parce que Bob appelle un outil, puis écrit sa réponse;
 -   une recherche sur internet ou la liste des films à l'affiche : de 7,5 à 11 s, surtout à cause de la longueur de la réponse.
 
-À un moment, on a essayé de laisser Home Assistant répondre lui-même aux commandes simples, sans passer par le modèle. La météo répondait alors en 0,1 s, mais avec une formulation fixe, sans la personnalité de Bob. Après quelques questions, j'ai tranché : « Non en fait je préfère que tout passe par Bob, c'était assez rapide. »
+On a essayé de laisser Home Assistant répondre lui-même aux commandes simples, sans passer par le modèle : la météo répondait en 0,1 s, mais avec une formulation fixe, sans la personnalité de Bob. J'ai tranché : « Non en fait je préfère que tout passe par Bob, c'était assez rapide. » Pour la voix elle-même, j'ai proposé Piper, une voix locale : « On pourrait peut-être utiliser Piper pour Bob, comme il s'agit d'un bot, pas besoin d'être trop humain? » Contrairement à la voix de Google que j'utilisais, Piper parle en flux : il commence à lire la première phrase pendant que Bob écrit la suite.
 
-Il restait la voix elle-même. La voix de Google que j'utilisais attendait que toute la réponse soit écrite avant de commencer, puis prenait environ 2,2 s à créer le son. C'est moi qui ai proposé Piper, une voix locale : « On pourrait peut-être utiliser Piper pour Bob, comme il s'agit d'un bot, pas besoin d'être trop humain? » Piper roule maintenant sur `gpu-01` et parle en flux : il commence à lire la première phrase pendant que Bob écrit la suite. Sur le pipeline de la salle à manger, pour une question météo, la synthèse a commencé 3,25 s après le début de la réponse, alors que le texte n'a fini de s'écrire qu'à 5,11 s.
-
-Le chat du blogue, lui, paie le prix. À 18 jetons par seconde, une longue réponse de 300 jetons demande environ 17 secondes à s'écrire, contre 4 avec l'ancien modèle. La plupart des réponses de Bob sont plus courtes, mais c'est le compromis : un chat plus lent, qui invente moins.
+Le chat du blogue, lui, paie le prix du modèle dense. À 18 jetons par seconde, une longue réponse de 300 jetons demande environ 17 secondes à s'écrire, contre 4 avec l'ancien modèle. La plupart des réponses de Bob sont plus courtes, mais c'est le compromis : un chat plus lent, qui invente moins.
 
 ## Mot de la fin
 
-Au final, pour les questions courtes, le modèle le plus lent répond à la voix aussi vite que l'ancien avant le correctif, un peu plus lentement quand il doit appeler un outil, et il invente moins. Ce n'est pas une carte de plus qui a fait la différence, c'est l'ordre de trois lignes dans un prompt que j'avais écrit moi-même.
+Au final, pour les questions courtes, le modèle le plus lent répond à la voix aussi vite que l'ancien avant le correctif, un peu plus lentement quand il doit appeler un outil, et il invente moins. Ce n'est pas une carte de plus qui a fait la différence, c'est l'ordre de quelques lignes dans un prompt que j'avais écrit moi-même.
 
-Éventuellement, j'aimerais remplacer les 3060 par des RTX 3090 de 24 Go, qui lisent leur mémoire environ 2,6 fois plus vite, et la machine a déjà une alimentation de 1 500 W. Peut-être un sujet pour une autre fois.
+Éventuellement, j'aimerais remplacer les 3060 par des RTX 3090 de 24 Go, qui lisent leur mémoire environ 2,6 fois plus vite, et la machine a déjà une alimentation de 1 500 W. Ça aiderait l'écriture. La lecture, elle, était déjà réglée par la cache. Peut-être un sujet pour une autre fois.
 
 Alors si votre modèle local vous semble lent, je vous dirais de regarder ce qui change en haut de votre prompt avant de regarder le prix des cartes.
 

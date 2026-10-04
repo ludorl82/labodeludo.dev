@@ -81,7 +81,7 @@ C'est là que j'ai posé la question qui m'intéressait vraiment.
   ]}
 />
 
-Le mécanisme est simple. Quand Ollama reçoit une question, il réutilise le calcul qu'il a déjà fait pour la question précédente, mais seulement pour le début du prompt qui n'a pas changé. Dès qu'une ligne diffère, tout ce qui la suit est recalculé. Et ces lignes-là, c'est moi qui les avais ajoutées à mon prompt, pour que Bob connaisse la météo : la température actuelle, la date avec l'heure à la minute, et les prévisions des prochains jours. Trois lignes qui changeaient à chaque question, placées avant la description des appareils de la maison, qui fait à elle seule environ 5 000 jetons. Tout ça était relu à chaque fois.
+Le mécanisme est simple. Quand Ollama reçoit une question, il réutilise le calcul qu'il a déjà fait pour la question précédente, mais seulement pour le début du prompt qui n'a pas changé. Dès qu'une ligne diffère, tout ce qui la suit est recalculé. Et ces lignes-là, c'est moi qui les avais ajoutées à mon prompt, pour que Bob connaisse la météo : la température actuelle, la date avec l'heure à la minute, et les prévisions des prochains jours. Trois lignes qui changeaient à chaque question, placées avant la description des appareils de la maison et des outils, qui fait l'essentiel du prompt. Tout ça était relu à chaque fois.
 
 Le correctif a été fait le soir même, sans que je touche à un clavier :
 
@@ -91,15 +91,17 @@ Le correctif a été fait le soir même, sans que je touche à un clavier :
 
 Sur le MoE, la relecture du prompt est passée de 2,1 s à environ 0,15 s par question. Sur le dense, elle prend maintenant de 0,2 à 0,5 s au lieu d'environ 6 s, et c'est ce qui l'a rendu possible pour la voix. Le chat du blogue, lui, avait déjà ses extraits d'articles à la fin de son prompt, après la partie qui ne change pas : il n'avait pas ce problème.
 
-Pour vous montrer le mécanisme pour vrai, voici la même expérience rejouée sur le modèle dense : le même prompt envoyé trois fois de suite, avec l'heure à la seconde en tête, puis en queue.
+Pour vous montrer le mécanisme pour vrai, voici la même expérience rejouée le 4 octobre sur le modèle dense. Un petit script envoie trois fois de suite le même prompt, environ 3 500 jetons, avec l'heure à la seconde placée à trois endroits : en tête du prompt système, à la fin du prompt système, puis dans la question elle-même. Au milieu, le journal du serveur dit combien de jetons il a dû relire.
 
 <AsciiCast
-  src="/casts/un-cerveau-plus-lent-pour-bob-real.cast"
+  src="/casts/l-heure-dans-le-prompt-real.cast"
   frame="none"
-  poster="npt:0:40"
-  caption="Pour vrai, sur le modèle dense : le même prompt, trois questions de suite. L'heure en tête, et le modèle relit tout à chaque fois; l'heure en queue, et il ne relit plus que la fin."
-  disclaimer="✔ Ceci est une capture réelle, faite avec asciinema dans une session tmux dédiée, sans montage. Le script envoie ses requêtes au vrai modèle de Bob, avec les réglages de la production. Seules les pauses de plus de deux secondes sont raccourcies."
+  poster="npt:1:15"
+  caption="Pour vrai, sur le modèle dense. L'heure en tête du prompt : tout est relu à chaque question, 3 483 jetons, 4,9 s. À la fin du prompt système : 1 024 jetons, 2,3 s. Dans la question : 29 jetons, 0,37 s."
+  disclaimer="✔ Ceci est une capture réelle, faite le 4 octobre 2026 avec asciinema dans une session tmux dédiée, sans montage. Le script envoie ses requêtes au vrai modèle de Bob, avec les réglages de la production, et le panneau du milieu suit le journal du serveur. Les frappes ont été envoyées par script, et seules les pauses de plus de deux secondes sont raccourcies."
 />
+
+Le cas du milieu est le plus instructif : l'heure à la fin du prompt système, ça ne suffit pas. Le modèle dense ne peut reprendre qu'à certains points de son calcul, et le plus proche était un peu plus de 1 000 jetons avant la fin. Ce qui change doit aller dans la question elle-même, ou dans la réponse d'un outil. Pourquoi, c'est justement [le sujet de Bob](/blog/trois-cartes-deux-cerveaux-une-horloge/).
 
 ## Un détail de plus : chaque appareil a son prompt
 

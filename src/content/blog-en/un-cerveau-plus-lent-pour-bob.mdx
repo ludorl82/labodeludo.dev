@@ -64,7 +64,20 @@ The table says it all. For a voice, writing speed matters little: a spoken answe
 
 When Ollama reads a prompt, it keeps the result of that computation in memory. On the next question, it compares the new prompt with the old one, from the beginning, and reuses everything that is identical. At the first difference, it computes everything after it again, even if the rest is the same. That is the rule to remember: the cache only keeps the common beginning.
 
-My models add a subtlety. Recent Qwen models are hybrid: three layers out of four keep a kind of summary of what they have read, and a summary cannot be rewound. So the server takes checkpoints in a few places only, at the start of the question and a little more than 1,000 tokens before the end of the prompt, and can only resume from one of them. A difference placed before those checkpoints makes it re-read everything. The why, with the code to back it, is in [Bob's article](/en/blog/trois-cartes-deux-cerveaux-une-horloge/).
+If you have ever written a Dockerfile, you already know this principle. Docker builds an image in layers, one per instruction, and keeps each one in its cache. Its [documentation](https://docs.docker.com/build/cache/) says it in one sentence: if a layer changes, all the layers that come after it are affected too. That is why you copy the dependency list and install the dependencies before copying the code, as in [Docker's own example](https://docs.docker.com/build/cache/optimize/):
+
+```dockerfile
+FROM node
+WORKDIR /app
+COPY package.json yarn.lock .    # rarely changes
+RUN npm install                  # stays cached
+COPY . .                         # changes with every commit
+RUN npm build
+```
+
+A prompt works the same way. The instructions and the description of the devices are the dependencies: they rarely change, they go at the top. The time, the weather and the question are the code: they change every time, they go at the bottom. Putting the time at the top of the prompt is like doing `COPY . .` on the first line: every build reinstalls everything.
+
+My models add a subtlety, and the comparison still holds. With a classic model, every token is a layer: the server resumes exactly where the difference starts. Recent Qwen models are hybrid: in three of the network's layers out of four, the model keeps a kind of summary of what it has read, and a summary cannot be rewound. It is like a Dockerfile with only a few big layers. The server takes checkpoints in a few places only, at the start of the question and a little more than 1,000 tokens before the end of the prompt, and can only resume from one of them. If something changes in the last big layer, it redoes it whole; if it changes higher up, it redoes everything. The why, with the code to back it, is in [Bob's article](/en/blog/trois-cartes-deux-cerveaux-une-horloge/).
 
 ## First trap: what changes at the top of the prompt
 
@@ -105,7 +118,7 @@ The three cases, plainly:
 -   the time at the end of the system prompt: 1,024 tokens re-read, 2.3 s;
 -   the time inside the question: 29 tokens re-read, 0.37 s.
 
-The middle case is the most instructive: the time at the end of the system prompt is not enough. The model can only resume from a checkpoint, and the closest one was a little more than 1,000 tokens before the end. What changes has to go in the question itself, or in a tool's answer.
+The middle case is the most instructive: the time at the end of the system prompt is not enough. The model can only resume from a checkpoint, and the closest one was a little more than 1,000 tokens before the end: that is the last big layer, redone whole on every question. What changes has to go in the question itself, or in a tool's answer.
 
 ## Second trap: one prompt per device
 
@@ -118,7 +131,7 @@ The fix is a small service on another machine in the lab, which asks Bob a harml
 ## The rules I take from it
 
 1.  **Measure the two speeds separately.** The time before the first word and the writing speed have neither the same causes nor the same remedies. A faster card helps writing; the cache helps reading.
-2.  **What changes goes after what does not.** The instructions and the description of the devices first; the time, the weather and the question at the end.
+2.  **What changes goes after what does not.** The instructions and the description of the devices first; the time, the weather and the question at the end. Just like a Dockerfile: dependencies before code.
 3.  **On a hybrid model, "at the end" means in the question or in a tool's answer.** The end of the system prompt is not enough.
 4.  **What rarely changes can stay at the top.** The date changes once a day: one full re-read per day is an acceptable price.
 5.  **Warm up the exact prompt.** A warm-up that does not build the same prompt, device included, warms up nothing.

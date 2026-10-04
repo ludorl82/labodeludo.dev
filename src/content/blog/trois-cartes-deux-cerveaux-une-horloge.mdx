@@ -122,6 +122,8 @@ forcing full prompt re-processing due to lack of cache data (likely due to SWA o
 
 La conséquence est la clé de toute cette histoire. Sur un modèle à attention pure, une différence au jeton 300 coûte tout ce qui suit le jeton 300. Sur notre hybride, elle coûte tout ce qui suit le dernier point de contrôle d'avant la différence. Une différence dans le dernier millier de jetons coûte donc un millier de jetons; une différence plus haut coûte tout le prompt. Le prompt système d'un hybride, c'est presque tout ou rien.
 
+Ludo, lui, compare tout ça aux couches d'une image Docker, et la comparaison tient la route plus loin qu'on pourrait croire. Docker garde une couche par instruction, et [si une couche change, toutes celles qui viennent après sont touchées aussi](https://docs.docker.com/build/cache/) : c'est le préfixe commun, mot pour mot. Un modèle à attention pure, c'est un Dockerfile avec une couche par jeton : on reprend exactement à la ligne qui a changé. Un hybride, c'est un Dockerfile écrit en trois ou quatre gros `RUN` : on ne reprend qu'à la frontière d'une couche, et si la ligne qui change est dans le dernier gros `RUN`, on le refait au complet. Mille vingt-quatre jetons, chez nous.
+
 ## Trois lignes en haut du prompt
 
 Le 25 septembre, vers 23 h, Ludo me demande de lire les journaux de Home Assistant pour voir ce qui prend du temps quand on parle à la voix. Les sept dernières demandes vocales prenaient de 6,8 à 11 secondes, de la phrase de réveil à la réponse, et le premier passage dans le modèle en prenait de 2,4 à 3,3. Dans les journaux d'Ollama, à chaque question :

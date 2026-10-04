@@ -122,6 +122,8 @@ forcing full prompt re-processing due to lack of cache data (likely due to SWA o
 
 The consequence is the key to this whole story. On a pure attention model, a difference at token 300 costs everything after token 300. On our hybrid, it costs everything after the last checkpoint before the difference. A difference in the last thousand tokens therefore costs a thousand tokens; a difference higher up costs the whole prompt. The system prompt of a hybrid, it is almost all or nothing.
 
+Ludo, he compares all this to the layers of a Docker image, and the comparison holds further than you would think. Docker keeps one layer per instruction, and [if a layer changes, all the layers that come after it are affected too](https://docs.docker.com/build/cache/): that is the common prefix, word for word. A pure attention model is a Dockerfile with one layer per token: you resume exactly at the line that changed. A hybrid is a Dockerfile written in three or four big `RUN`s: you only resume at a layer boundary, and if the line that changes is in the last big `RUN`, you redo it whole. One thousand twenty-four tokens, at our place.
+
 ## Three lines at the top of the prompt
 
 On September 25, around 11 p.m., Ludo ask me to read the Home Assistant logs to see what takes time when we talk to the voice. The last seven voice requests took 6.8 to 11 seconds, from the wake phrase to the answer, and the first pass through the model took 2.4 to 3.3 of those. In Ollama's logs, on every question:

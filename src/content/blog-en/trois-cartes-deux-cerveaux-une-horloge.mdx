@@ -12,6 +12,7 @@ heroImage: "/images/blog/banner-horloge-du-prompt-en.svg"
 > -   **The ground**: Ollama 0.34 on `gpu-01`, three 12 GB RTX 3060 cards, one model loaded permanently (`keep_alive: -1`), shared by this site's chatbot and the house's voice (Home Assistant). Ollama run `llama-server`, from llama.cpp, with a single processing seat (a "slot") for these models.
 > -   **The two brains**: Qwen3.6-35B-A3B, 256 experts with 8 routed and 1 shared per token, so 3 billion active parameters out of 35; Qwen3.8-27B, dense, 27 billion on every token. Both are hybrid: three Gated DeltaNet layers for one attention layer.
 > -   **Writing is limited by memory**: every generated token read all the active weights again. A 3060 reads 360 GB/s. The dense one generates 18.4 tokens/s, close to its ceiling; the MoE, 77.6. Three cards don't go faster than two: they work one after the other.
+> -   **Fixed weights, read again anyway**: the weights never change during inference, but the chip has only about ten megabytes of fast memory for 16,500 MB of weights. Every token does the round of the 64 layers again. What changes from one question to the next is the vector that flows through; the cache keeps what was computed from it, never the weights.
 > -   **Reading is limited by compute**: a prompt's tokens go through in batches, so 2,778 tokens/s for the MoE and 834 for the dense. A 5,200-token prompt costs 2.1 s or 6.4 s, before the first word.
 > -   **The cache**: llama.cpp only reuses the longest common prefix with the previous prompt (`cache_prompt`). Everything after the first difference is computed again.
 > -   **The hybrid**: the state of a Gated DeltaNet layer, she does not rewind. llama.cpp takes checkpoints (149.6 MiB each here), at the start of the user's message and a bit before the end of the prompt, and can only resume from one of them. A difference higher than the last thousand tokens means re-reading everything.
@@ -57,9 +58,36 @@ The dense one writes at 18.4 tokens per second, so about 85% of its theoretical 
 
 And the three cards, then? You could think they share the work. They share the model, nuance: by default, llama.cpp [splits it by layers](https://github.com/ggml-org/llama.cpp/blob/dd266785c2595775001c1c714bd9d92b3ef34cde/tools/server/README.md?plain=1#L85) ("split layers and KV across GPUs (pipelined)"), the first card takes the first third, the second one the next, and so on. For one request, the cards work one after the other, and the token does a relay from one to the next. The ceiling stays the one of a single card. I measured it on September 11, when the third 3060 arrived: the MoE generated 69.8 to 71.7 tokens per second on three cards, against 70.1 to 72.1 on two. One more card is room, not speed.
 
+## Weights that never move, read again anyway
+
+While reading this text, Ludo, he asked me the question everybody should ask at this point: if the weights never change, why does the card read them again for every token? Good question. The answer is in the geography of the card.
+
+The weights are frozen at the end of training. When the model answers, it does not modify them, it uses them. The problem is where they are stored. The compute units of an RTX 3060 are grouped in multiprocessors, and each one has, right next to it, only [256 KB of registers and 128 KB of shared L1 cache](https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/compute-capabilities.html) (64 K registers of 32 bits). With its few dozen multiprocessors, the chip has in total something like ten megabytes of fast memory. The weights of the dense model, them, are 16,500 megabytes, stored in the video memory, next to the chip.
+
+To give the scale: a single one of the matrices in the FFN block of one layer of the 27B is [5,120 by 17,408 numbers](https://huggingface.co/Qwen/Qwen3.8-27B), 89 million weights. At 4 bits per weight, that is already about 45 MB, more than four times all the fast memory of the chip. And there are 64 layers.
+
+So, for every token, the card does the round. It loads the weights of one layer into its multiprocessors, multiplies them with the token's vector, throws them out to make room for the next layer, and so on until the 64th. At the next token, it starts again from the top. NVIDIA says it straight in [its inference optimization guide](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/): during generation, "the speed at which the data (weights, keys, values, activations) is transferred to the GPU from memory dominates the latency, not how fast the computation actually happens". It is a recipe book too big for the counter: the book never change, but for every dish, you flip through the whole thing again.
+
+## How the input changes the output
+
+If the weights are fixed, where does the difference between two answers come from? From what flows inside them. The weights are the function; the input is what you give it. Like y = f(x): f does not move, x changes.
+
+The trip of a question, in the 27B:
+
+1.  **The cutting.** The text is cut into tokens, pieces of words, each one identified by a number among [248,320](https://huggingface.co/Qwen/Qwen3.8-27B).
+2.  **The vector.** Each number picks a row of a big table, also learned during training: a vector of 5,120 numbers (2,048 on the MoE). From here, the token is not a word anymore, it is a position in a 5,120-dimension space.
+3.  **The layers.** The vector goes through the 64 layers. In each one, it is multiplied by the same weight matrices, which gives a new vector, a bit better informed. Sixteen of those layers are [attention](https://arxiv.org/abs/1706.03762): the token compares its query to the keys of all the previous tokens, then adds up their values, weighted by how much they look alike. That is where "the weather" learns we are talking about tomorrow. The 48 others are [Gated DeltaNet](https://arxiv.org/abs/2412.06464) layers: instead of looking at each previous token, they keep up to date a fixed-size state, the famous summary, where, according to their authors, "gating enables rapid memory erasure while the delta rule facilitates targeted updates".
+4.  **The output.** After the last layer, the vector is multiplied by an output matrix that gives a score to each of the 248,320 possible tokens. Those scores become probabilities, one is picked (the most likely, or a draw according to the temperature), it is added to the text, and everything goes through again for the next token, until the end token. The [Transformers documentation](https://huggingface.co/docs/transformers/llm_tutorial) sums it up: the model generates the next token "given some initial text (prompt) along with its own generated outputs".
+
+So two different questions send different vectors through exactly the same weights, and that is enough to get two different answers.
+
+The MoE adds a nuance I like: with him, the input chooses **which** weights work. A small router looks at the token's vector and picks [8 experts out of 256, plus one shared expert](https://huggingface.co/Qwen/Qwen3.6-35B-A3B). The values of the weights do not change, but the token "weather" and the token "light" do not go through the same experts. That is exactly why an MoE reads less memory per token: it only flips through the chapters it needs.
+
+And the cache, in all this? It does not contain a single weight. It keeps what was computed from the input: the keys and values of each token already read, in the sixteen attention layers, and the state of the 48 DeltaNet layers. NVIDIA presents the [KV cache](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/) as a way to avoid "recomputing all these tensors for all tokens at each time step". The weights never change, so they never invalidate anything. It is the input that changes, and that is why one line modified at the top of the prompt makes everything after it get computed again.
+
 ## Reading a prompt is a whole other story
 
-Before writing anything, the model must read the prompt: the instructions, the description of the house's devices, the history, the question. And there, the mechanics change. A prompt's tokens are all known in advance, so llama.cpp passes them in batches of a few hundred. The weights are read once per batch instead of once per token, and the limit becomes the card's computing power.
+Before writing anything, the model must read the prompt: the instructions, the description of the house's devices, the history, the question. And there, the mechanics change. A prompt's tokens are all known in advance, so llama.cpp passes them in batches of a few hundred. The round of the layers is done once per batch instead of once per token: each matrix loaded serves hundreds of vectors at once, and the limit becomes the card's computing power. NVIDIA, [again](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/): "a matrix-matrix operation that's highly parallelized. It effectively saturates GPU utilization".
 
 Hence the numbers of the measurement: 2,778 tokens per second for reading on the MoE, 834 for the dense, dozens of times faster than writing. But a voice prompt is more than 5,000 tokens. Re-read in full, it costs, according to Ollama's logs on real questions from the house, on September 25 on the MoE:
 
@@ -113,6 +141,8 @@ The llama.cpp solution is to take pictures of that state along the way. Since [P
 ```
 created context checkpoint 5 of 32 (pos_min = 5356, pos_max = 5356, n_tokens = 5357, size = 149.626 MiB)
 ```
+
+Those 149.6 MiB do not move, whether the checkpoint is taken at token 4,164 or at token 5,356: it is not a cache that grows with the text, it is the summary itself, fixed size. The math lands almost exactly with the 27B's card: 48 DeltaNet layers, 48 heads each, a state of 128 by 128 numbers per head. In 32 bits, 48 × 48 × 128 × 128 × 4 bytes give 144 MiB, out of the 149.6 in the log. The keys and values of the attention layers, them, are not in it: they can be cut at any token, and llama.cpp only [takes a picture of what cannot be rewound](https://github.com/ggml-org/llama.cpp/blob/dd266785c2595775001c1c714bd9d92b3ef34cde/tools/server/server-context.cpp#L3647-L3651).
 
 When a question arrives, the server computes the common prefix, then [looks for a checkpoint taken before the first difference](https://github.com/ggml-org/llama.cpp/blob/dd266785c2595775001c1c714bd9d92b3ef34cde/tools/server/server-context.cpp#L3513-L3545). If it finds one, it restores it and only computes the rest. If it finds none, it starts over from zero, with this message:
 

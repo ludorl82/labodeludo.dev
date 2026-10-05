@@ -1,21 +1,20 @@
 {
   "curated": [
-    "Comment tes dessins se redessinent tout seuls la nuit ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
     "How do your diagrams redraw themselves every night?",
     "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?"
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
   ],
-  "generated": "2026-10-04T08:32:54Z",
+  "generated": "2026-10-05T08:31:57Z",
   "openers": [
     "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tu as séparé le bastion de la console ?",
-    "Comment tes dessins se redessinent tout seuls la nuit ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
+    "C'est quoi la carte graphique qui permet de rouler le modèle?",
     "How do your diagrams redraw themselves every night?",
     "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?"
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
   ],
   "written": []
 }

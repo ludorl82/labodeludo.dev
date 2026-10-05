@@ -52,7 +52,7 @@ const hasFrench = frenchPosts.some((p) => p.id === post.id);
           <a class="lang-link" href={`/blog/${post.id}/`}>Version française</a>
         )}
       </div>
-      <AiNotice ia={post.data.ia} outils={post.data.iaOutils} lang="en" />
+      <AiNotice ia={post.data.ia} outils={post.data.iaOutils} certificat={post.data.certificatHumain} lang="en" />
     </header>
 
     {post.data.heroImage && (

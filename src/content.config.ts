@@ -7,7 +7,11 @@ import { glob } from "astro/loaders";
      aucune   — écrit sans IA (les articles de 2019 à 2022)
      assistee — rédigé par Ludo avec l'aide de l'IA ; `iaOutils` nomme l'outil
      redigee  — rédigé par Bob, de bout en bout
-   Un article tagué `bob` est forcément `redigee`. */
+   Un article tagué `bob` est forcément `redigee`.
+   `certificatHumain` porte l'identifiant d'un certificat Humanums
+   (humanums.com/verify/<id>) : le texte a été tapé par Ludo dans leur éditeur,
+   qui signe une empreinte du texte exact. Sur `aucune`, la page affiche le
+   certificat; sur `assistee`, c'est une traduction de cet original. */
 const postSchema = z
   .object({
     title: z.string(),
@@ -20,6 +24,10 @@ const postSchema = z
         "champ `ia` manquant : aucune | assistee | redigee (voir src/content.config.ts)",
     }),
     iaOutils: z.string().optional(),
+    certificatHumain: z
+      .string()
+      .regex(/^HM-[A-Z0-9]{4}-[A-Z0-9]{4}$/, "certificatHumain : HM-XXXX-XXXX")
+      .optional(),
   })
   .refine((d) => !d.tags.includes("bob") || d.ia === "redigee", {
     message: "un article tagué `bob` doit avoir ia: \"redigee\"",
@@ -28,6 +36,10 @@ const postSchema = z
   .refine((d) => d.ia !== "assistee" || !!d.iaOutils, {
     message: "ia: \"assistee\" exige iaOutils (ex. \"Claude Code\")",
     path: ["iaOutils"],
+  })
+  .refine((d) => !d.certificatHumain || d.ia !== "redigee", {
+    message: "un certificat d'écriture humaine ne va pas sur un article rédigé par Bob",
+    path: ["certificatHumain"],
   });
 
 const blog = defineCollection({

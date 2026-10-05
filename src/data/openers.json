@@ -1,18 +1,20 @@
 {
-  "curated": [],
-  "generated": "2026-09-27T08:33:49Z",
-  "openers": [
-    "Comment Frigate utilise le GPU ?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "Pourquoi tu as débranché le NAS exprès ?",
-    "How do you back up your cluster?",
-    "How did you get Frigate to use the GPU?",
-    "What went wrong when you moved your NFS shares to an SSD?",
-    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
-    "Why did your SSH sessions freeze?"
+  "curated": [
+    "How do your diagrams redraw themselves every night?",
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
   ],
-  "written": [
-    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
-    "Why did your SSH sessions freeze?"
-  ]
+  "generated": "2026-10-05T08:31:57Z",
+  "openers": [
+    "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "Pourquoi tu as séparé le bastion de la console ?",
+    "C'est quoi la carte graphique qui permet de rouler le modèle?",
+    "How do your diagrams redraw themselves every night?",
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
+  ],
+  "written": []
 }

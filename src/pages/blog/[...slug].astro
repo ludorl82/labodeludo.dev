@@ -54,7 +54,7 @@ const relatedInventory = inventoryForArticle(post.id);
           <a class="lang-link" href={`/en/blog/${post.id}/`}>English version</a>
         )}
       </div>
-      <AiNotice ia={post.data.ia} outils={post.data.iaOutils} />
+      <AiNotice ia={post.data.ia} outils={post.data.iaOutils} certificat={post.data.certificatHumain} />
     </header>
 
     {post.data.heroImage && (

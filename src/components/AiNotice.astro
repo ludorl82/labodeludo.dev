@@ -1,33 +1,90 @@
 ---
 /* Mention d'écriture assistée par IA, en tête de chaque article.
-   Le niveau vient du champ `ia` du frontmatter, obligatoire (content.config.ts). */
+   Le niveau vient du champ `ia` du frontmatter, obligatoire (content.config.ts).
+   Avec `certificat` (Humanums), l'original français montre le badge, le lien
+   de vérification et le bouton de copie, quel que soit `ia` (Humanums certifie
+   la FRAPPE, pas l'origine des idées : un texte tapé à partir d'un premier jet
+   reste `assistee`); la traduction anglaise renvoie à l'original certifié.
+   Le badge est une copie locale de humanums.com/api/badge/<id> : la page ne
+   charge rien de leur domaine, seul le lien y mène.
+   Leur vérificateur compare l'empreinte SHA-256 du texte COMPLET, octet par
+   octet : le texte publié, corrigé pour la forme, ne peut pas passer. L'original
+   exact vit dans public/textes-certifies/<id>.txt (ce que leur éditeur garde
+   dans `contentText`, sauts de ligne finaux compris) et le bouton le copie. */
 interface Props {
   ia: "aucune" | "assistee" | "redigee";
   outils?: string;
+  certificat?: string;
   lang?: "fr" | "en";
 }
 
-const { ia, outils, lang = "fr" } = Astro.props;
+const { ia, outils, certificat, lang = "fr" } = Astro.props;
 const policy = "/politique-de-confidentialite/";
+const verify = certificat && `https://humanums.com/verify/${certificat}`;
+const original = !!verify && lang === "fr";
 
 const text = {
   fr: {
     assistee: `Rédigé avec l'aide de l'intelligence artificielle (${outils}). Ludo a relu et validé le texte.`,
     redigee: "Rédigé par Bob, un assistant d'intelligence artificielle, à partir du travail fait en session avec Ludo.",
     more: "Comment l'IA est utilisée ici",
+    humain: "Ludo a tapé ce texte lui-même, certifié par Humanums, à partir d'un premier jet rédigé avec Claude Code. Claude Code l'a ensuite corrigé pour la forme et y a ajouté les tableaux, l'extrait et la capture de console. Pour vérifier, copiez l'original tel qu'il a été tapé et collez-le dans la boîte du certificat.",
+    certificat: "Voir le certificat",
+    copier: "Copier l'original",
+    copie: "Copié!",
+    txt: "texte brut",
+    original: "Traduction d'un texte que Ludo a tapé lui-même à partir d'un premier jet de Claude Code, certifié par Humanums",
   },
   en: {
     assistee: `Written with the help of artificial intelligence (${outils}). Ludo reviewed and approved the text.`,
     redigee: "Written by Bob, an artificial intelligence assistant, from work done in session with Ludo.",
     more: "How AI is used here (French)",
+    humain: "Ludo typed this text himself, certified by Humanums, from a first draft written with Claude Code. Claude Code then corrected it for form and added the tables, the excerpt and the console capture. To verify, copy the original as typed and paste it in the certificate's box.",
+    certificat: "See the certificate",
+    copier: "Copy the original",
+    copie: "Copied!",
+    txt: "plain text",
+    original: "This is a translation of a text Ludo typed himself from a Claude Code draft, certified by Humanums",
   },
 }[lang];
 ---
 
-{ia !== "aucune" && (
+{original && (
+  <p class="ai-notice human" role="note">
+    <a class="badge" href={verify} rel="noopener">
+      <img src={`/images/humanums/${certificat}.svg`} width="180" height="46" alt={`Verified Human, Humanums ${certificat}`} />
+    </a>
+    <span>
+      {text.humain}{" "}
+      <button type="button" class="copier" data-src={`/textes-certifies/${certificat}.txt`} data-fait={text.copie}>{text.copier}</button>{" "}
+      (<a href={`/textes-certifies/${certificat}.txt`}>{text.txt}</a>){" · "}
+      <a href={verify} rel="noopener">{text.certificat}</a>{" · "}
+      <a href={policy}>{text.more}</a>
+    </span>
+  </p>
+)}
+
+<script>
+  // Copie l'original certifié tel quel : fetch du .txt, puis presse-papiers.
+  // Pas de sélection dans la page, qui changerait les octets.
+  for (const b of document.querySelectorAll<HTMLButtonElement>(".ai-notice .copier")) {
+    b.addEventListener("click", async () => {
+      const t = await (await fetch(b.dataset.src!)).text();
+      await navigator.clipboard.writeText(t);
+      const avant = b.textContent;
+      b.textContent = b.dataset.fait!;
+      setTimeout(() => (b.textContent = avant), 2000);
+    });
+  }
+</script>
+
+{!original && ia !== "aucune" && (
   <p class="ai-notice" role="note">
     <span class="tag" aria-hidden="true">IA</span>
-    <span>{text[ia]} <a href={policy}>{text.more}</a>.</span>
+    <span>
+      {text[ia]} {verify && <>{text.original} (<a href={verify} rel="noopener">{certificat}</a>). </>}
+      <a href={policy}>{text.more}</a>.
+    </span>
   </p>
 )}
 
@@ -58,6 +115,36 @@ const text = {
 
   .ai-notice a {
     color: inherit;
+  }
+
+  .ai-notice.human {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .ai-notice .copier {
+    padding: 0 0.4em;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .ai-notice .copier:hover {
+    color: var(--accent-live);
+  }
+
+  .ai-notice .badge {
+    flex: none;
+    line-height: 0;
+  }
+
+  .ai-notice .badge img {
+    display: block;
+    max-width: 100%;
+    height: auto;
   }
 
   .ai-notice a:hover {

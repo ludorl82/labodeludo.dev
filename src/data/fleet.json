@@ -456,24 +456,18 @@
           "model": "RTX 3050 6GB",
           "passthrough": true,
           "vram": "6 Go"
-        },
-        {
-          "die": "GM206",
-          "model": "GTX 960",
-          "passthrough": true,
-          "vram": "4 Go"
         }
       ],
       "hostedBy": "gaming-01",
-      "iacDeclared": true,
-      "name": "vm-03",
+      "iacDeclared": false,
+      "name": "win11",
       "network": "vlan10",
-      "role": "agent k3s (GPU)",
-      "spec": "RTX 3050 6GB (GA107, 6 Go, vfio) + GTX 960 (GM206, 4 Go, vfio)"
+      "role": "VM de bureau Windows 11 Pro, à la demande — emprunte la RTX 3050 6GB d'arcade1 quand arcade1 est éteinte ; pas un nœud k3s",
+      "spec": "RTX 3050 6GB (GA107, 6 Go, vfio)"
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-09-25T09:33:26Z",
+  "generated": "2026-10-02T15:20:59Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

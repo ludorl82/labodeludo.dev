@@ -214,13 +214,20 @@ const gpuList = (d: Device) => {
 // cards the box hands to a guest instead of keeping: same metal, other
 // driver — and the reason a chip can wave the flag under a flagged row
 const gpuLoans = (d: Device) => cards(d).filter((g) => g.passthrough === true).length;
-// the whole spoken sentence for the aria-label: rows are where cards exist
+// the whole spoken sentence for the aria-label: rows are where cards exist.
+// The number spoken is the count of CARDS, not the number of distinct names the
+// line below prints: two identical cards collapse into one name with a ×2 on
+// it, and a box holding three of them does not hold two because two of them
+// share a model. The flag drawn on a row and the tally drawn at the top of a
+// bay both count cards — a row contradicting them in words would have the
+// drawing disagreeing with its own numbers.
 const gpuSpoken = (d: Device) => {
   const list = gpuList(d);
+  const n = cards(d).length;
   if (!list.length) return d.gpu === true ? "une carte GPU" : "";
   const loans = gpuLoans(d);
   return (
-    `${list.length} carte${list.length > 1 ? "s" : ""} GPU : ${list.join(", ")}` +
+    `${n} carte${n > 1 ? "s" : ""} GPU : ${list.join(", ")}` +
     (loans ? ` — dont ${loans} passée${loans > 1 ? "s" : ""} à une VM` : "")
   );
 };

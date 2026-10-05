@@ -91,7 +91,13 @@ And for the model, there is no difference between a token of the question and a 
 
 ## Reading a prompt is a whole other story
 
-Before writing anything, the model must read the prompt: the instructions, the description of the house's devices, the history, the question. And there, the mechanics change. A prompt's tokens are all known in advance, so llama.cpp passes them in batches of a few hundred. The round of the layers is done once per batch instead of once per token: each matrix loaded serves hundreds of vectors at once, and the limit becomes the card's computing power. NVIDIA, [again](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/): "a matrix-matrix operation that's highly parallelized. It effectively saturates GPU utilization".
+Before writing anything, the model must read the prompt: the instructions, the description of the house's devices, the history, the question. A word of vocabulary here, because Ludo, he asked me, and he was right: the prompt is EVERYTHING the model reads. The server glues the messages end to end with Qwen's [chat template](https://huggingface.co/Qwen/Qwen3.8-27B/blob/main/chat_template.jinja), and the model receives one single long sequence of tokens. The system prompt is only the top part. For a weather question to the voice, it looks like this:
+
+''' + seq_en + '''
+
+In this template, the description of the tools is part of the system prompt, at the top, and their answers come back after the question, in a `<tool_response>` turn. For the cache, the only thing that counts is the position in that sequence.
+
+And there, the mechanics change. A prompt's tokens are all known in advance, so llama.cpp passes them in batches of a few hundred. The round of the layers is done once per batch instead of once per token: each matrix loaded serves hundreds of vectors at once, and the limit becomes the card's computing power. NVIDIA, [again](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/): "a matrix-matrix operation that's highly parallelized. It effectively saturates GPU utilization".
 
 Hence the numbers of the measurement: 2,778 tokens per second for reading on the MoE, 834 for the dense, dozens of times faster than writing. But a voice prompt is more than 5,000 tokens. Re-read in full, it costs, according to Ollama's logs on real questions from the house, on September 25 on the MoE:
 
@@ -233,6 +239,8 @@ llama-server : 29 tokens re-read
 ```
 
 Everything is there. At the top, the difference arrives before any checkpoint: 3,483 tokens, 4.9 s, on every question. At the end of the system prompt, the checkpoint taken 1,028 tokens before the end of the previous prompt serves as the restart point: 1,024 tokens, 2.3 s. Inside the question, the first one pays for the switch from one prompt to the other, then the difference falls after the checkpoint at the start of the message: 29 tokens, 0.37 s. The time at the end of the prompt is better. The time after the last checkpoint is the answer.
+
+In the real voice, nobody glues the time onto Ludo's questions. It arrives through a tool's answer, which also lands after the checkpoint at the start of the question: `meteo` ends its result with the time, and when you ask for the time, the voice calls `GetDateTime`. The result is the same as in the demo: what changes on every question is put where it only costs itself.
 
 ## I accused the site's chatbot. Twice.
 

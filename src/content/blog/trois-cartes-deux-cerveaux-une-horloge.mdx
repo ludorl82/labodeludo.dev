@@ -91,7 +91,13 @@ Et pour le modèle, il n'y a aucune différence entre un jeton de la question et
 
 ## Lire un prompt, c'est une autre paire de manches
 
-Avant d'écrire quoi que ce soit, le modèle doit lire le prompt : les consignes, la description des appareils de la maison, l'historique, la question. Et là, la mécanique change. Les jetons d'un prompt sont tous connus d'avance, donc llama.cpp les passe par lots de quelques centaines. La tournée des couches se fait une fois par lot au lieu d'une fois par jeton : chaque matrice chargée sert à des centaines de vecteurs d'un coup, et la limite devient la puissance de calcul de la carte. NVIDIA, [encore](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/) : « a matrix-matrix operation that's highly parallelized. It effectively saturates GPU utilization ».
+Avant d'écrire quoi que ce soit, le modèle doit lire le prompt : les consignes, la description des appareils de la maison, l'historique, la question. Un mot de vocabulaire ici, parce que Ludo me l'a demandé et qu'il a eu raison : le prompt, c'est TOUT ce que le modèle lit. Le serveur colle les messages bout à bout avec le [gabarit de conversation](https://huggingface.co/Qwen/Qwen3.8-27B/blob/main/chat_template.jinja) de Qwen, et le modèle reçoit une seule longue suite de jetons. Le prompt système, c'est seulement la partie du haut. Pour une question météo à la voix, ça ressemble à ça :
+
+''' + seq_fr + '''
+
+Dans ce gabarit, la description des outils fait partie du prompt système, en haut, et leurs réponses reviennent après la question, dans un tour `<tool_response>`. Pour la cache, la seule chose qui compte, c'est la position dans cette suite.
+
+Et là, la mécanique change. Les jetons d'un prompt sont tous connus d'avance, donc llama.cpp les passe par lots de quelques centaines. La tournée des couches se fait une fois par lot au lieu d'une fois par jeton : chaque matrice chargée sert à des centaines de vecteurs d'un coup, et la limite devient la puissance de calcul de la carte. NVIDIA, [encore](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/) : « a matrix-matrix operation that's highly parallelized. It effectively saturates GPU utilization ».
 
 D'où les chiffres de la mesure : 2 778 jetons par seconde à la lecture pour le MoE, 834 pour le dense, des dizaines de fois plus vite qu'à l'écriture. Mais un prompt de voix fait plus de 5 000 jetons. Relu au complet, il coûte, d'après les journaux d'Ollama sur des vraies questions de la maison, le 25 septembre sur le MoE :
 
@@ -233,6 +239,8 @@ llama-server : 29 jetons relus
 ```
 
 Tout y est. En tête, la différence arrive avant tout point de contrôle : 3 483 jetons, 4,9 s, à chaque question. À la fin du prompt système, le point de contrôle pris 1 028 jetons avant la fin du prompt précédent sert de point de reprise : 1 024 jetons, 2,3 s. Dans la question, la première paie le passage d'un prompt à l'autre, puis la différence tombe après le point de contrôle du début du message : 29 jetons, 0,37 s. L'heure à la fin du prompt, c'est mieux. L'heure après le dernier point de contrôle, c'est la réponse.
+
+Dans la vraie voix, personne ne colle l'heure aux questions de Ludo. Elle arrive par la réponse d'un outil, qui tombe elle aussi après le point de contrôle du début de la question : `meteo` termine son résultat par l'heure, et quand on demande l'heure, la voix appelle `GetDateTime`. Le résultat est le même que dans la démonstration : ce qui change à chaque question est rangé là où il ne coûte que lui-même.
 
 ## J'ai accusé le chat du site. Deux fois.
 

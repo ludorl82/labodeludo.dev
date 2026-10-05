@@ -10,8 +10,9 @@ import { glob } from "astro/loaders";
    Un article tagué `bob` est forcément `redigee`.
    `certificatHumain` porte l'identifiant d'un certificat Humanums
    (humanums.com/verify/<id>) : le texte a été tapé par Ludo dans leur éditeur,
-   qui signe une empreinte du texte exact. Sur `aucune`, la page affiche le
-   certificat; sur `assistee`, c'est une traduction de cet original. */
+   qui signe une empreinte du texte exact. Il certifie la frappe, pas l'origine
+   des idées : tapé à partir d'un premier jet de l'IA, l'article reste `assistee`.
+   L'original français affiche le badge; la traduction renvoie au certificat. */
 const postSchema = z
   .object({
     title: z.string(),

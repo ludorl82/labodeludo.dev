@@ -37,7 +37,7 @@ J'avais le choix entre deux familles de modèles. Un modèle à mélange d'exper
 
 ## Deux vitesses : lire et écrire
 
-Avant d'écrire quoi que ce soit, un modèle lit tout son prompt : les consignes, la description des appareils de la maison, l'historique et la question. Ensuite seulement, il écrit sa réponse, un jeton à la fois. Ces deux étapes n'ont pas les mêmes limites.
+Avant d'écrire quoi que ce soit, un modèle lit tout son prompt. Le prompt, c'est tout ce qu'on lui envoie, mis bout à bout : d'abord le prompt système, c'est-à-dire les consignes et la description des appareils de la maison, identiques d'une question à l'autre, puis la conversation, dont la question elle-même. Ensuite seulement, il écrit sa réponse, un jeton à la fois. Ces deux étapes n'ont pas les mêmes limites.
 
 Pour écrire, la carte doit relire, à chaque jeton, tous les poids qui travaillent. C'est la mémoire qui limite : une RTX 3060 en lit environ 360 Go par seconde. Pour les 16,5 Go du modèle dense, ça donne un plafond d'environ 22 jetons par seconde; on en mesure 18. Le MoE, qui ne relit que ses experts actifs, en écrit 77. Et ajouter une carte n'y change rien : Ollama répartit le modèle par couches, et les cartes travaillent chacune leur tour. Sur trois cartes, le MoE écrivait entre 70 et 72 jetons par seconde, comme sur deux.
 
@@ -121,6 +121,8 @@ Les trois cas, en clair :
 -   l'heure dans la question : 29 jetons relus, 0,37 s.
 
 Le cas du milieu est le plus instructif : l'heure à la fin du prompt système, ça ne suffit pas. Le modèle ne peut reprendre qu'à un point de contrôle, et le plus proche était un peu plus de 1 000 jetons avant la fin : c'est la dernière grosse couche, refaite au complet à chaque question. Ce qui change doit aller dans la question elle-même, ou dans la réponse d'un outil.
+
+Dans la vraie voix, je n'ai pas eu à toucher à mes questions. L'heure et la météo arrivent maintenant par la réponse d'un outil, qui vient après la question dans le prompt : quand on demande la météo, Bob appelle son outil, qui rend les prévisions et termine par l'heure, et quand on lui demande l'heure, Home Assistant lui fournit un outil exprès. Seule la date reste dans le prompt système, et elle ne coûte qu'une relecture complète par jour.
 
 ## Deuxième piège : un prompt par appareil
 

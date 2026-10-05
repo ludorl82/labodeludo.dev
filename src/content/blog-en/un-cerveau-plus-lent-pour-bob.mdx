@@ -37,7 +37,7 @@ In my benchmarks, the dense model made things up less. The best example is a tri
 
 ## Two speeds: reading and writing
 
-Before writing anything, a model reads its whole prompt: the instructions, the description of the house's devices, the history and the question. Only then does it write its answer, one token at a time. These two steps do not have the same limits.
+Before writing anything, a model reads its whole prompt. The prompt is everything you send it, put end to end: first the system prompt, meaning the instructions and the description of the house's devices, identical from one question to the next, then the conversation, including the question itself. Only then does it write its answer, one token at a time. These two steps do not have the same limits.
 
 To write, the card has to read again, for every token, all the weights that do the work. Memory is the limit: an RTX 3060 reads about 360 GB per second. For the dense model's 16.5 GB, that gives a ceiling of about 22 tokens per second; we measure 18. The MoE, which only reads its active experts, writes 77. And adding a card changes nothing: Ollama splits the model by layers, and the cards work one after the other. On three cards, the MoE wrote between 70 and 72 tokens per second, just like on two.
 
@@ -121,6 +121,8 @@ The three cases, plainly:
 -   the time inside the question: 29 tokens re-read, 0.37 s.
 
 The middle case is the most instructive: the time at the end of the system prompt is not enough. The model can only resume from a checkpoint, and the closest one was a little more than 1,000 tokens before the end: that is the last big layer, redone whole on every question. What changes has to go in the question itself, or in a tool's answer.
+
+In the real voice, I did not have to touch my questions. The time and the weather now arrive through a tool's answer, which comes after the question in the prompt: when you ask for the weather, Bob calls his tool, which returns the forecast and ends with the time, and when you ask him the time, Home Assistant gives him a dedicated tool. Only the date stays in the system prompt, and it costs just one full re-read per day.
 
 ## Second trap: one prompt per device
 

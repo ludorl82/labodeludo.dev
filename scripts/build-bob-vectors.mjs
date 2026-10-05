@@ -100,10 +100,6 @@ function stripMdx(body) {
     .replace(/^import\s+.*$/gm, "")
     .replace(/^export\s+const\s+.*$/gm, "")
     .replace(/<\/?[A-Z][\w.]*(\s[^>]*)?\/?>/g, "")
-    // un texte certifié humain garde ses apostrophes et guillemets droits en
-    // entités (sinon smartypants les courbe à l'affichage) : les remettre ici
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

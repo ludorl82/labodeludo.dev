@@ -5,14 +5,15 @@ import { glob } from "astro/loaders";
    article ne peut pas être publié en l'oubliant. La page l'affiche en tête
    (AiNotice.astro).
      aucune   — écrit sans IA (les articles de 2019 à 2022)
-     assistee — rédigé par Ludo avec l'aide de l'IA ; `iaOutils` nomme l'outil
+     reecrite — écrit par Ludo à partir d'un premier jet de l'IA, qu'il a
+                reformulé en majeure partie ; `iaOutils` nomme l'outil
+     assistee — rédigé par l'IA, relu et validé entièrement par Ludo ; `iaOutils` nomme l'outil
      redigee  — rédigé par Bob, de bout en bout
    Un article tagué `bob` est forcément `redigee`.
    `certificatHumain` porte l'identifiant d'un certificat Humanums
    (humanums.com/verify/<id>) : le texte a été tapé par Ludo dans leur éditeur,
-   qui signe une empreinte du texte exact. Il certifie la frappe, pas l'origine
-   des idées : tapé à partir d'un premier jet de l'IA, l'article reste `assistee`.
-   L'original français affiche le badge; la traduction renvoie au certificat. */
+   qui signe une empreinte du texte exact. L'original français offre le texte
+   certifié à copier; la traduction renvoie au certificat. */
 const postSchema = z
   .object({
     title: z.string(),
@@ -20,9 +21,9 @@ const postSchema = z
     description: z.string().optional().default(""),
     tags: z.array(z.string()).default([]),
     heroImage: z.string().optional(),
-    ia: z.enum(["aucune", "assistee", "redigee"], {
+    ia: z.enum(["aucune", "reecrite", "assistee", "redigee"], {
       error:
-        "champ `ia` manquant : aucune | assistee | redigee (voir src/content.config.ts)",
+        "champ `ia` manquant : aucune | reecrite | assistee | redigee (voir src/content.config.ts)",
     }),
     iaOutils: z.string().optional(),
     certificatHumain: z
@@ -34,8 +35,8 @@ const postSchema = z
     message: "un article tagué `bob` doit avoir ia: \"redigee\"",
     path: ["ia"],
   })
-  .refine((d) => d.ia !== "assistee" || !!d.iaOutils, {
-    message: "ia: \"assistee\" exige iaOutils (ex. \"Claude Code\")",
+  .refine((d) => (d.ia !== "assistee" && d.ia !== "reecrite") || !!d.iaOutils, {
+    message: "ia: \"assistee\" ou \"reecrite\" exige iaOutils (ex. \"Claude Code\")",
     path: ["iaOutils"],
   })
   .refine((d) => !d.certificatHumain || d.ia !== "redigee", {

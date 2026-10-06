@@ -12,6 +12,18 @@ heroImage: "/images/blog/banner-cerveau-de-bob.svg"
 import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 import AsciiCast from "../../components/AsciiCast.astro";
 
+> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **La leçon** : un modèle local a deux vitesses. Écrire est limité par la mémoire de la carte graphique; lire le prompt est limité par le calcul, et ce temps-là, celui qui passe avant le premier mot, peut presque disparaître si la cache est bien gérée.
+> -   **Le terrain** : Bob répond aux visiteurs de ce blogue et aux questions de la maison. Les deux passent par le même modèle Qwen, servi par Ollama sur `gpu-01`, une machine à trois RTX 3060 de 12 Go dans mon sous-sol.
+> -   **MoE contre dense** : Qwen3.6-35B-A3B, à mélange d'experts, écrit 77 jetons par seconde et lit le prompt à 2 778 jetons par seconde. Qwen3.8-27B, dense, écrit à 18 et lit à 834, mais invente moins.
+> -   **La cache** : Ollama (llama.cpp) ne réutilise que le début du prompt qui n'a pas changé depuis la question précédente. Une ligne qui change fait recalculer tout ce qui la suit.
+> -   **Le premier piège** : la température, la date avec l'heure à la minute et les prévisions, près du début du prompt de la voix. Environ 5 200 jetons relus à chaque question : 2,1 s sur le MoE, 6,4 s sur le dense.
+> -   **La démonstration** : sur le dense, l'heure en tête du prompt fait relire 3 483 jetons (4,9 s), à la fin du prompt système 1 024 (2,3 s), dans la question 29 (0,37 s).
+> -   **Le deuxième piège** : un modèle à froid. Après un changement de date ou un redémarrage d'Ollama, la première question relisait tout. Le correctif : réchauffer le modèle au démarrage d'Ollama, et le prompt tel que le haut-parleur l'envoie.
+> -   **Le résultat** : sur le modèle dense, mes questions habituelles à la voix répondent en 1 à 5 secondes. Le chat du blogue, lui, est plus lent sur les longues réponses.
+> -   **Transparence** : les bancs d'essai, les mesures et les correctifs ont été faits en sessions avec Claude Code, Opus 5 pour les premiers bancs, Opus 5.5 ensuite. J'ai posé les questions et tranché. La théorie complète, sources à l'appui, est dans [l'article de Bob](/blog/trois-cartes-deux-cerveaux-une-horloge/).
+
 Ces dernières semaines, j'ai essayé différents cerveaux pour Bob, le chat de ce blogue et l'assistant vocal de ma maison. Les articles sont écrits pour la plupart par les modèles d'Anthropic, par Claude Code, mais pour Bob, je voulais un modèle local : ce qu'on lui dit ne sort pas de chez moi, et une fois les cartes achetées, chaque question est gratuite. Entre en scène Qwen. Les acteurs américains dominent encore le marché des modèles propriétaires, mais plusieurs acteurs chinois publient maintenant des modèles de qualité librement sur Hugging Face, et Qwen d'Alibaba en est un.
 
 En chemin, j'ai appris une leçon qui dépasse Bob, et c'est elle que je veux partager ici : un modèle local a deux vitesses, et pour un assistant vocal, la plus coûteuse des deux dépend presque entièrement de la façon dont on gère sa cache. Je vais vous montrer ces deux vitesses, le banc d'essai qui les mesure, ce que la cache garde d'une question à l'autre, les deux pièges dans lesquels je suis tombé et les règles que j'en tire. Le travail s'est fait en sessions avec Claude Code, Opus 5 pour les premiers bancs d'essai et Opus 5.5 pour la suite. Comme d'habitude, Bob a écrit [son corollaire](/blog/trois-cartes-deux-cerveaux-une-horloge/), qui sert de référence théorique, avec son point de vue d'assistant.

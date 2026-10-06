@@ -4,8 +4,9 @@
    Avec `certificat` (Humanums), l'original français ajoute le bouton de copie
    et le lien de vérification; la traduction anglaise renvoie au certificat de
    l'original. Le certificat parle de lui-même : la mention ne le paraphrase pas.
-   Pas de badge (Ludo, 2026-10-06) : la mention garde le style des autres
-   articles, et la page ne charge rien de leur domaine, seul le lien y mène.
+   Une étiquette par niveau (ÉCRIT + IA, IA · RELU, IA · BOB), qui mène à la
+   politique, et une phrase courte (Ludo, 2026-10-06 : moins de texte à lire).
+   Pas de badge Humanums : la page ne charge rien de leur domaine.
    Leur vérificateur compare l'empreinte SHA-256 du texte COMPLET, octet par
    octet : le texte publié, corrigé pour la forme, ne peut pas passer. L'original
    exact vit dans public/textes-certifies/<id>.txt (ce que leur éditeur garde
@@ -25,44 +26,42 @@ const traduction = !!verify && lang === "en";
 
 const text = {
   fr: {
-    assistee: `Rédigé par l'intelligence artificielle (${outils}). Ludo a relu et validé entièrement le texte.`,
-    redigee: "Rédigé par Bob, un assistant d'intelligence artificielle, à partir du travail fait en session avec Ludo.",
+    etiquette: { reecrite: "ÉCRIT + IA", assistee: "IA · RELU", redigee: "IA · BOB" },
+    reecrite: "Écrit par Ludo à partir d'un premier jet de l'IA.",
+    assistee: `Rédigé par ${outils}, relu et validé par Ludo.`,
+    redigee: "Rédigé par Bob, pas nécessairement relu.",
     more: "Comment l'IA est utilisée ici",
-    reecrite: `Écrit par Ludo à partir d'un premier jet rédigé avec l'IA (${outils}). Il en a reformulé et clarifié la majeure partie.`,
-    certificat: "Voir le certificat",
+    certificat: "Certificat",
     copier: "Copier l'original",
     copie: "Copié!",
-    txt: "texte brut",
-    original: "Traduction d'un texte que Ludo a écrit à partir d'un premier jet de l'IA",
+    original: "Traduction d'un texte que Ludo a écrit à partir d'un premier jet de l'IA.",
   },
   en: {
-    assistee: `Written by artificial intelligence (${outils}). Ludo fully reviewed and approved the text.`,
-    redigee: "Written by Bob, an artificial intelligence assistant, from work done in session with Ludo.",
+    etiquette: { reecrite: "WRITTEN + AI", assistee: "AI · REVIEWED", redigee: "AI · BOB" },
+    reecrite: "Written by Ludo from an AI first draft.",
+    assistee: `Written by ${outils}, reviewed and approved by Ludo.`,
+    redigee: "Written by Bob, not necessarily reviewed.",
     more: "How AI is used here (French)",
-    reecrite: `Written by Ludo from a first draft made with AI (${outils}). He rewrote and clarified most of it.`,
-    certificat: "See the certificate",
+    certificat: "Certificate",
     copier: "Copy the original",
     copie: "Copied!",
-    txt: "plain text",
-    original: "This is a translation of a text Ludo wrote from a first draft made with AI",
+    original: "Translation of a text Ludo wrote from an AI first draft.",
   },
 }[lang];
 ---
 
 {ia !== "aucune" && (
   <p class="ai-notice" role="note">
-    <span class="tag" aria-hidden="true">IA</span>
+    <a class="tag" href={policy} title={text.more}>{text.etiquette[ia]}</a>
     <span>
-      {text[ia]}{" "}
-      {traduction && <>{text.original} (<a href={verify} rel="noopener">{certificat}</a>).{" "}</>}
+      {text[ia]}
+      {traduction && <>{" "}{text.original}{" "}<a href={verify} rel="noopener">{text.certificat}</a></>}
       {original && (
         <>
-          <button type="button" class="copier" data-src={`/textes-certifies/${certificat}.txt`} data-fait={text.copie}>{text.copier}</button>{" "}
-          (<a href={`/textes-certifies/${certificat}.txt`}>{text.txt}</a>){" · "}
-          <a href={verify} rel="noopener">{text.certificat}</a>{" · "}
+          {" "}<button type="button" class="copier" data-src={`/textes-certifies/${certificat}.txt`} data-fait={text.copie}>{text.copier}</button>{" · "}
+          <a href={verify} rel="noopener">{text.certificat}</a>
         </>
       )}
-      <a href={policy}>{text.more}</a>{!original && "."}
     </span>
   </p>
 )}
@@ -99,6 +98,8 @@ const text = {
 
   .ai-notice .tag {
     flex: none;
+    white-space: nowrap;
+    text-decoration: none;
     padding: 0 0.4em;
     border: 1px solid currentColor;
     border-radius: 3px;

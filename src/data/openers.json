@@ -1,20 +1,21 @@
 {
   "curated": [
-    "How do your diagrams redraw themselves every night?",
     "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?",
-    "How do your gaming rigs and your cluster share the graphics cards?"
+    "Why did you unplug the NAS on purpose?"
   ],
-  "generated": "2026-10-05T08:31:57Z",
+  "generated": "2026-10-06T08:35:56Z",
   "openers": [
     "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tu as séparé le bastion de la console ?",
-    "C'est quoi la carte graphique qui permet de rouler le modèle?",
-    "How do your diagrams redraw themselves every night?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "Why were the ssh sessions disconnecting after a few instants?",
+    "Pourquoi l'horloge est-elle à la mauvaise place dans ton montage ?",
+    "Why did your cache stay fast when the processor slowed down?",
     "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?",
-    "How do your gaming rigs and your cluster share the graphics cards?"
+    "Why did you unplug the NAS on purpose?"
   ],
-  "written": []
+  "written": [
+    "Pourquoi l'horloge est-elle à la mauvaise place dans ton montage ?",
+    "Why did your cache stay fast when the processor slowed down?"
+  ]
 }

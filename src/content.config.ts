@@ -7,7 +7,7 @@ import { glob } from "astro/loaders";
      aucune   — écrit sans IA (les articles de 2019 à 2022)
      reecrite — écrit par Ludo à partir d'un premier jet de l'IA, qu'il a
                 reformulé en majeure partie ; `iaOutils` nomme l'outil
-     assistee — rédigé par Ludo avec l'aide de l'IA ; `iaOutils` nomme l'outil
+     assistee — rédigé par l'IA, relu et validé entièrement par Ludo ; `iaOutils` nomme l'outil
      redigee  — rédigé par Bob, de bout en bout
    Un article tagué `bob` est forcément `redigee`.
    `certificatHumain` porte l'identifiant d'un certificat Humanums

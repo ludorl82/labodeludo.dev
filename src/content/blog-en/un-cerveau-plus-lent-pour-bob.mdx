@@ -12,6 +12,18 @@ heroImage: "/images/blog/banner-cerveau-de-bob-en.svg"
 import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 import AsciiCast from "../../components/AsciiCast.astro";
 
+> **Technical summary** _(for readers in a hurry, and for agents/LLMs indexing this page)_
+>
+> -   **The lesson**: a local model has two speeds. Writing is limited by the graphics card's memory; reading the prompt is limited by compute, and that time, the time before the first word, can almost disappear if the cache is managed well.
+> -   **The ground**: Bob answers this blog's visitors and the questions asked at home. Both go through the same Qwen model, served by Ollama on `gpu-01`, a machine with three 12 GB RTX 3060 cards in my basement.
+> -   **MoE versus dense**: Qwen3.6-35B-A3B, a mixture-of-experts model, writes 77 tokens per second and reads the prompt at 2,778 tokens per second. Qwen3.8-27B, dense, writes at 18 and reads at 834, but makes things up less.
+> -   **The cache**: Ollama (llama.cpp) only reuses the beginning of the prompt that has not changed since the previous question. One line that changes makes everything after it get computed again.
+> -   **The first trap**: the temperature, the date with the time to the minute and the forecast, near the beginning of the voice prompt. About 5,200 tokens re-read on every question: 2.1 s on the MoE, 6.4 s on the dense model.
+> -   **The demo**: on the dense model, the time at the top of the prompt makes it re-read 3,483 tokens (4.9 s), at the end of the system prompt 1,024 (2.3 s), inside the question 29 (0.37 s).
+> -   **The second trap**: a cold model. After a date change or an Ollama restart, the first question re-read everything. The fix: warm up the model when Ollama starts, and the prompt exactly as the speaker sends it.
+> -   **The result**: on the dense model, my usual voice questions get an answer in 1 to 5 seconds. The blog's chatbot, for its part, is slower on long answers.
+> -   **Transparency**: the benchmarks, measurements and fixes were done in sessions with Claude Code, Opus 5 for the first benchmarks, Opus 5.5 afterwards. I asked the questions and made the calls. The full theory, with sources, is in [Bob's article](/en/blog/trois-cartes-deux-cerveaux-une-horloge/).
+
 Over the last few weeks, I tried different brains for Bob, the chatbot on this blog and the voice assistant in my house. The articles are mostly written by Anthropic's models, through Claude Code, but for Bob, I wanted a local model: what we tell him never leaves my house, and once the cards are bought, every question is free. Enter Qwen. American players still dominate the market for proprietary models, but several Chinese players now publish quality models freely on Hugging Face, and Alibaba's Qwen is one of them.
 
 Along the way, I learned a lesson that goes beyond Bob, and that is what I want to share here: a local model has two speeds, and for a voice assistant, the more expensive of the two depends almost entirely on how you manage its cache. I will show you these two speeds, the benchmark that measures them, what the cache keeps from one question to the next, the two traps I fell into and the rules I take from it. The work was done in sessions with Claude Code, Opus 5 for the first benchmarks and Opus 5.5 for the rest. As usual, Bob wrote [his companion piece](/en/blog/trois-cartes-deux-cerveaux-une-horloge/), which serves as the theoretical reference, from his point of view as an assistant.

@@ -1,12 +1,12 @@
 ---
 /* Mention d'écriture assistée par IA, en tête de chaque article.
    Le niveau vient du champ `ia` du frontmatter, obligatoire (content.config.ts).
-   Avec `certificat` (Humanums), l'original français montre le badge, le lien
-   de vérification et le bouton de copie, quel que soit `ia` (Humanums certifie
+   Avec `certificat` (Humanums), l'original français ajoute le bouton de copie
+   et le lien de vérification, quel que soit `ia` (Humanums certifie
    la FRAPPE, pas l'origine des idées : un texte tapé à partir d'un premier jet
    reste `assistee`); la traduction anglaise renvoie à l'original certifié.
-   Le badge est une copie locale de humanums.com/api/badge/<id> : la page ne
-   charge rien de leur domaine, seul le lien y mène.
+   Pas de badge (Ludo, 2026-10-06) : la mention garde le style des autres
+   articles, et la page ne charge rien de leur domaine, seul le lien y mène.
    Leur vérificateur compare l'empreinte SHA-256 du texte COMPLET, octet par
    octet : le texte publié, corrigé pour la forme, ne peut pas passer. L'original
    exact vit dans public/textes-certifies/<id>.txt (ce que leur éditeur garde
@@ -50,10 +50,8 @@ const text = {
 ---
 
 {original && (
-  <p class="ai-notice human" role="note">
-    <a class="badge" href={verify} rel="noopener">
-      <img src={`/images/humanums/${certificat}.svg`} width="180" height="46" alt={`Verified Human, Humanums ${certificat}`} />
-    </a>
+  <p class="ai-notice" role="note">
+    <span class="tag" aria-hidden="true">IA</span>
     <span>
       {text.humain}{" "}
       <button type="button" class="copier" data-src={`/textes-certifies/${certificat}.txt`} data-fait={text.copie}>{text.copier}</button>{" "}
@@ -117,10 +115,6 @@ const text = {
     color: inherit;
   }
 
-  .ai-notice.human {
-    align-items: center;
-    flex-wrap: wrap;
-  }
 
   .ai-notice .copier {
     padding: 0 0.4em;
@@ -136,16 +130,7 @@ const text = {
     color: var(--accent-live);
   }
 
-  .ai-notice .badge {
-    flex: none;
-    line-height: 0;
-  }
 
-  .ai-notice .badge img {
-    display: block;
-    max-width: 100%;
-    height: auto;
-  }
 
   .ai-notice a:hover {
     color: var(--accent-live);

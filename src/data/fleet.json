@@ -147,7 +147,7 @@
       "class": "nas",
       "iacDeclared": false,
       "location": "wall-rack",
-      "model": "QNAP TS-XA28A",
+      "model": "QNAP TS-230",
       "name": "nas",
       "network": "vlan10",
       "rackOrder": 10,
@@ -240,14 +240,8 @@
         {
           "die": "GA106",
           "model": "RTX 3050",
-          "passthrough": false,
-          "vram": "8 Go"
-        },
-        {
-          "die": "GA107",
-          "model": "RTX 3050 6GB",
           "passthrough": true,
-          "vram": "6 Go"
+          "vram": "8 Go"
         },
         {
           "die": "GM206",
@@ -264,7 +258,7 @@
       "power": "ups-03",
       "rackOrder": 2,
       "role": "agent k3s à la demande, hôte de jeu (libvirt)",
-      "spec": "RTX 3050 (GA106, 8 Go) + RTX 3050 6GB (GA107, 6 Go, vfio) + GTX 960 (GM206, 4 Go, vfio)"
+      "spec": "RTX 3050 (GA106, 8 Go, vfio) + GTX 960 (GM206, 4 Go, vfio)"
     },
     {
       "class": "server",
@@ -389,10 +383,10 @@
       "gpu": true,
       "gpus": [
         {
-          "die": "GA107",
-          "model": "RTX 3050 6GB",
+          "die": "GA106",
+          "model": "RTX 3050",
           "passthrough": true,
-          "vram": "6 Go"
+          "vram": "8 Go"
         }
       ],
       "hostedBy": "gaming-01",
@@ -400,7 +394,7 @@
       "name": "arcade1",
       "network": "vlan10",
       "role": "VM de jeu, GPU en passthrough, streamée par Steam Remote Play — pas un nœud k3s",
-      "spec": "RTX 3050 6GB (GA107, 6 Go, vfio)"
+      "spec": "RTX 3050 (GA106, 8 Go, vfio)"
     },
     {
       "class": "vm",
@@ -452,10 +446,10 @@
       "gpu": true,
       "gpus": [
         {
-          "die": "GA107",
-          "model": "RTX 3050 6GB",
+          "die": "GA106",
+          "model": "RTX 3050",
           "passthrough": true,
-          "vram": "6 Go"
+          "vram": "8 Go"
         }
       ],
       "hostedBy": "gaming-01",
@@ -463,11 +457,11 @@
       "name": "win11",
       "network": "vlan10",
       "role": "VM de bureau Windows 11 Pro, à la demande — emprunte la RTX 3050 6GB d'arcade1 quand arcade1 est éteinte ; pas un nœud k3s",
-      "spec": "RTX 3050 6GB (GA107, 6 Go, vfio)"
+      "spec": "RTX 3050 (GA106, 8 Go, vfio)"
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-10-02T15:20:59Z",
+  "generated": "2026-10-07T08:45:15Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

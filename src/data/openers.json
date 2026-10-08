@@ -1,20 +1,21 @@
 {
   "curated": [
-    "Why did you unplug the NAS on purpose?",
-    "How do your gaming rigs and your cluster share the graphics cards?"
+    "How do your gaming rigs and your cluster share the graphics cards?",
+    "What happens to the cluster when you start a game?"
   ],
-  "generated": "2026-10-07T08:34:20Z",
+  "generated": "2026-10-08T08:34:29Z",
   "openers": [
     "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tu as séparé le bastion de la console ?",
-    "C'est quoi la carte graphique qui permet de rouler le modèle?",
-    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?",
     "Why were the ssh sessions disconnecting after a few instants?",
-    "Why did your cache keep its fast voice?",
-    "Why did you unplug the NAS on purpose?",
-    "How do your gaming rigs and your cluster share the graphics cards?"
+    "Pourquoi ton horloge se trouvait-elle à la mauvaise place ?",
+    "Why did you move the clock to a different card?",
+    "How do your gaming rigs and your cluster share the graphics cards?",
+    "What happens to the cluster when you start a game?"
   ],
   "written": [
-    "Why did your cache keep its fast voice?"
+    "Pourquoi ton horloge se trouvait-elle à la mauvaise place ?",
+    "Why did you move the clock to a different card?"
   ]
 }

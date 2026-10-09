@@ -1,21 +1,21 @@
 {
   "curated": [
-    "How do your gaming rigs and your cluster share the graphics cards?",
-    "What happens to the cluster when you start a game?"
+    "What happens to the cluster when you start a game?",
+    "Why did you split the bastion from the console?"
   ],
-  "generated": "2026-10-08T08:34:29Z",
+  "generated": "2026-10-09T08:34:13Z",
   "openers": [
     "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tu as séparé le bastion de la console ?",
     "Why were the ssh sessions disconnecting after a few instants?",
-    "Pourquoi ton horloge se trouvait-elle à la mauvaise place ?",
-    "Why did you move the clock to a different card?",
-    "How do your gaming rigs and your cluster share the graphics cards?",
-    "What happens to the cluster when you start a game?"
+    "Pourquoi la cache a-t-elle gardé la voix rapide de Bob ?",
+    "Why did you move the clock to the wrong place?",
+    "What happens to the cluster when you start a game?",
+    "Why did you split the bastion from the console?"
   ],
   "written": [
-    "Pourquoi ton horloge se trouvait-elle à la mauvaise place ?",
-    "Why did you move the clock to a different card?"
+    "Pourquoi la cache a-t-elle gardé la voix rapide de Bob ?",
+    "Why did you move the clock to the wrong place?"
   ]
 }

@@ -1,21 +1,23 @@
 {
   "curated": [
-    "What happens to the cluster when you start a game?",
-    "Why did you split the bastion from the console?"
-  ],
-  "generated": "2026-10-09T08:34:13Z",
-  "openers": [
-    "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tu as séparé le bastion de la console ?",
-    "Why were the ssh sessions disconnecting after a few instants?",
-    "Pourquoi la cache a-t-elle gardé la voix rapide de Bob ?",
-    "Why did you move the clock to the wrong place?",
-    "What happens to the cluster when you start a game?",
-    "Why did you split the bastion from the console?"
+    "Why did you split the bastion from the console?",
+    "What is the last thing still running when everything else is down?",
+    "How do you publish your infrastructure without leaking secrets?"
+  ],
+  "generated": "2026-10-10T08:34:25Z",
+  "openers": [
+    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "Pourquoi ton horloge de la carte mère a-t-elle failli tout planter ?",
+    "How did you keep the cache fast on the slower machine?",
+    "Pourquoi tu as séparé le bastion de la console ?",
+    "Why did you split the bastion from the console?",
+    "What is the last thing still running when everything else is down?",
+    "How do you publish your infrastructure without leaking secrets?"
   ],
   "written": [
-    "Pourquoi la cache a-t-elle gardé la voix rapide de Bob ?",
-    "Why did you move the clock to the wrong place?"
+    "Pourquoi ton horloge de la carte mère a-t-elle failli tout planter ?",
+    "How did you keep the cache fast on the slower machine?"
   ]
 }

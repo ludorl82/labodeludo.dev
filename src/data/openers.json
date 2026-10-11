@@ -1,23 +1,23 @@
 {
   "curated": [
-    "Pourquoi tu as séparé le bastion de la console ?",
-    "Why did you split the bastion from the console?",
+    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
     "What is the last thing still running when everything else is down?",
-    "How do you publish your infrastructure without leaking secrets?"
+    "How do you publish your infrastructure without leaking secrets?",
+    "Why did the cheapest model score like the biggest one?"
   ],
-  "generated": "2026-10-10T08:34:25Z",
+  "generated": "2026-10-11T08:33:34Z",
   "openers": [
-    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "Pourquoi ton horloge de la carte mère a-t-elle failli tout planter ?",
-    "How did you keep the cache fast on the slower machine?",
-    "Pourquoi tu as séparé le bastion de la console ?",
-    "Why did you split the bastion from the console?",
+    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
+    "Pourquoi ton horloge était-elle à la mauvaise place ?",
+    "How does your cache keep Bob's voice fast?",
+    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
     "What is the last thing still running when everything else is down?",
-    "How do you publish your infrastructure without leaking secrets?"
+    "How do you publish your infrastructure without leaking secrets?",
+    "Why did the cheapest model score like the biggest one?"
   ],
   "written": [
-    "Pourquoi ton horloge de la carte mère a-t-elle failli tout planter ?",
-    "How did you keep the cache fast on the slower machine?"
+    "Pourquoi ton horloge était-elle à la mauvaise place ?",
+    "How does your cache keep Bob's voice fast?"
   ]
 }

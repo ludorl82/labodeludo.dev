@@ -42,8 +42,9 @@ class Leak(Exception):
     pass
 
 
-def scan(value: str, where: str) -> None:
+def scan(value: str, where: str, extra_suffix: tuple = ()) -> None:
     """Raise Leak if the string contains anything outside the allowlist."""
+    allowed = ALLOWED_SUFFIX + tuple(extra_suffix)
     for m in ANY_V4.finditer(value):
         if not ALLOWED_V4.match(m.group(0)):
             raise Leak(f"non-documentation IPv4 {m.group(0)!r} at {where}")
@@ -61,11 +62,11 @@ def scan(value: str, where: str) -> None:
     # email shape with a non-example domain is a leak
     for m in re.finditer(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})",
                          value):
-        if not m.group(1).lower().endswith(ALLOWED_SUFFIX):
+        if not m.group(1).lower().endswith(allowed):
             raise Leak(f"email-shaped {m.group(0)!r} at {where}")
     for m in HOSTLIKE.finditer(value):
         s = m.group(0).lower()
-        if ANY_V4.match(s) or s.endswith(ALLOWED_SUFFIX):
+        if ANY_V4.match(s) or s.endswith(allowed):
             continue
         if s.split(".")[-1] in PUBLIC_TLDS:
             raise Leak(f"hostname-like string {s!r} outside the allowlist "
@@ -82,3 +83,55 @@ def walk(obj, where: str) -> None:
             walk(v, f"{where}[{i}]")
     elif isinstance(obj, str):
         scan(obj, where)
+
+
+def _is_v6_address(s: str) -> bool:
+    groups = [g for g in s.split(":") if g]
+    hexish = any(re.search(r"[a-f]", g, re.I) for g in groups)
+    return "::" in s or len(groups) >= 4 or (len(groups) >= 3 and hexish)
+
+
+def redact(value: str, extra_suffix: tuple = ()) -> str:
+    """Replace everything scan() would refuse with its documentation twin.
+
+    For prose that must be published unattended (the nightly console
+    snapshot): instead of refusing a whole window over one address, the
+    address becomes 192.0.2.x, the domain becomes site.example. The last
+    octet / group is kept so two different hosts stay two different hosts
+    on the page. `extra_suffix` lets the caller allow well-known public
+    domains (docs, vendors) that the infrastructure allowlist never needed.
+    scan() must still pass afterwards; redact() narrows, it does not vouch.
+    """
+    allowed = ALLOWED_SUFFIX + tuple(extra_suffix)
+
+    def v4(m):
+        s = m.group(0)
+        if ALLOWED_V4.match(s):
+            return s
+        return "192.0.2." + s.rsplit(".", 1)[1]
+
+    def v6(m):
+        s = m.group(0)
+        if not _is_v6_address(s) or s.lower().startswith("2001:db8"):
+            return s
+        last = [g for g in s.split(":") if g][-1:] or ["1"]
+        return "2001:db8::" + last[0]
+
+    def email(m):
+        if m.group(1).lower().endswith(allowed):
+            return m.group(0)
+        return "courriel@example.com"
+
+    def host(m):
+        s = m.group(0).lower()
+        if ANY_V4.match(s) or s.endswith(allowed):
+            return m.group(0)
+        if s.split(".")[-1] in PUBLIC_TLDS:
+            return "site.example"
+        return m.group(0)
+
+    value = ANY_V4.sub(v4, value)
+    value = ANY_V6.sub(v6, value)
+    value = re.sub(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})",
+                   email, value)
+    return HOSTLIKE.sub(host, value)

@@ -26,3 +26,7 @@ pnpm-debug.log*
 # python bytecode from the topology scripts
 __pycache__/
 *.pyc
+
+# Instantané de la console : déposé à côté du site en production, jamais
+# dans le dépôt (voir src/pages/console.astro).
+public/console/instantane.json

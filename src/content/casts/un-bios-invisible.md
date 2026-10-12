@@ -5,6 +5,7 @@ description: "Un écran BIOS que personne ne peut voir, des flèches qui n'arriv
 cast: "/casts/bios-blind.cast"
 poster: "npt:0:08"
 caption: "La partie la plus absurde de la migration de l'hyperviseur, condensée : naviguer un BIOS qui ne dessine rien sur le port série, découvrir que les touches fléchées n'arrivaient jamais, atterrir dans le menu Intel MEBx par erreur, casser le boot avec les « Optimized Defaults » — puis contourner tout ça par le lecteur CD virtuel du BMC."
+type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues attentes sont coupées. Noms d'hôte sanitisés."
 article: "une-borne-darcade-qui-cohabite-avec-kubernetes"
 ---

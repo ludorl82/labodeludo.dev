@@ -8,6 +8,7 @@ caption: "Trois panneaux : les commandes en haut, le pod qui meurt et renaît en
 article: "un-pod-qui-voyage-leger"
 session: "aucune"
 frame: "none"
+type: "prise-reelle"
 disclaimer: "✔ Ceci est une capture réelle, pas une reconstitution : enregistrée le 20 septembre 2026 avec asciinema dans une session tmux dédiée, sans montage. Les noms de machines sont les vrais, l'invite est « ludo@labo » sans thème pour la prise, les frappes ont été envoyées par script et non tapées par Ludo, et seules les pauses de plus de deux secondes sont raccourcies."
 ---
 

@@ -8,6 +8,7 @@ caption: "Three panes: the commands on top, llama-server's log in the middle, th
 article: "un-cerveau-plus-lent-pour-bob"
 session: "aucune"
 frame: "none"
+type: "prise-reelle"
 disclaimer: "✔ This is a real capture, made on October 4, 2026 with asciinema in a dedicated tmux session, with no editing. The mesure-prefixe.sh script, published in the site's repository, sends its requests to Bob's real model, with the production settings; the middle pane follows Ollama's log on the machine that serves it. The keystrokes were sent by a script and not typed by Ludo, the prompt is “ludo@labo”, only pauses longer than two seconds are shortened, and the container ID in the tmux bar is replaced by a name of the same length."
 ---
 

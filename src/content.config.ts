@@ -65,8 +65,22 @@ const castSchema = z.object({
   poster: z.string().optional(),
   disclaimer: z.string(),
   caption: z.string(),
-  /** Slug of the article this recording came from, if any. */
-  article: z.string().optional(),
+  /* Ce qu'on regarde, et donc ce qu'on peut croire. Le filtre de /casts
+     s'appuie dessus ; le libellé vient de src/lib/casts.ts.
+       reconstitution — une session Claude Code (ou Qwen Code) remontée après
+                        coup à partir de sa transcription réelle
+       prise-reelle   — la console capturée pour vrai par asciinema
+       chat           — des réponses du chat du site, capturées mot pour mot
+       simulation     — un comportement réel rejoué pour l'enregistrement */
+  type: z.enum(["reconstitution", "prise-reelle", "chat", "simulation"], {
+    error: "champ `type` manquant : reconstitution | prise-reelle | chat | simulation",
+  }),
+  /** Slug(s) of the article(s) this recording came from. Normalised to an array;
+      an unknown slug fails the build (src/lib/casts.ts). */
+  article: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v])),
   /* « aucune » pour les enregistrements du chat du site : le cadre par défaut
      reproduit une session Claude Code, et le chat n'en est pas une. */
   session: z.enum(["claude-code", "aucune"]).optional(),

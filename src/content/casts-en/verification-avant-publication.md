@@ -5,6 +5,7 @@ description: "The last net before a repository goes public: a forgotten domain, 
 cast: "/casts/iac-sanitize-gate.cast"
 poster: "npt:0:06"
 caption: "The final check before publication: it finds a forgotten domain, refuses to go on, and the offending name gets added both to the replacement rule and to the check itself."
+type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real session transcript. The prompts are the ones from the actual session; the timing is compressed and the long waits are cut. And the domain caught on screen is already the fictional name — publishing a demonstration of a leak detector with the real value inside it would have been a little ironic."
 article: "quatre-depots-pour-un-labo-au-complet"
 ---

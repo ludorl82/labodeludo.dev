@@ -10,7 +10,7 @@ heroImage: "/images/blog/banner-vm-qui-se-promenent.svg"
 
 import FlotteVmDiagram from "../../components/FlotteVmDiagram.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _(généré par Claude Code à partir de l'article, pas écrit par Ludo; pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Le point de départ** : dans les grappes VMware que j'ai connues, vMotion déplaçait une VM allumée d'un hôte à l'autre, avec un stockage partagé, vCenter et des licences. Je croyais que c'était le prix de la migration à chaud.
 > -   **Ce que j'ai appris** : libvirt et QEMU, deux logiciels libres, font la même chose sans stockage partagé. `virsh migrate --live --copy-storage-all` copie le disque, puis la mémoire, pendant que la VM roule, et la VM repart sur l'autre hôte après une pause d'une fraction de seconde.

@@ -41,59 +41,13 @@
 // publique contre le fichier pour apprendre qu'elle a touché un vrai nom.
 import { createHash, createHmac } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join, relative } from "node:path";
-import { spawnSync } from "node:child_process";
 import xterm from "@xterm/headless";
+import { PUBLIC_RULES, allowlistHits, loadDenylist } from "./lib/public-gate.mjs";
 
 const { Terminal } = xterm;
 const ROOT = new URL("..", import.meta.url).pathname;
 const IN_CI = !!process.env.CI || process.env.GARDE_SILENCE === "1";
-
-/* Formes publiques sans lecture innocente. La liste blanche couvre déjà les
-   adresses IP, les courriels et les noms de domaine. */
-const PUBLIC_RULES = [
-  ["clé privée", /BEGIN [A-Z ]*PRIVATE KEY/],
-  ["clé AWS", /\bAKIA[0-9A-Z]{16}\b/],
-  ["jeton", /\b(sk-ant-[\w-]{10,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_\w{20,}|xox[abprs]-[\w-]{10,})/],
-  ["JWT", /eyJ[\w-]{10,}\.eyJ[\w-]{10,}/],
-  ["jeton de sonde", /api\/push\/(?!EXAMPLE)[A-Za-z0-9]{8,}/],
-  ["lien de session", /claude\.ai\/code\/session_\w+/],
-  ["adresse MAC", /\b(?!02:00:00:00:)([0-9a-f]{2}:){5}[0-9a-f]{2}\b/i],
-  ["numéro de série", /\b(ata|nvme)-(?!EXAMPLE)[A-Za-z0-9]+_\w+/],
-];
-
-function loadDenylist() {
-  let text = process.env.PUBLIC_DENYLIST;
-  let from = "PUBLIC_DENYLIST";
-  if (!text) {
-    const file =
-      process.env.PUBLIC_DENYLIST_FILE ??
-      join(homedir(), "git/ludorl82/net-cfgs/public-denylist.txt");
-    if (!existsSync(file)) return null;
-    text = readFileSync(file, "utf8");
-    from = file;
-  }
-  let key = null;
-  const rules = [];
-  for (const [i, raw] of text.split("\n").entries()) {
-    const line = raw.trim();
-    if (!line || line.startsWith("#")) continue;
-    if (line.startsWith("!cle ")) {
-      key = line.slice(5).trim();
-      continue;
-    }
-    // « étiquette | regex », drapeaux iu. « étiquette [u] | regex » change les
-    // drapeaux : u seul quand la casse distingue un nom propre d'un mot
-    // courant. Pas de troisième champ : une regex contient déjà des |.
-    const bar = line.indexOf("|");
-    if (bar < 0) throw new Error(`${from}:${i + 1} : « étiquette [drapeaux] | regex » attendu`);
-    const m = line.slice(0, bar).trim().match(/^(.*?)(?:\s*\[([a-z]+)\])?$/);
-    rules.push([m[1], new RegExp(line.slice(bar + 1).trim(), m[2] ?? "iu")]);
-  }
-  if (!key) throw new Error(`${from} : ligne « !cle <hex> » manquante`);
-  return { key, rules, from };
-}
 
 const ESC = /\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[PX^_][^\x1b]*\x1b\\|[@-Z\\-_])/g;
 
@@ -174,16 +128,6 @@ function defaultFiles() {
     ...list("src/content/casts", ".md"),
     ...list("src/content/casts-en", ".md"),
   ];
-}
-
-function allowlistHits(texts) {
-  const r = spawnSync("python3", [join(ROOT, "scripts/topology/scan-lines.py")], {
-    input: JSON.stringify(texts),
-    encoding: "utf8",
-    maxBuffer: 256 * 1024 * 1024,
-  });
-  if (r.status !== 0) throw new Error(`scan-lines.py : ${r.stderr}`);
-  return new Map(JSON.parse(r.stdout));
 }
 
 const ackFile = join(ROOT, "scripts/public-leaks-ack.txt");

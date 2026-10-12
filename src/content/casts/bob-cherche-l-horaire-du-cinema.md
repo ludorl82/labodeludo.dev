@@ -5,6 +5,7 @@ description: "L'assistant vocal reçoit une recherche web, répond juste un soir
 cast: "/casts/bob-cherche-l-horaire-du-cinema.cast"
 poster: "npt:1:06"
 caption: "Deux sessions en une : l'outil Tavily monté dans Home Assistant, la charge utile réordonnée, puis le soir où les heures sont inventées et l'index sert une page vieille de deux jours. Le second outil, branché sur l'API du cinéma, passe par un arrêt au garde-fou des permissions et un titre raté d'une lettre."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de deux sessions, le 12 et le 14 septembre 2026. Les demandes sont celles des vraies sessions, coupées par endroits : le nom de la ville du cinéma est remplacé par « […] » et une adresse web collée avec une demande est retirée. Le minutage est compressé, les sorties d'outils sont réécrites courtes et l'identifiant du cinéma est fictif."
 article: ["comment-jai-appris-a-chercher-sur-internet", "ok-bob-a-quelle-heure-joue-le-film"]

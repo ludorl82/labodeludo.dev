@@ -5,6 +5,7 @@ description: "The voice assistant gets a web search, answers correctly one eveni
 cast: "/casts/bob-cherche-l-horaire-du-cinema.cast"
 poster: "npt:1:06"
 caption: "Two sessions in one: the Tavily tool wired into Home Assistant, the payload reordered, then the evening the hours are invented and the index serves a two-day-old page. The second tool, plugged into the cinema's API, goes through a stop at the permission guardrail and a title missed by one letter."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real transcript of two sessions, on September 12 and 14, 2026. The prompts are the ones from the actual sessions (in French), cut in places: the cinema's town is replaced with « […] » and a web address pasted with one prompt is left out. The timing is compressed, tool output is rewritten short, and the cinema's id is fictional."
 ---

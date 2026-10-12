@@ -16,123 +16,26 @@ Palette and line grammar per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-bios-blind.py
 """
-import json
-import random
 
-OUT = "public/casts/bios-blind.cast"
-COLS, ROWS = 96, 22
-random.seed(7)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, DIM, GREEN, R, YELLOW, calling, cont, line, prompt, says, spinner, waiting
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/bios-blind.cast",
+    title="Un BIOS invisible, piloté à l'aveugle (reconstitution)",
+    session="nixos-hyperviseur",
+    windows=["backlog", "nixos-hyperviseur"],
+    current="nixos-hyperviseur",
+    start="20-Aug-26 22:08:31",
+    cwd="~/git/nixos-iac",
+    model="Opus 4.8 · Claude Max",
+    version="v2.1.225",
+    seed=7,
+)
 
-BRANCH = "nixos-hyperviseur"
-
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def typed(s, prefix="", d=1.5):
-    """Type a line out character by character, at human speed."""
-    global t
-    if prefix:
-        out(prefix)
-        pause(0.7)
-    for ch in s:
-        out(ch)
-        t += random.uniform(0.045, 0.115)
-    out("\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(text, second=None):
-    rule()
-    if second is None:
-        typed(f"{FG}{text}{R}", prefix=f"{GREEN}❯{R} ", d=1.8)
-    else:
-        # One continuous typing flow across the wrap: no end-of-line pause, no
-        # second prompt char — the composer just wraps, like the real TUI.
-        global t
-        out(f"{GREEN}❯{R} ")
-        pause(0.7)
-        out(FG)
-        for ch in text:
-            out(ch)
-            t += random.uniform(0.045, 0.115)
-        out(R + "\r\n  ")
-        out(FG)
-        for ch in second:
-            out(ch)
-            t += random.uniform(0.045, 0.115)
-        out(R + "\r\n")
-        pause(1.8)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def running(cmd, d=0.7):
-    line()
-    line(f"  {DIM}{cmd}{R}", d)
-
-
-def spinner(word, secs, tokens, d=2.0):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def stop(text, detail=None, d=3.2):
-    line()
-    line(f"  {YELLOW}{BOLD}{text}{R}", 0.9)
-    if detail:
-        line(f"  {YELLOW}{detail}{R}", 0.6)
-    line(f"  {DIM}waiting for you…{R}", d)
-    line()
-
-
-# --- disclaimer ---------------------------------------------------------
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels, minutage compressé,{R}", 0.25)
-line(f"{DIM}     noms d'hôte sanitisés.  labodeludo.dev/casts/{R}", 2.6)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.225{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 4.8 · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/nixos-iac{R}", 1.4)
-line()
+T.disclaimer("Demandes et messages réels, minutage compressé,",
+             "noms d'hôte sanitisés.")
+T.banner()
 
 # --- 1. the ask: no screen, drive the BIOS anyway ------------------------
 prompt("please try guessing the post sequence to disable secure boot")
@@ -142,7 +45,8 @@ cont("under Security. But the serial console shows nothing when Setup is open.",
 says("First a zero-risk input test: enter Setup and send Save & Exit. Nothing")
 cont("has been changed, so saving is a no-op — but if the machine reboots")
 cont("promptly, that proves BIOS is receiving serial input.", 1.2)
-running("Bash  ipmitool -H hyperviseur-bmc chassis bootdev bios && … sol activate")
+calling("Bash", 1)
+T.detail("ipmitool -H hyperviseur-bmc chassis bootdev bios && … sol activate")
 spinner("Testing", "1m 12s", "1.4k")
 
 says(f"{GREEN}Breakthrough: BIOS is receiving serial input.{R} It was sitting in Setup,")
@@ -160,7 +64,8 @@ cont("suggests my model is wrong, not just the count.", 1.2)
 says("Three failures, and I'm searching blind in a space I can't observe —")
 cont("getting a feedback signal before spending more attempts. Windows can")
 cont("read the UEFI variables directly:", 1.0)
-running("Bash  ssh hyperviseur powershell -c \"Confirm-SecureBootUEFI; Get-UEFIVariable …\"")
+calling("Bash", 1)
+T.detail("ssh hyperviseur powershell -c \"Confirm-SecureBootUEFI; Get-UEFIVariable …\"")
 spinner("Checking", "24s", "0.9k")
 says(f"SetupMode=0, SecureBoot=1, boot order untouched — {YELLOW}none of my three")
 cont(f"{YELLOW}attempts changed anything at all.{R}", 1.2)
@@ -172,7 +77,8 @@ cont("every arrow silently did nothing. Sending raw bytes instead.", 1.4)
 
 # --- 3. the wrong menu renders ------------------------------------------
 prompt("yes keep iterating until you find it")
-running("Bash  printf '\\x1b[C\\x1b[C…' | ipmitool … sol activate")
+calling("Bash", 1)
+T.detail("printf '\\x1b[C\\x1b[C…' | ipmitool … sol activate")
 spinner("Navigating", "2m 05s", "1.8k")
 says(f"{YELLOW}Significant discovery — and I need to get out of something first.{R}")
 cont("The serial console is rendering… the Intel MEBx menu, with an ME")
@@ -186,12 +92,13 @@ cont("render over serial. MEBx draws its full UI; Setup stays black.", 1.3)
 
 # --- 4. the defaults gamble ---------------------------------------------
 prompt("yes load optimized defaults")
-running("Bash  ipmitool … sol activate   # ESC 3, then save")
+calling("Bash", 1)
+T.detail("ipmitool … sol activate   # ESC 3, then save")
 spinner("Resetting", "4m 40s", "2.6k")
-stop(
-    "I need to tell you plainly: the Load Optimized Defaults left hyperviseur",
-    "in a boot loop, and it is currently down.",
-)
+line()
+line(f"  {YELLOW}{BOLD}I need to tell you plainly: the Load Optimized Defaults left hyperviseur{R}", 0.9)
+line(f"  {YELLOW}in a boot loop, and it is currently down.{R}", 0.6)
+waiting()
 says("POST reaches code 72, goes dark, and restarts at code 32 roughly every")
 cont("two minutes, over and over. A cold power off/on didn't clear it.")
 cont("Diagnostics say settings, not hardware: no fault events, temps healthy.", 1.4)
@@ -202,10 +109,10 @@ says("Attempt B missed too — but something more important undermines the")
 cont("whole method: I don't actually have a working oracle. The console")
 cont("preview has been blank on every check, including before I changed")
 cont("anything. I cannot tell a hit from a miss.", 1.2)
-stop(
-    "So I'm going to stop guessing — further attempts are unfalsifiable.",
-    "I could have already hit the right setting and have no way to know.",
-)
+line()
+line(f"  {YELLOW}{BOLD}So I'm going to stop guessing — further attempts are unfalsifiable.{R}", 0.9)
+line(f"  {YELLOW}I could have already hit the right setting and have no way to know.{R}", 0.6)
+waiting()
 
 # --- 6. stop fighting the BIOS -------------------------------------------
 prompt("hey can we do f11 when the machine starts and chose the device we",
@@ -217,7 +124,8 @@ spinner("Iterating", "14m 51s", "5.2k")
 says("All four menu positions came up empty — the boot entries were wiped by")
 cont("the defaults reset. So: remount the installer ISO from gpu-01's share,")
 cont("and use this same F11 machinery to pick the UEFI virtual CD.", 1.3)
-running("Bash  ipmitool … raw  # mount installer ISO over SMB, boot the virtual CD")
+calling("Bash", 1)
+T.detail("ipmitool … raw  # mount installer ISO over SMB, boot the virtual CD")
 spinner("Booting installer", "6m 20s", "4.1k")
 
 says(f"{GREEN}Root shell on hyperviseur{R} — booted the installer off virtual media, added")
@@ -239,19 +147,4 @@ cont("link now, so there is a real recovery channel.", 1.2)
 line()
 line(f"  {DIM}The BIOS screen was never seen once.{R}", 2.6)
 
-# --- write it out -------------------------------------------------------
-header = {
-    "version": 2,
-    "width": COLS,
-    "height": ROWS,
-    "title": "Un BIOS invisible, piloté à l'aveugle (reconstitution)",
-    "timestamp": 0,
-    "idle_time_limit": 2,
-    "env": {"TERM": "xterm-256color", "SHELL": "/bin/zsh"},
-}
-with open(OUT, "w") as fh:
-    fh.write(json.dumps(header) + "\n")
-    for ev in events:
-        fh.write(json.dumps(ev, ensure_ascii=False) + "\n")
-
-print(f"{OUT}: {len(events)} events, {events[-1][0]:.0f}s")
+T.save()

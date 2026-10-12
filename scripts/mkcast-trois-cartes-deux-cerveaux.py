@@ -39,103 +39,42 @@ the fixed (no-pause) one.
 
 Run from the repo root:  python3 scripts/mkcast-trois-cartes-deux-cerveaux.py
 """
-import json
+
 import random
+from datetime import datetime, timedelta
 
-OUT = "public/casts/trois-cartes-deux-cerveaux.cast"
-COLS, ROWS = 96, 22
-random.seed(25)  # keep regenerated casts byte-stable
-
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner, failures
-RED = "\x1b[38;5;174m"
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
-
-BRANCH = "voix-de-bob"
-
-events, t = [], 0.0
+import claude_tui as T
+from claude_tui import BOLD, DIM, GREEN, R, RED, YELLOW, calling, cont, line, says, spinner, waiting
 
 
-def out(s):
-    events.append([round(t, 3), "o", s])
+def prompt(*parts, speed=1.0):
+    """T.prompt, mais les longues demandes dictées se tapent plus vite
+    (speed < 1), comme dans l'ancien script : seul le délai entre les
+    caractères change."""
+    uniform = random.uniform
+    random.uniform = lambda a, b: uniform(a, b) * speed
+    try:
+        T.prompt(*parts)
+    finally:
+        random.uniform = uniform
 
 
-def pause(d):
-    global t
-    t += d
+T.setup(
+    out="public/casts/trois-cartes-deux-cerveaux.cast",
+    title="Trois cartes, deux cerveaux (reconstitution)",
+    session="voix-de-bob",
+    windows=["backlog", "voix-de-bob"],
+    current="voix-de-bob",
+    start="25-Sep-26 20:17:52",
+    cwd="~/git/labo",
+    model="Opus 5.5 · Claude Max",
+    seed=25,
+)
 
+T.disclaimer("Demandes et messages réels (25 sept. et 4-5 oct. 2026), minutage compressé,",
+             "sorties réécrites, noms sanitisés.")
+T.banner()
 
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(*parts, speed=0.75):
-    """One continuous typing flow across wraps: no end-of-line pause and no
-    second prompt char — the composer wraps, it does not hesitate. Long
-    dictated prompts type faster (speed < 1)."""
-    global t
-    rule()
-    out(f"{GREEN}❯{R} ")
-    pause(0.7)
-    for i, text in enumerate(parts):
-        if i:
-            out(R + "\r\n  ")
-        out(FG)
-        for ch in text:
-            out(ch)
-            t += random.uniform(0.045, 0.115) * speed
-    out(R + "\r\n")
-    pause(1.2)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def calling(tool, n=1, d=0.7):
-    line()
-    line(f"  {DIM}Calling {tool} {n} time{'s' if n > 1 else ''}…{R}", d)
-
-
-def spinner(word, secs, tokens, d=1.2):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def waiting():
-    line()
-    line(f"  {DIM}waiting for you…{R}", 2.2)
-
-
-# --- disclaimer ---------------------------------------------------------
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels (25 sept. et 4-5 oct. 2026), minutage compressé,{R}", 0.25)
-line(f"{DIM}     sorties réécrites, noms sanitisés.  labodeludo.dev/casts/{R}", 2.2)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.280{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5.5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/labo{R}", 0.9)
-line()
 
 # --- 1. where the voice spends its time ---------------------------------
 prompt("Peux tu consulter les ligues de homme assistant pour voir ce qui prend du temps",
@@ -193,8 +132,8 @@ says(f"{BOLD}Aucun effet.{R} Cette version d'Ollama force une seule place pour c
 cont("Pas moyen de donner à la voix et au chat des caches séparées.", 1.3)
 
 # --- 5. nine days later: measure it -------------------------------------
-line()
-line(f"  {DIM}── 4 octobre · la session des articles ──{R}", 1.2)
+T.separator("4 octobre · la session des articles")
+T.set_clock("04-Oct-26 10:32:18")
 prompt("J'aimerais que tu écrives les deux articles maintenant. Celui de Bob et celui de Ludo.",
        "Ils sont au backlog. J'aimerais aussi qu'on fasse un asciicast et qu'on les traduise. On",
        "les publiera sur article LinkedIn aussi (celui de Ludo). Mardi en français et jeudi en",
@@ -231,14 +170,4 @@ says(f"{BOLD}Dans un prompt mis en cache, ce qui change va à la fin.{R} Sur un 
 cont("fin, c'est après le dernier point de contrôle : la question, ou la réponse d'un outil.", 2.4)
 line()
 
-# --- write --------------------------------------------------------------
-header = {
-    "version": 2, "width": COLS, "height": ROWS,
-    "title": "Trois cartes, deux cerveaux (reconstitution)",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-}
-with open(OUT, "w", encoding="utf-8") as fh:
-    fh.write(json.dumps(header, ensure_ascii=False) + "\n")
-    for e in events:
-        fh.write(json.dumps(e, ensure_ascii=False) + "\n")
-print(f"{OUT}: {len(events)} events, {t:.1f}s")
+T.save()

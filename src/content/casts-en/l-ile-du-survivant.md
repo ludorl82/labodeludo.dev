@@ -6,6 +6,7 @@ cast: "/casts/survivor-island.cast"
 poster: "npt:0:06"
 caption: "The final pull test: cascade, stray BMC, in-band repair, and the latch closing the outage on its own."
 article: "l-ile-du-survivant"
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: a condensed reconstruction from the real session transcript (2026-08-05). The prompts are verbatim, waits are compressed, and hostnames and addresses are fictional."
 ---

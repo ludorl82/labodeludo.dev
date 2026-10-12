@@ -31,95 +31,52 @@ named. Palette and line grammar per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-bob-lit-enfin-ses-articles.py
 """
-import json
+
 import random
 import re
 
-OUT = "public/casts/bob-lit-enfin-ses-articles.cast"
-COLS, ROWS = 96, 22
-random.seed(19)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, CYAN, DIM, FG, GREEN, R, RED, YELLOW, calling, line, spinner
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner, failures
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
-RED = SPIN
+T.setup(
+    out="public/casts/bob-lit-enfin-ses-articles.cast",
+    title="Bob lit enfin ses articles (reconstitution)",
+    session="recherche-semantique",
+    windows=["backlog", "recherche-semantique"],
+    current="recherche-semantique",
+    start="11-Sep-26 19:48:22",
+    cwd="~/git/site",
+    model="Opus 5 · Claude Max",
+    version="v2.1.180",
+    seed=19,
+)
 
-BRANCH = "recherche-semantique"
-
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(text, pasted=None):
-    """Type the demande in one continuous flow; a pasted conversation lands
-    at once underneath, the way a paste does in the composer."""
-    global t
-    rule()
-    out(f"{GREEN}❯{R} ")
-    pause(0.7)
-    out(FG)
-    for ch in text:
-        out(ch)
-        t += random.uniform(0.045, 0.115)
-    out(R + "\r\n")
-    if pasted:
-        pause(0.5)
-        out("".join(f"  {DIM}{p}{R}\r\n" for p in pasted))
-        pause(2.6)
-    else:
-        pause(1.8)
-    line()
-
+T.disclaimer("Demandes réelles (conversations collées abrégées […]),",
+             "minutage compressé, noms sanitisés.")
+T.banner()
 
 CODE = "\x1b[38;5;153m"  # inline code, as the TUI tints it (no backticks)
 
 
 def md(text):
     """Render `code` spans the way the TUI does: tinted, backticks dropped."""
-    return re.sub(r"`([^`]+)`", lambda m: f"{CODE}{m.group(1)}{R}{FG}", text)
+    return re.sub(r"`([^`]+)`", lambda m: f"{CODE}{m.group(1)}{R}", text)
 
 
 def says(text, d=0.9):
-    line(f"{FG}●{R} {FG}{md(text)}{R}", d)
+    T.says(md(text), d)
 
 
 def cont(text, d=0.9):
-    line(f"  {FG}{md(text)}{R}", d)
+    T.cont(md(text), d)
 
 
-def calling(tool, n=1, d=0.7):
-    line()
-    line(f"  {DIM}Calling {tool} {n} time{'s' if n > 1 else ''}…{R}", d)
-
-
-def spinner(word, secs, tokens, d=1.8):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
+def prompt(text, pasted=None):
+    """La demande tapée d'un trait ; une conversation collée arrive d'un bloc,
+    comme un collage dans la zone de saisie, et monte avec la demande."""
+    T.prompt(text, pasted=pasted)
+    if pasted:
+        T.pause(1.8)  # le temps de lire le collage
 
 
 def beat(text, d=3.2):
@@ -127,19 +84,6 @@ def beat(text, d=3.2):
     line()
     line(f"  {YELLOW}{BOLD}{text}{R}", d)
     line()
-
-
-# --- disclaimer ---------------------------------------------------------
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes réelles (conversations collées abrégées […]),{R}", 0.25)
-line(f"{DIM}     minutage compressé, noms sanitisés.  labodeludo.dev/casts/{R}", 2.6)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.180{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/site{R}", 1.4)
-line()
 
 # --- 1. the diagnosis ---------------------------------------------------
 prompt("je suis intéressé par l'idée d'alimenter Bob sur le site web avec la recherche sémantique")
@@ -230,14 +174,4 @@ says(f"{BOLD}Ce qui est le plus près de la question oriente le plus fort.{R}")
 cont("Les extraits décident ; tout le reste du prompt négocie.", 2.6)
 line()
 
-# --- write --------------------------------------------------------------
-header = {
-    "version": 2, "width": COLS, "height": ROWS,
-    "title": "Bob lit enfin ses articles (reconstitution)",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-}
-with open(OUT, "w", encoding="utf-8") as fh:
-    fh.write(json.dumps(header, ensure_ascii=False) + "\n")
-    for e in events:
-        fh.write(json.dumps(e, ensure_ascii=False) + "\n")
-print(f"{OUT}: {len(events)} events, {t:.1f}s")
+T.save()

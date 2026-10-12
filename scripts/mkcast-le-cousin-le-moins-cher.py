@@ -25,110 +25,32 @@ public and stays. Palette and line grammar per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-le-cousin-le-moins-cher.py
 """
-import json
-import random
 
-OUT = "public/casts/le-cousin-le-moins-cher.cast"
-COLS, ROWS = 96, 22
-random.seed(23)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, CYAN, DIM, FG, GREEN, R, SPIN, calling, cont, line, prompt, says, spinner
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner, failures
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/le-cousin-le-moins-cher.cast",
+    title="Le cousin le moins cher (reconstitution)",
+    session="pipeline-de-nuit",
+    windows=["backlog", "pipeline-de-nuit"],
+    current="pipeline-de-nuit",
+    start="12-Sep-26 14:07:51",
+    cwd="~/git/labo",
+    model="Opus 5 · Claude Max",
+    seed=23,
+)
 
-BRANCH = "pipeline-de-nuit"
+T.disclaimer("Demandes réelles (12-14 sept. 2026), sorties réécrites et",
+             "abrégées, minutage compressé.")
+T.banner()
 
-events, t = [], 0.0
+chapter = T.separator
 
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-PACE = 0.78  # the session ran three days; the reading pauses are compressed
-
-
-def pause(d):
-    global t
-    t += d * PACE
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def type_chars(s, lo=0.025, hi=0.055):
-    global t
-    for ch in s:
-        out(ch)
-        t += random.uniform(lo, hi)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(*parts, d=1.6):
-    """One continuous typing flow across the wraps: the composer wraps, it
-    does not hesitate, and there is only one ❯."""
-    rule()
-    out(f"{GREEN}❯{R} ")
-    pause(0.6)
-    for i, part in enumerate(parts):
-        if i:
-            out(R + "\r\n  ")
-        out(FG)
-        type_chars(part)
-    out(R + "\r\n")
-    pause(d)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def calling(tool, n=1, d=0.6):
-    line()
-    line(f"  {DIM}Calling {tool} {n} time{'s' if n > 1 else ''}…{R}", d)
-
-
-def spinner(word, secs, tokens, d=1.6):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def chapter(text, d=1.4):
-    line()
-    line(f"  {DIM}── {text} ──{R}", d)
-    line()
-
-
-# --- disclaimer ---------------------------------------------------------
-# Baked into the recording: on asciinema.org the cast stands alone.
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes réelles (12-14 sept. 2026), sorties réécrites et{R}", 0.25)
-line(f"{DIM}     abrégées, minutage compressé.  labodeludo.dev/casts/{R}", 2.4)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.220{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/labo{R}", 1.3)
-line()
+# the session ran three days; the reading pauses are compressed, as before
+PACE = 0.78
+_pause = T.pause
+T.pause = lambda d: _pause(d * PACE)
 
 # --- 1. the ask, and the guard-rails first ------------------------------
 prompt("Salut peux tu me faire un plan pour migrer le pipeline hebdomadaire de dessin",
@@ -192,8 +114,7 @@ prompt("Je croyais qu'on mettait flash pour tout le pipeline?")
 says(f"{BOLD}Tu as raison, c'était ta demande{R} — j'ai gardé A et C sur max de ma")
 cont("propre initiative parce qu'elles n'ont pas de banc.", 1.4)
 prompt("Tu me peux pas faire un test avant pour valider si flash peut faire le travail?")
-prompt("Ne fait pas rouler max svp, juste flash. Tu as déjà testé max et il fonctionne",
-       d=1.2)
+prompt("Ne fait pas rouler max svp, juste flash. Tu as déjà testé max et il fonctionne")
 calling("Bash", 6)
 spinner("Banc session A, un tirage", "1h 02m", "8.4k")
 line(f"  {GREEN}A : 5 mensonges sur 5 corrigés{R}  {DIM}· doc sans mensonge : aucune fausse alerte{R}", 0.5)
@@ -218,18 +139,4 @@ says(f"{BOLD}Tout le pipeline sur qwen3.8-flash, tous les jours à 04:45.{R}")
 cont("Environ 0,30 $US par jour au lieu de 1,40 — et zéro les nuits calmes.", 3.0)
 line()
 
-# --- write --------------------------------------------------------------
-header = {
-    "version": 2,
-    "width": COLS,
-    "height": ROWS,
-    # Shown by asciinema.org in listings and embeds — say what it is there too.
-    "title": "Le cousin le moins cher (reconstitution)",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-    "idleTimeLimit": 2,
-}
-with open(OUT, "w", encoding="utf-8") as fh:
-    fh.write(json.dumps(header, ensure_ascii=False) + "\n")
-    for e in events:
-        fh.write(json.dumps(e, ensure_ascii=False) + "\n")
-print(f"{OUT}: {len(events)} events, {t:.1f}s")
+T.save()

@@ -5,6 +5,7 @@ description: "Deux sessions autour de la voix de Bob : le soir où elle passe au
 cast: "/casts/trois-cartes-deux-cerveaux.cast"
 poster: "npt:1:48"
 caption: "Le fil de deux sessions : la voix qui relit tout son prompt, le banc du modèle dense, trois lignes en haut du prompt, la place de traitement qu'on ne peut pas doubler, puis la mesure du 4 octobre et la cache chaude pour le mauvais prompt. L'agent s'arrête deux fois, et se corrige trois fois."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir des transcriptions réelles de deux sessions, le 25 septembre puis du 4 au 6 octobre 2026. Les demandes de Ludo sont citées mot pour mot, fautes comprises; les sorties d'outils sont réécrites et raccourcies, le minutage est compressé et les noms sont sanitisés."
 article: ["trois-cartes-deux-cerveaux-une-horloge", "un-cerveau-plus-lent-pour-bob"]

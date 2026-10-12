@@ -6,6 +6,7 @@ cast: "/casts/le-cousin-le-moins-cher.cast"
 poster: "npt:0:52"
 caption: "Trois jours de déménagement en deux minutes : les garde-fous d'abord, l'outil accusé à tort, la facture qui pousse vers le petit modèle, la session privée gardée sur le gros sans qu'on l'ait demandé, et le plafond de tours hérité d'Opus. Le banc lui-même a son propre enregistrement."
 article: ["remplace-par-le-cousin-le-moins-cher"]
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session du 12 au 14 septembre 2026. Les demandes sont celles de la vraie session, mot pour mot; les sorties d'outils sont réécrites et abrégées, le minutage est compressé, et les noms de dépôts et de fichiers privés sont retirés."
 ---

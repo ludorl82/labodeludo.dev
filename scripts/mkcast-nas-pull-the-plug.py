@@ -24,112 +24,29 @@ per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-nas-pull-the-plug.py
 """
-import json
-import random
 
-OUT = "public/casts/nas-pull-the-plug.cast"
-COLS, ROWS = 96, 22
-random.seed(7)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, DIM, FG, GREEN, R, RED, YELLOW, calling, cont, line, prompt, says, spinner, waiting
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner, failures
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/nas-pull-the-plug.cast",
+    title="Débrancher le NAS pour la science (reconstitution)",
+    session="liveness-probes",
+    windows=["backlog", "liveness-probes"],
+    current="liveness-probes",
+    start="30-Jul-26 13:26:04",
+    cwd="~/tmp",
+    model="Opus 5 with high effort · Claude Max",
+    seed=7,
+)
 
-BRANCH = "liveness-probes"
-
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def typed(s, prefix="", d=1.5):
-    """Type a line out character by character, at human speed."""
-    global t
-    if prefix:
-        out(prefix)
-        pause(0.7)
-    for ch in s:
-        out(ch)
-        t += random.uniform(0.045, 0.115)
-    out("\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(text, d=1.8):
-    rule()
-    typed(f"{FG}{text}{R}", prefix=f"{GREEN}❯{R} ", d=d)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def calling(tool, n=1, d=0.7):
-    line()
-    line(f"  {DIM}Calling {tool} {n} time{'s' if n > 1 else ''}…{R}", d)
-
-
-def spinner(word, secs, tokens, d=2.0):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def stop(text, detail=None, d=3.2):
-    line()
-    line(f"  {YELLOW}{BOLD}{text}{R}", 0.9)
-    if detail:
-        line(f"  {YELLOW}{detail}{R}", 0.6)
-    line(f"  {DIM}waiting for you…{R}", d)
-    line()
-
-
-# --- disclaimer ---------------------------------------------------------
-# Baked into the recording itself, not just the page around it: the cast is
-# published to asciinema.org too, where it stands alone.
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels, minutage compressé,{R}", 0.25)
-line(f"{DIM}     noms d'hôte sanitisés.  labodeludo.dev/casts/{R}", 2.6)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.220{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/tmp{R}", 1.4)
-line()
+T.disclaimer("Demandes et messages réels, minutage compressé,",
+             "noms d'hôte sanitisés.")
+T.banner()
 
 # --- 1. the ask ---------------------------------------------------------
-prompt("Can you please add liveness probes to all our k3s-iac apps? I want to make")
-typed(f"{FG}sure we don't have zombie pods running when we yank the nfs volume storage.{R}", d=1.6)
-line()
+prompt("Can you please add liveness probes to all our k3s-iac apps? I want to make",
+       "sure we don't have zombie pods running when we yank the nfs volume storage.")
 calling("Bash", 3)
 spinner("Surveying", "41s", "3.2k")
 says("The survey explains the weekend: no NFS-backed workload has a liveness")
@@ -144,12 +61,11 @@ cont("n8n gets the DB-checking endpoint, nginx reads a real file off the", 0.8)
 cont("volume. Mongo's ping answers from memory — paired with a file check.", 1.9)
 
 # --- 2. first pull ------------------------------------------------------
-prompt("i yanked the power on the nas. any clue why the pods are all still marked")
-typed(f"{FG}as ready?{R}", d=1.6)
-line()
+prompt("i yanked the power on the nas. any clue why the pods are all still marked",
+       "as ready?")
 calling("Bash", 2)
 spinner("Sampling", "28s", "1.8k")
-line(f"  {FG}cronicle  {SPIN}0/1{R}   {FG}grafana  {SPIN}0/1{R}   {FG}n8n  {SPIN}0/1{R}   {FG}nginx  {SPIN}0/1{R}", 0.7)
+line(f"  {FG}cronicle  {RED}0/1{R}   {FG}grafana  {RED}0/1{R}   {FG}n8n  {RED}0/1{R}   {FG}nginx  {RED}0/1{R}", 0.7)
 line(f"  {FG}loki      {GREEN}1/1{R}   {FG}sftpgo   {GREEN}1/1{R}   {FG}mongo {GREEN}1/1{R}   {DIM}← still lying{R}", 1.8)
 says("Four are already NotReady — and the three that aren't are each a lesson.", 1.0)
 says("loki's /ready returns 200 with the NAS physically dead: it reports")
@@ -163,19 +79,19 @@ calling("Bash", 4)
 spinner("Monitoring", "12m", "9.6k")
 line(f"  {GREEN}7/7 NFS workloads NotReady — detection complete{R}", 0.9)
 line(f"  {GREEN}9/10 containers recovered unattended after power back{R}", 0.9)
-line(f"  {SPIN}loki: CrashLoopBackOff (restarts 4 → 6){R}", 1.8)
+line(f"  {RED}loki: CrashLoopBackOff (restarts 4 → 6){R}", 1.8)
 says("loki can't replay its WAL: it deletes segment files it still holds")
 cont("open, NFS turns that into a silly-rename to .nfsXXXX, and the rmdir", 0.8)
 cont("dies with ENOTEMPTY. Every restart regenerates the failure — a stable", 0.8)
 cont("equilibrium, not residue. Waiting will not fix it.", 1.6)
 calling("Bash", 1)
-line(f"  {SPIN}{BOLD}Permission denied by the auto mode classifier{R}", 0.8)
-line(f"  {DIM}  kubectl exec loki-fix -- mv /loki/…/wal /loki/…/wal.broken{R}", 1.4)
-stop(
-    "I need to stop and get your call on one command.",
-    "mv on loki's data volume — blocked, reasonably. Risk is nil: all",
-)
-prompt("go ahead", d=1.2)
+T.denied("kubectl exec loki-fix", 0.8)
+line(f"       {DIM}-- mv /loki/…/wal /loki/…/wal.broken{R}", 1.4)
+line()
+line(f"  {YELLOW}{BOLD}I need to stop and get your call on one command.{R}", 0.9)
+line(f"  {YELLOW}mv on loki's data volume — blocked, reasonably. Risk is nil: all{R}", 0.6)
+waiting()
+prompt("go ahead")
 calling("Bash", 2)
 spinner("Repairing", "54s", "2.3k")
 line(f"  {GREEN}wal renamed aside — loki 1/1 Running, index uploading to S3{R}", 1.9)
@@ -192,9 +108,8 @@ line(f"  {GREEN}emptyDir live (sizeLimit 5Gi) — push 204, query round-trip via
 line(f"  {GREEN}PVC deleted: loki has zero NFS dependency now{R}", 1.9)
 
 # --- 5. third pull, clean run -------------------------------------------
-prompt("i unplugged and replugged the nas. please monitor if everything happens")
-typed(f"{FG}as expected{R}", d=1.6)
-line()
+prompt("i unplugged and replugged the nas. please monitor if everything happens",
+       "as expected")
 calling("Bash", 3)
 spinner("Monitoring", "8m", "6.1k")
 line(f"  {FG}detection   {GREEN}6/6 NFS workloads NotReady{R}", 0.6)
@@ -204,19 +119,4 @@ line(f"  {FG}interventions  {GREEN}zero{R}", 2.2)
 line()
 line(f"{DIM}  Three power cuts in one afternoon. The last one was boring.{R}", 3.5)
 
-# --- write --------------------------------------------------------------
-header = {
-    "version": 2,
-    "width": COLS,
-    "height": ROWS,
-    # Shown by asciinema.org in listings and embeds — say what it is there too.
-    "title": "Débrancher le NAS pour la science (reconstitution)",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-    "idleTimeLimit": 2,
-}
-with open(OUT, "w") as f:
-    f.write(json.dumps(header) + "\n")
-    for e in events:
-        f.write(json.dumps(e, ensure_ascii=False) + "\n")
-
-print(f"{OUT}: {len(events)} events, {events[-1][0]:.1f}s")
+T.save()

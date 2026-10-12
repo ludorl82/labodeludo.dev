@@ -5,6 +5,7 @@ description: "Two days on hosts with two legs that answer through the wrong one:
 cast: "/casts/la-porte-d-en-arriere.cast"
 poster: "npt:1:32"
 caption: "Two days' thread: the failure understood, a first try that sets nothing, rules 100 and 101 on a witness and then on nine hosts, rule 102 for the Mac's freeze, and rule 103 for the container. The agent stops three times for a merge or a choice, and owns up to a case set aside wrongly. The recording is in French."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real transcript of the September 23 and 24, 2026 sessions. Ludo's prompts are quoted word for word, typos included, except the host name, replaced by the article's; tool output is rewritten and shortened, the timing is compressed and names are sanitized."
 article: ["corollaire-la-porte-d-en-arriere"]

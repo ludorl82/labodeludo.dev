@@ -5,6 +5,7 @@ description: "Un anneau lumineux vire au rouge au mauvais moment. Deux hypothès
 cast: "/casts/le-temoin.cast"
 poster: "npt:0:06"
 caption: "La chasse et sa fin : la piste connue écartée, le redémarrage qui induit en erreur, puis la comparaison avec le satellite d'à côté. La cause tient en une ligne de firmware — et les deux erreurs de méthode valaient plus cher que le bogue."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la session réelle du 10 septembre 2026. Les demandes sont celles de la vraie session; le minutage est compressé et les noms d'appareils sont sanitisés."
 ---

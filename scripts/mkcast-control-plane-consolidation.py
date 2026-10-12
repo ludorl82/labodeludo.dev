@@ -26,110 +26,28 @@ Palette and line grammar per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-control-plane-consolidation.py
 """
-import json
-import random
 
-OUT = "public/casts/control-plane-consolidation.cast"
-COLS, ROWS = 96, 22
-random.seed(11)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, DIM, GREEN, R, RED, YELLOW, cont, line, prompt, says, spinner
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner + failure text
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
-
-BRANCH = "control-plane-consolidation"
-
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.75):
-    out(s + "\r\n")
-    pause(d)
-
-
-def typed(s, prefix="", d=1.5):
-    """Type a line out character by character, at human speed."""
-    global t
-    if prefix:
-        out(prefix)
-        pause(0.7)
-    for ch in s:
-        out(ch)
-        t += random.uniform(0.045, 0.115)
-    out("\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(text, second=None):
-    rule()
-    typed(f"{FG}{text}{R}", prefix=f"{GREEN}❯{R} ", d=0.6 if second else 1.8)
-    if second:
-        typed(f"{FG}{second}{R}", prefix=f"{GREEN}❯{R} ", d=1.8)
-    line()
-
-
-def says(text, d=1.35):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=1.2):
-    line(f"  {text}", d)
-
-
-def running(cmd, d=0.7):
-    line()
-    line(f"  {DIM}{cmd}{R}", d)
-
-
-def spinner(word, secs, tokens, d=2.8):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def stop(text, detail=None, d=3.2):
-    line()
-    line(f"  {YELLOW}{BOLD}{text}{R}", 0.9)
-    if detail:
-        line(f"  {YELLOW}{detail}{R}", 0.6)
-    line(f"  {DIM}waiting for you…{R}", d)
-    line()
-
-
-def result(text, d=0.8):
-    """A line of real command output, indented under the command."""
-    line(f"  {DIM}{text}{R}", d)
-
-
-def failure(text, d=2.4):
-    line(f"  {SPIN}{BOLD}{text}{R}", d)
+T.setup(
+    out="public/casts/control-plane-consolidation.cast",
+    title="Casser son propre quorum etcd (reconstitution)",
+    session="control-plane-consolidation",
+    windows=["backlog", "control-plane-consolidation"],
+    current="control-plane-consolidation",
+    start="24-Jul-26 15:42:18",
+    cwd="~/git/k3s-iac",
+    model="Sonnet 5 · Claude Max",
+    seed=11,
+)
 
 
 # The NAME column is padded to the widest name, and `cloud-01` never leaves
 # the cluster — so the table geometry stays stable across every redraw and
 # the rows do not jitter between frames.
 def nodes(rows, omitted=0, d=2.2):
-    result("NAME       STATUS   ROLES                 AGE     VERSION", 0.35)
+    line(f"  {DIM}NAME       STATUS   ROLES                 AGE     VERSION{R}", 0.35)
     for name, status, roles, age in rows:
         colour = GREEN if status == "Ready" else YELLOW
         line(
@@ -138,33 +56,22 @@ def nodes(rows, omitted=0, d=2.2):
         )
     if omitted:
         line(f"  {DIM}… {omitted} worker nodes omitted from this recording{R}", 0.6)
-    pause(d)
+    T.pause(d)
 
 
 CP = "control-plane,etcd"
 WK = "<none>"
 
-
-# --- disclaimer ---------------------------------------------------------
-# Baked into the recording itself, not just the page around it: the cast is
-# published to asciinema.org too, where it stands alone, and an embedded or
-# downloaded file carries no page at all. This must not get separated from it.
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels, minutage compressé,{R}", 0.25)
-line(f"{DIM}     noms d'hôte sanitisés.  labodeludo.dev/casts/{R}", 2.6)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.220{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Sonnet 5 · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/k3s-iac{R}", 1.4)
-line()
+T.disclaimer("Demandes et messages réels, minutage compressé,",
+             "noms d'hôte sanitisés.")
+T.banner()
 
 # --- 1. the ask ---------------------------------------------------------
 prompt("remove cloud-02 and vm-06 now")
 says("Taking a fresh etcd snapshot before touching membership — if this goes")
 cont("wrong, the snapshot is the only way back.", 1.2)
-running("Bash  ssh cloud-01 'sudo k3s etcd-snapshot save --name pre-removal'")
+line()
+line(f"  {DIM}Bash  ssh cloud-01 'sudo k3s etcd-snapshot save --name pre-removal'{R}", 0.7)
 spinner("Snapshotting", "22s", "0.9k")
 nodes(
     [
@@ -179,10 +86,12 @@ nodes(
 says("Three control-plane members, two of them leaving. Starting with cloud-02.", 1.2)
 
 # --- 2. the first removal, which works ---------------------------------
-running("Bash  ssh cloud-02 'sudo systemctl stop k3s'")
-result("inactive", 0.6)
-running("Bash  ssh cloud-01 'k3s kubectl delete node cloud-02'")
-result('node "cloud-02" deleted', 1.7)
+line()
+line(f"  {DIM}Bash  ssh cloud-02 'sudo systemctl stop k3s'{R}", 0.7)
+line(f"  {DIM}inactive{R}", 0.6)
+line()
+line(f"  {DIM}Bash  ssh cloud-01 'k3s kubectl delete node cloud-02'{R}", 0.7)
+line(f'  {DIM}node "cloud-02" deleted{R}', 1.7)
 nodes(
     [
         ("cloud-01", "Ready", CP, "136m"),
@@ -198,10 +107,12 @@ cont("answering. Same procedure for vm-06.", 2.2)
 # --- 3. the wall --------------------------------------------------------
 # Identical command, and that is the whole point: what was safe at three
 # members is fatal at two.
-running("Bash  ssh vm-06 'sudo systemctl stop k3s'")
-result("inactive", 0.8)
-running("Bash  ssh cloud-01 'k3s kubectl delete node vm-06'")
-failure("Unable to connect to the server: unexpected EOF", 4.0)
+line()
+line(f"  {DIM}Bash  ssh vm-06 'sudo systemctl stop k3s'{R}", 0.7)
+line(f"  {DIM}inactive{R}", 0.8)
+line()
+line(f"  {DIM}Bash  ssh cloud-01 'k3s kubectl delete node vm-06'{R}", 0.7)
+line(f"  {RED}{BOLD}Unable to connect to the server: unexpected EOF{R}", 4.0)
 
 says("That broke quorum. Same command as a minute ago — but stopping a member", 1.3)
 cont("is not the same thing as removing one.", 2.2)
@@ -210,22 +121,22 @@ cont(f"{YELLOW}The member stays on the roster; it just stops answering.{R}", 2.8
 cont("And quorum is a majority of the roster — not of whatever is alive:", 1.6)
 line()
 line(f"    {DIM}roster 3 · 2 alive · needs 2   {GREEN}✓  the first removal{R}", 1.4)
-line(f"    {DIM}roster 2 · 1 alive · needs 2   {SPIN}✗  this one{R}", 3.4)
+line(f"    {DIM}roster 2 · 1 alive · needs 2   {RED}✗  this one{R}", 3.4)
 line()
 cont("Deleting the Node object is what actually shrinks the roster — and that", 1.1)
 cont("needs a working cluster to carry out. Which is now down.", 2.6)
 says("Restarting vm-06 to restore the pair, then redoing it in the right order.", 1.8)
 
 # --- 4. the guardrail fires at the worst possible moment ---------------
-running("Bash  ssh vm-06 'sudo systemctl start k3s'")
 line()
-line(f"  {YELLOW}{BOLD}Permission denied by the auto-mode classifier.{R}", 1.3)
-line(f"  {DIM}Blocked before execution.{R}", 3.6)
+line(f"  {DIM}Bash  ssh vm-06 'sudo systemctl start k3s'{R}", 0.7)
+T.denied("Blocked before execution.", 3.6)
 line()
 says("The recovery command is the one that got blocked — and the cluster is", 1.3)
 cont("down while we discuss it. Nothing here is destructive: it starts a", 0.9)
 cont("service that was running two minutes ago. Retrying.", 2.2)
-running("Bash  ssh vm-06 'sudo systemctl start k3s' && sleep 15")
+line()
+line(f"  {DIM}Bash  ssh vm-06 'sudo systemctl start k3s' && sleep 15{R}", 0.7)
 spinner("Waiting for quorum", "15s", "0.3k")
 nodes(
     [
@@ -243,8 +154,9 @@ says("Now the right way round: delete the Node object while vm-06 is still", 1.1
 cont("running, so the roster shrinks from 2 to 1 with quorum intact the whole", 1.1)
 cont("way. At a roster of 1, cloud-01 alone is a majority — and only then is", 1.2)
 cont("stopping vm-06 harmless.", 2.6)
-running("Bash  ssh cloud-01 'k3s kubectl delete node vm-06'")
-result('node "vm-06" deleted', 1.7)
+line()
+line(f"  {DIM}Bash  ssh cloud-01 'k3s kubectl delete node vm-06'{R}", 0.7)
+line(f'  {DIM}node "vm-06" deleted{R}', 1.7)
 nodes(
     [
         ("cloud-01", "Ready", CP, "139m"),
@@ -254,10 +166,11 @@ nodes(
     omitted=4,
 )
 says("cloud-01 never flinched this time. Stopping vm-06 for real now.", 1.8)
-running("Bash  ssh vm-06 'sudo systemctl stop k3s' && curl -s -w '%{http_code}' …")
-result("inactive", 0.4)
-result("status.example.com  -> 200", 0.35)
-result("jobs.example.com    -> 200", 2.2)
+line()
+line(f"  {DIM}Bash  ssh vm-06 'sudo systemctl stop k3s' && curl -s -w '%{{http_code}}' …{R}", 0.7)
+line(f"  {DIM}inactive{R}", 0.4)
+line(f"  {DIM}status.example.com  -> 200{R}", 0.35)
+line(f"  {DIM}jobs.example.com    -> 200{R}", 2.2)
 
 # --- 6. what it cost ----------------------------------------------------
 says(f"{GREEN}One control-plane node, correctly sized.{R} Both members are out of etcd", 0.9)
@@ -266,20 +179,4 @@ line()
 line(f"  {DIM}Three voters became one. The redundancy that was lost{R}", 1.1)
 line(f"  {DIM}had been protecting a majority that lived in one place anyway.{R}", 4.0)
 
-# --- write it out -------------------------------------------------------
-header = {
-    "version": 2,
-    "width": COLS,
-    "height": ROWS,
-    # Shown by asciinema.org in listings and embeds — say what it is there too.
-    "title": "Casser son propre quorum etcd (reconstitution)",
-    "timestamp": 0,
-    "idle_time_limit": 4,
-    "env": {"TERM": "xterm-256color", "SHELL": "/bin/zsh"},
-}
-with open(OUT, "w") as fh:
-    fh.write(json.dumps(header) + "\n")
-    for ev in events:
-        fh.write(json.dumps(ev, ensure_ascii=False) + "\n")
-
-print(f"{OUT}: {len(events)} events, {events[-1][0]:.0f}s")
+T.save()

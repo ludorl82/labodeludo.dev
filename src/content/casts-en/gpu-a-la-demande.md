@@ -5,6 +5,7 @@ description: "The day the second gaming station gets its graphics card: a clean 
 cast: "/casts/gpu-a-la-demande.cast"
 poster: "npt:1:41"
 caption: "August 22 only: the RTX 3050 passed to arcade2, policy routing on both stations, the card stuck in D3cold after a failed shutdown, then /games moved to a qcow2 on the NVMe when the games SSD drops off the bus. The agent stops three times, once on a permission refusal. The recording is in French."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real transcript of the August 22, 2026 session, and of that day only. Ludo's prompts are quoted word for word, typos included, except for one address replaced by a documentation range; tool output is rewritten and shortened, the timing is compressed and names are sanitized."
 article: ["gpu-a-la-demande-a-la-maison"]

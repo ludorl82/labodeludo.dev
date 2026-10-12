@@ -5,6 +5,7 @@ description: "Une GTX 960 sans emploi, donnée à Kubernetes : le pilote sur l'h
 cast: "/casts/le-cluster-ramasse-les-cartes.cast"
 poster: "npt:1:33"
 caption: "Le fil GPU d'une soirée : le nœud Ready qui ne démarre plus rien, la photo de l'écran qui corrige le diagnostic, la VM de calcul, le lecteur CD vide qui fausse le bissect, la ligne de XML qui débloque trois cartes, puis les quatre bogues de l'échange. L'agent s'arrête quatre fois et se corrige trois fois."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session des 14 et 15 septembre 2026. Les demandes de Ludo sont citées mot pour mot, fautes comprises, à part les noms de machines remplacés par ceux de l'article; les sorties d'outils sont réécrites et raccourcies, le minutage est compressé et les noms sont sanitisés."
 article: ["quand-personne-ne-joue-le-cluster-ramasse-les-cartes"]

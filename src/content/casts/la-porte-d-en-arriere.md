@@ -5,6 +5,7 @@ description: "Deux jours sur les hôtes à deux pattes qui répondent par la mau
 cast: "/casts/la-porte-d-en-arriere.cast"
 poster: "npt:1:32"
 caption: "Le fil de deux journées : la panne comprise, un premier essai qui ne pose rien, les règles 100 et 101 sur un témoin puis sur neuf hôtes, la règle 102 pour le gel du Mac, et la règle 103 pour le conteneur. L'agent s'arrête trois fois pour une fusion ou un choix, et reconnaît un cas écarté à tort."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle des sessions des 23 et 24 septembre 2026. Les demandes de Ludo sont citées mot pour mot, fautes comprises, sauf le nom de l'hôte, remplacé par celui de l'article; les sorties d'outils sont réécrites et raccourcies, le minutage est compressé et les noms sont sanitisés."
 article: ["corollaire-la-porte-d-en-arriere"]

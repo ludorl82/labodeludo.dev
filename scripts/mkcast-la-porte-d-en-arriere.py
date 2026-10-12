@@ -34,102 +34,29 @@ the fixed (no-pause) one.
 
 Run from the repo root:  python3 scripts/mkcast-la-porte-d-en-arriere.py
 """
-import json
-import random
 
-OUT = "public/casts/la-porte-d-en-arriere.cast"
-COLS, ROWS = 96, 22
-random.seed(23)  # keep regenerated casts byte-stable
+from datetime import datetime, timedelta
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner, failures
-RED = "\x1b[38;5;174m"
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
-
-BRANCH = "deux-pattes"
-
-events, t = [], 0.0
+import claude_tui as T
+from claude_tui import BOLD, DIM, GREEN, R, RED, calling, cont, line, prompt, says, spinner, waiting
 
 
-def out(s):
-    events.append([round(t, 3), "o", s])
+T.setup(
+    out="public/casts/la-porte-d-en-arriere.cast",
+    title="La porte d'en arrière (reconstitution)",
+    session="deux-pattes",
+    windows=["backlog", "deux-pattes"],
+    current="deux-pattes",
+    start="23-Sep-26 20:42:15",
+    cwd="~/git/labo",
+    model="Opus 5.5 · Claude Max",
+    seed=23,
+)
 
+T.disclaimer("Demandes et messages réels (23 et 24 sept. 2026), minutage compressé,",
+             "sorties réécrites, noms sanitisés.")
+T.banner()
 
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(*parts):
-    """One continuous typing flow across wraps: no end-of-line pause and no
-    second prompt char — the composer wraps, it does not hesitate."""
-    global t
-    rule()
-    out(f"{GREEN}❯{R} ")
-    pause(0.7)
-    for i, text in enumerate(parts):
-        if i:
-            out(R + "\r\n  ")
-        out(FG)
-        for ch in text:
-            out(ch)
-            t += random.uniform(0.045, 0.115)
-    out(R + "\r\n")
-    pause(1.4)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def calling(tool, n=1, d=0.7):
-    line()
-    line(f"  {DIM}Calling {tool} {n} time{'s' if n > 1 else ''}…{R}", d)
-
-
-def spinner(word, secs, tokens, d=1.5):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def waiting():
-    line()
-    line(f"  {DIM}waiting for you…{R}", 3.2)
-
-
-# --- disclaimer ---------------------------------------------------------
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels (23 et 24 sept. 2026), minutage compressé,{R}", 0.25)
-line(f"{DIM}     sorties réécrites, noms sanitisés.  labodeludo.dev/casts/{R}", 2.2)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.226{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5.5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/labo{R}", 0.9)
-line()
 
 # --- 1. back to the original problem ------------------------------------
 prompt("ok merci ça fonctionne. est-ce qu'on peut revenir maintenant au problème original",
@@ -172,8 +99,8 @@ says("Ce pod est un essai raté d'une CronJob, daté du 16 septembre. Il est")
 cont("antérieur à mon changement : pas de ma faute, mais à regarder un jour.", 1.8)
 
 # --- 3. the next day: the freeze ----------------------------------------
-line()
-line(f"  {DIM}— le lendemain —{R}", 0.9)
+T.separator("le lendemain")
+T.set_clock("24-Sep-26 13:05:40")
 prompt("ok pas grave, je ne reinitialiserai pas le mb. Peux-tu voir pourquoi quand je me",
        "connecte par ssh à console-vm.lab.example aprèes une ou deux minutes la connexion",
        "ssh gèle?")
@@ -215,14 +142,4 @@ says("Tu peux retourner sur ssh console-vm.lab.example -p 2222 : la session ne g
 cont(f"Les deux lignes arrivent. pfSense voit {GREEN}les deux sens{R}, fiche gardée 24 h.", 2.8)
 line()
 
-# --- write --------------------------------------------------------------
-header = {
-    "version": 2, "width": COLS, "height": ROWS,
-    "title": "La porte d'en arrière (reconstitution)",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-}
-with open(OUT, "w", encoding="utf-8") as fh:
-    fh.write(json.dumps(header, ensure_ascii=False) + "\n")
-    for e in events:
-        fh.write(json.dumps(e, ensure_ascii=False) + "\n")
-print(f"{OUT}: {len(events)} events, {t:.1f}s")
+T.save()

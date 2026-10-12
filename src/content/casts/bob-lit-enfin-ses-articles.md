@@ -6,6 +6,7 @@ cast: "/casts/bob-lit-enfin-ses-articles.cast"
 poster: "npt:0:24"
 caption: "La construction, pas les réponses : du diagnostic à la mise en production, avec les erreurs de l'agent laissées à l'écran. Les réponses du chat elles-mêmes sont dans l'enregistrement « Bob lit ses articles »."
 article: ["jai-lu-mes-propres-articles"]
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session du 11 septembre 2026. Les demandes sont celles de la vraie session — les deux conversations collées sont abrégées, marquées […] ; les sorties d'outils sont réécrites courtes, le minutage est compressé et les noms sont sanitisés."
 ---

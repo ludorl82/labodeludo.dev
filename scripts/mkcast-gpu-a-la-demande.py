@@ -32,102 +32,26 @@ fixed (no-pause) one.
 
 Run from the repo root:  python3 scripts/mkcast-gpu-a-la-demande.py
 """
-import json
-import random
 
-OUT = "public/casts/gpu-a-la-demande.cast"
-COLS, ROWS = 96, 22
-random.seed(22)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, DIM, GREEN, R, RED, YELLOW, calling, cont, line, prompt, says, spinner, waiting
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner, failures
-RED = "\x1b[38;5;174m"
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/gpu-a-la-demande.cast",
+    title="Le GPU à la demande (reconstitution)",
+    session="arcade",
+    windows=["backlog", "arcade"],
+    current="arcade",
+    start="22-Aug-26 14:26:09",
+    cwd="~/git/labo",
+    model="Fable 5 · Claude Max",
+    seed=22,
+)
 
-BRANCH = "arcade"
+T.disclaimer("Demandes et messages réels (22 août 2026 seulement), minutage compressé,",
+             "sorties réécrites, noms et adresses sanitisés.")
+T.banner()
 
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(*parts):
-    """One continuous typing flow across wraps: no end-of-line pause and no
-    second prompt char — the composer wraps, it does not hesitate."""
-    global t
-    rule()
-    out(f"{GREEN}❯{R} ")
-    pause(0.7)
-    for i, text in enumerate(parts):
-        if i:
-            out(R + "\r\n  ")
-        out(FG)
-        for ch in text:
-            out(ch)
-            t += random.uniform(0.045, 0.115)
-    out(R + "\r\n")
-    pause(1.4)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def calling(tool, n=1, d=0.7):
-    line()
-    line(f"  {DIM}Calling {tool} {n} time{'s' if n > 1 else ''}…{R}", d)
-
-
-def spinner(word, secs, tokens, d=1.5):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def waiting():
-    line()
-    line(f"  {DIM}waiting for you…{R}", 3.2)
-
-
-# --- disclaimer ---------------------------------------------------------
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels (22 août 2026 seulement), minutage compressé,{R}", 0.25)
-line(f"{DIM}     sorties réécrites, noms et adresses sanitisés.  labodeludo.dev/casts/{R}", 1.8)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.190{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Fable 5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/labo{R}", 0.9)
-line()
 
 # --- 1. the card ---------------------------------------------------------
 prompt("Salut peux tu ajouter ma rtx3050 sur arcade2. je viens de l'ajouter dans le serveur")
@@ -208,17 +132,6 @@ line()
 says(f"Deux « ne répond pas », et aucun n'était le réseau. {BOLD}Avant de le soupçonner, demander{R}")
 cont(f"{BOLD}à l'hyperviseur dans quel état il croit que la machine est.{R}", 1.2)
 line()
-line(f"  {DIM}── la suite (Plasma 6, Remote Play, une seule patte), dans une autre session ──{R}", 1.6)
-line()
+T.separator("la suite (Plasma 6, Remote Play, une seule patte), dans une autre session", 1.6)
 
-# --- write --------------------------------------------------------------
-header = {
-    "version": 2, "width": COLS, "height": ROWS,
-    "title": "Le GPU à la demande (reconstitution)",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-}
-with open(OUT, "w", encoding="utf-8") as fh:
-    fh.write(json.dumps(header, ensure_ascii=False) + "\n")
-    for e in events:
-        fh.write(json.dumps(e, ensure_ascii=False) + "\n")
-print(f"{OUT}: {len(events)} events, {t:.1f}s")
+T.save()

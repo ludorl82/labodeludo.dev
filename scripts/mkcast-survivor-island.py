@@ -24,169 +24,89 @@ per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-survivor-island.py
 """
-import json
-import random
 
-OUT = "public/casts/survivor-island.cast"
-COLS, ROWS = 96, 22
-random.seed(7)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import DIM, FG, GREEN, R, SPIN, calling, cont, line, prompt, says, spinner, waiting
 
-FG = "\x1b[38;5;253m"
-DIM = "\x1b[38;5;246m"
-YELLOW = "\x1b[38;5;220m"
-GREEN = "\x1b[38;5;114m"
-SPIN = "\x1b[38;5;174m"
-CYAN = "\x1b[38;5;37m"
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/survivor-island.cast",
+    title="L'île du survivant — le rack se réveille tout seul (reconstitution)",
+    session="survivor-island",
+    windows=["backlog", "survivor-island"],
+    current="survivor-island",
+    start="05-Aug-26 17:09:36",
+    cwd="~/tmp",
+    model="Opus 5 · Claude Max",
+    seed=7,
+)
 
-BRANCH = "survivor-island"
-
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def typed(s, prefix="", d=1.5):
-    global t
-    if prefix:
-        out(prefix)
-        pause(0.7)
-    for ch in s:
-        out(ch)
-        t += random.uniform(0.045, 0.115)
-    out("\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def assistant(lines, d=0.9):
-    first = True
-    for s in lines:
-        marker = f"{FG}●{R} " if first else "  "
-        line(marker + f"{FG}{s}{R}", d)
-        first = False
-
-
-def spinner(s, d=1.4):
-    line(f"{SPIN}·{R} {DIM}{s}{R}", d)
-
-
-def stop(d=3.2):
-    line(f"{DIM}waiting for you…{R}", d)
-
+T.disclaimer("Invites textuelles (5 août 2026), temps d'attente compressés,",
+             "noms d'hôtes et adresses fictifs.")
+T.banner()
 
 # ------------------------------------------------------------------ scene 1
-rule()
-typed("i unplugged the lx1500 now, i want to make sure pi-2 will bring everything "
-      "back up after it gets plugged in again", prefix=f"{GREEN}❯{R} ", d=1.6)
-line()
-assistant([
-    "One critical thing first: the survivor UPS is the mains sensor for the",
-    "whole wake logic — rack-wake decides \"power is back\" by watching pi-2's",
-    "own UPS flip from on-battery to online.",
-])
-line()
-spinner("Reading ups status on gpu-01… (2s · ↓ 0.4k tokens)")
+prompt("i unplugged the lx1500 now, i want to make sure pi-2 will bring everything "
+       "back up after it gets plugged in again")
+says("One critical thing first: the survivor UPS is the mains sensor for the")
+cont("whole wake logic — rack-wake decides \"power is back\" by watching pi-2's")
+cont("own UPS flip from on-battery to online.")
+spinner("Reading ups status on gpu-01", "2s", "0.4k", 1.4)
 line(f"  {DIM}battery.charge: 49   battery.charge.low: 50   ups.status: OB DISCHRG{R}", 0.9)
 line()
-assistant([
-    "The battery is at 49% — already below the 50% trigger — so the cascade",
-    "is firing right now. That's fine — it's the test you wanted, just on a",
-    "fast clock.",
-])
-stop()
+says("The battery is at 49% — already below the 50% trigger — so the cascade")
+cont("is firing right now. That's fine — it's the test you wanted, just on a")
+cont("fast clock.")
+waiting()
+T.pause(2.0)
 
 # ------------------------------------------------------------------ scene 2
+says("The cascade didn't fire — my 50% override set the variable but the")
+cont("driver still waits for the UPS's own low-battery signal (it needs the")
+cont("ignorelb flag — my miss). Battery's at ~49% with minutes left, so")
+cont("triggering the clean cascade manually right now:")
+calling("Bash", 1)
+T.detail(f"{DIM}sudo upsmon -c fsd on gpu-01{R}", 0.6)
+T.denied("Permission denied", 1.3)
 line()
-assistant([
-    "The cascade didn't fire — my 50% override set the variable but the",
-    "driver still waits for the UPS's own low-battery signal (it needs the",
-    "ignorelb flag — my miss). Battery's at ~49% with minutes left, so",
-    "triggering the clean cascade manually right now:",
-])
-line()
-spinner("Running sudo upsmon -c fsd on gpu-01…", 1.2)
-line(f"  {SPIN}✗ Permission denied by the auto mode classifier{R}", 1.3)
-line()
-assistant([
-    "The classifier blocked me from triggering the shutdown myself (it powers",
-    "down four hosts). ~8 minutes of battery left.",
-])
-stop(2.6)
-line()
-typed("the shutdown sequence is already running, dont bother", prefix=f"{GREEN}❯{R} ", d=1.4)
-line()
-spinner("Watching the cascade… (90s · ↓ 1.1k tokens)")
+says("The classifier blocked me from triggering the shutdown myself (it powers")
+cont("down four hosts). ~8 minutes of battery left.")
+waiting()
+T.pause(1.4)
+prompt("the shutdown sequence is already running, dont bother")
+spinner("Watching the cascade", "90s", "1.1k", 1.4)
 line(f"  {DIM}17:14:51  win-01=down node-01=down node-02=UP gpu-01=UP{R}", 0.8)
 line(f"  {DIM}17:15:27  win-01=down node-01=down node-02=down gpu-01=down{R}", 0.9)
 line()
-assistant([
-    "Confirmed — the UPS's native low-battery signal fired it: clean",
-    "shutdowns, least critical first, the UPS master last.",
-])
-stop()
+says("Confirmed — the UPS's native low-battery signal fired it: clean")
+cont("shutdowns, least critical first, the UPS master last.")
+waiting()
+T.pause(2.0)
 
 # ------------------------------------------------------------------ scene 3
-line()
-typed("everything is plugged back in", prefix=f"{GREEN}❯{R} ", d=1.4)
-line()
-spinner("Watching the BMCs and the wake latch on pi-2… (3m · ↓ 2.2k tokens)")
+prompt("everything is plugged back in")
+spinner("Watching the BMCs and the wake latch on pi-2", "3m", "2.2k", 1.4)
 line(f"  {DIM}pi-2 ups: OL   latch: ARMED{R}", 0.8)
 line(f"  {GREEN}✓{R} {FG}17:20:31  win-01=UP node-01=UP node-02=UP gpu-01=UP{R}", 1.0)
 line(f"  {SPIN}rack-wake: win-01 BMC unreachable — latch stays armed, retrying{R}", 1.2)
 line()
-typed("why isnt win-01 bmc back up while the machine is?", prefix=f"{GREEN}❯{R} ", d=1.5)
-line()
-spinner("Reading BMC LAN config in-band via Microsoft_IPMI WMI… (24s · ↓ 1.8k tokens)")
+prompt("why isnt win-01 bmc back up while the machine is?")
+spinner("Reading BMC LAN config in-band via Microsoft_IPMI WMI", "24s", "1.8k", 1.4)
 line(f"  {DIM}param 20 (802.1q): 0x1e 0x80 — VLAN 30, enabled{R}", 1.1)
 line()
-assistant([
-    "Found it! The BMC's VLAN tag reads VLAN 30 — it should be VLAN 10. The",
-    "cold AC cycle scrambled it: alive the whole time, tagging its traffic",
-    "onto the wrong network. Fixing it in-band:",
-])
-spinner("Setting param 20 → VLAN 10 via raw IPMI… cc=0", 1.2)
+says("Found it! The BMC's VLAN tag reads VLAN 30 — it should be VLAN 10. The")
+cont("cold AC cycle scrambled it: alive the whole time, tagging its traffic")
+cont("onto the wrong network. Fixing it in-band:")
+calling("Bash", 1)
+T.detail(f"{DIM}Setting param 20 → VLAN 10 via raw IPMI… cc=0{R}", 1.2)
 line(f"  {GREEN}✓{R} {FG}win-01 BMC answering after 10s{R}", 1.0)
 line()
-spinner("Waiting for the latch… (70s)")
+T.detail(f"{DIM}Waiting for the latch… (70s){R}", 1.4)
 line(f"  {GREEN}✓{R} {FG}power restored and all chassis on: latch cleared{R}", 0.9)
 line(f"  {GREEN}✓{R} {FG}ntfy → \"Rolling rack awake after power event\"{R}", 1.1)
 line()
-assistant([
-    "The latch cleared and sent its notification — full recovery, closed",
-    "loop, by the system itself. All 9 cluster nodes Ready.",
-], d=1.0)
+says("The latch cleared and sent its notification — full recovery, closed", 1.0)
+cont("loop, by the system itself. All 9 cluster nodes Ready.", 1.0)
 line()
 line(f"{DIM}The survivor island's first production cycle: detect, wait, wake, report.{R}", 3.0)
 
-# ---------------------------------------------------------------- write out
-header = {
-    "version": 2,
-    "width": COLS,
-    "height": ROWS,
-    "title": "L'île du survivant — le rack se réveille tout seul (reconstitution)",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-    "idle_time_limit": 2,
-}
-with open(OUT, "w") as f:
-    f.write(json.dumps(header) + "\n")
-    for ev in events:
-        f.write(json.dumps(ev, ensure_ascii=False) + "\n")
-print(f"wrote {OUT}: {len(events)} events, {events[-1][0]:.0f}s")
+T.save()

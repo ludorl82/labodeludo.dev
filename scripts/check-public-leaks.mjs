@@ -49,7 +49,10 @@ const { Terminal } = xterm;
 const ROOT = new URL("..", import.meta.url).pathname;
 const IN_CI = !!process.env.CI || process.env.GARDE_SILENCE === "1";
 
-const ESC = /\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[PX^_][^\x1b]*\x1b\\|[@-Z\\-_])/g;
+// ESC 7 / ESC 8 (sauver / rendre le curseur) et ESC = / ESC > aussi : le
+// gabarit console (claude_tui.py) en entoure chaque ligne, et leur chiffre
+// restait collé au texte du flux brut.
+const ESC = /\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[PX^_][^\x1b]*\x1b\\|[@-Z\\-_]|[78=>])/g;
 
 /* Toutes les lignes qu'un cast a affichées, avec l'instant de leur première
    apparition. */

@@ -1,23 +1,23 @@
 {
   "curated": [
-    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
-    "What is the last thing still running when everything else is down?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "D'où vient le nom de Bob ?",
     "How do you publish your infrastructure without leaking secrets?",
     "Why did the cheapest model score like the biggest one?"
   ],
-  "generated": "2026-10-11T08:33:34Z",
+  "generated": "2026-10-12T08:34:35Z",
   "openers": [
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
-    "Pourquoi ton horloge était-elle à la mauvaise place ?",
-    "How does your cache keep Bob's voice fast?",
-    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
-    "What is the last thing still running when everything else is down?",
+    "Why were the ssh sessions disconnecting after a few instants?",
+    "Pourquoi ta voix reste-t-elle rapide malgré le changement de CPU ?",
+    "How did you keep the cache fast with a slower CPU?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "D'où vient le nom de Bob ?",
     "How do you publish your infrastructure without leaking secrets?",
     "Why did the cheapest model score like the biggest one?"
   ],
   "written": [
-    "Pourquoi ton horloge était-elle à la mauvaise place ?",
-    "How does your cache keep Bob's voice fast?"
+    "Pourquoi ta voix reste-t-elle rapide malgré le changement de CPU ?",
+    "How did you keep the cache fast with a slower CPU?"
   ]
 }

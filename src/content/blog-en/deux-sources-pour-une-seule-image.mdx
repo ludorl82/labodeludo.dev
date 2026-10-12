@@ -10,17 +10,13 @@ heroImage: "/images/blog/banner-deux-sources.svg"
 
 import LiveArchDiagram from "../../components/LiveArchDiagram.astro";
 
-> **Technical summary** _(for the readers in a hurry, and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **The experiment**: an architecture page redrawn every night by an unattended AI session, seeded by two sources that do not overlap. It is running right now. The drawing below is this morning's.
-> -   **The number that redirected everything**: the four IaC repositories declare **11 devices**. The lab holds **37**. The gap is everything no declarative tool touches.
-> -   **Two seeds**: the four sanitized public snapshots give what is *declared* (116 nodes, 133 edges). A private document gives what is *there*. Neither draws the lab on its own.
-> -   **The inversion**: the deterministic pipeline I built rendered a page that *was* an inventory. It was never published, it stayed on staging. The pipeline became the seed, and a Claude Code session became the draughtsman.
-> -   **The night shift**: one scheduler, and one single clock, 04:30. Everything after it is chained: each step triggers the next by finishing, instead of hoping the previous hour was enough. Done by about 04:50. The step that carries material across the private-to-public boundary has no schedule at all: that one is a human gesture.
-> -   **The models**: each session pins its own. **Opus 5** for the three where the judgment is not machine-checkable (both reconciliations, the architecture drawing). **Sonnet 5** for the two whose output is (the hardware seed, the rack elevation). The split follows the judgment, not the volume.
-> -   **What the page promises**: not "this is live", but "redrawn last night, and here is when the checks last confirmed the repositories matched reality". The badge falls back to "unknown", **never to green**.
-> -   **What the nights found**: my VPN tunnel was described backwards in my own notes, a rack documented as having no UPS has one, and a document named a machine reassigned two weeks earlier.
-> -   **The code**: the four public snapshots, tagged `article/architecture-generee` at the exact state this article describes, each with the `topology.json` its sanitizer emits: [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/blob/article/architecture-generee/topology.json), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/architecture-generee/topology.json), [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/architecture-generee/topology.json), [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public/blob/article/architecture-generee/topology.json). The result: [/architecture](/architecture/) and [/inventaire](/inventaire/).
+> -   **The experiment**: an architecture page redrawn every night by an unattended AI session.
+> -   **The number**: the IaC repositories declare **11 devices**, the lab holds **37**. What is *declared* comes from the public snapshots, what is *there* from a private document.
+> -   **The night shift**: one single clock, 04:30. **Opus 5** for judgment, **Sonnet 5** for what a machine can check.
+> -   **The promise**: the badge falls back to "unknown", **never to green**.
+> -   **The code**: [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public/blob/article/architecture-generee/topology.json), [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/architecture-generee/topology.json), [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/architecture-generee/topology.json), [cloudflare-iac-public](https://github.com/ludorl82/cloudflare-iac-public/blob/article/architecture-generee/topology.json). The result: [/architecture](/architecture/) and [/inventaire](/inventaire/).
 
 This blog is a lab notebook. I try things in my basement, I break them, and I write down what I learned. Not finished recipes. The latest one is the experiment you can watch running: **an architecture page I no longer draw.**
 

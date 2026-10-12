@@ -14,16 +14,13 @@ import ModuleFlotteDiagram from "../../components/ModuleFlotteDiagram.astro";
 import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Technical summary** _(for the readers in a hurry, and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Symptom**: from my Mac, on the house VLAN, an SSH session to a server freezes as soon as it sits idle for a while. No error, no disconnection, the cursor just waits.
-> -   **The setting**: two VLANs on the same wires, with unmanaged Netgear switches: the house's VLAN 50 untagged, the servers' VLAN 10 tagged. Nine servers have a "leg", an address, in each of the two.
-> -   **The cause**: I reach a server by its name, so by its VLAN 10 address, through pfSense. The server answers me directly through its VLAN 50 leg. pfSense sees only one direction of the conversation (`22:0 pkts`), considers it never opened, and forgets it after 30 seconds of silence. The next packet is dropped.
-> -   **The red herring**: just before that, my Mac could not ping the local network at all. It was not the network: it was macOS's "Local Network" privacy blocking my terminal, Alacritty, without ever asking me.
-> -   **The fix**: source-based routing. Three `ip rule` rules send every reply back out the leg the request came in on. A NixOS module, `labo.dualHomed`, sets them; each server declares its last octet and, when needed, the names of its interfaces.
-> -   **The rollout**: nine machines wired three different ways (VMs with two NICs, physical machines with a tagged sub-interface, libvirt hypervisors), a single file. comin deployed it everywhere in under two minutes.
-> -   **The lesson**: a short test never meets an idle timeout. A 200 MB transfer, done in ten seconds, had "proven" that this case worked.
-> -   **Transparency**: the diagnosis and the fix were carried out in a session with Claude Code (Opus 5.5). I asked the questions, validated the rules and merged the PRs. The full theory, RFCs included, is in [Bob's corollary](/en/blog/corollaire-la-porte-d-en-arriere/).
+> -   **Symptom**: from my Mac, an SSH session to a server freezes as soon as it sits idle for a while.
+> -   **The cause**: nine servers have a leg in two VLANs. I go through pfSense, the server answers me directly. pfSense sees only one direction (`22:0 pkts`) and forgets the connection after 30 seconds.
+> -   **The fix**: three `ip rule` rules send every reply back out the leg it came in on. A NixOS module, `labo.dualHomed`, deployed by comin in under two minutes.
+> -   **The lesson**: a short test never meets an idle timeout.
+> -   **Transparency**: done with Claude Code (Opus 5.5). The theory is in [Bob's corollary](/en/blog/corollaire-la-porte-d-en-arriere/).
 
 I recently added a MacBook Air to my lab, configured with Nix like everything else. And fairly quickly, an annoyance: my SSH sessions to my servers froze. I would read a log, come back to the terminal a minute later, type a command, and nothing. No error, no disconnection, just a cursor waiting.
 

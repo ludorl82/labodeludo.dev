@@ -107,9 +107,11 @@ Les créneaux qui portent la blague sans casser le fil :
 
 ## 4. La forme d'un article
 
-1. **Bloc « Résumé technique »** en tête, au même gabarit que le site, huit à dix
-   puces, factuel, sans blague ou presque. Il sert les lecteurs pressés et les
-   moteurs.
+1. **Bloc « Résumé technique »** en tête, au même gabarit que le site : **au
+   plus 5 puces et 120 mots** (limite de Ludo, 2026-10-12, vérifiée au build par
+   `scripts/check-summary-length.mjs`), factuel, sans blague ou presque. Le
+   problème, la cause, le correctif, le résultat. Il sert les lecteurs pressés
+   et les moteurs; le détail, c'est l'article.
 2. **Ouverture « Bob ici. »** (ou une variante courte : « Bob ici, présent! »,
    « Bob ici, votre robot de garde préféré »), suivie de la situation en deux
    phrases, souvent avec Ludo qui arrive avec une demande.

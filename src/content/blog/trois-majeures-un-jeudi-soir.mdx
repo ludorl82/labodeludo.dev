@@ -9,15 +9,11 @@ heroImage: "/images/blog/banner-trois-majeures.svg"
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Contexte** : premier passage du robot de mises à jour hebdomadaires (Renovate, auto-hébergé) sur le dépôt du cluster. Trois PR de versions majeures : Grafana v13, Uptime Kuma v2, MongoDB 4.4 → 8.3. Toutes fusionnées le même soir.
-> -   **Grafana** : migration automatique, zéro drame. On aime Grafana.
-> -   **MongoDB** : quatre majeures d'un coup, c'est trois de trop — Mongo monte une majeure à la fois, avec un `featureCompatibilityVersion` à ajuster entre chaque. Pire : les démarrages ratés de la v8 ont modifié les métadonnées WiredTiger, rendant les fichiers illisibles par *toutes* les versions. Récupération par le mongodump nocturne dans S3.
-> -   **Le bogue caché** : les trois sondes de santé appelaient `mongo`, le shell retiré depuis la v6 — le kubelet tuait donc un mongod parfaitement sain aux 90 secondes.
-> -   **Uptime Kuma** : la migration v2 a besoin de ~40 minutes ininterrompues ; la sonde de démarrage en donnait 5. Le processus tué a laissé un verrou de migration qui bloquait chaque redémarrage.
-> -   **La fenêtre d'une sonde** : `failureThreshold × periodSeconds`. Tant que la sonde de démarrage n'a pas réussi, les deux autres sondes sont suspendues ; quand la fenêtre expire, le kubelet tue le conteneur, migration ou pas.
-> -   **Le pipeline contre moi** : une première tentative de retirer les sondes en direct a été annulée par la synchronisation automatique du déploiement. Il a fallu la mettre en pause pendant la chirurgie.
-> -   **La sauvegarde elle-même** : la job nocturne installait son outil S3 avec un gestionnaire de paquets absent de la nouvelle image. Celle qui nous a sauvés était cassée depuis la fusion.
-> -   **Après coup** : les majeures attendent maintenant une approbation explicite, les majeures de bases de données ne viennent plus jamais d'un robot, et la sonde de Kuma a une fenêtre de 60 minutes.
+> -   **Contexte** : premier passage de Renovate sur le dépôt du cluster. Trois majeures fusionnées le même soir : Grafana v13 (zéro drame), Uptime Kuma v2, MongoDB 4.4 → 8.3.
+> -   **MongoDB** : Mongo monte une majeure à la fois. Les démarrages ratés de la v8 ont rendu les fichiers illisibles par *toutes* les versions. Sauvé par le mongodump nocturne.
+> -   **Le bogue caché** : les sondes appelaient `mongo`, retiré depuis la v6 ; le kubelet tuait un mongod sain aux 90 secondes.
+> -   **Uptime Kuma** : la migration v2 a besoin de ~40 minutes ; la sonde de démarrage en donnait 5.
+> -   **Après coup** : les majeures attendent une approbation explicite, et la sonde de Kuma a une fenêtre de 60 minutes.
 
 Bob ici. La semaine passée, on a branché le labo pour que chaque fusion dans git déploie toute seule — les garde-fous, la porte qui refuse les destructions, toute l'affaire. Cette semaine, la suite logique : un robot qui *remarque* les mises à jour disponibles pis qui ouvre les PR tout seul le dimanche matin. Premier passage du robot : quatre PR. Un paquet de mises à jour mineures groupées, pis trois versions majeures, chacune sa PR, comme du monde civilisé.
 

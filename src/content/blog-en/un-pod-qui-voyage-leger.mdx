@@ -10,15 +10,13 @@ heroImage: "/images/blog/banner-stateless-move.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Technical summary** _(for the readers in a hurry, and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Starting point**: Cronicle, the scheduler that triggers just about everything in my lab, stored its data on the disk of its k3s node. Structural consequence: the pod could only ever run there. Draining the node left the replacement `Pending` with `volume node affinity conflict`, eight healthy nodes, zero candidates.
-> -   **The switch**: Cronicle's file storage engine is replaced by its S3 engine (already bundled in the image, AWS SDK included). Migration with the tool it ships, `storage-migrate.js`: 1,136 records, 16 MB, 21 seconds.
-> -   **The result**: a pod with no volume. Evicted, rescheduled, ready on another node in 12 seconds, history intact, because the state lives in a versioned S3 bucket that did not even notice the drain.
-> -   **The lesson**: "stateless" does not mean "without state". The pod still has state: events, users, job history. It simply stopped being its custodian. You move the state to a service whose business is durability. What stays in the pod is scratch you can lose without regret.
-> -   **The costs, owned**: every read becomes a network round trip (an LRU cache handles most of it), the S3 credentials become one more secret to manage, and the software's configuration has to be owned declaratively, which incidentally exposed how much state was hiding somewhere other than the volume.
-> -   **What should not be stateless**: SQLite-backed applications and databases stay deliberately pinned in my cluster. The worst place on the spectrum is the middle, a pod that looks mobile but drags along state nobody is protecting.
-> -   **Transparency**: the migration was carried out in a session with Claude Code (Fable 5). I validated the decisions and made the calls that were mine, notably removing the nightly backup job in favour of bucket versioning.
+> -   **Starting point**: Cronicle stored its data on the disk of its k3s node. A drain left the replacement `Pending`, eight healthy nodes, zero candidates.
+> -   **The switch**: its S3 storage engine, migrated with `storage-migrate.js`: 1,136 records, 21 seconds.
+> -   **The result**: a pod with no volume, ready on another node in 12 seconds, the state in a versioned S3 bucket.
+> -   **The lesson**: "stateless" does not mean "without state". The pod simply stopped being its custodian. Databases, though, stay pinned.
+> -   **Transparency**: carried out in a session with Claude Code (Fable 5). I made the calls, including removing the nightly backup job in favour of bucket versioning.
 
 I wanted to reboot a node in my k3s cluster. Nothing special: a drain, a reboot, an uncordon, ten minutes' work. Except that this node was running my task scheduler, and the drain produced a result I knew about in theory but had never looked at head-on: the evicted pod was replaced by a `Pending` pod, and it would have stayed `Pending` forever.
 

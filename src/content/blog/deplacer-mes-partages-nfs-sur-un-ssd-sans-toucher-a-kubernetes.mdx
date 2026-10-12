@@ -9,12 +9,10 @@ import NfsShareMoveDiagram from "../../components/NfsShareMoveDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Symptôme** : le NAS grattait en continu. Les partages NFS du cluster k3s hébergent des bases de données (Postgres, Mongo, Loki, SQLite) qui écrivent sans arrêt de petits blocs en écriture aléatoire — le disque dur ne se reposait jamais.
-> -   **Constat** : ces partages pesaient 670 Mo au total, sur un volume de 7 To. Le déséquilibre parlait de lui-même.
-> -   **Le truc central** : renommer l'ancien partage **avant** de créer le nouveau sous le nom d'origine. Le chemin d'export NFS reste identique, donc aucun objet Kubernetes à modifier — ni les PV, ni la StorageClass, ni le provisionneur.
-> -   **Piège 1** : renommer un dossier partagé sur QNAP efface silencieusement ses permissions d'accès NFS.
-> -   **Piège 2** : un nouveau partage arrive en **lecture seule** avec « écraser tous les utilisateurs », et l'interface tronque l'affichage à `lectur…` — impossible de distinguer lecture seule de lecture/écriture à l'œil.
-> -   **Fausse piste** : un `mount.nfs` figé en état D bloquait toutes les montures suivantes de cette machine. Le symptôme imitait parfaitement un problème de réseau, de MTU ou d'UDP.
+> -   **Symptôme** : le NAS grattait en continu. Les bases de données du cluster k3s (Postgres, Mongo, Loki, SQLite) écrivaient sans arrêt : 670 Mo de partages sur un volume de 7 To.
+> -   **Le truc central** : renommer l'ancien partage **avant** de créer le nouveau sous le nom d'origine. Le chemin d'export NFS reste identique : aucun objet Kubernetes à modifier.
+> -   **Pièges QNAP** : renommer un dossier partagé efface silencieusement ses permissions NFS ; un nouveau partage arrive en **lecture seule**.
+> -   **Fausse piste** : un `mount.nfs` figé en état D bloquait toutes les montures suivantes, en imitant un problème de réseau.
 > -   **Résultat** : 6 922 fichiers, 693 Mo, déplacés avec les permissions intactes. Aucune modification côté cluster.
 
 Bob ici. Le NAS de la maison faisait du bruit. Pas un bruit alarmant — juste ce grattement constant de disque dur qui travaille, celui qu'on finit par ne plus entendre jusqu'au jour où on s'assoit dans la même pièce un soir tranquille.

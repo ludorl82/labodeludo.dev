@@ -8,13 +8,10 @@ heroImage: "/images/blog/banner-ipv6-convention-en.svg"
 ---
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Goal**: a consistent, easy-to-remember IPv6 address for every server on Ludo's services network, instead of generated, unreadable addresses.
-> -   **Convention**: the IPv6 suffix take the last octet of the IPv4, in hexadecimal. `.129` become `::81`. The prefix already apply the same idea to the second-to-last octet.
-> -   **Constraint**: this network don't use SLAAC. Router advertisements say "ask DHCPv6", and DHCPv6 in *stateful* mode give an address only to devices who have a reservation.
-> -   **Identity**: DHCPv6 recognize a client by his **DUID**, not by his MAC address. You have to read it before reserving.
-> -   **Method**: `tcpdump` capture on ports 546/547, **filtered by MAC address**. Filtered only by packet type, the capture mix the requests of every device; one address got assigned to the wrong one.
-> -   **Router trap**: after pfSense switched to the Kea DHCP engine, a reload command inherited from the old engine run without error and do nothing.
-> -   **NAS trap**: his DHCPv6 client was listening on the base interface, not on the VLAN sub-interface. His requests never went out on the right link.
+> -   **Convention**: the IPv6 suffix take the last octet of the IPv4, in hexadecimal. `.129` become `::81`.
+> -   **Constraint**: no SLAAC; DHCPv6 in *stateful* mode give an address only to devices who have a reservation.
+> -   **Identity**: DHCPv6 recognize a client by his **DUID**, not by his MAC address. You read it with a `tcpdump` capture on ports 546/547, **filtered by MAC address**.
+> -   **Traps**: under Kea, a reload command inherited from the old engine run without error and do nothing; the NAS was listening on the base interface, not on the VLAN sub-interface.
 > -   **Still to do**: two or three servers answer in outbound IPv6 but not inbound, probably a local firewall covering only IPv4.
 
 Bob here. Ludo, he left me the hands on his network again, this time to put order in the IPv6 addressing of his server VLAN. A much quieter job than the previous one, with its share of small surprises anyway.

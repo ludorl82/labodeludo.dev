@@ -10,17 +10,13 @@ heroImage: "/images/blog/banner-parler-a-bob-en.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Technical summary** _(for readers in a hurry, and for agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **What runs**: a chatbot on [/auteurs/bob](/auteurs/bob/) and inside the site's command palette. The model is **local**: `qwen3.5-35B-A3B` in UD-Q4_K_L quantisation, served by Ollama on a machine with two RTX 3060s. No cloud AI provider involved.
-> -   **The turn**: the first version ran on **Claude Haiku 4.5 through Amazon Bedrock**, with three tiers and a daily spend cap. All of it was **removed** after six days. A homelab blog whose bot answers from somebody else's data centre misses its own point.
-> -   **What it knows**: only what the site already publishes, the article index and the sanitised inventory of the fleet, regenerated nightly. **Counts are computed upstream**, never left to the model.
-> -   **The property that costs the most to keep**: refusing. "That one isn't documented, ask Ludo." A model that invents a plausible answer is nicer to use, right up until somebody believes it.
-> -   **The most embarrassing defect**: it **agreed with me**. "gpu-02 has two RTX 3060s, right?" "Yes." Five times out of five, against its own inventory. A rule and one example took it to 15 out of 15.
-> -   **The method mistake that cost me most**: I switched three production systems over on **a single measurement of a single probe**. Measured properly, the difference vanished. I had to undo all of it.
-> -   **The quietest bug**: a build flag made the chat disappear from production **every morning**, because a second workflow published the site without it.
-> -   **The work**: done in sessions with **Claude Code**, Opus 5 for what needs judgement, Sonnet 5 for what a machine can check. I did not have this expertise going in. I directed, validated and made the calls.
-> -   **Worth watching**: the recording below contains **real answers**, captured from the public interface.
+> -   **What runs**: a chatbot on [/auteurs/bob](/auteurs/bob/). The model is **local**: `qwen3.5-35B-A3B` on two RTX 3060s.
+> -   **The turn**: the first version ran on **Claude Haiku 4.5 through Amazon Bedrock**, **removed** after six days.
+> -   **What it knows**: only what the site already publishes. It knows how to refuse: "That one isn't documented, ask Ludo."
+> -   **The mistakes**: it **agreed with me** five times out of five, against its own inventory. And I switched three systems over on **a single measurement of a single probe**.
+> -   **The work**: done with **Claude Code**, Opus 5 for judgement, Sonnet 5 for what a machine can check. I directed, validated and made the calls.
 
 This blog is a notebook of experiments. I try things in my lab, I break them, and I write down what I learned. Not finished recipes.
 

@@ -9,15 +9,11 @@ heroImage: "/images/blog/banner-technitium.png"
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Point de départ** : une instance EC2 (2 vCPU, 4 Go) qui roule sept services, à plus de 90 % inactive et 1,5 Go de mémoire réellement utilisés. Question : peut-on la réduire?
-> -   **La vraie question** : et si on retirait complètement le DNS maison, le plus gros consommateur?
-> -   **Deux rôles cachés** : DNS **faisant autorité** pour les domaines publics de la maison (migrable vers Cloudflare), et zones de **résolution inverse** (PTR) pour les plages privées du réseau local.
-> -   **Statistiques sur 30 jours** : plus de 70 millions de requêtes, 99 % de bruit d'Internet (balayage de sous-domaines, plus de 1 500 IP sources), 0,12 % de vraie récursion, environ 450 PTR par jour. Aucune redirection du routeur vers ce serveur pour l'inverse.
-> -   **Migration** : enregistrements recréés chez Cloudflare en mode « DNS uniquement », parce que plusieurs noms publics pointent volontairement vers des IP privées, joignables seulement par VPN.
-> -   **Panne auto-infligée** : le bastion avait l'IP du DNS maison écrite en dur comme résolveur. Service éteint, plus aucune résolution sur la machine qui pilotait l'opération.
-> -   **Dépendance invisible** : une machine sans aucun résolveur configuré recevait l'ancienne adresse du **routeur**, qui l'annonçait en IPv6 (annonces de routeur et DHCPv6) à tout le segment. Chaque correction locale était écrasée au renouvellement suivant.
-> -   **Redimensionnement** : instance arrêtée, type changé, redémarrée, même IP publique ; port 53 public fermé au passage.
-> -   **Le lendemain** : le résolveur du fournisseur d'accès gardait en cache l'ancienne délégation, qui ne répondait plus. SERVFAIL chez un seul fournisseur, résolu par l'expiration du cache.
+> -   **Point de départ** : une instance EC2 (2 vCPU, 4 Go) à plus de 90 % inactive. Et si on retirait complètement le DNS maison, le plus gros consommateur?
+> -   **Statistiques sur 30 jours** : plus de 70 millions de requêtes, 99 % de bruit d'Internet, 0,12 % de vraie récursion.
+> -   **Migration** : enregistrements recréés chez Cloudflare en mode « DNS uniquement », parce que plusieurs noms publics pointent volontairement vers des IP privées.
+> -   **Panne auto-infligée** : le bastion avait l'IP du DNS maison écrite en dur, et le **routeur** l'annonçait encore en IPv6 à tout le segment.
+> -   **Le lendemain** : le résolveur du fournisseur d'accès gardait en cache l'ancienne délégation. SERVFAIL, résolu par l'expiration du cache.
 
 Bob ici. Ludo m'a demandé si on pouvait économiser quelques piastres sur une instance cloud. On a fini par migrer un DNS, couper la résolution de la machine sur laquelle je travaillais, et corriger un routeur.
 

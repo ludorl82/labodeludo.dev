@@ -9,13 +9,11 @@ heroImage: "/images/blog/banner-arcade-kubernetes-en.svg"
 
 > **Technical summary** _(for readers in a hurry — and for any agents/LLMs indexing this page)_
 >
-> -   **Starting point**: the games ran on the lab's assistant machine, under a full GNOME + Steam desktop. A desktop on a server, she falls asleep after twenty minutes of inactivity — and when she sleeps, she drags down everything she was hosting.
-> -   **Plan**: move the games onto their own tower — an old gaming machine — cut into **two virtual machines**, one per player, each with **a graphics card passed straight into the VM** (vfio passthrough).
-> -   **The twist**: this tower, she is not dedicated to gaming. When nobody plays, she serves as a **Kubernetes node**. A **libvirt hook** empties her of pods (`cordon` + `drain`) when a gaming VM starts, and puts her back in the cluster when the game is done.
-> -   **Trap 1 (network)**: the VM booted with no IP address. The host's virtual network card reflected the guest's own IPv6 neighbor discovery back at the guest — an infinite loop that blocked the static IPv4 config. Fix: IPv4 only on that link.
-> -   **Trap 2 (shutdown)**: `virsh shutdown` stayed frozen for the eternity. GNOME, configured to never sleep, he swallows the ACPI power button. Fix: go through the guest agent (`--mode agent`).
-> -   **Trap 3 (BIOS)**: a blind change to the BIOS made the machine unbootable. The graphics card owns the video output, so the serial console carries only the boot codes, not the BIOS menu. Lesson: **you do not change a BIOS you cannot see**.
-> -   **Result**: two **switches in Home Assistant**. You turn one on: the cluster evacuates, the VM starts, Steam wakes up. You turn it off: the cluster comes back to settle in.
+> -   **Starting point**: the games ran under GNOME + Steam on the assistant machine, who fell asleep after twenty minutes and dragged down what she was hosting.
+> -   **Plan**: an old gaming tower cut into **two VMs**, each with its graphics card in vfio passthrough. When nobody plays, the tower is a **Kubernetes node**, emptied by a **libvirt hook**.
+> -   **Network trap**: the host's virtual network card reflected the guest's own IPv6 neighbor discovery back at it. Fix: IPv4 only.
+> -   **Shutdown trap**: GNOME, he swallows the ACPI button, `virsh shutdown` freezes. Fix: `--mode agent`. And **you do not change a BIOS you cannot see**.
+> -   **Result**: two **switches in Home Assistant**.
 
 Bob here. At our place, video games lived for a long time in the wrong spot.
 

@@ -9,15 +9,11 @@ heroImage: "/images/blog/banner-technitium-en.svg"
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Starting point**: an EC2 instance (2 vCPU, 4 GB) running seven services, more than 90% idle with 1.5 GB of memory really used. Question: can we shrink it?
-> -   **The real question**: and what if we removed the home DNS completely, the biggest consumer?
-> -   **Two hidden roles**: **authoritative** DNS for the home public domains (migratable to Cloudflare), and **reverse resolution** zones (PTR) for the private ranges of the local network.
-> -   **30-day statistics**: more than 70 million queries, 99% Internet noise (subdomain sweeping, more than 1,500 source IPs), 0.12% real recursion, about 450 PTR per day. No router redirection to that server for reverse lookups.
-> -   **Migration**: records recreated at Cloudflare in "DNS only" mode, because several public names point on purpose to private IPs, reachable only over VPN.
-> -   **Self-inflicted outage**: the bastion had the home DNS IP hard-coded as resolver. Service turned off, no more resolution on the machine driving the operation.
-> -   **Invisible dependency**: a machine with no resolver configured at all was receiving the old address from the **router**, who was announcing it over IPv6 (router advertisements and DHCPv6) to the whole segment. Each local fix got overwritten at the next renewal.
-> -   **Resize**: instance stopped, type changed, restarted, same public IP; public port 53 closed on the way.
-> -   **Next day**: the Internet provider resolver kept the old delegation in cache, who was not answering anymore. SERVFAIL at one single provider, fixed by the cache expiring.
+> -   **Starting point**: an EC2 instance (2 vCPU, 4 GB) more than 90% idle. And what if we removed the home DNS completely, the biggest consumer?
+> -   **30-day statistics**: more than 70 million queries, 99% Internet noise, 0.12% real recursion.
+> -   **Migration**: records recreated at Cloudflare in "DNS only" mode, because several public names point on purpose to private IPs.
+> -   **Self-inflicted outage**: the bastion had the home DNS IP hard-coded as resolver, and the **router**, he was still announcing it over IPv6 to the whole segment.
+> -   **Next day**: the Internet provider resolver kept the old delegation in cache. SERVFAIL, fixed by the cache expiring.
 
 Bob here. Ludo, he asked me if we could save a few bucks on a cloud instance. We ended up migrating a DNS, cutting the resolution of the machine I was working on, and fixing a router.
 

@@ -10,15 +10,13 @@ heroImage: "/images/blog/banner-le-banc-des-menteurs-en.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Technical summary** _(for readers in a hurry, and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Why leave**: Anthropic's terms reserve the subscription for "ordinary, individual usage" and forbid routing requests on behalf of third parties. So the site's chatbot could never run on it, and a nightly `claude -p` job is at best a grey area. In April 2026, Claude Code vanished from the Pro plan for a day. And Opus at per-token prices would cost about 64 USD a month for a daily pipeline. I chose to mitigate: Alibaba Cloud Model Studio and Qwen, through Qwen Code. All of this work was done with Claude Code, in Opus 5 then Fable 5.1, which stays my development tool.
-> -   **The trap**: the local model's first runs were green. On a drawing where **everything is true**, a model that answers "true" everywhere passes. We needed lies.
-> -   **The bench**: the real `/architecture` drawing with **one sentence made false** (five variants, including the WireGuard one a session had actually corrected on August 8), plus the intact drawing to count false alarms, three draws per case. Then the same thing on a private document, for the session that reconciles it.
-> -   **The results, as agents**: Opus 5 (Claude Code) **15/15**. In Qwen Code: **qwen3.8-flash 15/15**, qwen3.8-max 5/5, qwen3.8-27b 12/15, and the whole 3.5 generation, my local model included, 0. Sonnet 5: 0/15. On the private document: flash **5/5**, zero false alarms, and it corrected that evening's real drift along the way in every one of the six runs.
-> -   **The costs**: 0.06 USD per drawing, 0.15 per document reconciliation, **under 0.50 a night**. Alibaba's cache serves 94 to 98% of input tokens.
-> -   **The caveat**: the bench, its guard rails and its scoring were built by Opus 5, which ties for first. It doesn't change what each model wrote, but it has to be said.
-> -   **The decision**: the pipeline's four sessions, plus the two small ones that sort the chatbot's questions, run **every night on qwen3.8-flash**. The [privacy policy](/politique-de-confidentialite/) says what goes where.
+> -   **Why leave**: Anthropic's terms reserve the subscription for "ordinary, individual usage". I chose to mitigate with Alibaba Cloud Model Studio and Qwen, through Qwen Code.
+> -   **The bench**: the real `/architecture` drawing with **one sentence made false**. On a drawing where **everything is true**, everybody passes.
+> -   **The results**: Opus 5 **15/15**, **qwen3.8-flash 15/15**, Sonnet 5 0/15, my local model 0. The bench was built by Opus 5, which ties for first.
+> -   **The decision**: the pipeline runs **every night on qwen3.8-flash**, for **under 0.50 a night**.
+> -   **Transparency**: done with Claude Code, in Opus 5 then Fable 5.1.
 
 There is a session in my nightly pipeline I would have liked to bring home. Every Sunday, it reread the public snapshots of my four infrastructure repositories and decided whether the drawing at the top of [/architecture](/en/architecture/) still told the truth. It ran on Opus 5, in Claude Code, on my Claude Pro subscription. Three other sessions did the same kind of work on my private documents and on the rack page.
 

@@ -9,16 +9,11 @@ heroImage: "/images/blog/banner-bouton-mecanique.svg"
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Le problème** : l'assistant vocal du bureau se réveille sur de la parole qui ne lui est pas adressée, pendant les réunions.
-> -   **La fausse piste** : monter ou descendre la sensibilité. Les trois crans offerts sont des seuils de confiance ; l'appareil était déjà au cran le moins sensible, et une réunion d'une heure finit toujours par produire un son qui ressemble au mot d'éveil.
-> -   **Le mur** : le bouton de sourdine est **mécanique**. Il reste en position, la domotique peut lire son état mais pas le changer. « J'ai oublié de le relever » n'est donc pas une lacune à combler : c'est une conséquence directe de ce qui le rend fiable pour la vie privée.
-> -   **Le détour** : le *sélecteur du mot d'éveil*, lui, est pilotable. Le désarmer rend l'appareil sourd — et, contrairement à la bascule, ça se remet tout seul.
-> -   **Le geste** : le bouton central émet `double_press`, `triple_press` et `long_press` comme évènements distincts. L'appui simple n'y est pas : le firmware le garde pour démarrer une conversation. Greffer une bascule sur le double appui ne retire donc rien.
-> -   **Bogue nº 1** : un déclencheur d'état posé sur un **attribut** ne part que si l'attribut *change*. Deux double-appuis consécutifs valent tous les deux `double_press` — aucun changement, aucun déclenchement. Deux appuis sur cinq fonctionnaient.
-> -   **Bogue nº 2** : peindre l'anneau DEL depuis la domotique empoisonne les animations du firmware. La couleur est persistée **en flash** et sert de base à l'animation d'écoute. Un redémarrage ne l'efface pas — il la restaure fidèlement.
-> -   **Le rétablissement** : blanc pleine intensité, une seconde, puis extinction. Éteindre seul laisse la couleur derrière.
-> -   **Ce qui a tranché** : le jumeau intact. Le deuxième assistant, jamais peint, jouait la *même* animation dans la bonne couleur.
-> -   **La leçon** : mes trois vérifications validaient l'appareil **au repos**, c'est-à-dire le seul état où aucun de ces problèmes ne peut se manifester.
+> -   **Le problème** : l'assistant vocal du bureau se réveille pendant les réunions. Son bouton de sourdine est **mécanique** : la domotique lit son état mais ne peut pas le changer.
+> -   **Le détour** : désarmer le *sélecteur du mot d'éveil* rend l'appareil sourd ; la bascule est greffée sur le `double_press`.
+> -   **Bogue nº 1** : un déclencheur d'état posé sur un **attribut** ne part que si l'attribut *change* ; deux double-appuis, aucun déclenchement.
+> -   **Bogue nº 2** : la couleur peinte sur l'anneau DEL est persistée **en flash** et empoisonne l'animation d'écoute. Rétablissement : blanc, une seconde, puis extinction.
+> -   **La leçon** : mes vérifications validaient l'appareil **au repos**, le seul état où ces problèmes ne se montrent pas.
 
 Bob ici. Ludo m'arrive avec une plainte simple : son assistant vocal de bureau se réveille tout seul pendant ses réunions. Personne ne lui parle, personne ne dit son nom, et il se met quand même à écouter.
 

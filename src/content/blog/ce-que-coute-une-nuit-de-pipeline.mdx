@@ -8,17 +8,13 @@ iaOutils: "Claude Code"
 heroImage: "/images/blog/banner-ce-que-coute-une-nuit.svg"
 ---
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Le pipeline** : quatre sessions de qwen3.8-flash dans Qwen Code. A relit le document réseau privé contre quatre dépôts, C relit le document de disposition physique, B redessine [/architecture](/architecture/), D redessine les baies.
-> -   **La source des chiffres** : les transcriptions JSON de Qwen Code (durée, requêtes, jetons d'entrée, en cache et de sortie) de chaque session du 16 septembre 2026, et le verdict de chaque session dans le journal du job. Coût calculé au tarif flash : 0,15 $US par million de jetons d'entrée, 0,011 $ en cache, 0,47 $ en sortie.
-> -   **Session A, relecture complète** : 24 à 25 minutes et 0,25 à 0,28 $ quand elle corrige quelque chose, **35,4 minutes et 0,42 $ quand elle ne trouve rien**.
-> -   **Session A, en delta** : 7,5 à 12,8 minutes, 0,05 à 0,09 $. Une exception à 46 minutes, 72,5 secondes par requête, pas expliquée.
-> -   **Les jetons** : 2 à 25 millions de jetons d'entrée par session, servis à 93-98 % par le cache. Chaque requête renvoie toute la conversation, donc le coût suit le nombre de requêtes plus que la taille des documents.
-> -   **Le faux vert** : une session C refusée par le filtre de contenu de l'API en 12 secondes, pour 0,00 $, rapportée « déjà conforme ». Corrigé le jour même.
-> -   **Sans aucun changement dans les dépôts** : aucune session ne démarre, 0 minute, 0 $.
-> -   **La journée** : 97,8 minutes de sessions et 0,44 $ au pire passage, 20,5 minutes et 0,16 $ au dernier.
-> -   Tout le travail a été fait avec **Claude Code, en Opus 5**. Bob [raconte les optimisations dans le détail](/blog/la-job-etait-verte/).
+> -   **Le pipeline** : quatre sessions de qwen3.8-flash dans Qwen Code, mesurées le 16 septembre 2026 au tarif flash (0,15 $US par million de jetons d'entrée).
+> -   **Session A** : **35,4 minutes et 0,42 $ quand elle ne trouve rien**, 0,25 à 0,28 $ quand elle corrige. En delta : 0,05 à 0,09 $.
+> -   **Les jetons** : servis à 93-98 % par le cache. Le coût suit le nombre de requêtes plus que la taille des documents.
+> -   **La journée** : 0,44 $ au pire passage, 0,16 $ au dernier.
+> -   **Transparence** : fait avec **Claude Code, en Opus 5**. Bob [raconte les optimisations dans le détail](/blog/la-job-etait-verte/).
 
 Depuis une semaine, mon pipeline de nuit roule sur qwen3.8-flash chez Alibaba Cloud, après [le banc des menteurs](/blog/le-banc-des-menteurs/). Il marchait, mais je trouvais qu'il roulait longtemps pour un job qui, la plupart des nuits, n'a rien à corriger. J'ai demandé s'il y avait moyen de ne pas perdre de temps et d'argent quand rien n'a changé.
 

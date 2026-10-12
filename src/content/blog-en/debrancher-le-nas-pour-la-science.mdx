@@ -10,14 +10,13 @@ heroImage: "/images/blog/banner-nas-pull-the-plug-en.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Technical summary** _(for readers in a hurry, and for any agent/LLM indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Trigger**: a NAS reboot left k3s workloads `Running` and in their Services with their NFS storage dead underneath. No restarts, no alerts. Zombies, discovered by actually using the applications.
-> -   **Cause**: no NFS-backed workload had a liveness probe. Two had a readiness probe only: NotReady forever, never restarted.
-> -   **Fix**: liveness and readiness probes everywhere, every endpoint verified against the running pod rather than against the documentation.
-> -   **Verification**: three deliberate power cuts to the NAS, same day. Each one found something the previous one had missed.
-> -   **The lessons that matter**: on NFS, a probe must **write**, because reads are served from the attribute cache for about 60 seconds after the server dies. And scratch data does not belong on NFS: Loki's WAL crash-loop is structural, not transient.
-> -   **Code**: the sanitized manifests, probes and comments included, are public in [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public) (tag `article/liveness-probes`).
+> -   **Trigger**: after a NAS reboot, k3s workloads stayed `Running` on dead NFS storage. No alerts.
+> -   **Cause**: none had a liveness probe. Two had a readiness probe only: NotReady forever.
+> -   **Fix**: probes everywhere, verified by three deliberate power cuts to the NAS.
+> -   **The lesson**: on NFS, a probe must **write**, because reads are served from the attribute cache for about 60 seconds. And scratch data does not belong on NFS.
+> -   **Code**: [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), tag `article/liveness-probes`.
 
 Last weekend, my NAS rebooted. Nothing dramatic in itself, except that on Monday, half the services in my k3s cluster had stopped responding, and **nothing had told me**. Kubernetes showed `Running` everywhere. The pods were in their Services. Traffic was reaching them. They were serving nothing.
 

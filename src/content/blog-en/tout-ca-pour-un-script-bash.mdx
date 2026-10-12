@@ -11,15 +11,11 @@ import ScanPipelineDiagram from "../../components/ScanPipelineDiagram.astro";
 
 > **Technical summary** _(for the readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Starting point** : SFTPGo in a container, with a custom Docker image (multi-arch build, public repo, CI pipeline) whose only reason to exist was a post-upload hook — ImageMagick, rclone, the AWS command line and an SSH client, all of them present for one script.
-> -   **The switch** : SFTPGo already write natively into S3, so the hook become a Lambda function triggered by EventBridge on "Object Created". The image go back to the project's own, with nothing left to build.
-> -   **Stateless** : no more persistent volume, no more nightly backup job. The SQLite user database is rebuilt at every start from a file rendered by an init container — which run *the same stock image*, because it already contain `bash`.
-> -   **Two of the three blockers had expired by themselves** : the host keys were already a Kubernetes secret for weeks, and the main config file contained no variable to substitute at all.
-> -   **Bugs found by reading, not by looking** : a whole upload path was falling into the `case` catch-all and leaving with a success code — three real scans never arrived. And the hook was rewriting its result into the prefix that triggered it : harmless under polling, infinite loop under events.
-> -   **The authentication trap** : the `drive.file` scope see *only* what the app create itself. An existing folder can never be adopted — and a "reusing existing folder" message made me deliver scans into a duplicate for a while.
-> -   **The platform traps** : a `/healthz` probe that answer 200 with zero users loaded ; an option that, disabled, remove the probe itself ; an archive whose hash depend on your file-creation mask ; and Argo CD which, without pruning, keep running what you deleted from the repo.
-> -   **The final outage** : the scanner could not connect any more. I accused the new image. It was not the new image.
-> -   **The code** : sanitized and public, tag `article/numeriseur-lambda` in [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur.tf) (the Lambda, the EventBridge rule, the role and the dead-letter queue) and [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/deployment.yaml) (the stateless pod, the probes, the config rendering).
+> -   **Starting point** : SFTPGo with a custom Docker image whose only reason to exist was a post-upload hook.
+> -   **The switch** : SFTPGo already write into S3, so the hook become a Lambda triggered by EventBridge. The image go back to the project's own, and the pod become stateless.
+> -   **Bugs found by reading** : a whole upload path was falling into the `case` catch-all with a success code ; three scans never arrived.
+> -   **The traps** : the `drive.file` scope see *only* what the app create itself ; a `/healthz` probe answer 200 with zero users ; Argo CD, without pruning, keep running what you deleted.
+> -   **The code** : tag `article/numeriseur-lambda` in [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur.tf) and [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/deployment.yaml).
 
 Bob here. The scanning pipeline of the house is simple to describe : the multifunction printer drop a scan over SFTP, a service receive it, file it into S3, clean up the photos on the way and push everything to two Google Drive accounts. It run for months, without complaining.
 

@@ -8,7 +8,7 @@ iaOutils: "Claude Code"
 ---
 import FrigateDetectorDiagram from "../../components/FrigateDetectorDiagram.astro";
 
-> **Technical summary** _(for readers in a hurry, and for any agent/LLM indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > - **Symptom**: the `encodeur` box (home NVR, Frigate + camera) was making more fan noise than usual.
 > - **Cause**: Frigate 0.16 dropped the TensorRT detector on amd64. My config was still on `type: cpu`, an object detector that was running at 250% CPU continuously while the GPU (RTX 3060) sat at 1% utilization.

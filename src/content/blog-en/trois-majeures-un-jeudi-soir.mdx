@@ -9,15 +9,11 @@ heroImage: "/images/blog/banner-trois-majeures-en.svg"
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Context**: first run of the weekly update robot (self-hosted Renovate) on the cluster repo. Three major-version PRs: Grafana v13, Uptime Kuma v2, MongoDB 4.4 → 8.3. All merged the same evening.
-> -   **Grafana**: migrated himself, zero drama. We like Grafana.
-> -   **MongoDB**: four majors at once, it is three too many. Mongo climb one major at a time, with a `featureCompatibilityVersion` bump between each. Worse: the failed v8 boots modified the WiredTiger metadata, making the files unreadable by *every* version. Recovered from the nightly mongodump in S3.
-> -   **The hidden bug**: the three health probes were calling `mongo`, the shell removed since v6, so the kubelet was killing a perfectly healthy mongod every 90 seconds.
-> -   **Uptime Kuma**: the v2 migration need ~40 uninterrupted minutes; the startup probe was giving 5. The killed process left a migration lock that blocked every following boot.
-> -   **A probe window**: `failureThreshold × periodSeconds`. As long as the startup probe have not succeeded, the other two probes are suspended; when the window expire, the kubelet kill the container, migration or not.
-> -   **The pipeline against me**: a first attempt to remove the probes live got undone by the deployment auto-sync. It had to be paused during the surgery.
-> -   **The backup herself**: the nightly job was installing its S3 tool with a package manager missing from the new image. The one that saved us was broken since the merge.
-> -   **Afterward**: majors now wait for explicit approval, database majors never come from a robot again, and Kuma's probe got a 60-minute window.
+> -   **Context**: first run of Renovate on the cluster repo. Three majors merged the same evening: Grafana v13 (zero drama), Uptime Kuma v2, MongoDB 4.4 → 8.3.
+> -   **MongoDB**: Mongo climb one major at a time. The failed v8 boots made the files unreadable by *every* version. Saved by the nightly mongodump.
+> -   **The hidden bug**: the probes were calling `mongo`, removed since v6; the kubelet was killing a healthy mongod every 90 seconds.
+> -   **Uptime Kuma**: the v2 migration need ~40 minutes; the startup probe was giving 5.
+> -   **Afterward**: majors now wait for explicit approval, and Kuma's probe got a 60-minute window.
 
 Bob here. Last week, we wired the lab so every git merge deploy by itself: the guardrails, the gate that refuse destroys, the whole affair. This week, the logical next step: a robot who *notice* the available updates and open the PRs by himself on Sunday morning. First run of the robot: four PRs. One grouped bundle of minor updates, and three major versions, each in its own PR, like civilized people.
 

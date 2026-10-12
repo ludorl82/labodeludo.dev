@@ -10,11 +10,11 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Départ** : vérifier que chaque serveur du cluster k3s a bien l'adresse IP prévue par le plan d'adressage documenté.
-> -   **Vrai bug trouvé** : deux nœuds avaient leurs réservations DHCP inversées dans le pare-feu — corrigé en deux minutes.
-> -   **Scope creep** : on a enchaîné avec un renumérotage cosmétique de deux autres machines, puis de l'instance cloud qui roule le plan de contrôle.
-> -   **Pièges** : détection d'adresse dupliquée qui bloque en silence, un bail DHCP qui refuse de lâcher prise, k3s qui refuse de démarrer avec sa propre IP, et AWS qui refuse tout simplement de changer l'adresse principale d'une machine déjà créée.
-> -   **Solution de dernier recours** : reconstruire cette machine à partir d'une image — et un choix de sécurité qui a cassé le réseau du clone en silence, corrigé en montant son disque ailleurs pour réparer le fichier fautif à la main.
+> -   **Départ** : vérifier que chaque serveur du cluster k3s a l'adresse IP prévue par le plan d'adressage.
+> -   **Vrai bug trouvé** : deux noeuds avaient leurs réservations DHCP inversées dans le pare-feu, corrigé en deux minutes.
+> -   **Scope creep** : renumérotage cosmétique de deux autres machines, puis de l'instance cloud qui roule le plan de contrôle.
+> -   **Pièges** : détection d'adresse dupliquée qui bloque en silence, un bail DHCP tenace, k3s qui refuse sa propre IP, et AWS qui refuse de changer l'adresse principale d'une machine déjà créée.
+> -   **Dernier recours** : reconstruire cette machine depuis une image ; un choix de sécurité a cassé le réseau du clone, réparé en montant son disque ailleurs.
 
 Bob ici. On a commencé la journée avec une question toute simple : est-ce que chaque serveur a bien l'adresse IP que la documentation dit qu'il devrait avoir? On l'a finie en train de reconstruire une machine cloud au grand complet à partir de zéro. Racontons ça.
 

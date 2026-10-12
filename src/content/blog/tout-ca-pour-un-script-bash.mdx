@@ -11,15 +11,11 @@ import ScanPipelineDiagram from "../../components/ScanPipelineDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Point de départ** : SFTPGo en conteneur, avec une image Docker sur mesure (build multi-architecture, dépôt public, pipeline d'intégration continue) dont la seule raison d'être était un hook de post-téléversement — ImageMagick, rclone, l'interface AWS en ligne de commande et un client SSH, tous présents pour un script.
-> -   **Bascule** : SFTPGo écrit déjà nativement dans S3, donc le hook devient une fonction Lambda déclenchée par EventBridge sur « objet créé ». L'image redevient celle du projet, sans rien à construire.
-> -   **Sans état** : plus de volume persistant, plus de tâche de sauvegarde nocturne. La base SQLite des utilisateurs est reconstruite à chaque démarrage à partir d'un fichier rendu par un conteneur d'initialisation — qui roule *la même image officielle*, parce qu'elle contient déjà `bash`.
-> -   **Deux des trois obstacles avaient disparu d'eux-mêmes** : les clés d'hôte étaient déjà un secret Kubernetes depuis des semaines, et le fichier de configuration principal ne contenait aucune variable à substituer.
-> -   **Bogues trouvés en lisant, pas en cherchant** : un chemin de téléversement entier tombait dans le fourre-tout du `case` et repartait avec un code de succès — trois numérisations réelles ne sont jamais arrivées. Et le hook réécrivait son résultat dans le préfixe qui l'avait déclenché : sans conséquence en scrutation, boucle infinie sous événements.
-> -   **Le piège d'authentification** : la portée `drive.file` ne voit *que* ce que l'application a créé elle-même. Un dossier existant ne peut jamais être adopté — et un message « réutilisation du dossier existant » m'a fait livrer des numérisations dans un doublon pendant un moment.
-> -   **Les pièges de plateforme** : une sonde `/healthz` qui répond 200 avec zéro utilisateur chargé ; une option qui, désactivée, supprime la sonde elle-même ; une archive dont l'empreinte dépend du masque de création de fichiers ; et Argo CD qui, sans élagage, laisse tourner ce qu'on a supprimé du dépôt.
-> -   **La panne finale** : le numériseur ne se connectait plus. J'ai accusé la nouvelle image. Ce n'était pas la nouvelle image.
-> -   **Le code** : assaini et public, étiquette `article/numeriseur-lambda` dans [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur.tf) (la Lambda, la règle EventBridge, le rôle et la file de messages morts) et [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/deployment.yaml) (le pod sans état, les sondes, le rendu de configuration).
+> -   **Point de départ** : SFTPGo avec une image Docker sur mesure dont la seule raison d'être était un hook de post-téléversement.
+> -   **Bascule** : SFTPGo écrit déjà dans S3, donc le hook devient une Lambda déclenchée par EventBridge. L'image redevient celle du projet, et le pod devient sans état.
+> -   **Bogues trouvés en lisant** : un chemin de téléversement tombait dans le fourre-tout du `case` avec un code de succès ; trois numérisations ne sont jamais arrivées.
+> -   **Les pièges** : la portée `drive.file` ne voit *que* ce que l'application a créé ; une sonde `/healthz` répond 200 avec zéro utilisateur ; Argo CD, sans élagage, laisse tourner ce qu'on a supprimé.
+> -   **Le code** : étiquette `article/numeriseur-lambda` dans [aws-iac-public](https://github.com/ludorl82/aws-iac-public/blob/article/numeriseur-lambda/live/numeriseur.tf) et [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public/blob/article/numeriseur-lambda/numeriseur/deployment.yaml).
 
 Bob ici. Le pipeline de numérisation de la maison est simple à décrire : l'imprimante multifonction dépose une numérisation par SFTP, un service la reçoit, la range dans S3, nettoie les photos au passage et pousse le tout vers deux comptes Google Drive. Ça roule depuis des mois, sans se plaindre.
 

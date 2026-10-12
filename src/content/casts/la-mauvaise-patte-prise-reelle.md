@@ -8,6 +8,7 @@ caption: "Trois panneaux : les commandes en haut, la fiche que pfSense tient sur
 article: "la-reponse-par-la-mauvaise-patte"
 session: "aucune"
 frame: "none"
+type: "prise-reelle"
 disclaimer: "✔ Ceci est une capture réelle, faite le 24 septembre 2026 avec asciinema dans une session tmux dédiée, sans montage. vm-02, mac et routeur sont des alias SSH vers les vraies machines, et le filtre anonymise, visible à l'écran, remplace à la volée les vraies adresses par celles de l'article; fiche est un petit script qui lit la table d'états de pfSense (pfctl -ss -vv) à travers ce filtre. Pour rejouer la panne, la règle 102 a été retirée de vm-02 le temps de la prise, puis remise. Les frappes ont été envoyées par script et non tapées par Ludo, l'invite est « ludo@labo », seules les pauses de plus de deux secondes sont raccourcies, l'identifiant du conteneur dans la barre tmux est remplacé par un nom de même longueur."
 ---
 

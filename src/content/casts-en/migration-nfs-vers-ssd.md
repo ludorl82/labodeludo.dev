@@ -5,6 +5,7 @@ description: "Claude in Chrome configures the NAS while I watch: a volume to cre
 cast: "/casts/claude-in-chrome-nas.cast"
 poster: "npt:0:04"
 caption: "Roughly fifty minutes of NAS work, condensed into two. The SSH half isn't shown."
+type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real session transcript. The prompts and the stop messages are the ones from the actual session; the timing is compressed and the long waits are cut. Hostnames sanitized."
 article: "claude-in-chrome-quand-lagent-doit-passer-par-linterface-web"
 ---

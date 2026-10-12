@@ -342,3 +342,42 @@ img {
   border-color: var(--accent-live);
   background: color-mix(in srgb, var(--accent-live) 10%, transparent);
 }
+
+/* Type d'un enregistrement (src/lib/casts.ts). Global parce que la liste de
+   /casts, la page d'un cast et le bas d'un article l'affichent tous les trois.
+   Gris comme les catégories : la nuance distingue, le vert reste réservé à ce
+   qui réagit au clic. Le glyphe dit la nature de la prise : ◆ reconstitué,
+   ● enregistré pour vrai, ❯ chat, ◇ rejoué. */
+.cast-type {
+  --type-color: var(--accent-cloud);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.05em 0.6em;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--type-color);
+}
+
+.cast-type::before {
+  content: "◆";
+  font-size: 0.85em;
+}
+
+.cast-type[data-type="prise-reelle"] { --type-color: var(--text); }
+.cast-type[data-type="prise-reelle"]::before { content: "●"; }
+.cast-type[data-type="chat"] { --type-color: var(--accent-devops); }
+.cast-type[data-type="chat"]::before { content: "❯"; }
+.cast-type[data-type="simulation"] { --type-color: var(--text-faint); }
+.cast-type[data-type="simulation"]::before { content: "◇"; }
+
+a.cast-type:hover,
+a.cast-type:focus-visible {
+  border-color: var(--accent-live);
+}

@@ -5,6 +5,7 @@ description: "Trois coupures de courant volontaires du NAS pour vérifier des so
 cast: "/casts/nas-pull-the-plug.cast"
 poster: "npt:0:08"
 caption: "Les trois coupures, condensées : les sondes qui mentent encore, la boucle de crash de Loki, le garde-fou de permissions au milieu de la réparation, et la course propre à la fin."
+type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues boucles de surveillance sont coupées. Noms d'hôte sanitisés."
 article: "debrancher-le-nas-pour-la-science"
 ---

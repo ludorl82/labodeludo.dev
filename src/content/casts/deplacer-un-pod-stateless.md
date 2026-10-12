@@ -5,6 +5,7 @@ description: "Le même drain, deux fois. Avant : le pod est riveté au disque de
 cast: "/casts/stateless-move.cast"
 poster: "npt:0:12"
 caption: "Le même drain, avant et après : le pod riveté à son disque qui reste Pending devant huit nœuds libres, puis le pod stateless qui est prêt sur un autre nœud 12 secondes après l'éviction — parce qu'il n'y a plus rien à déménager."
+type: "simulation"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une simulation pédagogique. La migration vers S3 est réelle et les deux comportements montrés sont véridiques, mais les drains ont été rejoués pour l'enregistrement, le minutage est condensé, le stockage d'origine est simplifié en « disque local », et les noms d'hôte sont fictifs."
 article: "un-pod-qui-voyage-leger"
 ---

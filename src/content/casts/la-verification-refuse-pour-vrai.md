@@ -8,6 +8,7 @@ caption: "En haut, le script d'assainissement ; en bas, un panneau réservé à 
 article: "quatre-depots-pour-un-labo-au-complet"
 session: "aucune"
 frame: "none"
+type: "prise-reelle"
 disclaimer: "✔ Capture réelle du 20 septembre 2026, asciinema dans une session tmux dédiée, sans montage : les commandes tournent pour vrai sur une copie du dépôt et leurs sorties sont vraies. Les frappes ont été envoyées par script, pas tapées par Ludo ; le domaine oublié est fictif, planté pour la prise ; seules les pauses de plus de deux secondes sont raccourcies."
 ---
 

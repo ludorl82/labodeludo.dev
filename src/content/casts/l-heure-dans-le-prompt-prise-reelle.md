@@ -8,6 +8,7 @@ caption: "Trois panneaux : les commandes en haut, le journal de llama-server au 
 article: "un-cerveau-plus-lent-pour-bob"
 session: "aucune"
 frame: "none"
+type: "prise-reelle"
 disclaimer: "✔ Ceci est une capture réelle, faite le 4 octobre 2026 avec asciinema dans une session tmux dédiée, sans montage. Le script mesure-prefixe.sh, publié dans le dépôt du site, envoie ses requêtes au vrai modèle de Bob, avec les réglages de la production; le panneau du milieu suit le journal d'Ollama sur la machine qui le sert. Les frappes ont été envoyées par script et non tapées par Ludo, l'invite est « ludo@labo », seules les pauses de plus de deux secondes sont raccourcies, et l'identifiant du conteneur dans la barre tmux est remplacé par un nom de même longueur."
 ---
 

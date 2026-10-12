@@ -6,8 +6,10 @@
    le déploiement ne supprime pas. Une fuite se corrige en remplaçant le
    fichier ; elle ne reste dans l'historique d'aucun dépôt public.
 
-   Tout le texte vient de transcriptions : il est posé en textContent, jamais
-   en HTML. Les conversations sont en français, sur les deux pages. */
+   Chaque fenêtre montre un récapitulatif par jour, écrit par le modèle du
+   labo à partir de la conversation assainie, pas la conversation elle-même.
+   Tout ce texte est posé en textContent, jamais en HTML. Il est en français,
+   sur les deux pages. */
 interface Props {
   lang?: "fr" | "en";
 }
@@ -16,15 +18,15 @@ const { lang = "fr" } = Astro.props;
 const t = {
   fr: {
     heading: "En ce moment dans la console",
-    lede: "Chaque fenêtre de ma session tmux, avec la conversation qui s'y déroule avec Claude Code : ce sur quoi je travaille cette semaine, et ce qui deviendra peut-être un article. Clique sur une fenêtre dans la barre du bas pour la parcourir.",
-    disclaimer: "✔ Prise réelle, refaite chaque soir et assainie automatiquement, sans relecture humaine. Les noms d'hôte, adresses et domaines sont remplacés par des valeurs fictives, et les appels d'outils sont réduits à une ligne, sans leur sortie. Un passage qu'une des gardes touche est retiré, et la fenêtre entière seulement quand le sujet lui-même est privé : la liste blanche, la liste noire du vrai inventaire, et la relecture par le modèle du labo, qui cherche ce qu'aucune liste ne sait nommer d'avance.",
+    lede: "Chaque fenêtre de ma session tmux, et ce que j'y ai fait avec Claude Code, jour par jour : ce sur quoi je travaille cette semaine, et ce qui deviendra peut-être un article. Clique sur une fenêtre dans la barre du bas pour la parcourir.",
+    disclaimer: "✔ Refait chaque soir à partir des vraies conversations, sans relecture humaine. Le modèle du labo résume chaque journée à partir d'une conversation déjà assainie : noms d'hôte, adresses et domaines remplacés par des valeurs fictives, appels d'outils sans leur sortie, et tout passage touché par une garde retiré avant le résumé. Le résumé repasse ensuite les mêmes gardes (liste blanche, liste noire du vrai inventaire, relecture par le modèle) et il est retiré s'il en touche une.",
     loading: "Chargement de l'instantané…",
     windows: "Fenêtres de la session",
   },
   en: {
     heading: "In the console right now",
-    lede: "Every window of my tmux session, with the conversation going on in it with Claude Code: what I am working on this week, and what may become an article. The conversations are in French. Click a window in the bottom bar to browse it.",
-    disclaimer: "✔ A real capture, redone every night and sanitized automatically, with no human review. Hostnames, addresses and domains are replaced with fictional values, and tool calls are reduced to one line, without their output. A passage that any of the guards flags is removed, and the whole window only when its subject itself is private: the allowlist, the denylist of the real inventory, and a review by the lab's own model, which looks for what no list can name in advance.",
+    lede: "Every window of my tmux session, and what I did in it with Claude Code, day by day: what I am working on this week, and what may become an article. The summaries are in French. Click a window in the bottom bar to browse it.",
+    disclaimer: "✔ Redone every night from the real conversations, with no human review. The lab's model summarizes each day from a conversation that is already sanitized: hostnames, addresses and domains replaced with fictional values, tool calls without their output, and any passage a guard flags removed before the summary. The summary then goes through the same guards (allowlist, denylist of the real inventory, review by the model) and is removed if it trips one.",
     loading: "Loading the snapshot…",
     windows: "Session windows",
   },
@@ -55,7 +57,7 @@ const t = {
 </section>
 
 <script>
-  type Entry = { r: "u" | "a" | "t" | "n"; t: string; at?: string };
+  type Day = { date: string; resume?: string; retire?: boolean };
   type Win = {
     index: number;
     name: string;
@@ -63,7 +65,7 @@ const t = {
     activity: string;
     status: "publiee" | "retenue";
     reason?: "garde" | "relecture";
-    entries?: Entry[];
+    jours?: Day[];
   };
   type Snapshot = { generated: string; windows: Win[] };
 
@@ -75,6 +77,7 @@ const t = {
         heldReview: "Window held back tonight: its subject itself is private, according to the review by the lab's model.",
         heldList: "Window held back tonight: too many of its passages carry names or values that do not leave the lab.",
         empty: "Nothing to show in this window.",
+        removed: "— summary removed by the guards —",
         none: "No snapshot here. It is only placed next to the site in production.",
         stamp: "snapshot of",
         vide: "The session is empty tonight.",
@@ -85,6 +88,7 @@ const t = {
         heldReview: "Fenêtre retenue ce soir : selon la relecture par le modèle du labo, c'est le sujet lui-même qui est privé.",
         heldList: "Fenêtre retenue ce soir : trop de ses passages portent des noms ou des valeurs qui ne sortent pas du labo.",
         empty: "Rien à montrer dans cette fenêtre.",
+        removed: "— récapitulatif retiré par la garde —",
         none: "Pas d'instantané ici. Il n'est déposé qu'à côté du site en production.",
         stamp: "instantané du",
         vide: "La session est vide ce soir.",
@@ -109,6 +113,14 @@ const t = {
       minute: "2-digit",
     });
 
+  // « 2026-10-11 » est une date locale : midi évite qu'un fuseau la décale.
+  const day = (d: string) =>
+    new Date(`${d}T12:00:00`).toLocaleDateString(S.locale, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+
   function show(w: Win, buttons: Map<number, HTMLButtonElement>, clicked = false) {
     for (const [i, b] of buttons) b.setAttribute("aria-current", String(i === w.index));
     pane.replaceChildren();
@@ -123,26 +135,21 @@ const t = {
           w.reason === "relecture" ? S.heldReview : S.heldList,
         ),
       );
-    } else if (!w.entries?.length) {
+    } else if (!w.jours?.length) {
       pane.append(el("p", "held", S.empty));
     }
 
-    for (const e of w.entries ?? []) {
-      if (e.r === "u") {
-        const p = el("div", "msg user");
-        p.append(el("span", "mark", "❯ "), el("span", "body", e.t));
-        pane.append(p);
-      } else if (e.r === "a") {
+    for (const d of w.jours ?? []) {
+      pane.append(el("div", "msg date", `── ${day(d.date)} ──`));
+      if (d.resume) {
         const p = el("div", "msg asst");
-        p.append(el("span", "mark", "● "), el("span", "body", e.t));
+        p.append(el("span", "mark", "● "), el("span", "body", d.resume));
         pane.append(p);
-      } else if (e.r === "t") {
-        pane.append(el("div", "msg tool", `  ⎿ ${e.t}`));
       } else {
-        pane.append(el("div", "msg note", e.t));
+        pane.append(el("div", "msg note", S.removed));
       }
     }
-    // On arrive sur le présent : le bas de la conversation.
+    // On arrive sur le présent : le dernier jour, en bas.
     pane.scrollTop = pane.scrollHeight;
     // Seulement sur un clic : à l'arrivée, l'adresse de la page ne bouge pas.
     if (clicked) history.replaceState(null, "", `#fenetre-${w.index}`);
@@ -270,21 +277,13 @@ const t = {
     overflow-wrap: anywhere;
   }
 
-  .pane :global(.user) {
-    color: #ffffff;
-  }
-
-  .pane :global(.user .mark) {
+  .pane :global(.date) {
+    margin: 1.2rem 0 0.4rem;
     color: #87d787;
   }
 
   .pane :global(.asst .mark) {
     color: #dadada;
-  }
-
-  .pane :global(.tool) {
-    margin-top: -0.4rem;
-    color: #8a8a8a;
   }
 
   .pane :global(.note) {

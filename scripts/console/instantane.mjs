@@ -10,10 +10,14 @@
 // de la session, que le titre de la fenêtre retrouve (enregistrement
 // « custom-title »).
 //
-// CE QUI EST MONTRÉ : les demandes de Ludo, les réponses, et chaque appel
+// CE QUI EST LU : les demandes de Ludo, les réponses, et chaque appel
 // d'outil réduit à une ligne (« Bash : Vérifier l'état du cluster »), jamais
 // sa sortie. C'est dans les sorties que vivent les adresses, les secrets et
 // les vrais noms ; on ne les assainit pas, on ne les prend pas.
+//
+// CE QUI EST PUBLIÉ : un récapitulatif par jour, écrit par le modèle local à
+// partir de la conversation DÉJÀ assainie, jamais la conversation elle-même.
+// Personne ne lisait 400 passages ; un paragraphe par jour, si.
 //
 // L'ASSAINISSEMENT, dans l'ordre, fenêtre par fenêtre :
 //  1. exclusions privées : une fenêtre exclue n'apparaît pas du tout ;
@@ -24,8 +28,9 @@
 //  5. la relecture par le modèle local, qui retient ce qu'aucune liste ne sait
 //     nommer d'avance : employeur, famille, santé, argent, secrets, adresses,
 //     et les failles encore ouvertes qu'un inconnu pourrait exploiter.
-// Une garde qui touche RETIRE le passage (une marque le remplace à l'écran),
-// puis ce qui reste est vérifié de nouveau ; jamais rien n'est réécrit. Une
+// Une garde qui touche RETIRE le passage, puis ce qui reste est vérifié de
+// nouveau ; jamais rien n'est réécrit. Le récapitulatif repasse ensuite les
+// mêmes gardes : touché, il est retiré, et sa journée le dit. Une
 // fenêtre n'est retenue en entier que si le sujet lui-même est privé (plus du
 // quart à retirer) ou si la relecture ne se satisfait pas. Elle ne bloque
 // jamais les autres. Une erreur, elle, n'écrit rien du tout : modèle
@@ -57,9 +62,13 @@ const MODEL = arg("model", "qwen38-27b");
 const CACHE = arg("cache", join(homedir(), ".cache/console-instantane"));
 const SANS_RELECTURE = flag("sans-relecture");
 
-const MAX_ENTRIES = 400; // par fenêtre, les plus récentes
+const MAX_ENTRIES = 400; // par fenêtre, les plus récentes, en journées entières
 const MAX_CHARS = 6000; // par entrée
 const CHUNK_CHARS = 6000; // par appel au modèle : au-delà, le 27B rate des passages (banc du 2026-10-12)
+const DAY_CHARS = 36000; // par récapitulatif : tient dans num_ctx 16384 avec la réponse
+const TZ = "America/Toronto";
+const DAY = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+const jour = (iso) => DAY.format(new Date(iso));
 
 /* Domaines publics que la console cite sans rien révéler du labo : de la
    documentation et des fournisseurs. Tout autre domaine devient site.example. */
@@ -245,7 +254,14 @@ function entriesOf(path) {
   }
   // `n` : le rang dans toute la conversation, stable d'un soir à l'autre
   // (la relecture le cite, et son cache en dépend).
-  return out.map((e, n) => ({ ...e, n })).slice(-MAX_ENTRIES);
+  const all = out.map((e, n) => ({ ...e, n }));
+  if (all.length <= MAX_ENTRIES) return all;
+  // La coupe tombe au milieu d'une journée : ce début de journée ne se
+  // résumerait pas en entier, et son récapitulatif changerait chaque soir.
+  // Il part avec le reste.
+  const kept = all.slice(-MAX_ENTRIES);
+  const cut = jour(kept[0].at);
+  return kept.filter((e) => jour(e.at) !== cut);
 }
 
 /* --- gardes ------------------------------------------------------------ */
@@ -324,11 +340,8 @@ function cachePut(key, v) {
   writeFileSync(join(CACHE, `${key}.json`), JSON.stringify(v));
 }
 
-/** Les numéros de passage que le modèle signale dans une tranche. */
-async function review(chunk) {
-  const key = createHash("sha256").update(`${PROMPT_VERSION}\0${MODEL}\0${chunk.text}`).digest("hex");
-  const hit = cacheGet(key);
-  if (hit) return hit;
+/** Un appel au modèle local, réponse JSON selon `format`. */
+async function ask(what, system, user, format) {
   const res = await fetch(`${OLLAMA}/api/chat`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -337,30 +350,37 @@ async function review(chunk) {
       stream: false,
       think: false,
       messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: `Extrait :\n\n${chunk.text}` },
+        { role: "system", content: system },
+        { role: "user", content: user },
       ],
-      format: {
-        type: "object",
-        properties: {
-          passages: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: { n: { type: "integer" }, categorie: { type: "string", enum: CATEGORIES } },
-              required: ["n", "categorie"],
-            },
-          },
-        },
-        required: ["passages"],
-      },
+      format,
       options: { temperature: 0, num_ctx: 16384 },
     }),
     signal: AbortSignal.timeout(600_000),
   });
-  if (!res.ok) throw new Error(`relecture : HTTP ${res.status}`);
-  const body = await res.json();
-  const verdict = JSON.parse(body.message.content);
+  if (!res.ok) throw new Error(`${what} : HTTP ${res.status}`);
+  return JSON.parse((await res.json()).message.content);
+}
+
+/** Les numéros de passage que le modèle signale dans une tranche. */
+async function review(chunk) {
+  const key = createHash("sha256").update(`${PROMPT_VERSION}\0${MODEL}\0${chunk.text}`).digest("hex");
+  const hit = cacheGet(key);
+  if (hit) return hit;
+  const verdict = await ask("relecture", SYSTEM, `Extrait :\n\n${chunk.text}`, {
+    type: "object",
+    properties: {
+      passages: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: { n: { type: "integer" }, categorie: { type: "string", enum: CATEGORIES } },
+          required: ["n", "categorie"],
+        },
+      },
+    },
+    required: ["passages"],
+  });
   const passages = (verdict.passages ?? []).filter((p) => CATEGORIES.includes(p.categorie));
   // Un numéro qui n'est pas dans la tranche ne désigne rien : le modèle a
   // signalé quelque chose sans dire où. On ne sait pas quoi retirer, alors la
@@ -418,6 +438,62 @@ function retirer(entries, drop) {
   return out;
 }
 
+/* --- récapitulatifs ---------------------------------------------------- */
+
+const RESUME_VERSION = "1";
+const SYSTEM_RESUME = `Tu résumes une journée de travail entre Ludo et Claude, un assistant de programmation, dans son labo maison. Le résumé sera publié sur son site, sous la date du jour, pour des visiteurs qui veulent savoir sur quoi il travaille.
+
+Écris en français, au passé composé, en 2 à 4 phrases, un seul paragraphe, sans liste ni Markdown. Dis ce que Ludo cherchait à faire, ce qui a été fait ou décidé, et où ça en est à la fin de la journée. Appelle-les « Ludo » et « Claude ». N'ajoute rien qui ne soit pas dans l'extrait : aucun chiffre, aucun nom, aucune cause qu'il ne donne pas. Réponds en JSON.`;
+
+/** Le texte d'une journée pour le modèle : sans les outils s'il est trop
+    long, puis des entrées raccourcies, puis la fin seulement. */
+function dayText(entries) {
+  const label = { u: "Ludo :", a: "Claude :", t: "[outil]" };
+  const render = (es, max) => es.map((e) => `${label[e.r]} ${e.t.length > max ? `${e.t.slice(0, max)} […]` : e.t}`).join("\n\n");
+  let text = render(entries, 1500);
+  if (text.length > DAY_CHARS) text = render(entries.filter((e) => e.r !== "t"), 600);
+  return text.length > DAY_CHARS ? text.slice(-DAY_CHARS) : text;
+}
+
+async function resume(text) {
+  const key = createHash("sha256").update(`resume\0${RESUME_VERSION}\0${MODEL}\0${text}`).digest("hex");
+  const hit = cacheGet(key);
+  if (hit) return hit.resume;
+  const v = await ask("récapitulatif", SYSTEM_RESUME, `Journée :\n\n${text}`, {
+    type: "object",
+    properties: { resume: { type: "string" } },
+    required: ["resume"],
+  });
+  cachePut(key, { resume: v.resume });
+  return v.resume;
+}
+
+/** Un récapitulatif par journée, chacun repassé devant les gardes : touché,
+    il est retiré, pas réécrit. */
+async function recapitulatifs(w, safe, config, deny) {
+  const days = new Map();
+  for (const e of safe) {
+    if (e.r === "n") continue;
+    const d = jour(e.at);
+    if (!days.has(d)) days.set(d, []);
+    days.get(d).push(e);
+  }
+  const out = [];
+  for (const [date, es] of days) {
+    // Une journée où Claude n'a rien répondu (un /compact, des outils seuls)
+    // n'a rien à raconter : le modèle en ferait une « opération de maintenance ».
+    if (!es.some((e) => e.r === "a")) continue;
+    const [text] = sanitize([await resume(dayText(es))], config);
+    const hit = listHits([text], deny).get(0);
+    const flagged = hit ? null : (await review({ text: `[0] ${text}\n\n`, ns: [0] })).passages[0]?.categorie;
+    if (hit || flagged) {
+      log(`${w.index}:${w.name} — récapitulatif du ${date} retiré, ${hit ? `garde « ${hit} »` : `relecture « ${flagged} »`}`);
+      out.push({ date, retire: true });
+    } else out.push({ date, resume: text });
+  }
+  return out;
+}
+
 /* --- assemblage -------------------------------------------------------- */
 
 const config = loadConfig();
@@ -460,7 +536,7 @@ for (const w of windows()) {
 
   if (!src) {
     log(`${w.index}:${w.name} — aucune transcription trouvée`);
-    result.push({ ...base, name, status: "publiee", entries: [] });
+    result.push({ ...base, name, status: "publiee", jours: [] });
     continue;
   }
 
@@ -494,18 +570,13 @@ for (const w of windows()) {
     retenue(`${dropped.size} entrées sur ${entries.length} à retirer`, hits.size ? "garde" : "relecture");
     continue;
   }
-  log(`${w.index}:${w.name} — publiée, ${entries.length - dropped.size} entrées, ${dropped.size} retirée(s) (${basename(src.path)})`);
-  result.push({
-    ...base,
-    name,
-    status: "publiee",
-    retirees: dropped.size,
-    entries: safe.map(({ n, ...e }) => e),
-  });
+  const jours = await recapitulatifs(w, safe, config, deny);
+  log(`${w.index}:${w.name} — publiée, ${jours.length} jour(s), ${entries.length - dropped.size} entrées lues, ${dropped.size} retirée(s) (${basename(src.path)})`);
+  result.push({ ...base, name, status: "publiee", retirees: dropped.size, jours });
 }
 
 const doc = {
-  version: 1,
+  version: 2,
   generated: new Date().toISOString(),
   session: SESSION,
   relu: !SANS_RELECTURE,

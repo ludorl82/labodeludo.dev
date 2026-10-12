@@ -6,6 +6,7 @@ cast: "/casts/survivor-island.cast"
 poster: "npt:0:06"
 caption: "Le dernier test de traction : cascade, BMC égaré, réparation in-band, et le verrou qui clôt la panne tout seul."
 article: "l-ile-du-survivant"
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : reconstitution condensée à partir de la transcription réelle de la session (2026-08-05). Les invites sont textuelles, les temps d'attente sont compressés, et les noms d'hôtes et adresses sont fictifs."
 ---

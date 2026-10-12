@@ -5,6 +5,7 @@ description: "Un bouton dans Home Assistant qui ouvre une fenêtre tmux avec une
 cast: "/casts/bouton-claude.cast"
 poster: "npt:0:08"
 caption: "Une demande simple — démarrer Claude Code au boot dans tmux — qui bute sur un piège réel (deux serveurs tmux dans le même conteneur), puis se termine en bouton Home Assistant : chaque pression ouvre une fenêtre tmux avec un nouveau Claude, pilotable depuis l'app tant qu'elle vit."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues attentes sont coupées. Noms d'hôte sanitisés."
 ---

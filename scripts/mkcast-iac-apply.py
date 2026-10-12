@@ -20,105 +20,46 @@ Palette and line grammar per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-iac-apply.py
 """
-import json
-import random
 
-OUT = "public/casts/iac-apply.cast"
-COLS, ROWS = 96, 22
-random.seed(7)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, CYAN, DIM, FG, GREEN, PINK, R, RED, SPIN, YELLOW, calling, cont, line, prompt, says, spinner, waiting
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner, and the refusal lines here
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/iac-apply.cast",
+    title="La porte anti-destroy refuse d'appliquer (reconstitution)",
+    session="iac-auto-deploy",
+    windows=["backlog", "iac-auto-deploy"],
+    current="iac-auto-deploy",
+    start="30-Jul-26 19:26:44",
+    cwd="~/tmp",
+    model="Fable 5 · Claude Max",
+    version="v2.1.220",
+    seed=7,
+)
 
-BRANCH = "iac-auto-deploy"
-
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
+T.disclaimer("Demandes et messages réels, minutage compressé,",
+             "noms d'hôte sanitisés.")
+T.banner()
 
 
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def typed(s, prefix="", d=1.5):
-    """Type a line out character by character, at human speed."""
-    global t
-    if prefix:
-        out(prefix)
-        pause(0.7)
-    for ch in s:
-        out(ch)
-        t += random.uniform(0.045, 0.115)
-    out("\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(text, d=1.8):
-    rule()
-    typed(f"{FG}{text}{R}", prefix=f"{GREEN}❯{R} ", d=d)
-    line()
-
-
+# L'ancien script rythmait ses réponses à 1,35 s par ligne : on garde son rythme.
 def says(text, d=1.35):
-    line(f"{FG}●{R} {text}", d)
+    T.says(text, d)
 
 
 def cont(text, d=1.35):
-    line(f"  {text}", d)
-
-
-def calling(tool, n=1, d=0.7):
-    line()
-    line(f"  {DIM}Calling {tool} {n} time{'s' if n > 1 else ''}…{R}", d)
-
-
-def spinner(word, secs, tokens, d=2.0):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
+    T.cont(text, d)
 
 
 def stop(text, detail=None, d=3.2):
-    line()
+    """Ancienne aide : le message d'arrêt en jaune, puis l'agent rend la main."""
     line(f"  {YELLOW}{BOLD}{text}{R}", 0.9)
     if detail:
         line(f"  {YELLOW}{detail}{R}", 0.6)
-    line(f"  {DIM}waiting for you…{R}", d)
-    line()
-
-
-# --- disclaimer ---------------------------------------------------------
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels, minutage compressé,{R}", 0.25)
-line(f"{DIM}     noms d'hôte sanitisés.  labodeludo.dev/casts/{R}", 2.6)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.220{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Fable 5 · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/tmp{R}", 1.4)
-line()
+    waiting()
+    pause_ = d - 1.2
+    if pause_ > 0:
+        T.pause(pause_)
 
 # --- 1. the ask ---------------------------------------------------------
 prompt("hey, can we start building the auto deployment through github actions of all iac projects?")
@@ -168,15 +109,14 @@ cont("live on the cluster (16 apps synced, zero pod restarts), comin canary", 1.
 cont("deployed on vm-01. Now let's prove the gate instead of trusting it.", 3.0)
 
 # --- 3. jump cut: the destroy-gate test ---------------------------------
-line(f"{DIM}  ── plus tard dans la session : tester la porte pour vrai ──{R}", 1.6)
-line()
+T.separator("plus tard dans la session : tester la porte pour vrai", 1.6)
 says("PR #2 is open: it deletes the throwaway TXT record created by PR #1.")
 cont("The plan comment flags it loudly:", 1.0)
 line(f"  {SPIN}⛔ Plan contains 1 destroy — the apply workflow will refuse this{R}", 0.5)
 line(f"  {SPIN}   cloudflare_dns_record.cicd_test_txt{R}", 1.6)
 stop("Merge PR #2 — the apply run must FAIL at the destroy gate.")
 
-prompt("done", d=1.2)
+prompt("done")
 calling("Bash", 2)
 spinner("Watching the apply run", "1m 04s", "1.2k")
 says("The run failed exactly where it should:", 1.15)
@@ -187,9 +127,8 @@ says("The gate held. The record still exists; git says delete; closing that")
 cont("gap is now deliberate human work — which is the whole point.", 2.4)
 
 # --- 3. jump cut: comin deploys with nobody home ------------------------
-line(f"{DIM}  ── plus tard encore : le même merge, côté NixOS ──{R}", 1.6)
-line()
-prompt("merged the prs", d=1.2)
+T.separator("plus tard encore : le même merge, côté NixOS", 1.6)
+prompt("merged the prs")
 calling("Bash", 1)
 spinner("Watching vm-01", "1m 12s", "0.8k")
 line(f"  {GREEN}deployer: deploying generation 88ec6151 (switch){R}", 0.4)
@@ -200,18 +139,4 @@ cont("configurationRevision now equals origin/master.", 2.0)
 line()
 line(f"{DIM}  Le bouton merge est devenu le bouton deploy.{R}", 3.5)
 
-# --- write --------------------------------------------------------------
-header = {
-    "version": 2,
-    "width": COLS,
-    "height": ROWS,
-    "title": "La porte anti-destroy refuse d'appliquer (reconstitution)",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-    "idleTimeLimit": 2,
-}
-with open(OUT, "w") as f:
-    f.write(json.dumps(header) + "\n")
-    for e in events:
-        f.write(json.dumps(e, ensure_ascii=False) + "\n")
-
-print(f"{OUT}: {len(events)} events, {events[-1][0]:.1f}s")
+T.save()

@@ -200,25 +200,20 @@ figure:not(.live-arch, .racks) > figcaption a {
 }
 
 /* Dans un article, le schéma sort de la colonne de texte (40rem, faite pour
-   lire) : jusqu'à 64rem, centré sur le texte, sans jamais toucher les bords
-   de l'écran. Avant, un dessin de 900 de large tenait dans 640 px, réduit
-   à 71 %, et défilait de côté même sur un écran de bureau.
-   La géométrie suit .page (BaseLayout.astro) : 56rem au plus, 1.5rem de
-   marge; la colonne de texte part de son bord gauche. */
-.prose figure:has(> .diagram-wrap):not(.live-arch) {
-  /* 4rem et non 3 : 100vw compte la barre de défilement de Windows */
-  --fig-w: min(64rem, 100vw - 4rem);
-  --text-left: calc(max(0px, (100vw - 56rem) / 2) + 1.5rem);
-  --text-mid: calc(var(--text-left) + min(20rem, (100vw - 3rem) / 2));
-  width: var(--fig-w);
-  max-width: none;
-  margin-left: calc(
-    clamp(1.5rem, var(--text-mid) - var(--fig-w) / 2, 100vw - var(--fig-w) - 1.5rem) - var(--text-left)
-  );
+   lire) et prend la largeur de l'article, comme la bannière et comme sur
+   /architecture : même bord gauche que le texte, même bord droit que la
+   bannière. Avant, un dessin de 900 de large tenait dans 640 px, réduit à
+   71 %, et défilait de côté même sur un écran de bureau.
+   100cqw = la largeur de l'article (sa boîte de requête), au pixel près :
+   pas de 100vw, qui compte la barre de défilement. Rien en position fixe ne
+   vit dans l'article (palette, visionneuse : dans BaseLayout). */
+article:has(> .prose) {
+  container-type: inline-size;
 }
 
-.prose figure:has(> .diagram-wrap):not(.live-arch) > figcaption {
-  margin-inline: auto;
+.prose figure:has(> .diagram-wrap):not(.live-arch) {
+  width: 100cqw;
+  max-width: none;
 }
 
 /* Sur un téléphone, un dessin de 900 de large ne sera jamais lisible dans

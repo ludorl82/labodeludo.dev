@@ -25,7 +25,7 @@
 //    alors elle vient de la variable PUBLIC_DENYLIST (secret du dépôt en CI)
 //    ou du fichier PUBLIC_DENYLIST_FILE, par défaut
 //    ~/git/ludorl82/net-cfgs/public-denylist.txt. Une ligne par règle :
-//        étiquette | expression régulière (drapeaux iu)
+//        étiquette [drapeaux] | expression régulière   (iu par défaut)
 //    plus une ligne « !cle <hex> », la clé des acquittements privés.
 //    Sans elle, la garde tourne à moitié et le dit ; avec GARDE_EXIGEE=1
 //    (la CI), elle refuse.
@@ -83,9 +83,13 @@ function loadDenylist() {
       key = line.slice(5).trim();
       continue;
     }
+    // « étiquette | regex », drapeaux iu. « étiquette [u] | regex » change les
+    // drapeaux : u seul quand la casse distingue un nom propre d'un mot
+    // courant. Pas de troisième champ : une regex contient déjà des |.
     const bar = line.indexOf("|");
-    if (bar < 0) throw new Error(`${from}:${i + 1} : « étiquette | regex » attendu`);
-    rules.push([line.slice(0, bar).trim(), new RegExp(line.slice(bar + 1).trim(), "iu")]);
+    if (bar < 0) throw new Error(`${from}:${i + 1} : « étiquette [drapeaux] | regex » attendu`);
+    const m = line.slice(0, bar).trim().match(/^(.*?)(?:\s*\[([a-z]+)\])?$/);
+    rules.push([m[1], new RegExp(line.slice(bar + 1).trim(), m[2] ?? "iu")]);
   }
   if (!key) throw new Error(`${from} : ligne « !cle <hex> » manquante`);
   return { key, rules, from };

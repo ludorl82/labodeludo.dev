@@ -5,6 +5,7 @@ description: "An idle GTX 960 handed to Kubernetes: the driver on the host freez
 cast: "/casts/le-cluster-ramasse-les-cartes.cast"
 poster: "npt:1:33"
 caption: "The GPU thread of one evening: the Ready node that no longer starts anything, the photo of the screen that corrects the diagnosis, the compute VM, the empty CD drive that skews the bisect, the one line of XML that unblocks three cards, then the four bugs in the swap. The agent stops four times and corrects itself three times. The recording is in French."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real transcript of the September 14–15, 2026 session. Ludo's prompts are quoted word for word, typos included, except for machine names replaced with the article's; tool output is rewritten and shortened, the timing is compressed and names are sanitized."
 article: ["quand-personne-ne-joue-le-cluster-ramasse-les-cartes"]

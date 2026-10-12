@@ -5,6 +5,7 @@ description: "La journée où le deuxième poste de jeu reçoit sa carte graphiq
 cast: "/casts/gpu-a-la-demande.cast"
 poster: "npt:1:41"
 caption: "Le 22 août seulement : la RTX 3050 passée à arcade2, le routage par politique sur les deux postes, la carte coincée en D3cold après un arrêt raté, puis /games déménagé en qcow2 sur le NVMe quand le SSD des jeux tombe du bus. L'agent s'arrête trois fois, dont une sur un refus de permission."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session du 22 août 2026, et de cette journée seulement. Les demandes de Ludo sont citées mot pour mot, fautes comprises, sauf une adresse remplacée par une plage de documentation; les sorties d'outils sont réécrites et raccourcies, le minutage est compressé et les noms sont sanitisés."
 article: ["gpu-a-la-demande-a-la-maison"]

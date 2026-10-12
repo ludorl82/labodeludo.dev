@@ -5,6 +5,7 @@ description: "Two sessions around Bob's voice: the evening it moves to the 27-bi
 cast: "/casts/trois-cartes-deux-cerveaux.cast"
 poster: "npt:1:48"
 caption: "The thread of two sessions: the voice re-reading its whole prompt, the dense model's bench, three lines at the top of the prompt, the processing slot that cannot be doubled, then the October 4 measurement and the cache warm for the wrong prompt. The agent stops twice and corrects itself three times. The recording is in French."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real transcripts of two sessions, on September 25 and from October 4 to 6, 2026. Ludo's prompts are quoted word for word, typos included; tool output is rewritten and shortened, the timing is compressed and names are sanitized."
 article: ["trois-cartes-deux-cerveaux-une-horloge", "un-cerveau-plus-lent-pour-bob"]

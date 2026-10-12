@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import CastList from "../../../components/CastList.astro";
+import ConsoleSnapshot from "../../../components/ConsoleSnapshot.astro";
 
 const casts = (await getCollection("castsEn")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -23,13 +24,17 @@ const casts = (await getCollection("castsEn")).sort(
   <header class="page-header">
     <h1>Terminal recordings</h1>
     <p class="lede">
-      The working sessions behind the articles, replayable in the browser. Most
-      are condensed reconstructions of a Claude Code session, taken from its
-      real transcript; others are real captures of the console or of the site
-      chat. Each one says plainly what it is above the player.
+      What goes on in my console: at the top, the working session as it was
+      last night; further down, the sessions behind the articles, replayable in
+      the browser. Most are condensed reconstructions of a Claude Code session,
+      taken from its real transcript; others are real captures of the console
+      or of the site chat. Each one says plainly what it is.
     </p>
   </header>
 
+  <ConsoleSnapshot lang="en" />
+
+  <h2 class="list-h">The recordings</h2>
   <CastList casts={casts} basePath="/en/casts" lang="en" />
 </BaseLayout>
 
@@ -48,6 +53,11 @@ const casts = (await getCollection("castsEn")).sort(
 
   h1 {
     margin: 0 0 0.6rem;
+  }
+
+  .list-h {
+    margin: 0 0 1rem;
+    font-size: 1.15rem;
   }
 
   .lede {

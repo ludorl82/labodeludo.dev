@@ -1,6 +1,6 @@
 // L'instantané public de la console : chaque fenêtre de la session tmux
-// « claude », avec l'historique de sa conversation, assaini, pour la page
-// /console. Tourne sur la console, chaque soir.
+// « claude », avec l'historique de sa conversation, assaini, pour la
+// section console de /casts. Tourne sur la console, chaque soir.
 //
 //   node scripts/console/instantane.mjs --out instantane.json [--sans-relecture]
 //

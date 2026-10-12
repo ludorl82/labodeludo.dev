@@ -27,7 +27,7 @@ interface Props {
 }
 
 const { src, caption, disclaimer, poster = "npt:0:06", containerId,
-        session = "claude-code", frame = "alacritty" } = Astro.props;
+        session = "claude-code" } = Astro.props;
 
 /* Each recording ran in its own throwaway container at its own moment, so the
    id and the clock in the status line have to differ from one cast to the
@@ -67,6 +67,12 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
    never disagree about when a given recording was made. */
 const entry = (await getCollection("casts")).find((c) => c.data.cast === src);
 const d = entry?.data.pubDate;
+
+/* Le cadre aussi vient de la fiche quand l'appel ne le donne pas : depuis le
+   gabarit de la vraie console (scripts/claude_tui.py, 2026-10-12), une
+   reconstitution porte sa barre tmux dans l'enregistrement, et un article qui
+   l'intègre ne doit pas lui en ajouter une deuxième. */
+const frame = Astro.props.frame ?? entry?.data.frame ?? "alacritty";
 const stamp = d
   ? `${String(d.getUTCDate()).padStart(2, "0")}-${MONTHS[d.getUTCMonth()]}-${String(
       d.getUTCFullYear() % 100,

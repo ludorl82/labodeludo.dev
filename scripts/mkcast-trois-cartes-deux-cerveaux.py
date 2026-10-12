@@ -59,12 +59,6 @@ def prompt(*parts, speed=1.0):
         random.uniform = uniform
 
 
-def set_clock(when):
-    """Le cast saute à une autre session (un autre jour) : la barre tmux
-    repart de cette heure-là au lieu de continuer celle du début."""
-    T._s["clock"] = datetime.strptime(when, "%d-%b-%y %H:%M:%S") - timedelta(seconds=T.t + T._s["skew"])
-
-
 T.setup(
     out="public/casts/trois-cartes-deux-cerveaux.cast",
     title="Trois cartes, deux cerveaux (reconstitution)",
@@ -139,7 +133,7 @@ cont("Pas moyen de donner à la voix et au chat des caches séparées.", 1.3)
 
 # --- 5. nine days later: measure it -------------------------------------
 T.separator("4 octobre · la session des articles")
-set_clock("04-Oct-26 10:32:18")
+T.set_clock("04-Oct-26 10:32:18")
 prompt("J'aimerais que tu écrives les deux articles maintenant. Celui de Bob et celui de Ludo.",
        "Ils sont au backlog. J'aimerais aussi qu'on fasse un asciicast et qu'on les traduise. On",
        "les publiera sur article LinkedIn aussi (celui de Ludo). Mardi en français et jeudi en",

@@ -74,31 +74,9 @@ def cont(text, d=0.9):
 def prompt(text, pasted=None):
     """La demande tapée d'un trait ; une conversation collée arrive d'un bloc,
     comme un collage dans la zone de saisie, et monte avec la demande."""
-    if not pasted:
-        T.prompt(text)
-        return
-    T._end_turn()
-    b = T._s["bottom"]
-    T.pause(0.6)
-    typed = ""
-    for ch in text:
-        typed += ch
-        T.out_(f"\x1b7\x1b[{b + 2};1H\x1b[2K❯ {typed[-(T.COLS - 3):]}\x1b8")
-        T.t += random.uniform(0.045, 0.11)
-    tag = f" [Pasted text #1 +{len(pasted)} lines]"
-    T.pause(0.5)
-    T.out_(f"\x1b7\x1b[{b + 2};1H\x1b[2K❯ {(typed + tag)[-(T.COLS - 3):]}\x1b8")
-    T.pause(0.7)
-    T.out_(f"\x1b7\x1b[{b + 2};1H\x1b[2K❯ \x1b8")
-    import textwrap
-    for i, l in enumerate(textwrap.wrap(text, T.COLS - 4)):
-        T._hist(f"{DIM}{T.PROMPT_BG}{'❯' if i == 0 else ' '} {FG}{l} \x1b[49m")
-    for p in pasted:
-        T._hist(f"{DIM}{T.PROMPT_BG}  {p} \x1b[49m")
-    line("", 2.6)
-    T._s["turn"] = {"label": "5s"}
-    T._footer(working=True)
-    T.pause(0.8)
+    T.prompt(text, pasted=pasted)
+    if pasted:
+        T.pause(1.8)  # le temps de lire le collage
 
 
 def beat(text, d=3.2):

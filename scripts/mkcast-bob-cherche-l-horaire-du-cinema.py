@@ -60,7 +60,7 @@ def stop(text, detail=None):
 def day(label, start):
     """Une nouvelle session : l'intertitre, et l'horloge de la barre saute au soir du 14."""
     T.separator(label)
-    T._s["clock"] = datetime.strptime(start, "%d-%b-%y %H:%M:%S") - timedelta(seconds=T.t + T._s["skew"])
+    T.set_clock(start)
 
 # --- 1. the tool, and the checkbox --------------------------------------
 prompt("Est-ce qu'on pourrait faire chercher Bob sur internet avec homme assistant?")

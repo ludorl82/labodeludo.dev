@@ -41,12 +41,6 @@ import claude_tui as T
 from claude_tui import BOLD, DIM, GREEN, R, RED, calling, cont, line, prompt, says, spinner, waiting
 
 
-def set_clock(when):
-    """Le cast saute à une autre session (un autre jour) : la barre tmux
-    repart de cette heure-là au lieu de continuer celle du début."""
-    T._s["clock"] = datetime.strptime(when, "%d-%b-%y %H:%M:%S") - timedelta(seconds=T.t + T._s["skew"])
-
-
 T.setup(
     out="public/casts/la-porte-d-en-arriere.cast",
     title="La porte d'en arrière (reconstitution)",
@@ -106,7 +100,7 @@ cont("antérieur à mon changement : pas de ma faute, mais à regarder un jour."
 
 # --- 3. the next day: the freeze ----------------------------------------
 T.separator("le lendemain")
-set_clock("24-Sep-26 13:05:40")
+T.set_clock("24-Sep-26 13:05:40")
 prompt("ok pas grave, je ne reinitialiserai pas le mb. Peux-tu voir pourquoi quand je me",
        "connecte par ssh à console-vm.lab.example aprèes une ou deux minutes la connexion",
        "ssh gèle?")

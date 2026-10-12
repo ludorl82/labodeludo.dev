@@ -121,6 +121,13 @@ def _now():
     return _s["clock"] + timedelta(seconds=t + _s["skew"])
 
 
+def set_clock(when):
+    """Le cast saute à une autre session (un autre jour) : la barre tmux et les
+    « done » repartent de cette heure-là. « 24-Sep-26 13:05:40 »."""
+    _s["clock"] = datetime.strptime(when, "%d-%b-%y %H:%M:%S") - timedelta(seconds=t + _s["skew"])
+    _footer(working=_s.get("turn") is not None)
+
+
 def _secs(label):
     n = 0
     for v, u in re.findall(r"(\d+)\s*([hms])", label):
@@ -137,17 +144,31 @@ def _tmux_bar():
             f"{c(240, 235)} {_s['windows'].index(_s['current']) + 1}:1 {c(235, 233)}{sep_r}")
     right = (f"{c(235, 233)}{sep_l}{c(240, 235)} {clock:%H:%M:%S} {c(240, 235)}{sep_l}"
              f"{c(233, 240)} {clock:%d-%b-%y} {c(245, 240)}{sep_l}{c(233, 245)}{BOLD} {_s['host']} ")
-    wins = ""
-    for i, name in enumerate(_s["windows"], 1):
-        if name == _s["current"]:
-            wins += f"{c(233, 0)}{sep_r}\x1b[22m\x1b[38;5;250m {i}:{name}* {c(233, 0)}{sep_l}"
-        else:
-            wins += f"{c(240, 233)}  {i}:{name}  "
-    lw, rw, ww = len(_visible(left)), len(_visible(right)), len(_visible(wins))
+    lw, rw = len(_visible(left)), len(_visible(right))
     space = COLS - lw - rw
-    if ww > space:  # trop de fenêtres pour la largeur : on garde celles autour de la courante
-        wins = f"{c(240, 233)}" + _visible(wins)[:max(0, space)]
-        ww = len(_visible(wins))
+
+    def render(entries, cur_name):
+        w = ""
+        for i, name in entries:
+            if name == _s["current"]:
+                w += f"{c(233, 0)}{sep_r}\x1b[22m\x1b[38;5;250m {i}:{cur_name}* {c(233, 0)}{sep_l}"
+            else:
+                w += f"{c(240, 233)}  {i}:{name}  "
+        return w
+
+    # Comme tmux quand la barre déborde : les autres fenêtres partent d'abord,
+    # la courante reste entière avec son astérisque tant qu'elle tient.
+    entries = list(enumerate(_s["windows"], 1))
+    cur = _s["current"]
+    wins = render(entries, cur)
+    while len(_visible(wins)) > space and len(entries) > 1:
+        ci = next(k for k, (_, n) in enumerate(entries) if n == cur)
+        entries.pop(0 if ci > 0 else len(entries) - 1)
+        wins = render(entries, cur)
+    if len(_visible(wins)) > space:
+        keep = max(1, len(cur) - (len(_visible(wins)) - space) - 1)
+        wins = render(entries, cur[:keep] + "…")
+    ww = len(_visible(wins))
     pad_l = (space - ww) // 2
     pad_r = space - ww - pad_l
     return f"{left}{c(240, 233)}{' ' * pad_l}{wins}{c(240, 233)}{' ' * pad_r}{right}{R}"
@@ -221,7 +242,7 @@ def _end_turn():
         _footer(working=False)
 
 
-def prompt(*parts):
+def prompt(*parts, pasted=None):
     """Ludo tape dans la zone de saisie, puis la demande monte dans
     l'historique, sur fond gris. Les morceaux sont recollés : le texte reste
     mot pour mot, seul le retour à la ligne est celui de l'écran."""
@@ -236,11 +257,19 @@ def prompt(*parts):
         shown = typed[-(COLS - 3):]
         out_(f"\x1b7\x1b[{b + 2};1H\x1b[2K❯ {shown}\x1b8")
         t += random.uniform(0.045, 0.11)
+    if pasted:
+        # Un collage s'affiche replié dans la saisie, comme dans la console,
+        # puis monte en entier dans l'historique avec la demande.
+        tag = f" [Pasted text #1 +{len(pasted)} lines]"
+        pause(0.5)
+        out_(f"\x1b7\x1b[{b + 2};1H\x1b[2K❯ {(typed + tag)[-(COLS - 3):]}\x1b8")
     pause(0.7)
     out_(f"\x1b7\x1b[{b + 2};1H\x1b[2K❯ \x1b8")
     for i, l in enumerate(textwrap.wrap(text, COLS - 4) or [""]):
         mark = "❯" if i == 0 else " "
         _hist(f"{DIM}{PROMPT_BG}{mark} {FG}{l} \x1b[49m")
+    for p in pasted or []:
+        _hist(f"{DIM}{PROMPT_BG}  {p} \x1b[49m")
     line()
     _s["turn"] = {"label": "5s"}
     _footer(working=True)
@@ -327,7 +356,8 @@ def separator(text, d=1.0):
 def save():
     _end_turn()
     pause(1.5)
-    header = {"version": 2, "width": COLS, "height": ROWS, "title": _s["title"],
+    header = {"version": 2, "width": COLS, "height": ROWS, "idle_time_limit": 2.0,
+              "title": _s["title"],
               "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"}}
     with open(_s["out"], "w", encoding="utf-8") as fh:
         fh.write(json.dumps(header, ensure_ascii=False) + "\n")

@@ -5,6 +5,7 @@ description: "The evening the site's chat went from a catalogue of titles to the
 cast: "/casts/bob-lit-enfin-ses-articles.cast"
 poster: "npt:0:24"
 caption: "The build, not the answers: from diagnosis to production, with the agent's mistakes left on screen. The recording is in French."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real transcript of the session of September 11, 2026. The prompts are the ones from the actual session — the two pasted conversations are shortened, marked […]; tool output is rewritten short, the timing is compressed and names are sanitized."
 ---

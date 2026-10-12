@@ -6,6 +6,7 @@ cast: "/casts/le-cousin-le-moins-cher.cast"
 poster: "npt:0:52"
 caption: "Three days of moving in two minutes: guard-rails first, the tool wrongly blamed, the bill that pushes toward the small model, the private session kept on the big one without being asked, and the turn ceiling inherited from Opus. The bench itself has its own recording. Terminal in French."
 article: ["remplace-par-le-cousin-le-moins-cher"]
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real transcript of the session of September 12 to 14, 2026. The prompts are the ones from the actual session, word for word; tool output is rewritten and shortened, the timing is compressed, and private repository and file names are removed."
 ---

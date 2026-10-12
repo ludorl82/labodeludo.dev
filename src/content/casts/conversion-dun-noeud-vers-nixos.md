@@ -5,6 +5,7 @@ description: "Une machine réinstallée par SSH, sans écran ni clé USB. Le Sec
 cast: "/casts/nixos-migration.cast"
 poster: "npt:0:06"
 caption: "Une conversion de nœud du début à la fin, condensée en moins de deux minutes. Le Secure Boot et l'initrd qui refuse de se décompresser sont les vrais murs de cette session."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session. Les demandes et les messages d'arrêt sont ceux de la vraie session; le minutage est compressé et les longues attentes sont coupées. Noms d'hôte sanitisés."
 article: "migrer-tout-mon-homelab-vers-nixos"

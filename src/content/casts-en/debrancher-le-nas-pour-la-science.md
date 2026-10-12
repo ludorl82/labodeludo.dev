@@ -5,6 +5,7 @@ description: "Three deliberate power cuts to the NAS to verify freshly written l
 cast: "/casts/nas-pull-the-plug.cast"
 poster: "npt:0:08"
 caption: "The three cuts, condensed: the probes that still lied, Loki's crash loop, the permission guard-rail in the middle of the repair, and the clean run at the end."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, assembled after the fact from the session's real transcript. The prompts and stop messages are those of the actual session; timing is compressed and the long monitoring loops are cut. Hostnames sanitized."
 article: "debrancher-le-nas-pour-la-science"

@@ -7,7 +7,7 @@ ia: "assistee"
 iaOutils: "Claude Code"
 ---
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > - **Avant** : `coquille`, `worker1` et `worker2` (trois Raspberry Pi 5, plan de contrôle et noeuds de travail d'une partie de mon infra locale) vivaient chacun dans son propre boîtier, simplement posés sur une tablette du rack mural. Difficiles d'accès, câblage pas contraint.
 > - **Ajout** : un support 1U GeeekPi pour Raspberry Pi 5, compatible rack 19 pouces, avec adaptateurs PCIe vers M.2 NVMe (4x) et afficheur OLED intégré.

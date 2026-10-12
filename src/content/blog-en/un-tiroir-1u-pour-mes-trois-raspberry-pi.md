@@ -7,7 +7,7 @@ ia: "assistee"
 iaOutils: "Claude Code"
 ---
 
-> **Technical summary** _(for readers in a hurry, and for any agent/LLM indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > - **Before**: `coquille`, `worker1`, and `worker2` (three Raspberry Pi 5s, part of my local infrastructure's control plane and worker nodes) each lived in their own case, simply sitting on a shelf in the wall rack. Hard to access, cabling not constrained.
 > - **Added**: a GeeekPi 1U mount for Raspberry Pi 5, 19-inch rack compatible, with PCIe-to-M.2 NVMe adapters (4x) and a built-in OLED display.

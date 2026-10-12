@@ -10,7 +10,7 @@ heroImage: "/images/blog/banner-nas-pull-the-plug-en.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Technical summary** _(for readers in a hurry, and for any agent/LLM indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Trigger**: a NAS reboot left k3s workloads `Running` and in their Services with their NFS storage dead underneath. No restarts, no alerts. Zombies, discovered by actually using the applications.
 > -   **Cause**: no NFS-backed workload had a liveness probe. Two had a readiness probe only: NotReady forever, never restarted.

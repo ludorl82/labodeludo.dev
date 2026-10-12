@@ -8,7 +8,7 @@ iaOutils: "Claude Code"
 ---
 import FrigateDetectorDiagram from "../../components/FrigateDetectorDiagram.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > - **Symptôme** : le boîtier `encodeur` (NVR maison, Frigate + caméra) faisait plus de bruit de ventilateur que d'habitude.
 > - **Cause** : Frigate 0.16 a retiré le détecteur TensorRT sur amd64. Ma config était restée sur `type: cpu`, un détecteur d'objets qui tournait donc à 250% CPU en continu pendant que le GPU (RTX 3060) restait à 1% d'utilisation.

@@ -10,7 +10,7 @@ heroImage: "/images/blog/banner-stateless-move.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Point de départ** : Cronicle, le planificateur qui déclenche à peu près tout dans mon labo, stockait ses données sur le disque de son noeud k3s. Conséquence structurelle : le pod ne pouvait tourner que là. Un drain du noeud laissait le remplaçant `Pending` avec `volume node affinity conflict`, huit noeuds en santé, zéro candidat.
 > -   **Bascule** : le moteur de stockage fichier de Cronicle est remplacé par son moteur S3 (déjà inclus dans l'image, SDK AWS compris). Migration avec l'outil fourni, `storage-migrate.js` : 1 136 enregistrements, 16 Mo, 21 secondes.

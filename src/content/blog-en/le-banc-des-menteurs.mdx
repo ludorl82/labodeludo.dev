@@ -10,7 +10,7 @@ heroImage: "/images/blog/banner-le-banc-des-menteurs-en.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Technical summary** _(for readers in a hurry, and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Why leave**: Anthropic's terms reserve the subscription for "ordinary, individual usage" and forbid routing requests on behalf of third parties. So the site's chatbot could never run on it, and a nightly `claude -p` job is at best a grey area. In April 2026, Claude Code vanished from the Pro plan for a day. And Opus at per-token prices would cost about 64 USD a month for a daily pipeline. I chose to mitigate: Alibaba Cloud Model Studio and Qwen, through Qwen Code. All of this work was done with Claude Code, in Opus 5 then Fable 5.1, which stays my development tool.
 > -   **The trap**: the local model's first runs were green. On a drawing where **everything is true**, a model that answers "true" everywhere passes. We needed lies.

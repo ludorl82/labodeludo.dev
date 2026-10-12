@@ -12,7 +12,7 @@ import AsciiCast from "../../components/AsciiCast.astro";
 import IacPipelinesDiagram from "../../components/IacPipelinesDiagram.astro";
 import OidcExchangeDiagram from "../../components/OidcExchangeDiagram.astro";
 
-> **Technical summary** _(for readers in a hurry, and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Starting point**: four IaC repos (Cloudflare, AWS, k3s, NixOS) imported, plans clean, drift checked nightly, but every `apply` was manual.
 > -   **Architecture**: hybrid. GitHub Actions (OIDC, zero stored keys) **pushes** to the public APIs. Argo CD and comin **pull** from inside the lab.

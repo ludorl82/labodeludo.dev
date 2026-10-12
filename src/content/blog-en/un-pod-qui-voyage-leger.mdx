@@ -10,7 +10,7 @@ heroImage: "/images/blog/banner-stateless-move.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Technical summary** _(for the readers in a hurry, and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Starting point**: Cronicle, the scheduler that triggers just about everything in my lab, stored its data on the disk of its k3s node. Structural consequence: the pod could only ever run there. Draining the node left the replacement `Pending` with `volume node affinity conflict`, eight healthy nodes, zero candidates.
 > -   **The switch**: Cronicle's file storage engine is replaced by its S3 engine (already bundled in the image, AWS SDK included). Migration with the tool it ships, `storage-migrate.js`: 1,136 records, 16 MB, 21 seconds.

@@ -9,7 +9,7 @@ heroImage: "/images/blog/banner-arcade-deux-postes.svg"
 ---
 import ArcadePassthroughDiagram from "../../components/ArcadePassthroughDiagram.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **L'idée** : du GPU à la demande, à la maison. Personne ne se déplace vers une machine physique : un interrupteur lève une session de jeu accélérée par une vraie carte graphique, et on y joue par Steam Remote Play depuis n'importe quel appareil de la maison.
 > -   **Le montage** : une station Supermicro X11SRA-F (Xeon W-2135, 48 Go) découpée en deux VM NixOS de 8 vCPU / 16 Go, chacune avec sa carte passée en `vfio`, RTX 3060 pour un poste, RTX 3050 pour l'autre. Une VM par joueur, pas une session partagée.

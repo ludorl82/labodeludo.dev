@@ -1,0 +1,243 @@
+---
+interface Props {
+  context?: "article" | "architecture";
+  lang?: "fr" | "en";
+}
+
+const { context = "article", lang = "fr" } = Astro.props;
+
+const copy = {
+  fr: {
+    ariaLabel:
+      "Schéma de la flotte de machines virtuelles. Quatre serveurs Supermicro X11SRA, chacun avec un Xeon W-2135 et 48 Go de mémoire. Aujourd'hui, bob héberge coquille (16 Go, la console), win11 (12 Go) et worker3 (4 Go), soit 32 Go de VM; stella héberge worker5 (4 Go) et, quand on joue, arcade1 et arcade2 (12 Go chacune), qui ont une carte graphique passée et ne bougent pas. Bientôt, eventreur et encodeur passent aussi sur X11SRA avec 48 Go : worker4 sur eventreur, worker6 à créer sur encodeur. Toutes les VM sans carte peuvent passer d'un hôte à l'autre, allumées, disque et mémoire copiés; l'hôte d'arrivée doit garder 4 Go de libre en plus de la VM.",
+    today: "aujourd'hui",
+    soon: "à partir du 14 octobre",
+    board: "X11SRA · W-2135 · 48 Go",
+    mem: "mémoire",
+    rest: "le reste : l'hôte",
+    restBob: "(k3s, Ollama, Piper)",
+    restStella: "(k3s, la RTX 3050)",
+    coquille: "coquille · 16 Go",
+    coquilleSub: "la console",
+    win11: "win11 · 12 Go",
+    win11Sub: "le Chrome de Claude",
+    worker3: "worker3 · 4 Go",
+    worker5: "worker5 · 4 Go",
+    worker4: "worker4 · 4 Go",
+    worker6: "worker6 · 4 Go",
+    workerSub: "noeud k3s, CPU",
+    toCreate: "à créer",
+    arcade1: "arcade1 · 12 Go",
+    arcade2: "arcade2 · 12 Go",
+    pinned: "carte passée, reste là",
+    whenPlaying: "quand on joue",
+    bus: "vm-move : disque, puis mémoire, la VM reste allumée",
+    margin: "l'hôte d'arrivée garde 4 Go libres en plus de la VM",
+    legendMoves: "se promène",
+    legendPinned: "clouée à son hôte",
+    legendSoon: "pas encore là",
+  },
+  en: {
+    ariaLabel:
+      "Diagram of the virtual machine fleet. Four Supermicro X11SRA servers, each with a Xeon W-2135 and 48 GiB of memory. Today, bob hosts coquille (16 GiB, the console), win11 (12 GiB) and worker3 (4 GiB), 32 GiB of VMs in all; stella hosts worker5 (4 GiB) and, while someone plays, arcade1 and arcade2 (12 GiB each), which have a passed-through graphics card and never move. Soon, eventreur and encodeur move to X11SRA boards too, with 48 GiB: worker4 on eventreur, worker6 to be created on encodeur. Every VM without a card can go from one host to another while running, disk and memory copied; the receiving host must keep 4 GiB free beyond the VM.",
+    today: "today",
+    soon: "from October 14",
+    board: "X11SRA · W-2135 · 48 GiB",
+    mem: "memory",
+    rest: "the rest: the host",
+    restBob: "(k3s, Ollama, Piper)",
+    restStella: "(k3s, the RTX 3050)",
+    coquille: "coquille · 16 GiB",
+    coquilleSub: "the console",
+    win11: "win11 · 12 GiB",
+    win11Sub: "Claude's Chrome",
+    worker3: "worker3 · 4 GiB",
+    worker5: "worker5 · 4 GiB",
+    worker4: "worker4 · 4 GiB",
+    worker6: "worker6 · 4 GiB",
+    workerSub: "k3s node, CPU only",
+    toCreate: "to be created",
+    arcade1: "arcade1 · 12 GiB",
+    arcade2: "arcade2 · 12 GiB",
+    pinned: "passed-through card, stays",
+    whenPlaying: "while someone plays",
+    bus: "vm-move: disk, then memory, the VM stays on",
+    margin: "the receiving host keeps 4 GiB free beyond the VM",
+    legendMoves: "moves around",
+    legendPinned: "pinned to its host",
+    legendSoon: "not there yet",
+  },
+} as const;
+
+const t = copy[lang];
+const slug = "mes-vm-changent-de-maison-sans-s-eteindre";
+
+/* 48 GiB = 180 px, so 3.75 px per GiB. */
+const gib = (n: number) => n * 3.75;
+---
+
+<figure class="flotte-vm-diagram">
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 500" role="img" aria-label={t.ariaLabel}>
+      <defs>
+        <marker id="fv-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-live)" />
+        </marker>
+      </defs>
+
+      <!-- les deux époques -->
+      <text x="230" y="22" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{t.today}</text>
+      <text x="670" y="22" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">{t.soon}</text>
+
+      <!-- ===== bob ===== -->
+      <rect x="20" y="34" width="200" height="318" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="120" y="58" text-anchor="middle" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--text)">bob</text>
+      <text x="120" y="75" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.board}</text>
+      <text x="30" y="98" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.mem}</text>
+      <rect x="30" y="103" width="180" height="16" rx="2" fill="none" stroke="var(--panel-border)" />
+      <rect x="30" y="103" width={gib(16)} height="16" fill="var(--accent-live)" opacity="0.55" />
+      <rect x={30 + gib(16)} y="103" width={gib(12)} height="16" fill="var(--accent-live)" opacity="0.4" />
+      <rect x={30 + gib(28)} y="103" width={gib(4)} height="16" fill="var(--accent-live)" opacity="0.25" />
+      <text x="30" y="134" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.rest}</text>
+      <text x="30" y="146" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.restBob}</text>
+
+      <rect x="30" y="160" width="180" height="40" rx="4" fill="none" stroke="var(--accent-live)" stroke-width="1.5" />
+      <text x="40" y="177" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.coquille}</text>
+      <text x="40" y="192" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.coquilleSub}</text>
+      <rect x="30" y="208" width="180" height="40" rx="4" fill="none" stroke="var(--accent-live)" stroke-width="1.5" />
+      <text x="40" y="225" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.win11}</text>
+      <text x="40" y="240" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.win11Sub}</text>
+      <rect x="30" y="256" width="180" height="40" rx="4" fill="none" stroke="var(--accent-live)" stroke-width="1.5" />
+      <text x="40" y="273" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.worker3}</text>
+      <text x="40" y="288" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.workerSub}</text>
+
+      <!-- ===== stella ===== -->
+      <rect x="240" y="34" width="200" height="318" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
+      <text x="340" y="58" text-anchor="middle" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--text)">stella</text>
+      <text x="340" y="75" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.board}</text>
+      <text x="250" y="98" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.mem}</text>
+      <rect x="250" y="103" width="180" height="16" rx="2" fill="none" stroke="var(--panel-border)" />
+      <rect x="250" y="103" width={gib(4)} height="16" fill="var(--accent-live)" opacity="0.25" />
+      <rect x={250 + gib(4)} y="103" width={gib(24)} height="16" fill="var(--text-faint)" opacity="0.18" stroke="var(--text-faint)" stroke-dasharray="3 3" />
+      <text x="250" y="134" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.rest}</text>
+      <text x="250" y="146" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.restStella}</text>
+
+      <rect x="250" y="160" width="180" height="40" rx="4" fill="none" stroke="var(--accent-live)" stroke-width="1.5" />
+      <text x="260" y="177" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.worker5}</text>
+      <text x="260" y="192" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.workerSub}</text>
+      <rect x="250" y="208" width="180" height="40" rx="4" fill="none" stroke="var(--panel-border)" stroke-width="1.5" stroke-dasharray="3 3" />
+      <text x="260" y="225" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{t.arcade1}</text>
+      <text x="260" y="240" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.pinned}</text>
+      <rect x="250" y="256" width="180" height="40" rx="4" fill="none" stroke="var(--panel-border)" stroke-width="1.5" stroke-dasharray="3 3" />
+      <text x="260" y="273" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{t.arcade2}</text>
+      <text x="260" y="288" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.pinned}</text>
+      <text x="340" y="316" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.whenPlaying}</text>
+
+      <!-- ===== eventreur (bientôt) ===== -->
+      <rect x="460" y="34" width="200" height="318" rx="6" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="6 4" />
+      <text x="560" y="58" text-anchor="middle" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--text)">eventreur</text>
+      <text x="560" y="75" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.board}</text>
+      <text x="470" y="98" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.mem}</text>
+      <rect x="470" y="103" width="180" height="16" rx="2" fill="none" stroke="var(--panel-border)" stroke-dasharray="3 3" />
+      <rect x="470" y="103" width={gib(4)} height="16" fill="var(--accent-live)" opacity="0.25" />
+      <rect x="470" y="160" width="180" height="40" rx="4" fill="none" stroke="var(--accent-live)" stroke-width="1.5" />
+      <text x="480" y="177" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.worker4}</text>
+      <text x="480" y="192" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.workerSub}</text>
+
+      <!-- ===== encodeur (bientôt) ===== -->
+      <rect x="680" y="34" width="200" height="318" rx="6" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="6 4" />
+      <text x="780" y="58" text-anchor="middle" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--text)">encodeur</text>
+      <text x="780" y="75" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.board}</text>
+      <text x="690" y="98" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.mem}</text>
+      <rect x="690" y="103" width="180" height="16" rx="2" fill="none" stroke="var(--panel-border)" stroke-dasharray="3 3" />
+      <rect x="690" y="103" width={gib(4)} height="16" fill="var(--accent-live)" opacity="0.25" stroke="var(--accent-live)" stroke-dasharray="3 3" />
+      <rect x="690" y="160" width="180" height="40" rx="4" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="6 4" />
+      <text x="700" y="177" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{t.worker6}</text>
+      <text x="700" y="192" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">{t.toCreate}</text>
+
+      <!-- le chemin commun : n'importe quelle VM sans carte, vers n'importe quel hôte -->
+      <path d="M120,352 L120,388" fill="none" stroke="var(--accent-live)" stroke-width="2" marker-start="url(#fv-arrow)" />
+      <path d="M340,352 L340,388" fill="none" stroke="var(--accent-live)" stroke-width="2" marker-start="url(#fv-arrow)" />
+      <path d="M560,352 L560,388" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" marker-start="url(#fv-arrow)" />
+      <path d="M780,352 L780,388" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" marker-start="url(#fv-arrow)" />
+      <path d="M120,388 L340,388" fill="none" stroke="var(--accent-live)" stroke-width="2" />
+      <path d="M340,388 L780,388" fill="none" stroke="var(--accent-live)" stroke-width="2" stroke-dasharray="6 4" />
+      <text x="450" y="410" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">{t.bus}</text>
+      <text x="450" y="427" text-anchor="middle" font-family="var(--font-mono)" font-size="9.5" fill="var(--text-faint)">{t.margin}</text>
+
+      <!-- légende -->
+      <rect x="120" y="458" width="28" height="14" rx="3" fill="none" stroke="var(--accent-live)" stroke-width="1.5" />
+      <text x="156" y="469" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.legendMoves}</text>
+      <rect x="330" y="458" width="28" height="14" rx="3" fill="none" stroke="var(--panel-border)" stroke-width="1.5" stroke-dasharray="3 3" />
+      <text x="366" y="469" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.legendPinned}</text>
+      <rect x="560" y="458" width="28" height="14" rx="3" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="6 4" />
+      <text x="596" y="469" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{t.legendSoon}</text>
+    </svg>
+  </div>
+  <figcaption>
+    {
+      context === "architecture" ? (
+        lang === "en" ? (
+          <>
+            Detail of the <a href="/inventaire/bastion/">console</a> and the other virtual machines: four X11SRA boards
+            with 48 GiB each, two today and two more from mid-October. Every VM without a passed-through card can change
+            host while it runs. See the article:{" "}
+            <a href={`/blog/${slug}/`}>my VMs move house without shutting down</a>.
+          </>
+        ) : (
+          <>
+            Détail de la <a href="/inventaire/bastion/">console</a> et des autres machines virtuelles : quatre X11SRA
+            de 48 Go chacune, deux aujourd'hui et deux de plus à partir de la mi-octobre. Toute VM sans carte passée
+            peut changer d'hôte pendant qu'elle roule. Voir l'article :{" "}
+            <a href={`/blog/${slug}/`}>mes VM changent de maison sans s'éteindre</a>.
+          </>
+        )
+      ) : lang === "en" ? (
+        <>
+          Two hosts today, four soon, 48 GiB each. The VMs with a graphics card stay put; the others move, disk and
+          memory included, without shutting down. See the <a href="/architecture/">architecture overview</a>.
+        </>
+      ) : (
+        <>
+          Deux hôtes aujourd'hui, quatre bientôt, 48 Go chacun. Les VM qui ont une carte graphique restent sur place;
+          les autres se déplacent, disque et mémoire compris, sans s'éteindre. Voir la{" "}
+          <a href="/architecture/">vue d'ensemble de l'architecture</a>.
+        </>
+      )
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .flotte-vm-diagram {
+    margin: 2rem 0;
+  }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 1rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  figcaption a {
+    color: var(--accent-live);
+  }
+</style>

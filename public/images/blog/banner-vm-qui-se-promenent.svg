@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : deux serveurs, bob et stella, avec 48 Go de mémoire chacun; entre les deux, la machine virtuelle coquille passe de l'un à l'autre sur une flèche pointillée, son terminal toujours ouvert, pendant que deux barres montrent le disque puis la mémoire qui se copient, avec un chronomètre à 7 minutes">
+  <defs>
+    <linearGradient id="bgvm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2333"/>
+      <stop offset="100%" stop-color="#2e3f5c"/>
+    </linearGradient>
+    <marker id="vmb-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ffd166"/>
+    </marker>
+  </defs>
+
+  <rect width="1024" height="320" fill="url(#bgvm)"/>
+
+  <!-- bob, à gauche -->
+  <g>
+    <rect x="56" y="70" width="190" height="200" rx="10" fill="#243149" stroke="#5a6f96" stroke-width="3"/>
+    <rect x="74" y="90" width="154" height="16" rx="3" fill="#3a4a68"/>
+    <rect x="74" y="114" width="154" height="16" rx="3" fill="#3a4a68"/>
+    <circle cx="214" cy="98" r="4" fill="#7ec8ff"/>
+    <circle cx="214" cy="122" r="4" fill="#7ec8ff"/>
+    <!-- la mémoire de bob : ce qui reste après le départ -->
+    <text x="74" y="160" fill="#8fa3c8" font-size="13">mémoire</text>
+    <rect x="74" y="168" width="154" height="18" rx="3" fill="#162033" stroke="#5a6f96" stroke-width="1.5"/>
+    <rect x="76" y="170" width="38" height="14" rx="2" fill="#7ec8ff" opacity="0.55"/>
+    <rect x="116" y="170" width="13" height="14" rx="2" fill="#7ec8ff" opacity="0.4"/>
+    <text x="151" y="214" fill="#dfe8f7" font-size="13" text-anchor="middle">48 Go</text>
+    <text x="151" y="252" fill="#dfe8f7" font-size="24" font-weight="bold" text-anchor="middle">bob</text>
+  </g>
+
+  <!-- stella, à droite -->
+  <g>
+    <rect x="778" y="70" width="190" height="200" rx="10" fill="#243149" stroke="#5a6f96" stroke-width="3"/>
+    <rect x="796" y="90" width="154" height="16" rx="3" fill="#3a4a68"/>
+    <rect x="796" y="114" width="154" height="16" rx="3" fill="#3a4a68"/>
+    <circle cx="936" cy="98" r="4" fill="#7ec8ff"/>
+    <circle cx="936" cy="122" r="4" fill="#7ec8ff"/>
+    <text x="796" y="160" fill="#8fa3c8" font-size="13">mémoire</text>
+    <rect x="796" y="168" width="154" height="18" rx="3" fill="#162033" stroke="#5a6f96" stroke-width="1.5"/>
+    <rect x="798" y="170" width="13" height="14" rx="2" fill="#7ec8ff" opacity="0.4"/>
+    <!-- la place qui attend coquille -->
+    <rect x="813" y="170" width="51" height="14" rx="2" fill="none" stroke="#ffd166" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="873" y="214" fill="#dfe8f7" font-size="13" text-anchor="middle">48 Go</text>
+    <text x="873" y="252" fill="#dfe8f7" font-size="24" font-weight="bold" text-anchor="middle">stella</text>
+  </g>
+
+  <!-- le trajet -->
+  <path d="M250,150 C360,40 664,40 772,150" fill="none" stroke="#ffd166" stroke-width="3" stroke-dasharray="9 7" marker-end="url(#vmb-a)"/>
+
+  <!-- coquille en vol, terminal ouvert -->
+  <g>
+    <rect x="402" y="74" width="220" height="120" rx="10" fill="#162033" stroke="#7ec8ff" stroke-width="3"/>
+    <rect x="402" y="74" width="220" height="24" rx="10" fill="#243149"/>
+    <rect x="402" y="88" width="220" height="10" fill="#243149"/>
+    <circle cx="420" cy="86" r="4" fill="#ff7b72"/>
+    <circle cx="434" cy="86" r="4" fill="#ffd166"/>
+    <circle cx="448" cy="86" r="4" fill="#5fd28c"/>
+    <text x="512" y="91" fill="#dfe8f7" font-size="14" font-weight="bold" text-anchor="middle">coquille</text>
+    <text x="418" y="124" fill="#7ec8ff" font-family="Menlo, Consolas, monospace" font-size="14">ludo@coquille</text>
+    <text x="418" y="146" fill="#dfe8f7" font-family="Menlo, Consolas, monospace" font-size="14">$ claude</text>
+    <rect x="490" y="134" width="9" height="15" fill="#7ec8ff" opacity="0.85"/>
+    <circle cx="424" cy="174" r="5" fill="#5fd28c"/>
+    <text x="436" y="179" fill="#8fa3c8" font-size="13">toujours allumée</text>
+  </g>
+
+  <!-- ce qui se copie : le disque, puis la mémoire -->
+  <g font-size="13">
+    <text x="402" y="226" fill="#8fa3c8">disque · 100 Go</text>
+    <rect x="402" y="232" width="220" height="10" rx="3" fill="#162033" stroke="#5a6f96" stroke-width="1"/>
+    <rect x="403" y="233" width="218" height="8" rx="2" fill="#7ec8ff" opacity="0.7"/>
+    <text x="402" y="266" fill="#8fa3c8">mémoire · 16 Go</text>
+    <rect x="402" y="272" width="220" height="10" rx="3" fill="#162033" stroke="#5a6f96" stroke-width="1"/>
+    <rect x="403" y="273" width="150" height="8" rx="2" fill="#ffd166" opacity="0.85"/>
+  </g>
+
+  <!-- le chronomètre -->
+  <g>
+    <circle cx="676" cy="252" r="28" fill="#243149" stroke="#ffd166" stroke-width="3"/>
+    <rect x="670" y="216" width="12" height="9" rx="2" fill="#ffd166"/>
+    <path d="M676,252 L676,234" stroke="#ffd166" stroke-width="3" stroke-linecap="round"/>
+    <path d="M676,252 L689,258" stroke="#ffd166" stroke-width="3" stroke-linecap="round"/>
+    <text x="676" y="302" fill="#ffd166" font-size="17" font-weight="bold" text-anchor="middle">7 min</text>
+  </g>
+</svg>

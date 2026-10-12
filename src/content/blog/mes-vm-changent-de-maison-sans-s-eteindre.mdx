@@ -1,0 +1,112 @@
+---
+title: "Mes VM changent de maison sans s'éteindre"
+pubDate: 2026-10-19
+description: "Redémarrer un de mes serveurs voulait dire couper ma console, celle d'où je pilote tout le labo. Maintenant, un bouton dans Home Assistant déplace la VM vers l'autre serveur pendant qu'elle roule, disque et mémoire compris, en trois à sept minutes. Pourquoi on a copié le disque au lieu de le partager, comment la mémoire se répartit sur 48 Go, et ce qui change quand deux autres X11SRA se joindront à la flotte. Construit en une soirée avec Claude Code (Opus 5.5)."
+tags: ["Labo", "DevOps", "ludo"]
+ia: "assistee"
+iaOutils: "Claude Code"
+heroImage: "/images/blog/banner-vm-qui-se-promenent.svg"
+---
+
+import FlotteVmDiagram from "../../components/FlotteVmDiagram.astro";
+
+> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+>
+> -   **Le problème** : redémarrer un hyperviseur coupait les VM qu'il hébergeait, dont coquille, la VM console où roulent mes sessions Claude Code, et win11, le Chrome que Claude in Chrome pilote. La veille sur disque les faisait survivre, mais la session figeait et l'horloge revenait avec six minutes de retard.
+> -   **La solution** : la migration à chaud de libvirt et QEMU entre deux serveurs Supermicro X11SRA (Xeon W-2135, 48 Go chacun). Une commande, `vm-move <vm> <hôte>`, copie le disque puis la mémoire pendant que la VM roule, et la définition de la VM part avec elle.
+> -   **Pas de stockage partagé** : le NAS en NFS a été écarté, parce qu'il redémarre seul après une mise à jour de son firmware et qu'un montage NFS bloqué fige l'hôte au complet. Chaque hôte garde ses disques; on les copie.
+> -   **La mémoire** : l'hôte d'arrivée doit garder 4 Go de libre en plus de la VM. stella ne peut donc pas recevoir la console pendant que les deux postes de jeu roulent.
+> -   **Le tableau de bord** : Home Assistant montre où tourne chaque VM et offre un bouton « Déplacer » par VM, plus un interrupteur par noeud Kubernetes pour le drainer moi-même.
+> -   **Les chiffres** : un worker k3s en 3 minutes, win11 (disque de 128 Go) en 6 minutes, la console (100 Go) en 7 minutes. La session Claude Code dans la console a survécu à ses propres déplacements.
+> -   **La suite** : deux autres X11SRA de 48 Go arrivent à partir du 14 octobre; quatre destinations au lieu de deux.
+> -   **Transparence** : conçu et construit en session avec Claude Code (Opus 5.5). J'ai posé le besoin, tranché les choix et cliqué les boutons. Le mécanisme complet sera dans le corollaire de Bob.
+
+Le 6 octobre, je devais redémarrer bob, un de mes deux gros serveurs, pour changer un réglage dans son BIOS. Rien de compliqué, sauf que bob héberge coquille, la VM d'où je pilote tout le labo. La session Claude Code qui m'aidait à faire le changement roulait dans la machine que j'étais en train d'éteindre. coquille a été mise en veille sur disque, puis relancée au retour, et la session a repris. Mais son horloge avait six minutes de retard, et j'ai compris que chaque redémarrage de serveur allait me coûter ma console.
+
+Le lendemain, j'ai demandé à Claude Code (Opus 5.5) comment déplacer mes VM d'un serveur à l'autre, sans les éteindre, avec un bouton dans Home Assistant. Le soir du 8 octobre, c'était fait. Voici ce que ça m'a apporté, et pourquoi on l'a construit comme ça.
+
+## Un peu de contexte : mes VM, et les deux qui comptent le plus
+
+Mes deux hyperviseurs, bob et stella, sont des cartes mères Supermicro X11SRA avec un Xeon W-2135 et 48 Go de mémoire chacun. Ils hébergent six machines virtuelles :
+
+-   **coquille**, la console. C'est là que roulent mes sessions Claude Code et Qwen Code, dans un conteneur à part, depuis [la séparation du bastion et de la console](/blog/separer-le-bastion-de-la-console/). Tout passe par elle : les déploiements, les dépôts, ce blogue.
+-   **win11**, une VM Windows 11 qui ne dort jamais. C'est le Chrome que Claude in Chrome conduit quand une tâche doit passer par une interface web. La saisie d'écran plus bas, par exemple, est passée par elle.
+-   **worker3** et **worker5**, deux noeuds k3s sans carte graphique, un par serveur.
+-   **arcade1** et **arcade2**, les deux postes de jeu de la maison, avec chacun une carte graphique passée à la VM. Elles, elles ne bougent pas : une carte branchée dans un serveur ne peut pas suivre la VM dans l'autre. Je les avais présentées dans [mon article sur le GPU à la demande](/blog/gpu-a-la-demande-a-la-maison/).
+
+Avant, redémarrer bob voulait dire couper coquille et win11. La veille sur disque les faisait survivre, mais je perdais ma console le temps du redémarrage, et Claude in Chrome perdait son fureteur.
+
+## La mémoire : 48 Go de chaque côté
+
+Le premier calcul à faire, c'est la mémoire. Une VM qui déménage doit trouver sa place dans le serveur d'arrivée, et ce serveur ne vit pas que de VM : bob roule aussi des pods Kubernetes, Ollama pour le chat du site et Piper pour la voix; stella roule des pods sur sa carte RTX 3050.
+
+<FlotteVmDiagram />
+
+Normalement, bob porte coquille (16 Go), win11 (12 Go) et worker3 (4 Go), donc 32 Go de VM sur 48. stella porte worker5 (4 Go), et les deux postes de jeu (12 Go chacun) quand quelqu'un joue. La règle qu'on a mise dans le script est simple : le serveur d'arrivée doit garder 4 Go de libre en plus de la VM, sinon le déplacement est refusé avant même de commencer.
+
+Conséquence directe : stella ne peut pas recevoir coquille pendant que les deux arcades roulent. 16 Go plus 4 Go de marge, c'est plus que ce qui reste. Je l'ai vu en vrai le 12 octobre, dans l'autre sens : bob avait repris ses trois VM, et quand j'ai voulu lui envoyer worker5, le script a refusé avant de toucher à quoi que ce soit :
+
+```
+vm-move: FAILED: bob has 2 GiB available; worker5 needs 4 GiB + 4 GiB headroom
+```
+
+Je l'ai redémarré avec stella. C'est un noeud k3s, il s'en remet très bien.
+
+## Pourquoi copier le disque au lieu de le partager
+
+Ma première idée était de mettre le disque de coquille sur mon NAS, un QNAP, et de le monter en NFS sur les deux serveurs. C'est la façon classique de faire de la migration à chaud : le disque ne bouge pas, seule la mémoire voyage. Claude Code m'a fait remarquer deux choses que j'avais vécues sans faire le lien. Mon QNAP redémarre tout seul après une mise à jour de son firmware. Et quand un montage NFS bloque, il ne bloque pas juste la VM : il fige l'hôte au complet. Ça m'était arrivé. Mettre la console sur le NAS, c'était remplacer un point de panne par un pire.
+
+Ce qu'on a choisi à la place : chaque serveur garde ses disques, et on copie. QEMU sait le faire pendant que la VM roule. Il copie d'abord le disque vers l'autre serveur, en suivant les écritures qui arrivent pendant la copie. Puis il copie la mémoire, page par page, et recommence pour les pages modifiées entre-temps, jusqu'à ce qu'il en reste assez peu pour faire la dernière passe. La VM fige alors une fraction de seconde, et repart de l'autre côté.
+
+Un détail m'a plu : la définition de la VM part avec elle. Le serveur de départ l'oublie, celui d'arrivée la garde. Une VM n'est jamais définie à deux endroits, donc elle ne peut jamais démarrer en double. Ça tient lieu de verrou, sans rien de plus à gérer.
+
+Le prix, c'est le temps : on copie des dizaines de gigaoctets chaque fois. Pour le comment détaillé, la pré-copie de la mémoire, les refus de libvirt qu'on a rencontrés et pourquoi, je vous renvoie au corollaire de Bob.
+
+## Le tableau de bord
+
+Je voulais pouvoir le faire moi-même, de mon téléphone, sans ouvrir de terminal. Voici ce que ça donne dans Home Assistant :
+
+<img
+  src="/images/blog/ha-deplacer-vm.png"
+  alt="Saisie d'écran du tableau de bord Homelab de Home Assistant sur un téléphone. Section « Déplacer entre bob et stella » : une tuile par VM avec l'hôte où elle tourne (coquille sur bob, win11 sur bob, worker3 sur bob, worker5 sur stella) et, à côté, un bouton « Déplacer coquille », « Déplacer win11 », « Déplacer worker3 », « Déplacer worker5 ». Plus bas, « Kubernetes, statut » : aws, worker1 et worker2 connectés. Puis « Kubernetes, planification » : un interrupteur par noeud, aws, bob et stella activés, encodeur désactivé."
+  width="360"
+  loading="lazy"
+/>
+
+À gauche, chaque tuile dit où tourne la VM, rafraîchie toutes les 30 secondes. À droite, le bouton la déplace vers l'autre serveur, après une confirmation qui annonce de deux à dix minutes. Pendant le déplacement, la tuile affiche « bob -> stella ».
+
+Plus bas, un interrupteur par noeud Kubernetes. Le fermer fait un cordon puis un drain : les pods quittent le noeud, sauf ceux qui doivent rouler partout. Le rouvrir le remet en service. Il refuse de fermer un noeud s'il en resterait moins de trois autres, pour que je ne vide pas le cluster par accident.
+
+Ce que ça a changé, je l'ai vu le 12 octobre. Je devais redémarrer bob puis stella pour un changement de matériel. J'ai cliqué « Déplacer » pour coquille, win11 et worker3, j'ai fermé l'interrupteur de bob, redémarré, rouvert l'interrupteur, et tout ramené. Puis la même chose pour stella. Ma console n'a jamais été coupée, et la session qui m'aidait est restée ouverte du début à la fin.
+
+## Les chiffres
+
+| VM | Disque | Durée du déplacement |
+|---|---|---|
+| worker5 | 60 Go | environ 1 min 35 |
+| worker3 | 60 Go | environ 3 min |
+| win11 | 128 Go | 6 min |
+| coquille | 100 Go | 7 min |
+
+Le disque compte pour l'essentiel du temps. Les fichiers qcow2 ne copient que ce qui est réellement écrit : pour coquille, environ 72 Go ont traversé le réseau, mémoire comprise.
+
+Le moment que je retiens, c'est le premier déplacement de coquille. La session Claude Code qui avait écrit le script roulait dans coquille. Elle m'a prévenu qu'elle allait figer quelques secondes, je lui ai envoyé « U there? » pendant le transfert, et sept minutes plus tard elle m'a répondu depuis stella. Elle avait survécu à son propre déménagement.
+
+Tout ne s'est pas passé du premier coup. win11 a été refusée deux fois : une fois parce qu'elle avait encore une carte graphique (on l'a retirée, elle n'en avait plus besoin), puis parce que son processeur virtuel exposait une fonction que libvirt ne sait pas transporter. Et les deux serveurs n'avaient pas le même microcode Intel, ce qui bloquait le retour d'une VM démarrée sur stella. Chaque refus a été corrigé dans la configuration NixOS, pas à la main.
+
+## La suite : quatre X11SRA
+
+À partir du 14 octobre, eventreur et encodeur passent eux aussi sur des cartes X11SRA, avec 48 Go chacun. Ça fera quatre serveurs identiques, 192 Go en tout, et un worker k3s sans carte graphique sur chacun : worker4 sur eventreur, et worker6, à créer, sur encodeur.
+
+Pour en profiter, il reste du travail :
+
+-   le bouton « Déplacer » suppose qu'il n'y a qu'un « autre » serveur. Il faudra choisir la destination parmi trois;
+-   les quatre serveurs devront offrir les mêmes noms d'interfaces réseau, sinon une VM arrive sans réseau;
+-   un moniteur vérifiera que chaque VM tourne exactement une fois dans le parc;
+-   et j'aimerais que les VM partent toutes seules avant le redémarrage d'une mise à jour hebdomadaire. C'est au backlog.
+
+## Mot de la fin
+
+Au final, c'est pas la migration à chaud elle-même qui m'a le plus impressionné, c'est ce qu'elle rend banal. Redémarrer un serveur pour un réglage de BIOS ou un changement de carte n'est plus un petit événement que je planifie autour de ma console : je clique, j'attends sept minutes, et je fais ce que j'avais à faire. Je garde la main sur le moment et sur la destination, c'était voulu : je n'avais pas besoin d'une relève automatique, j'avais besoin de pouvoir déplacer mes choses moi-même.
+
+Si vous avez deux hyperviseurs et pas de stockage partagé, je vous encourage à essayer la copie du disque avant de monter un NAS au milieu. C'est plus lent, mais c'est une pièce de moins qui peut tout figer.

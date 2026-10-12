@@ -142,6 +142,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "laisser-le-pipeline-appuyer-sur-apply",
       "deux-sources-pour-une-seule-image",
       "je-redessine-ces-pages-chaque-nuit",
+      "mes-vm-changent-de-maison-sans-s-eteindre",
     ],
     nodes: [
       "host:pi-02",

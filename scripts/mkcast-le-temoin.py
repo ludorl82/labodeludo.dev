@@ -139,7 +139,7 @@ line()
 # --- banner -------------------------------------------------------------
 line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.220{R}", 0.2)
 line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/automatron{R}", 1.4)
+line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/domotique{R}", 1.4)
 line()
 
 # --- 1. the report ------------------------------------------------------

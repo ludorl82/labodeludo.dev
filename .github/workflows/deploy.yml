@@ -4,6 +4,31 @@ on:
   push:
 
 jobs:
+  # La garde des enregistrements de terminal (scripts/check-public-leaks.mjs) :
+  # aucun cast, aucune fiche de cast ne part avec un vrai nom, une vraie adresse
+  # ou un secret à l'écran. Sur chaque push, branches de travail comprises,
+  # pour qu'une fuite se voie avant d'arriver sur dev ; et les deux
+  # déploiements l'attendent.
+  #
+  # Sur un runner hébergé : elle n'a besoin de rien dans le cluster, et elle
+  # doit pouvoir refuser même quand le cluster est à terre. La liste noire
+  # privée vient du secret PUBLIC_DENYLIST (source : net-cfgs/public-denylist.txt) ;
+  # GARDE_EXIGEE fait échouer le job si le secret manque, au lieu de tourner
+  # à moitié. Le journal est public : la garde n'y écrit jamais la valeur
+  # trouvée, seulement le fichier, l'instant et l'étiquette.
+  garde-publique:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: node scripts/check-public-leaks.mjs
+        env:
+          PUBLIC_DENYLIST: ${{ secrets.PUBLIC_DENYLIST }}
+          GARDE_EXIGEE: "1"
+
   # Staging publishes to Cloudflare Pages (project `labodeludo-dev`, custom
   # domain dev.labodeludo.dev). It used to `kubectl cp` a build into an nginx
   # pod backed by the cluster's only RWX NFS claim; static content needed
@@ -37,6 +62,7 @@ jobs:
     # <hash>.pages.dev URL, which the Access app on dev.labodeludo.dev does not
     # cover, so the alternative to no preview is an unauthenticated one.
     if: github.ref == 'refs/heads/dev'
+    needs: garde-publique
     runs-on: [self-hosted, k3s]
     # One runner, shared with deploy-prod and the nightly Architecture
     # workflow, and this job fires on EVERY non-main push — including the
@@ -83,6 +109,7 @@ jobs:
 
   deploy-prod:
     if: github.ref == 'refs/heads/main'
+    needs: garde-publique
     runs-on: [self-hosted, k3s]
     steps:
       - uses: actions/checkout@v4

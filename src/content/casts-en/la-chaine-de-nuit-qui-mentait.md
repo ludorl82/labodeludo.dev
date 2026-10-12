@@ -5,6 +5,7 @@ description: "A day on the night pipeline, and three green statuses that said �
 cast: "/casts/la-chaine-de-nuit-qui-mentait.cast"
 poster: "npt:1:43"
 caption: "One day's thread: the guard that had never run, the graphics card nobody had counted, the delta, the API refusal reported as “already matched”, then one line of .bashrc that kept every job from starting. The agent stops twice and corrects itself once. The recording is in French."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real transcript of the September 16, 2026 session. Ludo's prompts are quoted word for word, typos included; tool output is rewritten and shortened, the timing is compressed and names are sanitized."
 article: ["ce-que-coute-une-nuit-de-pipeline", "la-job-etait-verte"]

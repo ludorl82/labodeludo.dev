@@ -31,102 +31,25 @@ net-cfgs/asciicast-style.md; prompt helper is the fixed (no-pause) one.
 
 Run from the repo root:  python3 scripts/mkcast-la-chaine-de-nuit-qui-mentait.py
 """
-import json
-import random
 
-OUT = "public/casts/la-chaine-de-nuit-qui-mentait.cast"
-COLS, ROWS = 96, 22
-random.seed(16)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, DIM, GREEN, R, RED, YELLOW, calling, cont, line, prompt, says, spinner, waiting
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner, failures
-RED = "\x1b[38;5;174m"
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/la-chaine-de-nuit-qui-mentait.cast",
+    title="La chaîne de nuit qui mentait (reconstitution)",
+    session="chaine-de-nuit",
+    windows=["backlog", "chaine-de-nuit", "voice"],
+    current="chaine-de-nuit",
+    start="16-Sep-26 09:21:40",
+    cwd="~/git/labo",
+    model="Opus 5 · Claude Max",
+    seed=16,
+)
 
-BRANCH = "chaine-de-nuit"
-
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(*parts):
-    """One continuous typing flow across wraps: no end-of-line pause and no
-    second prompt char — the composer wraps, it does not hesitate."""
-    global t
-    rule()
-    out(f"{GREEN}❯{R} ")
-    pause(0.7)
-    for i, text in enumerate(parts):
-        if i:
-            out(R + "\r\n  ")
-        out(FG)
-        for ch in text:
-            out(ch)
-            t += random.uniform(0.045, 0.115)
-    out(R + "\r\n")
-    pause(1.4)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def calling(tool, n=1, d=0.7):
-    line()
-    line(f"  {DIM}Calling {tool} {n} time{'s' if n > 1 else ''}…{R}", d)
-
-
-def spinner(word, secs, tokens, d=1.5):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def waiting():
-    line()
-    line(f"  {DIM}waiting for you…{R}", 3.2)
-
-
-# --- disclaimer ---------------------------------------------------------
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels (16 sept. 2026), minutage compressé,{R}", 0.25)
-line(f"{DIM}     sorties réécrites, noms sanitisés.  labodeludo.dev/casts/{R}", 2.2)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.220{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/labo{R}", 0.9)
-line()
+T.disclaimer("Demandes et messages réels (16 sept. 2026), minutage compressé,",
+             "sorties réécrites, noms sanitisés.")
+T.banner()
 
 # --- 1. green, and running Sunday's code --------------------------------
 prompt("Pour le pipeline qui choisit les questions, cette nuit il a choisit une question",
@@ -211,14 +134,4 @@ says(f"Trois verts, trois mensonges. {BOLD}Vert ne dit pas quelle version a roul
 cont("Faire écrire au système ce qu'il a fait : le commit, le refus, le code.", 2.2)
 line()
 
-# --- write --------------------------------------------------------------
-header = {
-    "version": 2, "width": COLS, "height": ROWS,
-    "title": "La chaîne de nuit qui mentait (reconstitution)",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-}
-with open(OUT, "w", encoding="utf-8") as fh:
-    fh.write(json.dumps(header, ensure_ascii=False) + "\n")
-    for e in events:
-        fh.write(json.dumps(e, ensure_ascii=False) + "\n")
-print(f"{OUT}: {len(events)} events, {t:.1f}s")
+T.save()

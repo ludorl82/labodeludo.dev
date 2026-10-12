@@ -5,6 +5,7 @@ description: "Une journée sur le pipeline de nuit, et trois statuts verts qui d
 cast: "/casts/la-chaine-de-nuit-qui-mentait.cast"
 poster: "npt:1:43"
 caption: "Le fil d'une journée : la garde qui n'avait jamais tourné, la carte graphique que personne n'avait comptée, le delta, le refus de l'API rapporté « déjà conforme », puis une ligne de .bashrc qui empêchait toutes les jobs de démarrer. L'agent s'arrête deux fois, et se corrige une fois."
+frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir de la transcription réelle de la session du 16 septembre 2026. Les demandes de Ludo sont citées mot pour mot, fautes comprises; les sorties d'outils sont réécrites et raccourcies, le minutage est compressé et les noms sont sanitisés."
 article: ["ce-que-coute-une-nuit-de-pipeline", "la-job-etait-verte"]

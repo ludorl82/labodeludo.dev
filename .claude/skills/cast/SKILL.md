@@ -189,3 +189,7 @@ mais la relecture coûte 25 s).
 - [ ] Géométrie de l'en-tête = celle demandée ; durée sans trou de plus de 2 s.
 - [ ] Cluster remis dans l'état de départ, session `cast` fermée.
 - [ ] Disclaimer inversé, `frame: "none"`, poster au bon instant, FR et EN.
+- [ ] `npm run check:leaks` rc 0 — la garde qui bloque aussi le déploiement :
+      cast rejoué dans un émulateur, liste blanche publique + liste noire
+      privée (`net-cfgs/public-denylist.txt`). Un faux positif relu s'acquitte
+      dans `scripts/public-leaks-ack.txt`, sans jamais y écrire la valeur.

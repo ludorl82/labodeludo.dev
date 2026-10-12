@@ -1,0 +1,26 @@
+# Lignes relues et jugées correctes malgré une touche de check-public-leaks.mjs.
+# Une empreinte par ligne : pub:… (liste blanche) ou priv:… (liste noire,
+# HMAC par sa clé). Le commentaire dit POURQUOI c'est correct, jamais la
+# valeur : ce fichier est public, et la liste noire ne l'est pas.
+
+# bob-lit-ses-articles : une question tapée lettre par lettre, coupée au milieu d'un mot anglais.
+priv:b71d256d211bc2f44b59c35009fbb0a4
+
+# la-verification-refuse-pour-vrai : le domaine planté pour la prise, fictif et nommé comme tel.
+pub:68220593a5515561b9b28862d2774dda
+pub:e02f29e8a06c2afb5c4d82f6ae939056
+pub:601bf50b9c572503ffe10442dac20ec4
+pub:1de65557f2f6ec157a768dc2120b7831
+pub:7c2a58bd8513ef5c3dfe5097fd18ee7f
+pub:3025d3ea84759501ebcd2ddf21fec0c8
+pub:095e2eea0651cebedd0830c8f743ccef
+
+# verification-avant-publication : le raccourcisseur d'URL, public depuis les articles de 2019
+# qui racontent sa construction. Décision de Ludo à confirmer (PR de la garde).
+pub:ae3af35b9872b80b16e150128386a4b2
+priv:b45d4d9d2f7f3e0ccfd2093f2318504a
+
+# un-pod-stateless-prise-reelle : adresses de pod dans la plage par défaut de k3s, pas une
+# adresse du labo ; les deux nœuds montrés sont publics.
+pub:d957af0975f828e5c0b596795c69fe23
+pub:914c3c6feeeff84f1a33bd78f569f293

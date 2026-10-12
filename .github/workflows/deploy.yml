@@ -154,7 +154,10 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: us-east-1
-        run: aws s3 sync dist/ s3://labodeludo.dev/ --delete
+        # --exclude : l'instantané de la console (/console/) n'est pas dans le
+        # dépôt. La console le dépose chaque soir à côté du site ; --delete le
+        # supprimerait à chaque déploiement.
+        run: aws s3 sync dist/ s3://labodeludo.dev/ --delete --exclude 'console/instantane.json'
       - env:
           AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}

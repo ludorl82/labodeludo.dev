@@ -1,7 +1,7 @@
 ---
-title: "Mes VM changent de maison sans s'éteindre"
+title: "Un vMotion sans VMware, et sans stockage partagé"
 pubDate: 2026-10-19
-description: "Redémarrer un de mes serveurs voulait dire couper ma console, celle d'où je pilote tout le labo. Maintenant, un bouton dans Home Assistant déplace la VM vers l'autre serveur pendant qu'elle roule, disque et mémoire compris, en trois à sept minutes. Pourquoi on a copié le disque au lieu de le partager, comment la mémoire se répartit sur 48 Go, et ce qui change quand deux autres X11SRA se joindront à la flotte. Construit en une soirée avec Claude Code (Opus 5.5)."
+description: "J'ai travaillé avec des grappes VMware où vMotion déplaçait les VM d'un hôte à l'autre sans les éteindre, sur un stockage partagé et sous licence. Ce que j'ai appris en session avec Claude Code (Opus 5.5), c'est qu'on fait la même chose avec des outils libres, libvirt et QEMU, sans stockage partagé : virsh migrate copie le disque puis la mémoire pendant que la VM roule. Deux serveurs de 48 Go, un bouton par VM dans Home Assistant, de trois à sept minutes par déplacement, et deux autres serveurs qui se joindront bientôt à la flotte."
 tags: ["Labo", "DevOps", "ludo"]
 ia: "assistee"
 iaOutils: "Claude Code"
@@ -12,18 +12,21 @@ import FlotteVmDiagram from "../../components/FlotteVmDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Le problème** : redémarrer un hyperviseur coupait les VM qu'il hébergeait, dont coquille, la VM console où roulent mes sessions Claude Code, et win11, le Chrome que Claude in Chrome pilote. La veille sur disque les faisait survivre, mais la session figeait et l'horloge revenait avec six minutes de retard.
-> -   **La solution** : la migration à chaud de libvirt et QEMU entre deux serveurs Supermicro X11SRA (Xeon W-2135, 48 Go chacun). Une commande, `vm-move <vm> <hôte>`, copie le disque puis la mémoire pendant que la VM roule, et la définition de la VM part avec elle.
-> -   **Pas de stockage partagé** : le NAS en NFS a été écarté, parce qu'il redémarre seul après une mise à jour de son firmware et qu'un montage NFS bloqué fige l'hôte au complet. Chaque hôte garde ses disques; on les copie.
-> -   **La mémoire** : l'hôte d'arrivée doit garder 4 Go de libre en plus de la VM. stella ne peut donc pas recevoir la console pendant que les deux postes de jeu roulent.
+> -   **Le point de départ** : dans les grappes VMware que j'ai connues, vMotion déplaçait une VM allumée d'un hôte à l'autre, avec un stockage partagé, vCenter et des licences. Je croyais que c'était le prix de la migration à chaud.
+> -   **Ce que j'ai appris** : libvirt et QEMU, deux logiciels libres, font la même chose sans stockage partagé. `virsh migrate --live --copy-storage-all` copie le disque, puis la mémoire, pendant que la VM roule, et la VM repart sur l'autre hôte après une pause d'une fraction de seconde.
+> -   **Pourquoi pas de stockage partagé chez moi** : mon NAS redémarre seul après une mise à jour de son firmware, et un montage NFS bloqué fige l'hôte au complet. Chaque serveur garde ses disques; on les copie.
+> -   **Le terrain** : deux serveurs Supermicro X11SRA (Xeon W-2135, 48 Go chacun). La console où roulent mes sessions Claude Code et la VM Windows que Claude in Chrome pilote peuvent passer de l'un à l'autre; les deux postes de jeu, qui ont une carte graphique passée, restent sur place.
+> -   **La mémoire** : l'hôte d'arrivée doit garder 4 Go de libre en plus de la VM, sinon le déplacement est refusé avant de commencer.
 > -   **Le tableau de bord** : Home Assistant montre où tourne chaque VM et offre un bouton « Déplacer » par VM, plus un interrupteur par noeud Kubernetes pour le drainer moi-même.
-> -   **Les chiffres** : un worker k3s en 3 minutes, win11 (disque de 128 Go) en 6 minutes, la console (100 Go) en 7 minutes. La session Claude Code dans la console a survécu à ses propres déplacements.
+> -   **Les chiffres** : un worker k3s en 3 minutes, la VM Windows (disque de 128 Go) en 6 minutes, la console (100 Go) en 7 minutes. La session Claude Code dans la console a survécu à ses propres déplacements.
 > -   **La suite** : deux autres X11SRA de 48 Go arrivent à partir du 14 octobre; quatre destinations au lieu de deux.
 > -   **Transparence** : conçu et construit en session avec Claude Code (Opus 5.5). J'ai posé le besoin, tranché les choix et cliqué les boutons. Le mécanisme complet sera dans le corollaire de Bob.
 
-Le 6 octobre, je devais redémarrer bob, un de mes deux gros serveurs, pour changer un réglage dans son BIOS. Rien de compliqué, sauf que bob héberge coquille, la VM d'où je pilote tout le labo. La session Claude Code qui m'aidait à faire le changement roulait dans la machine que j'étais en train d'éteindre. coquille a été mise en veille sur disque, puis relancée au retour, et la session a repris. Mais son horloge avait six minutes de retard, et j'ai compris que chaque redémarrage de serveur allait me coûter ma console.
+J'ai travaillé avec des grappes VMware pendant un bon bout. Ce qui m'impressionnait le plus, c'était vMotion : on déplaçait une VM allumée d'un hôte à l'autre, et les utilisateurs ne s'en rendaient pas compte. Mais dans ma tête, ça venait avec tout un attirail : un stockage partagé que tous les hôtes voyaient, un vCenter pour orchestrer, et des licences. Pas exactement ce qu'on installe dans un sous-sol.
 
-Le lendemain, j'ai demandé à Claude Code (Opus 5.5) comment déplacer mes VM d'un serveur à l'autre, sans les éteindre, avec un bouton dans Home Assistant. Le soir du 8 octobre, c'était fait. Voici ce que ça m'a apporté, et pourquoi on l'a construit comme ça.
+Le 6 octobre, je devais redémarrer bob, un de mes deux gros serveurs, pour changer un réglage dans son BIOS. bob héberge coquille, la VM d'où je pilote tout le labo, et la session Claude Code qui m'aidait roulait dedans. coquille a été mise en veille sur disque, puis relancée au retour, et la session a repris, mais avec une horloge en retard de six minutes. Le lendemain, j'ai demandé à Claude Code (Opus 5.5) comment déplacer mes VM d'un serveur à l'autre, sans les éteindre, avec un bouton dans Home Assistant.
+
+C'est là que j'ai appris ce qui fait l'objet de cet article : la migration à chaud n'a besoin ni de VMware, ni de stockage partagé. libvirt et QEMU, deux logiciels libres qui roulent déjà sur mes serveurs, savent copier le disque et la mémoire d'une VM pendant qu'elle roule. Le soir du 8 octobre, c'était en place. Voici comment, et ce que ça m'a apporté.
 
 ## Un peu de contexte : mes VM, et les deux qui comptent le plus
 
@@ -35,6 +38,25 @@ Mes deux hyperviseurs, bob et stella, sont des cartes mères Supermicro X11SRA a
 -   **arcade1** et **arcade2**, les deux postes de jeu de la maison, avec chacun une carte graphique passée à la VM. Elles, elles ne bougent pas : une carte branchée dans un serveur ne peut pas suivre la VM dans l'autre. Je les avais présentées dans [mon article sur le GPU à la demande](/blog/gpu-a-la-demande-a-la-maison/).
 
 Avant, redémarrer bob voulait dire couper coquille et win11. La veille sur disque les faisait survivre, mais je perdais ma console le temps du redémarrage, et Claude in Chrome perdait son fureteur.
+
+## Ce que j'ai appris : pas besoin de stockage partagé
+
+Dans les grappes VMware que j'ai connues, vMotion reposait sur un stockage partagé : tous les hôtes voyaient les mêmes disques, et seule la mémoire de la VM voyageait. C'est ce qui rendait le déplacement rapide, et c'est aussi ce que je croyais obligatoire. En toute transparence, VMware sait aussi copier le disque pendant un vMotion depuis vSphere 5.1, en 2012, mais toujours sous vCenter et sous licence. Ce que je n'avais jamais vu, c'est la même chose avec des outils libres, sur deux serveurs qui ne partagent rien.
+
+Ma première idée allait d'ailleurs dans le sens de mes habitudes : mettre le disque de coquille sur mon NAS, un QNAP, et le monter en NFS sur les deux serveurs. Claude Code m'a fait remarquer deux choses que j'avais vécues sans faire le lien. Mon QNAP redémarre tout seul après une mise à jour de son firmware. Et quand un montage NFS bloque, il ne bloque pas juste la VM : il fige l'hôte au complet. Ça m'était arrivé. Mettre la console sur le NAS, c'était remplacer un point de panne par un pire.
+
+Ce qu'on a choisi à la place : chaque serveur garde ses disques, et on copie. Tout tient dans une commande de libvirt :
+
+```
+virsh migrate --live --persistent --undefinesource --copy-storage-all \
+  coquille qemu+ssh://stella/system
+```
+
+`--copy-storage-all` dit à QEMU de copier le disque vers l'autre serveur, en suivant les écritures qui arrivent pendant la copie. Puis `--live` copie la mémoire, page par page, et recommence pour les pages modifiées entre-temps, jusqu'à ce qu'il en reste assez peu pour la dernière passe. La VM fige alors une fraction de seconde, et repart de l'autre côté. Un détail m'a plu : avec `--persistent --undefinesource`, la définition de la VM part avec elle. Le serveur de départ l'oublie, celui d'arrivée la garde. Une VM n'est jamais définie à deux endroits, donc elle ne peut jamais démarrer en double. Ça tient lieu de verrou, sans vCenter.
+
+Autour de cette commande, Claude Code a écrit un petit script, `vm-move`, qui vérifie avant de commencer : la VM n'a pas de carte passée, l'hôte d'arrivée a assez de mémoire, la VM n'y est pas déjà définie. Il copie aussi les variables UEFI de la VM, le fichier NVRAM qui garde ses entrées de démarrage, que libvirt ne recopie pas sur le disque de l'autre serveur. Les deux serveurs ont reçu le même module NixOS pour les clés SSH entre eux et les ports de migration, ouverts seulement entre les deux.
+
+Le prix, comparé à vMotion sur un stockage partagé, c'est le temps : on copie des dizaines de gigaoctets chaque fois, plutôt que quelques gigaoctets de mémoire. Pour le comment détaillé, la pré-copie de la mémoire, les refus de libvirt qu'on a rencontrés et pourquoi, je vous renvoie au corollaire de Bob.
 
 ## La mémoire : 48 Go de chaque côté
 
@@ -51,16 +73,6 @@ vm-move: FAILED: bob has 2 GiB available; worker5 needs 4 GiB + 4 GiB headroom
 ```
 
 Je l'ai redémarré avec stella. C'est un noeud k3s, il s'en remet très bien.
-
-## Pourquoi copier le disque au lieu de le partager
-
-Ma première idée était de mettre le disque de coquille sur mon NAS, un QNAP, et de le monter en NFS sur les deux serveurs. C'est la façon classique de faire de la migration à chaud : le disque ne bouge pas, seule la mémoire voyage. Claude Code m'a fait remarquer deux choses que j'avais vécues sans faire le lien. Mon QNAP redémarre tout seul après une mise à jour de son firmware. Et quand un montage NFS bloque, il ne bloque pas juste la VM : il fige l'hôte au complet. Ça m'était arrivé. Mettre la console sur le NAS, c'était remplacer un point de panne par un pire.
-
-Ce qu'on a choisi à la place : chaque serveur garde ses disques, et on copie. QEMU sait le faire pendant que la VM roule. Il copie d'abord le disque vers l'autre serveur, en suivant les écritures qui arrivent pendant la copie. Puis il copie la mémoire, page par page, et recommence pour les pages modifiées entre-temps, jusqu'à ce qu'il en reste assez peu pour faire la dernière passe. La VM fige alors une fraction de seconde, et repart de l'autre côté.
-
-Un détail m'a plu : la définition de la VM part avec elle. Le serveur de départ l'oublie, celui d'arrivée la garde. Une VM n'est jamais définie à deux endroits, donc elle ne peut jamais démarrer en double. Ça tient lieu de verrou, sans rien de plus à gérer.
-
-Le prix, c'est le temps : on copie des dizaines de gigaoctets chaque fois. Pour le comment détaillé, la pré-copie de la mémoire, les refus de libvirt qu'on a rencontrés et pourquoi, je vous renvoie au corollaire de Bob.
 
 ## Le tableau de bord
 
@@ -107,6 +119,6 @@ Pour en profiter, il reste du travail :
 
 ## Mot de la fin
 
-Au final, c'est pas la migration à chaud elle-même qui m'a le plus impressionné, c'est ce qu'elle rend banal. Redémarrer un serveur pour un réglage de BIOS ou un changement de carte n'est plus un petit événement que je planifie autour de ma console : je clique, j'attends sept minutes, et je fais ce que j'avais à faire. Je garde la main sur le moment et sur la destination, c'était voulu : je n'avais pas besoin d'une relève automatique, j'avais besoin de pouvoir déplacer mes choses moi-même.
+Ce que je retiens, c'est que la migration à chaud n'est plus une fonction de grappe d'entreprise. Il m'a fallu deux serveurs, deux logiciels libres déjà installés et une soirée en session pour obtenir ce que j'associais à vMotion, sans stockage partagé ni licence. Et ce qu'elle rend banal me plaît encore plus : redémarrer un serveur pour un réglage de BIOS ou un changement de carte n'est plus un événement que je planifie autour de ma console. Je clique, j'attends sept minutes, et je fais ce que j'avais à faire. Je garde la main sur le moment et sur la destination, c'était voulu : je n'avais pas besoin d'une relève automatique, j'avais besoin de pouvoir déplacer mes choses moi-même.
 
-Si vous avez deux hyperviseurs et pas de stockage partagé, je vous encourage à essayer la copie du disque avant de monter un NAS au milieu. C'est plus lent, mais c'est une pièce de moins qui peut tout figer.
+Si vous avez deux hyperviseurs et pas de stockage partagé, je vous encourage à essayer `virsh migrate --copy-storage-all` avant de monter un NAS au milieu. C'est plus lent, mais c'est une pièce de moins qui peut tout figer.

@@ -17,14 +17,14 @@ const t = {
   fr: {
     heading: "En ce moment dans la console",
     lede: "Chaque fenêtre de ma session tmux, avec la conversation qui s'y déroule avec Claude Code : ce sur quoi je travaille cette semaine, et ce qui deviendra peut-être un article. Clique sur une fenêtre dans la barre du bas pour la parcourir.",
-    disclaimer: "✔ Prise réelle, refaite chaque soir et assainie automatiquement, sans relecture humaine. Les noms d'hôte, adresses et domaines sont remplacés par des valeurs fictives, et les appels d'outils sont réduits à une ligne, sans leur sortie. Une fenêtre qu'une des gardes touche est retenue ce soir-là : la liste blanche, la liste noire du vrai inventaire, ou la relecture par le modèle du labo, qui cherche ce qu'aucune liste ne sait nommer d'avance.",
+    disclaimer: "✔ Prise réelle, refaite chaque soir et assainie automatiquement, sans relecture humaine. Les noms d'hôte, adresses et domaines sont remplacés par des valeurs fictives, et les appels d'outils sont réduits à une ligne, sans leur sortie. Un passage qu'une des gardes touche est retiré, et la fenêtre entière seulement quand le sujet lui-même est privé : la liste blanche, la liste noire du vrai inventaire, et la relecture par le modèle du labo, qui cherche ce qu'aucune liste ne sait nommer d'avance.",
     loading: "Chargement de l'instantané…",
     windows: "Fenêtres de la session",
   },
   en: {
     heading: "In the console right now",
     lede: "Every window of my tmux session, with the conversation going on in it with Claude Code: what I am working on this week, and what may become an article. The conversations are in French. Click a window in the bottom bar to browse it.",
-    disclaimer: "✔ A real capture, redone every night and sanitized automatically, with no human review. Hostnames, addresses and domains are replaced with fictional values, and tool calls are reduced to one line, without their output. A window that any of the guards flags is held back that night: the allowlist, the denylist of the real inventory, or a review by the lab's own model, which looks for what no list can name in advance.",
+    disclaimer: "✔ A real capture, redone every night and sanitized automatically, with no human review. Hostnames, addresses and domains are replaced with fictional values, and tool calls are reduced to one line, without their output. A passage that any of the guards flags is removed, and the whole window only when its subject itself is private: the allowlist, the denylist of the real inventory, and a review by the lab's own model, which looks for what no list can name in advance.",
     loading: "Loading the snapshot…",
     windows: "Session windows",
   },
@@ -72,8 +72,8 @@ const t = {
   const S = EN
     ? {
         last: "last activity",
-        heldReview: "Window held back tonight: the review by the lab's model found something private in it.",
-        heldList: "Window held back tonight: one of the list guards found a name or a value that does not leave the lab.",
+        heldReview: "Window held back tonight: its subject itself is private, according to the review by the lab's model.",
+        heldList: "Window held back tonight: too many of its passages carry names or values that do not leave the lab.",
         empty: "Nothing to show in this window.",
         none: "No snapshot here. It is only placed next to the site in production.",
         stamp: "snapshot of",
@@ -82,8 +82,8 @@ const t = {
       }
     : {
         last: "dernière activité le",
-        heldReview: "Fenêtre retenue ce soir : la relecture par le modèle du labo y a trouvé quelque chose de privé.",
-        heldList: "Fenêtre retenue ce soir : une des gardes de listes y a trouvé un nom ou une valeur qui ne sort pas du labo.",
+        heldReview: "Fenêtre retenue ce soir : selon la relecture par le modèle du labo, c'est le sujet lui-même qui est privé.",
+        heldList: "Fenêtre retenue ce soir : trop de ses passages portent des noms ou des valeurs qui ne sortent pas du labo.",
         empty: "Rien à montrer dans cette fenêtre.",
         none: "Pas d'instantané ici. Il n'est déposé qu'à côté du site en production.",
         stamp: "instantané du",

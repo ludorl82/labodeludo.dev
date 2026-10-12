@@ -22,18 +22,21 @@
 //     deviennent leur jumeau de documentation (allowlist.redact) ;
 //  4. les gardes de check-public-leaks.mjs, liste blanche et liste noire ;
 //  5. la relecture par le modèle local, qui retient ce qu'aucune liste ne sait
-//     nommer d'avance : employeur, famille, santé, argent, secrets, adresses.
-// Une garde qui touche RETIENT la fenêtre ce soir-là (elle apparaît, vide,
-// avec une raison générique) ; elle ne la réécrit jamais et ne bloque pas les
-// autres. Une erreur, elle, n'écrit rien du tout : modèle injoignable, liste
-// noire absente, transcription illisible — pas d'instantané plutôt qu'un
-// instantané moins gardé.
+//     nommer d'avance : employeur, famille, santé, argent, secrets, adresses,
+//     et les failles encore ouvertes qu'un inconnu pourrait exploiter.
+// Une garde qui touche RETIRE le passage (une marque le remplace à l'écran),
+// puis ce qui reste est vérifié de nouveau ; jamais rien n'est réécrit. Une
+// fenêtre n'est retenue en entier que si le sujet lui-même est privé (plus du
+// quart à retirer) ou si la relecture ne se satisfait pas. Elle ne bloque
+// jamais les autres. Une erreur, elle, n'écrit rien du tout : modèle
+// injoignable, liste noire absente, transcription illisible — pas
+// d'instantané plutôt qu'un instantané moins gardé.
 //
 // Le rapport détaillé (quelle garde, quelle entrée) va sur stderr, qui reste
 // sur la console : il ne doit jamais suivre l'instantané.
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { PUBLIC_RULES, allowlistHits, loadDenylist, redactTexts } from "../lib/public-gate.mjs";
@@ -56,7 +59,7 @@ const SANS_RELECTURE = flag("sans-relecture");
 
 const MAX_ENTRIES = 400; // par fenêtre, les plus récentes
 const MAX_CHARS = 6000; // par entrée
-const CHUNK_CHARS = 16000; // par appel au modèle
+const CHUNK_CHARS = 6000; // par appel au modèle : au-delà, le 27B rate des passages (banc du 2026-10-12)
 
 /* Domaines publics que la console cite sans rien révéler du labo : de la
    documentation et des fournisseurs. Tout autre domaine devient site.example. */
@@ -240,7 +243,9 @@ function entriesOf(path) {
       }
     }
   }
-  return out.slice(-MAX_ENTRIES);
+  // `n` : le rang dans toute la conversation, stable d'un soir à l'autre
+  // (la relecture le cite, et son cache en dépend).
+  return out.map((e, n) => ({ ...e, n })).slice(-MAX_ENTRIES);
 }
 
 /* --- gardes ------------------------------------------------------------ */
@@ -260,44 +265,68 @@ function sanitize(texts, config) {
   return t;
 }
 
-/** Première touche des gardes de liste, ou null. */
-function listGate(texts, deny) {
+/** Toutes les touches des gardes de liste : Map index → première étiquette. */
+function listHits(texts, deny) {
   const pub = allowlistHits(texts, PUBLIC_SUFFIX);
+  const hits = new Map();
   for (let i = 0; i < texts.length; i++) {
-    if (pub.has(i)) return { i, label: pub.get(i) };
-    for (const [label, re] of PUBLIC_RULES) if (re.test(texts[i])) return { i, label };
-    for (const [label, re] of deny.rules) if (re.test(texts[i])) return { i, label };
+    if (pub.has(i)) {
+      hits.set(i, pub.get(i));
+      continue;
+    }
+    for (const [label, re] of [...PUBLIC_RULES, ...deny.rules]) {
+      if (re.test(texts[i])) {
+        hits.set(i, label);
+        break;
+      }
+    }
   }
-  return null;
+  return hits;
 }
 
-const CATEGORIES = ["employeur", "famille", "sante", "argent", "secret", "adresse"];
-const PROMPT_VERSION = "1";
-const SYSTEM = `Tu es une garde de confidentialité. On te donne un extrait d'une session de travail entre Ludo et un assistant de programmation. L'extrait sera PUBLIÉ sur son site web.
+const CATEGORIES = ["employeur", "famille", "sante", "argent", "secret", "adresse", "faille"];
+const PROMPT_VERSION = "3";
+const SYSTEM = `Tu es une garde de confidentialité. On te donne un extrait d'une session de travail entre Ludo et un assistant de programmation, découpé en passages numérotés [n]. L'extrait sera PUBLIÉ sur son site web.
 
 Ce qui est PUBLIC et ne doit PAS être signalé : le travail technique sur son labo maison (serveurs, réseau, Kubernetes, NixOS, domotique, modèles d'IA), ses projets à venir, ses articles de blogue, ses chiens Bob et Stella, et les noms d'hôte, adresses et domaines, qui ont déjà été remplacés par des valeurs fictives.
 
-Signale seulement ce qui appartient à l'une de ces catégories :
+Signale chaque passage qui contient quelque chose de l'une de ces catégories :
 - employeur : le nom de l'employeur de Ludo, ou son travail pour lui ;
 - famille : un proche nommé, la vie de famille, la conjointe, les enfants ;
 - sante : la santé de Ludo ou d'un proche ;
 - argent : finances personnelles (comptes, revenus, dettes, montants personnels) ;
 - secret : un mot de passe, jeton, clé ou code écrit en clair ;
-- adresse : une adresse postale, un numéro de téléphone, un courriel personnel.
+- adresse : une adresse postale, un numéro de téléphone, un courriel personnel ;
+- faille : une faiblesse de sécurité ENCORE en place qu'un inconnu pourrait exploiter (un compte sans mot de passe, un service ouvert sans chiffrement ou avec un mot de passe faible, un port exposé, une protection désactivée). Une faille corrigée dans le même passage, ou une mesure de sécurité décrite, n'en est pas une.
 
-Dans le doute sur une de ces catégories, signale-la. Réponds en JSON.`;
+Donne le numéro [n] de CHAQUE passage concerné, pas seulement le premier : les passages signalés seront retirés, le reste sera publié. Dans le doute, signale. Réponds en JSON.`;
 
 function cacheGet(key) {
   const p = join(CACHE, `${key}.json`);
-  return existsSync(p) ? JSON.parse(readFileSync(p, "utf8")) : null;
+  if (!existsSync(p)) return null;
+  const now = new Date();
+  utimesSync(p, now, now); // servi ce soir : l'élagage le garde
+  return JSON.parse(readFileSync(p, "utf8"));
+}
+
+/* Une tranche que plus aucune fenêtre ne produit ne sera plus jamais
+   demandée : un verdict qui n'a pas servi depuis 30 jours part. */
+function cachePrune() {
+  if (!existsSync(CACHE)) return;
+  const limit = Date.now() - 30 * 86400_000;
+  for (const f of readdirSync(CACHE)) {
+    const p = join(CACHE, f);
+    if (statSync(p).mtimeMs < limit) unlinkSync(p);
+  }
 }
 function cachePut(key, v) {
   mkdirSync(CACHE, { recursive: true });
   writeFileSync(join(CACHE, `${key}.json`), JSON.stringify(v));
 }
 
+/** Les numéros de passage que le modèle signale dans une tranche. */
 async function review(chunk) {
-  const key = createHash("sha256").update(`${PROMPT_VERSION}\0${MODEL}\0${chunk}`).digest("hex");
+  const key = createHash("sha256").update(`${PROMPT_VERSION}\0${MODEL}\0${chunk.text}`).digest("hex");
   const hit = cacheGet(key);
   if (hit) return hit;
   const res = await fetch(`${OLLAMA}/api/chat`, {
@@ -309,12 +338,21 @@ async function review(chunk) {
       think: false,
       messages: [
         { role: "system", content: SYSTEM },
-        { role: "user", content: `Extrait :\n\n${chunk}` },
+        { role: "user", content: `Extrait :\n\n${chunk.text}` },
       ],
       format: {
         type: "object",
-        properties: { categories: { type: "array", items: { type: "string", enum: CATEGORIES } } },
-        required: ["categories"],
+        properties: {
+          passages: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { n: { type: "integer" }, categorie: { type: "string", enum: CATEGORIES } },
+              required: ["n", "categorie"],
+            },
+          },
+        },
+        required: ["passages"],
       },
       options: { temperature: 0, num_ctx: 16384 },
     }),
@@ -323,8 +361,14 @@ async function review(chunk) {
   if (!res.ok) throw new Error(`relecture : HTTP ${res.status}`);
   const body = await res.json();
   const verdict = JSON.parse(body.message.content);
-  const cats = (verdict.categories ?? []).filter((c) => CATEGORIES.includes(c));
-  const v = { categories: [...new Set(cats)] };
+  const passages = (verdict.passages ?? []).filter((p) => CATEGORIES.includes(p.categorie));
+  // Un numéro qui n'est pas dans la tranche ne désigne rien : le modèle a
+  // signalé quelque chose sans dire où. On ne sait pas quoi retirer, alors la
+  // tranche entière l'est.
+  const known = new Set(chunk.ns);
+  const v = passages.some((p) => !known.has(p.n))
+    ? { passages: chunk.ns.map((n) => ({ n, categorie: passages[0].categorie })) }
+    : { passages };
   cachePut(key, v);
   return v;
 }
@@ -335,25 +379,42 @@ async function review(chunk) {
    toutes les tranches. La coupe se décide donc sur le contenu (après une
    entrée dont l'empreinte finit par 0, passé la moitié de la taille), comme
    un découpage rsync : seules les tranches qui ont vraiment changé repassent
-   devant le modèle. */
+   devant le modèle. Chaque passage porte son rang dans la conversation. */
 function chunks(entries) {
   const label = { u: "Ludo", a: "Assistant", t: "[outil]", n: "" };
   const out = [];
-  let cur = "";
+  let cur = { text: "", ns: [] };
   for (const e of entries) {
-    const line = `${label[e.r]} ${e.t}\n\n`;
-    if (cur && cur.length + line.length > CHUNK_CHARS) {
+    const line = `[${e.n}] ${label[e.r]} ${e.t}\n\n`;
+    if (cur.text && cur.text.length + line.length > CHUNK_CHARS) {
       out.push(cur);
-      cur = "";
+      cur = { text: "", ns: [] };
     }
-    cur += line;
+    cur.text += line;
+    cur.ns.push(e.n);
     const h = createHash("sha256").update(line).digest()[0];
-    if (cur.length > CHUNK_CHARS / 2 && h % 4 === 0) {
+    if (cur.text.length > CHUNK_CHARS / 2 && h % 4 === 0) {
       out.push(cur);
-      cur = "";
+      cur = { text: "", ns: [] };
     }
   }
-  if (cur) out.push(cur);
+  if (cur.text) out.push(cur);
+  return out;
+}
+
+const RETIRE = "— passage retiré par la garde —";
+/* Au-delà, ce n'est plus un passage qui est privé, c'est le sujet : la
+   fenêtre est retenue au lieu d'être publiée en gruyère. */
+const MAX_RETRAIT = 0.25;
+const TOURS = 3;
+
+/** Remplace les entrées retirées par une seule marque par suite. */
+function retirer(entries, drop) {
+  const out = [];
+  for (const e of entries) {
+    if (!drop.has(e.n)) out.push(e);
+    else if (out.at(-1)?.t !== RETIRE) out.push({ r: "n", t: RETIRE, at: e.at, n: e.n });
+  }
   return out;
 }
 
@@ -374,34 +435,73 @@ for (const w of windows()) {
   const src = byTitle.get(w.name);
   const entries = src ? entriesOf(src.path) : [];
   const texts = sanitize([w.name, ...entries.map((e) => e.t)], config);
-  const [name, ...clean] = texts;
-  const safe = entries.map((e, i) => ({ ...e, t: clean[i] }));
+  let [name, ...clean] = texts;
+  let safe = entries.map((e, i) => ({ ...e, t: clean[i] }));
   const base = { index: w.index, active: w.active, activity: w.activity.toISOString() };
+  const retenue = (why, reason) => {
+    log(`${w.index}:${w.name} — retenue, ${why}`);
+    result.push({ ...base, name, status: "retenue", reason });
+  };
 
-  const hit = listGate(texts, deny);
-  if (hit) {
-    log(`${w.index}:${w.name} — retenue, garde « ${hit.label} » (${hit.i === 0 ? "nom" : `entrée ${hit.i - 1}`})`);
-    result.push({ ...base, name: hit.i === 0 ? `fenêtre ${w.index}` : name, status: "retenue", reason: "garde" });
-    continue;
+  // 1. Les gardes de liste, passage par passage. Un nom de fenêtre touché
+  //    devient « fenêtre N » ; une entrée touchée est retirée.
+  const hits = listHits([name, ...safe.map((e) => e.t)], deny);
+  if (hits.has(0)) {
+    log(`${w.index}:${w.name} — nom touché (« ${hits.get(0)} »), renommée`);
+    name = `fenêtre ${w.index}`;
   }
+  const dropped = new Set();
+  for (const [i, label] of hits) {
+    if (i === 0) continue;
+    dropped.add(safe[i - 1].n);
+    log(`${w.index}:${w.name} — entrée ${safe[i - 1].n} retirée, garde « ${label} »`);
+  }
+  safe = retirer(safe, dropped);
+
   if (!src) {
     log(`${w.index}:${w.name} — aucune transcription trouvée`);
     result.push({ ...base, name, status: "publiee", entries: [] });
     continue;
   }
 
-  let cats = [];
-  if (!SANS_RELECTURE) {
-    for (const c of chunks(safe)) cats.push(...(await review(c)).categories);
-    cats = [...new Set(cats)];
+  // 2. La relecture, jusqu'à ce qu'elle ne signale plus rien : ce qui reste
+  //    après un retrait est relu à nouveau, parce qu'une réponse voisine peut
+  //    encore porter ce que le passage retiré disait.
+  let propre = SANS_RELECTURE;
+  for (let tour = 0; !propre && tour < TOURS; tour++) {
+    const flagged = new Map();
+    for (const c of chunks(safe.filter((e) => e.t !== RETIRE)))
+      for (const p of (await review(c)).passages) flagged.set(p.n, p.categorie);
+    if (!flagged.size) propre = true;
+    for (const [n, cat] of flagged) {
+      dropped.add(n);
+      log(`${w.index}:${w.name} — entrée ${n} retirée, relecture « ${cat} » (tour ${tour + 1})`);
+    }
+    safe = retirer(safe, dropped);
   }
-  if (cats.length) {
-    log(`${w.index}:${w.name} — retenue, relecture : ${cats.join(", ")}`);
-    result.push({ ...base, name, status: "retenue", reason: "relecture" });
+
+  // 3. Une dernière passe des gardes de liste sur ce qui sera publié : elle
+  //    ne doit plus rien trouver. Si elle trouve, c'est un bogue ici.
+  if (listHits([name, ...safe.map((e) => e.t)], deny).size) {
+    retenue("garde encore touchée après retrait", "garde");
     continue;
   }
-  log(`${w.index}:${w.name} — publiée, ${safe.length} entrées (${basename(src.path)})`);
-  result.push({ ...base, name, status: "publiee", entries: safe });
+  if (!propre) {
+    retenue(`relecture toujours insatisfaite après ${TOURS} tours`, "relecture");
+    continue;
+  }
+  if (dropped.size > MAX_RETRAIT * entries.length) {
+    retenue(`${dropped.size} entrées sur ${entries.length} à retirer`, hits.size ? "garde" : "relecture");
+    continue;
+  }
+  log(`${w.index}:${w.name} — publiée, ${entries.length - dropped.size} entrées, ${dropped.size} retirée(s) (${basename(src.path)})`);
+  result.push({
+    ...base,
+    name,
+    status: "publiee",
+    retirees: dropped.size,
+    entries: safe.map(({ n, ...e }) => e),
+  });
 }
 
 const doc = {
@@ -411,6 +511,7 @@ const doc = {
   relu: !SANS_RELECTURE,
   windows: result,
 };
+cachePrune();
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(`${OUT}.tmp`, JSON.stringify(doc));
 renameSync(`${OUT}.tmp`, OUT);

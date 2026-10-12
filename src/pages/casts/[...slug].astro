@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { articlesForCast, CAST_TYPE_LABELS, CAST_TYPE_HINTS } from "../../lib/casts";
 import AsciiCast from "../../components/AsciiCast.astro";
 
 export async function getStaticPaths() {
@@ -14,10 +15,7 @@ const { Content } = await render(cast);
 const englishCasts = await getCollection("castsEn");
 const hasEnglish = englishCasts.some((c) => c.id === cast.id);
 
-const articles = await getCollection("blog");
-const article = cast.data.article
-  ? articles.find((a) => a.id === cast.data.article)
-  : undefined;
+const articles = await articlesForCast(cast, "fr");
 ---
 
 <BaseLayout
@@ -42,6 +40,12 @@ const article = cast.data.article
           })
         }
       </time>
+      <a
+        class="cast-type"
+        data-type={cast.data.type}
+        href={`/casts/?type=${cast.data.type}`}
+        title={CAST_TYPE_HINTS.fr[cast.data.type]}
+      >{CAST_TYPE_LABELS.fr[cast.data.type]}</a>
     </header>
 
     <AsciiCast
@@ -58,10 +62,15 @@ const article = cast.data.article
     </div>
 
     {
-      article && (
+      articles.length > 0 && (
         <p class="related">
-          L'article qui raconte cette session :{" "}
-          <a href={`/blog/${article.id}/`}>{article.data.title}</a>
+          {articles.length === 1 ? "L'article qui raconte cette session :" : "Les articles qui racontent cette session :"}{" "}
+          {articles.map((a, i) => (
+            <>
+              {i > 0 && " · "}
+              <a href={`/blog/${a.id}/`}>{a.data.title}</a>
+            </>
+          ))}
         </p>
       )
     }
@@ -89,6 +98,10 @@ const article = cast.data.article
     font-family: var(--font-mono);
     font-size: 0.8rem;
     color: var(--text-faint);
+  }
+
+  .cast-type {
+    margin-left: 0.75rem;
   }
 
   .prose {

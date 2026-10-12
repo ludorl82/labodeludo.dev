@@ -1,20 +1,23 @@
 {
   "curated": [
-    "Why did you unplug the NAS on purpose?",
-    "How do your gaming rigs and your cluster share the graphics cards?"
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "D'où vient le nom de Bob ?",
+    "How do you publish your infrastructure without leaking secrets?",
+    "Why did the cheapest model score like the biggest one?"
   ],
-  "generated": "2026-10-07T08:34:20Z",
+  "generated": "2026-10-12T08:34:35Z",
   "openers": [
-    "Pourquoi tes connexions SSH gelaient-elles après une minute ?",
-    "Pourquoi tu as séparé le bastion de la console ?",
-    "C'est quoi la carte graphique qui permet de rouler le modèle?",
-    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?",
+    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
     "Why were the ssh sessions disconnecting after a few instants?",
-    "Why did your cache keep its fast voice?",
-    "Why did you unplug the NAS on purpose?",
-    "How do your gaming rigs and your cluster share the graphics cards?"
+    "Pourquoi ta voix reste-t-elle rapide malgré le changement de CPU ?",
+    "How did you keep the cache fast with a slower CPU?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "D'où vient le nom de Bob ?",
+    "How do you publish your infrastructure without leaking secrets?",
+    "Why did the cheapest model score like the biggest one?"
   ],
   "written": [
-    "Why did your cache keep its fast voice?"
+    "Pourquoi ta voix reste-t-elle rapide malgré le changement de CPU ?",
+    "How did you keep the cache fast with a slower CPU?"
   ]
 }

@@ -1,8 +1,10 @@
 ---
+import { CAST_TYPES, CAST_TYPE_LABELS, CAST_TYPE_HINTS, type CastType } from "../lib/casts";
+
 interface Props {
   casts: {
     id: string;
-    data: { title: string; description?: string; pubDate: Date };
+    data: { title: string; description?: string; pubDate: Date; type: CastType };
   }[];
   basePath?: string;
   lang?: "fr" | "en";
@@ -14,7 +16,34 @@ const empty =
   lang === "en"
     ? `$ ls ${basePath}/\nls: no matches found`
     : `$ ls ${basePath}/\nls: aucune correspondance trouvée`;
+
+const counts = CAST_TYPES.map((t) => ({
+  type: t,
+  n: casts.filter((c) => c.data.type === t).length,
+})).filter((c) => c.n > 0);
+const allLabel = lang === "en" ? "All" : "Tous";
+const filterLabel = lang === "en" ? "Filter by type" : "Filtrer par type";
 ---
+
+{
+  counts.length > 1 && (
+    <nav class="filter" aria-label={filterLabel} data-cast-filter>
+      <a class="pill" href={`${basePath}/`} data-filter="" aria-current="true">
+        {allLabel} <span class="n">{casts.length}</span>
+      </a>
+      {counts.map(({ type, n }) => (
+        <a
+          class="pill"
+          href={`${basePath}/?type=${type}`}
+          data-filter={type}
+          title={CAST_TYPE_HINTS[lang][type]}
+        >
+          {CAST_TYPE_LABELS[lang][type]} <span class="n">{n}</span>
+        </a>
+      ))}
+    </nav>
+  )
+}
 
 {
   casts.length === 0 ? (
@@ -22,15 +51,20 @@ const empty =
   ) : (
     <ul class="list">
       {casts.map((cast) => (
-        <li class="row">
+        <li class="row" data-type={cast.data.type}>
           <a class="row-link" href={`${basePath}/${cast.id}/`}>
-            <time datetime={cast.data.pubDate.toISOString()}>
-              {cast.data.pubDate.toLocaleDateString(dateLocale, {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-            </time>
+            <span class="meta">
+              <time datetime={cast.data.pubDate.toISOString()}>
+                {cast.data.pubDate.toLocaleDateString(dateLocale, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </time>
+              <span class="cast-type" data-type={cast.data.type}>
+                {CAST_TYPE_LABELS[lang][cast.data.type]}
+              </span>
+            </span>
             <span class="row-title">{cast.data.title}</span>
             {cast.data.description && <span class="row-desc">{cast.data.description}</span>}
           </a>
@@ -40,7 +74,74 @@ const empty =
   )
 }
 
+<script>
+  /* Sans JavaScript, la liste reste complète et les pastilles rechargent la
+     page sur ?type=… sans effet : rien n'est caché qu'on ne puisse revoir. */
+  function applyFilter(nav: HTMLElement, type: string) {
+    const known = [...nav.querySelectorAll<HTMLElement>("[data-filter]")].some(
+      (a) => a.dataset.filter === type,
+    );
+    const active = known ? type : "";
+    nav.querySelectorAll<HTMLElement>("[data-filter]").forEach((a) => {
+      if (a.dataset.filter === active) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+    });
+    document.querySelectorAll<HTMLElement>(".list .row").forEach((row) => {
+      row.hidden = !!active && row.dataset.type !== active;
+    });
+  }
+
+  for (const nav of document.querySelectorAll<HTMLElement>("[data-cast-filter]")) {
+    applyFilter(nav, new URLSearchParams(location.search).get("type") ?? "");
+    nav.addEventListener("click", (e) => {
+      const a = (e.target as HTMLElement).closest<HTMLAnchorElement>("[data-filter]");
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      e.preventDefault();
+      history.replaceState(null, "", a.href);
+      applyFilter(nav, a.dataset.filter ?? "");
+    });
+  }
+</script>
+
 <style>
+  .filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .pill {
+    padding: 0.2rem 0.75rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .pill .n {
+    color: var(--text-faint);
+  }
+
+  .pill:hover,
+  .pill:focus-visible {
+    border-color: var(--accent-live);
+  }
+
+  .pill[aria-current="true"] {
+    border-color: var(--accent-live);
+    color: var(--accent-live);
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
   .list {
     list-style: none;
     margin: 0;

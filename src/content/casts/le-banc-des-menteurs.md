@@ -6,6 +6,7 @@ cast: "/casts/le-banc-des-menteurs.cast"
 poster: "npt:0:09"
 caption: "Le mensonge est celui du 8 août — la phrase qu'une session avait vraiment corrigée. Même agent, même prompt, mêmes outils : ce qui diffère, c'est ce que le modèle fait une fois qu'il a lu."
 article: "le-banc-des-menteurs"
+type: "reconstitution"
 disclaimer: "⚠ Reconstitution condensée, pas une capture en direct. La trace des outils, les verdicts et le diff sont ceux des vraies exécutions du 13 septembre 2026 (qwen3.5-35b-a3b et qwen3.8-flash, cas L1, premier tirage). Le minutage est compressé, l'habillage de Qwen Code est approximé, et seize des dix-huit cas sont coupés."
 ---
 

@@ -12,131 +12,35 @@ Palette and line grammar per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-bouton-claude.py
 """
-import json
-import random
 
-OUT = "public/casts/bouton-claude.cast"
-COLS, ROWS = 96, 22
-random.seed(7)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, CYAN, DIM, FG, GREEN, PINK, R, RED, SPIN, YELLOW, calling, cont, line, prompt, says, spinner, waiting
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/bouton-claude.cast",
+    title="Un bouton domotique qui embauche un Claude (reconstitution)",
+    session="console-claude-session",
+    windows=["backlog", "console-claude-session"],
+    current="console-claude-session",
+    start="19-Aug-26 20:08:12",
+    cwd="~/git/nixos-iac",
+    model="Opus 5 · Claude Max",
+    version="v2.1.225",
+    seed=7,
+)
 
-BRANCH = "console-claude-session"
+T.disclaimer("Demandes et messages réels, minutage compressé,",
+             "noms d'hôte sanitisés.")
+T.banner()
 
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def typed(s, prefix="", d=1.5):
-    """Type a line out character by character, at human speed."""
-    global t
-    if prefix:
-        out(prefix)
-        pause(0.7)
-    for ch in s:
-        out(ch)
-        t += random.uniform(0.045, 0.115)
-    out("\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(text, second=None):
-    rule()
-    if second is None:
-        typed(f"{FG}{text}{R}", prefix=f"{GREEN}❯{R} ", d=1.8)
-    else:
-        # One continuous typing flow across the wrap: no end-of-line pause, no
-        # second prompt char — the composer just wraps, like the real TUI.
-        global t
-        out(f"{GREEN}❯{R} ")
-        pause(0.7)
-        out(FG)
-        for ch in text:
-            out(ch)
-            t += random.uniform(0.045, 0.115)
-        out(R + "\r\n  ")
-        out(FG)
-        for ch in second:
-            out(ch)
-            t += random.uniform(0.045, 0.115)
-        out(R + "\r\n")
-        pause(1.8)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def running(cmd, d=0.7):
-    line()
-    line(f"  {DIM}{cmd}{R}", d)
-
-
-def spinner(word, secs, tokens, d=2.0):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def stop(text, detail=None, d=3.2):
-    line()
-    line(f"  {YELLOW}{BOLD}{text}{R}", 0.9)
-    if detail:
-        line(f"  {YELLOW}{detail}{R}", 0.6)
-    line(f"  {DIM}waiting for you…{R}", d)
-    line()
-
-
-
-# --- disclaimer ---------------------------------------------------------
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels, minutage compressé,{R}", 0.25)
-line(f"{DIM}     noms d'hôte sanitisés.  labodeludo.dev/casts/{R}", 2.6)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.225{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/nixos-iac{R}", 1.4)
-line()
 
 # --- 1. the ask ----------------------------------------------------------
 prompt("can you make sure when console-vm is powered back on with the ha switch",
        "that it starts up claude code with remote control turned on in a tmux session called claude?")
 says("Let me find how Remote Control is enabled and where `claude` actually")
 cont("lives — then test the exact invocation before declaring it.", 1.2)
-running("Bash  docker exec console tmux new-session -d -s claude 'claude --remote-control'")
+calling("Bash", 1)
+T.detail(f"{DIM}docker exec console tmux new-session -d -s claude 'claude --remote-control'{R}", 0.7)
 spinner("Testing", "48s", "1.1k")
 says("Works — Remote Control is live with a session URL. Now to declare it so")
 cont("it happens on every boot.", 1.3)
@@ -146,7 +50,8 @@ prompt("hey i want the claude tmux session to run in the container you are",
        "currently running in")
 says("Two different tmux servers — so my test was not landing where I am.")
 cont("Let me identify my actual container:", 1.1)
-running("Bash  cat /proc/self/cgroup && tmux -L console ls")
+calling("Bash", 1)
+T.detail(f"{DIM}cat /proc/self/cgroup && tmux -L console ls{R}", 0.7)
 spinner("Investigating", "31s", "0.8k")
 says("Same container — the difference is the tmux socket. I'm on a named")
 cont("socket `console`; the unit created its session on the default socket,")
@@ -165,7 +70,8 @@ cont("since that's the same path a boot takes.", 1.4)
 # --- 3. the button --------------------------------------------------------
 prompt("can you add a button in home assistant to add a new window in the tmux",
        "session with a new Claude code instance with remote control turned on?")
-running("Bash  curl -X POST …/api/services/button/press  # full chain test")
+calling("Bash", 1)
+T.detail(f"{DIM}curl -X POST …/api/services/button/press  # full chain test{R}", 0.7)
 spinner("Building", "4m 02s", "2.7k")
 says(f"{GREEN}Done and verified through the full chain{R} — HA button press →")
 cont("shell_command → SSH → dispatcher → tmux window with a live Claude.", 1.1)
@@ -186,19 +92,4 @@ cont("your account — open it in the app and you're driving the same session.",
 line()
 line(f"  {DIM}A smart-home button that hires another Claude.{R}", 2.6)
 
-# --- write it out -------------------------------------------------------
-header = {
-    "version": 2,
-    "width": COLS,
-    "height": ROWS,
-    "title": "Un bouton domotique qui embauche un Claude (reconstitution)",
-    "timestamp": 0,
-    "idle_time_limit": 2,
-    "env": {"TERM": "xterm-256color", "SHELL": "/bin/zsh"},
-}
-with open(OUT, "w") as fh:
-    fh.write(json.dumps(header) + "\n")
-    for ev in events:
-        fh.write(json.dumps(ev, ensure_ascii=False) + "\n")
-
-print(f"{OUT}: {len(events)} events, {events[-1][0]:.0f}s")
+T.save()

@@ -5,6 +5,8 @@ description: "The same command, twice. The first time it is safe, the second tim
 cast: "/casts/control-plane-consolidation.cast"
 poster: "npt:0:08"
 caption: "Tearing a three-node control plane down to one. The outage in the middle is self-inflicted, and the command that fixes it gets blocked by the permission guardrail while the cluster is down."
+frame: "none"
+type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real session transcript. The prompts and the stop messages are the ones from the actual session; the timing is compressed and the long waits are cut. Hostnames sanitized, and some worker nodes are left out of the display — that is called out on screen."
 article: "je-me-suis-vote-hors-de-l-ile"
 ---

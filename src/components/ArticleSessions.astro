@@ -1,0 +1,98 @@
+---
+/* Les enregistrements rattachés à un article (champ `article` d'un cast), en
+   bas du texte : les sessions qui ont mené à l'article, dans l'ordre où elles
+   ont eu lieu. Rien n'est rendu quand l'article n'en a aucune. */
+import { castsForArticle, CAST_TYPE_LABELS } from "../lib/casts";
+
+interface Props {
+  slug: string;
+  lang?: "fr" | "en";
+}
+
+const { slug, lang = "fr" } = Astro.props;
+const items = await castsForArticle(slug, lang);
+const heading =
+  lang === "en"
+    ? items.length === 1 ? "The session behind this article" : "The sessions behind this article"
+    : items.length === 1 ? "La session derrière cet article" : "Les sessions derrière cet article";
+const dateLocale = lang === "en" ? "en-CA" : "fr-CA";
+---
+
+{
+  items.length > 0 && (
+    <aside class="sessions">
+      <h2>{heading}</h2>
+      <ul>
+        {items.map(({ cast, fallback }) => (
+          <li>
+            <a
+              class="bob-link"
+              data-kind="cast"
+              href={fallback || lang === "fr" ? `/casts/${cast.id}/` : `/en/casts/${cast.id}/`}
+              hreflang={fallback ? "fr" : undefined}
+            >
+              <span class="bob-link-ico" aria-hidden="true">▶</span>
+              {cast.data.title}
+            </a>
+            <span class="meta">
+              <span class="cast-type" data-type={cast.data.type}>
+                {CAST_TYPE_LABELS[lang][cast.data.type]}
+              </span>
+              <time datetime={cast.data.pubDate.toISOString()}>
+                {cast.data.pubDate.toLocaleDateString(dateLocale, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </time>
+              {fallback && <span class="fr">(en français)</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  )
+}
+
+<style>
+  .sessions {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--panel-border);
+    max-width: var(--measure);
+  }
+
+  h2 {
+    margin: 0 0 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  li {
+    display: grid;
+    gap: 0.35rem;
+    justify-items: start;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+</style>

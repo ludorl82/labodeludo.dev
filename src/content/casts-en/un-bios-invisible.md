@@ -5,6 +5,8 @@ description: "A BIOS screen nobody can see, arrow keys that never arrived, a wro
 cast: "/casts/bios-blind.cast"
 poster: "npt:0:08"
 caption: "The most absurd part of the Cabinet's migration, condensed: navigating a BIOS that draws nothing over serial, discovering the arrow keys were never arriving, landing in the Intel MEBx menu by mistake, breaking the boot with Optimized Defaults — then routing around all of it through the BMC's virtual CD drive."
+frame: "none"
+type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real session transcript. The prompts and the stop messages are the ones from the actual session; the timing is compressed and the long waits are cut. Hostnames sanitized."
 article: "une-borne-darcade-qui-cohabite-avec-kubernetes"
 ---

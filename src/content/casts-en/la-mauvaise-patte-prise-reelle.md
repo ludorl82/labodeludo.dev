@@ -8,6 +8,7 @@ caption: "Three panes: the commands on top, the state pfSense keeps on the sessi
 article: "la-reponse-par-la-mauvaise-patte"
 session: "aucune"
 frame: "none"
+type: "prise-reelle"
 disclaimer: "✔ This is a real capture, made on September 24, 2026 with asciinema in a dedicated tmux session, with no editing. vm-02, mac and routeur are SSH aliases to the real machines, and the anonymise filter, visible on screen, replaces the real addresses with the article's on the fly; fiche is a small script that reads pfSense's state table (pfctl -ss -vv) through that filter. To replay the failure, rule 102 was removed from vm-02 for the take, then put back. The keystrokes were sent by a script and not typed by Ludo, the prompt is “ludo@labo”, only pauses longer than two seconds are shortened, and the container ID in the tmux bar is replaced by a name of the same length."
 ---
 

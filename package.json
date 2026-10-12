@@ -11,7 +11,8 @@
     "build": "node scripts/render-bob-prompts.mjs --check && node scripts/check-bob-register.mjs && node scripts/build-bob-vectors.mjs --soft && npm run generate-og-images && astro build && node scripts/emit-nested-404.mjs && node scripts/check-prose-spacing.mjs dist && node scripts/check-diagram-links.mjs dist && node scripts/check-diagram-highlight.mjs dist",
     "preview": "astro preview",
     "astro": "astro",
-    "embed": "node scripts/build-bob-vectors.mjs"
+    "embed": "node scripts/build-bob-vectors.mjs",
+    "check:leaks": "node scripts/check-public-leaks.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.2",
@@ -19,5 +20,8 @@
     "asciinema-player": "^3.17.0",
     "astro": "^7.0.6",
     "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "@xterm/headless": "6.0.0"
   }
 }

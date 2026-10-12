@@ -15,110 +15,25 @@ Palette and line grammar per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-nixos-migration.py
 """
-import json
-import random
 
-OUT = "public/casts/nixos-migration.cast"
-COLS, ROWS = 96, 22
-random.seed(7)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BOLD, DIM, GREEN, R, YELLOW, cont, line, prompt, says, spinner, waiting
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"  # #d8d8d8 body text
-DIM = "\x1b[38;5;246m"  # #949494 secondary
-YELLOW = "\x1b[38;5;220m"  # #ffd700 headings / warnings
-GREEN = "\x1b[38;5;114m"  # #87d787 ok / prompt
-SPIN = "\x1b[38;5;174m"  # #d78787 spinner
-CYAN = "\x1b[38;5;37m"  # #00afaf rule + branch
-PINK = "\x1b[38;5;217m"  # logo
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/nixos-migration.cast",
+    title="Une conversion de nœud vers NixOS (reconstitution)",
+    session="nixos-vm-05",
+    windows=["backlog", "nixos-vm-05"],
+    current="nixos-vm-05",
+    start="24-Jul-26 10:08:51",
+    cwd="~/git/nixos-iac",
+    model="Opus 5 with high effort · Claude Max",
+    seed=7,
+)
 
-BRANCH = "nixos-vm-05"
-
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def typed(s, prefix="", d=1.5):
-    """Type a line out character by character, at human speed."""
-    global t
-    if prefix:
-        out(prefix)
-        pause(0.7)
-    for ch in s:
-        out(ch)
-        t += random.uniform(0.045, 0.115)
-    out("\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(text, second=None):
-    rule()
-    typed(f"{FG}{text}{R}", prefix=f"{GREEN}❯{R} ", d=0.6 if second else 1.8)
-    if second:
-        typed(f"{FG}{second}{R}", prefix=f"{GREEN}❯{R} ", d=1.8)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def running(cmd, d=0.7):
-    line()
-    line(f"  {DIM}{cmd}{R}", d)
-
-
-def spinner(word, secs, tokens, d=2.0):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-def stop(text, detail=None, d=3.2):
-    line()
-    line(f"  {YELLOW}{BOLD}{text}{R}", 0.9)
-    if detail:
-        line(f"  {YELLOW}{detail}{R}", 0.6)
-    line(f"  {DIM}waiting for you…{R}", d)
-    line()
-
-
-# --- disclaimer ---------------------------------------------------------
-# Baked into the recording itself, not just the page around it: the cast is
-# published to asciinema.org too, where it stands alone, and an embedded or
-# downloaded file carries no page at all. This must not get separated from it.
-line(f"{YELLOW}  \u26a0  Reconstitution condens\u00e9e \u2014 pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages r\u00e9els, minutage compress\u00e9,{R}", 0.25)
-line(f"{DIM}     noms d'h\u00f4te sanitis\u00e9s.  labodeludo.dev/casts/{R}", 2.6)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.220{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/nixos-iac{R}", 1.4)
-line()
+T.disclaimer("Demandes et messages réels, minutage compressé,",
+             "noms d'hôte sanitisés.")
+T.banner()
 
 # --- 1. the ask ---------------------------------------------------------
 prompt("Can you ssh into vm-05 and convert it to nixos as vm-03?")
@@ -134,18 +49,21 @@ says("Got it — no rename. Converting in place as `vm-05`.", 1.0)
 
 says("Important find before I wipe anything: vm-05 runs a scheduled S3 backup")
 cont("(`~/scripts/homelab-backup.sh` + its key). Preserving that first.", 1.2)
-running("Bash  scp -p vm-05:~/scripts/homelab-backup.sh ./salvage/")
+line()
+line(f"  {DIM}Bash  scp -p vm-05:~/scripts/homelab-backup.sh ./salvage/{R}", 0.7)
 spinner("Salvaging", "12s", "0.8k")
 
 says("Now writing the vm-05 config, then checking it evaluates.", 1.0)
-running("Bash  nix eval .#nixosConfigurations.vm-05.config.system.build.toplevel")
+line()
+line(f"  {DIM}Bash  nix eval .#nixosConfigurations.vm-05.config.system.build.toplevel{R}", 0.7)
 spinner("Evaluating", "41s", "2.6k")
 says("Config evaluates cleanly. Committing to the repo.", 1.1)
 
 # --- 3. point of no return ---------------------------------------------
 says("Now the kexec phase — this is the point of no return for vm-05's")
 cont("Debian install.", 1.2)
-running("Bash  nixos-anywhere --flake .#vm-05 root@vm-05")
+line()
+line(f"  {DIM}Bash  nixos-anywhere --flake .#vm-05 root@vm-05{R}", 0.7)
 spinner("Installing", "1m 04s", "3.4k")
 
 # --- 4. first wall: Secure Boot ----------------------------------------
@@ -156,13 +74,14 @@ spinner("Investigating", "27s", "1.9k")
 says("Blocked on a real fork. vm-05 is a Gen-2 VM with Secure Boot On, and the")
 cont("kernel is in `integrity` lockdown — that blocks both kexec paths, so the")
 cont("install can't start. NixOS also can't Secure Boot without lanzaboote.", 1.3)
-stop(
-    "I can disable Secure Boot from the hypervisor and power-cycle it.",
-    "That reboots vm-05. Say go and I'll do it.",
-)
+line()
+line(f"  {YELLOW}{BOLD}I can disable Secure Boot from the hypervisor and power-cycle it.{R}", 0.9)
+line(f"  {YELLOW}That reboots vm-05. Say go and I'll do it.{R}", 0.6)
+waiting()
 
 prompt("go ahead")
-running("Bash  ssh hv-01 powershell -c \"Set-VMFirmware vm-05 -EnableSecureBoot Off\"")
+line()
+line(f"  {DIM}Bash  ssh hv-01 powershell -c \"Set-VMFirmware vm-05 -EnableSecureBoot Off\"{R}", 0.7)
 spinner("Reconfiguring", "34s", "1.1k")
 says("Lockdown is now `[none]` — kexec will work. Re-running.", 1.0)
 spinner("Installing", "2m 11s", "4.2k")
@@ -170,7 +89,8 @@ spinner("Installing", "2m 11s", "4.2k")
 # --- 5. second wall: initrd won't unpack -------------------------------
 says("Mid-kexec, host unreachable as expected. But it never came back.", 1.1)
 says("I have hypervisor access, so let me grab the VM console screen directly.", 1.0)
-running("Bash  ssh hv-01 powershell -c \"Get-VMConsole vm-05 | Out-File screen.txt\"")
+line()
+line(f"  {DIM}Bash  ssh hv-01 powershell -c \"Get-VMConsole vm-05 | Out-File screen.txt\"{R}", 0.7)
 spinner("Capturing", "19s", "1.5k")
 
 says("Found it — the console shows the kexec kernel booted but")
@@ -202,20 +122,4 @@ cont("after a cold boot at the original 4 GB. Config committed and pushed.", 1.4
 line()
 line(f"  {DIM}8 of 9 nodes converted.{R}", 2.6)
 
-# --- write it out -------------------------------------------------------
-header = {
-    "version": 2,
-    "width": COLS,
-    "height": ROWS,
-    # Shown by asciinema.org in listings and embeds — say what it is there too.
-    "title": "Une conversion de nœud vers NixOS (reconstitution)",
-    "timestamp": 0,
-    "idle_time_limit": 2,
-    "env": {"TERM": "xterm-256color", "SHELL": "/bin/zsh"},
-}
-with open(OUT, "w") as fh:
-    fh.write(json.dumps(header) + "\n")
-    for ev in events:
-        fh.write(json.dumps(ev, ensure_ascii=False) + "\n")
-
-print(f"{OUT}: {len(events)} events, {events[-1][0]:.0f}s")
+T.save()

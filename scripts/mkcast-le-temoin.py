@@ -32,115 +32,25 @@ Palette and line grammar per net-cfgs/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-le-temoin.py
 """
-import json
-import random
 
-OUT = "public/casts/le-temoin.cast"
-COLS, ROWS = 96, 22
-random.seed(11)  # keep regenerated casts byte-stable
+import claude_tui as T
+from claude_tui import BLUE, BOLD, CYAN, DIM, GREEN, R, RED, YELLOW, calling, cont, line, prompt, says, spinner
 
-# --- palette sampled from the terminal screenshots ----------------------
-FG = "\x1b[38;5;253m"
-DIM = "\x1b[38;5;246m"
-YELLOW = "\x1b[38;5;220m"
-GREEN = "\x1b[38;5;114m"
-SPIN = "\x1b[38;5;174m"
-CYAN = "\x1b[38;5;37m"
-PINK = "\x1b[38;5;217m"
-RED = "\x1b[38;5;174m"
-BLUE = "\x1b[38;5;74m"
-BOLD = "\x1b[1m"
-R = "\x1b[0m"
+T.setup(
+    out="public/casts/le-temoin.cast",
+    title="Le témoin : deux hypothèses tuées par un jumeau",
+    session="mot-de-reveil",
+    windows=["backlog", "mot-de-reveil"],
+    current="mot-de-reveil",
+    start="10-Sep-26 20:42:15",
+    cwd="~/git/domotique",
+    model="Opus 5 · Claude Max",
+    seed=11,
+)
 
-BRANCH = "mot-de-reveil"
-
-events, t = [], 0.0
-
-
-def out(s):
-    events.append([round(t, 3), "o", s])
-
-
-def pause(d):
-    global t
-    t += d
-
-
-def line(s="", d=0.55):
-    out(s + "\r\n")
-    pause(d)
-
-
-def typed(s, prefix="", d=1.5):
-    global t
-    if prefix:
-        out(prefix)
-        pause(0.7)
-    for ch in s:
-        out(ch)
-        t += random.uniform(0.045, 0.115)
-    out("\r\n")
-    pause(d)
-
-
-def rule():
-    dashes = "─" * (COLS - len(BRANCH) - 3)
-    line(f"{CYAN}{dashes} {BRANCH}{R}", 0.5)
-
-
-def prompt(text, second=None):
-    rule()
-    if second is None:
-        typed(f"{FG}{text}{R}", prefix=f"{GREEN}❯{R} ", d=1.8)
-    else:
-        # One continuous typing flow across the wrap: no end-of-line pause, no
-        # second prompt char — the composer wraps, it does not hesitate.
-        global t
-        out(f"{GREEN}❯{R} ")
-        pause(0.7)
-        out(FG)
-        for ch in text:
-            out(ch)
-            t += random.uniform(0.045, 0.115)
-        out(R + "\r\n  ")
-        out(FG)
-        for ch in second:
-            out(ch)
-            t += random.uniform(0.045, 0.115)
-        out(R + "\r\n")
-        pause(1.8)
-    line()
-
-
-def says(text, d=0.9):
-    line(f"{FG}●{R} {text}", d)
-
-
-def cont(text, d=0.9):
-    line(f"  {text}", d)
-
-
-def calling(tool, n=1, d=0.7):
-    line()
-    line(f"  {DIM}Calling {tool} {n} time{'s' if n > 1 else ''}…{R}", d)
-
-
-def spinner(word, secs, tokens, d=2.0):
-    line(f"{SPIN}· {word}…{R} {DIM}({secs} · ↓ {tokens} tokens){R}", d)
-    line()
-
-
-# --- disclaimer ---------------------------------------------------------
-line(f"{YELLOW}  ⚠  Reconstitution condensée — pas une capture en direct.{R}", 0.25)
-line(f"{DIM}     Demandes et messages réels, minutage compressé,{R}", 0.25)
-line(f"{DIM}     noms d'appareils sanitisés.  labodeludo.dev/casts/{R}", 2.6)
-line()
-
-# --- banner -------------------------------------------------------------
-line(f"{PINK}  ▄▄▄▄▄▄▄▄{R}   {BOLD}Claude Code{R} {DIM}v2.1.220{R}", 0.2)
-line(f"{PINK}  █ ██ ██ █{R}  {DIM}Opus 5 with high effort · Claude Pro{R}", 0.2)
-line(f"{PINK}  ▀▀    ▀▀{R}  {DIM}~/git/automatron{R}", 1.4)
-line()
+T.disclaimer("Demandes et messages réels, minutage compressé,",
+             "noms d'appareils sanitisés.")
+T.banner()
 
 # --- 1. the report ------------------------------------------------------
 prompt("le double appui marche, l'assistant répond comme il faut, mais l'anneau du",
@@ -223,14 +133,4 @@ says(f"{BOLD}Ce labo a des paires de presque tout.{R} Le jumeau non modifié est
 cont("un témoin, et j'aurais dû aller le chercher avant de spéculer.", 2.6)
 line()
 
-# --- write --------------------------------------------------------------
-header = {
-    "version": 2, "width": COLS, "height": ROWS,
-    "title": "Le témoin : deux hypothèses tuées par un jumeau",
-    "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"},
-}
-with open(OUT, "w", encoding="utf-8") as fh:
-    fh.write(json.dumps(header, ensure_ascii=False) + "\n")
-    for e in events:
-        fh.write(json.dumps(e, ensure_ascii=False) + "\n")
-print(f"{OUT}: {len(events)} events, {t:.1f}s")
+T.save()

@@ -8,6 +8,7 @@ caption: "On top, the sanitizing script; at the bottom, a pane kept for the narr
 article: "quatre-depots-pour-un-labo-au-complet"
 session: "aucune"
 frame: "none"
+type: "prise-reelle"
 disclaimer: "✔ Real capture from September 20, 2026, asciinema in a dedicated tmux session, no editing: the commands run for real on a copy of the repository and their output is real. The keystrokes were sent by a script, not typed by Ludo; the forgotten domain is fictional, planted for the take; only pauses longer than two seconds are shortened."
 ---
 

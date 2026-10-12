@@ -631,12 +631,13 @@ const ariaLabel = hasRacks
         {RACKS.length > 1
           ? "Les baies du parc, relevées chaque nuit dans l'inventaire du matériel."
           : "La baie du parc, relevée chaque nuit dans l'inventaire du matériel."}
-        Trait plein pour ce que les dépôts déclarent, pointillé pour le
-        reste — le matériel que personne n'a jamais écrit nulle part. La
-        barre de gauche donne le réseau, les puces en pointillé sont les
-        machines virtuelles et les contrôleurs qui vivent <em>dans</em> la
-        machine au-dessus d'elles, et le modèle réel est écrit à droite de
-        chaque rangée.
+        Sur une rangée, trait plein pour ce que les dépôts déclarent, pointillé
+        pour le reste — le matériel que personne n'a jamais écrit nulle part.
+        Sur une puce, le pointillé ne parle pas des dépôts : il dit seulement
+        que la boîte est logée dans celle qui la porte. La barre de gauche donne
+        le réseau, les puces sont les machines virtuelles et les contrôleurs qui
+        vivent <em>dans</em> la machine au-dessus d'elles, et le modèle réel est
+        écrit à droite de chaque rangée.
         {shownGpu && (
           <> Le drapeau GPU écrit à côté d'un nom vient de l'inventaire : une
           carte logée dans cette machine, rien de plus — le dessin ne devine pas

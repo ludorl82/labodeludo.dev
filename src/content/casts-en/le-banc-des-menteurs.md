@@ -6,6 +6,7 @@ cast: "/casts/le-banc-des-menteurs.cast"
 poster: "npt:0:09"
 caption: "The lie is the one from August 8 — the sentence a session had really corrected. Same agent, same prompt, same tools: what differs is what the model does once it has read. Terminal in French."
 article: "le-banc-des-menteurs"
+type: "reconstitution"
 disclaimer: "⚠ A condensed reconstruction, not a live capture. The tool trace, the verdicts and the diff are those of the real runs of September 13, 2026 (qwen3.5-35b-a3b and qwen3.8-flash, case L1, first draw). Timing is compressed, Qwen Code's chrome is approximated, and sixteen of the eighteen cases are cut."
 ---
 

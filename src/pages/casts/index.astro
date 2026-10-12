@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CastList from "../../components/CastList.astro";
+import ConsoleSnapshot from "../../components/ConsoleSnapshot.astro";
 
 const casts = (await getCollection("casts")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -17,12 +18,18 @@ const casts = (await getCollection("casts")).sort(
   <header class="page-header">
     <h1>Enregistrements de terminal</h1>
     <p class="lede">
-      Des sessions de travail rejouables, tirées des transcriptions réelles.
-      Chacune est une reconstitution condensée — jamais une capture en direct —
-      et le dit en toutes lettres au-dessus du lecteur.
+      Ce qui se passe dans ma console : en haut, la session de travail telle
+      qu'elle était hier soir ; plus bas, les sessions derrière les articles,
+      rejouables dans le navigateur. La plupart sont des reconstitutions
+      condensées d'une session Claude Code, tirées de sa transcription réelle ;
+      d'autres sont des prises réelles de la console ou du chat du site.
+      Chacune dit ce qu'elle est en toutes lettres.
     </p>
   </header>
 
+  <ConsoleSnapshot lang="fr" />
+
+  <h2 class="list-h">Les enregistrements</h2>
   <CastList casts={casts} lang="fr" />
 </BaseLayout>
 
@@ -41,6 +48,11 @@ const casts = (await getCollection("casts")).sort(
 
   h1 {
     margin: 0 0 0.6rem;
+  }
+
+  .list-h {
+    margin: 0 0 1rem;
+    font-size: 1.15rem;
   }
 
   .lede {

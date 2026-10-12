@@ -5,6 +5,8 @@ description: "A Home Assistant button that opens a tmux window with a fresh Clau
 cast: "/casts/bouton-claude.cast"
 poster: "npt:0:08"
 caption: "A simple ask — start Claude Code at boot inside tmux — that hits a real trap (two tmux servers in the same container), then ends as a Home Assistant button: each press opens a tmux window with a new Claude, drivable from the app while it lives."
+frame: "none"
+type: "reconstitution"
 disclaimer: "⚠ This is not a live capture: it is a condensed reconstruction, edited afterwards from the real session transcript. The prompts and the stop messages are the ones from the actual session; the timing is compressed and the long waits are cut. Hostnames sanitized."
 ---
 

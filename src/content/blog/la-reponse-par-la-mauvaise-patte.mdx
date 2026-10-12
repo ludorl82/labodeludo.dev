@@ -16,14 +16,11 @@ import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Symptôme** : depuis mon Mac, branché sur le VLAN de la maison, une session SSH vers un serveur gèle dès qu'elle reste inactive un moment. Pas d'erreur, pas de déconnexion, le curseur attend.
-> -   **Le terrain** : deux VLAN sur les mêmes fils, avec des commutateurs Netgear non gérés : le VLAN 50 de la maison sans étiquette, le VLAN 10 des serveurs étiqueté. Neuf serveurs ont une « patte », une adresse, dans chacun des deux.
-> -   **La cause** : je joins un serveur par son nom, donc par son adresse VLAN 10, en passant par pfSense. Le serveur, lui, me répond directement par sa patte VLAN 50. pfSense ne voit qu'un sens de la conversation (`22:0 pkts`), la considère comme jamais ouverte et l'oublie après 30 secondes de silence. Le paquet suivant est jeté.
-> -   **La fausse piste** : juste avant, mon Mac ne pinguait plus le réseau local du tout. Ce n'était pas le réseau : c'était la confidentialité « Réseau local » de macOS, qui bloquait mon terminal, Alacritty, sans jamais me poser la question.
-> -   **Le correctif** : du routage par source. Trois règles `ip rule` font repartir chaque réponse par la patte par laquelle la demande est arrivée. Un module NixOS, `labo.dualHomed`, les pose; chaque serveur déclare son dernier octet et, au besoin, le nom de ses interfaces.
-> -   **Le déploiement** : neuf machines câblées de trois façons différentes (VM à deux cartes, machines physiques avec une sous-interface étiquetée, hyperviseurs libvirt), un seul fichier. comin l'a déployé partout en moins de deux minutes.
-> -   **La leçon** : un essai court ne rencontre jamais un délai d'inactivité. Un transfert de 200 Mo, bouclé en dix secondes, avait « prouvé » que ce cas-là fonctionnait.
-> -   **Transparence** : le diagnostic et le correctif ont été menés en session avec Claude Code (Opus 5.5). J'ai posé les questions, validé les règles et fusionné les PR. La théorie complète, RFC à l'appui, est dans [le corollaire de Bob](/blog/corollaire-la-porte-d-en-arriere/).
+> -   **Symptôme** : depuis mon Mac, une session SSH vers un serveur gèle dès qu'elle reste inactive un moment.
+> -   **La cause** : neuf serveurs ont une patte dans deux VLAN. Je passe par pfSense, le serveur me répond directement. pfSense ne voit qu'un sens (`22:0 pkts`) et oublie la connexion après 30 secondes.
+> -   **Le correctif** : trois règles `ip rule` renvoient chaque réponse par la patte d'arrivée. Un module NixOS, `labo.dualHomed`, déployé par comin en moins de deux minutes.
+> -   **La leçon** : un essai court ne rencontre jamais un délai d'inactivité.
+> -   **Transparence** : mené avec Claude Code (Opus 5.5). La théorie est dans [le corollaire de Bob](/blog/corollaire-la-porte-d-en-arriere/).
 
 Je viens d'ajouter un MacBook Air à mon labo, configuré avec Nix comme le reste. Et assez vite, un irritant : mes sessions SSH vers mes serveurs gelaient. Je lisais un journal, je revenais au terminal une minute plus tard, je tapais une commande, et plus rien. Pas d'erreur, pas de déconnexion, juste un curseur qui attend.
 

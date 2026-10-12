@@ -9,10 +9,10 @@ iaOutils: "Claude Code"
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> - **Avant** : `coquille`, `worker1` et `worker2` (trois Raspberry Pi 5, plan de contrôle et noeuds de travail d'une partie de mon infra locale) vivaient chacun dans son propre boîtier, simplement posés sur une tablette du rack mural. Difficiles d'accès, câblage pas contraint.
+> - **Avant** : `coquille`, `worker1` et `worker2` (trois Raspberry Pi 5) vivaient chacun dans son boîtier, posés sur une tablette du rack mural. Difficiles d'accès, câblage pas contraint.
 > - **Ajout** : un support 1U GeeekPi pour Raspberry Pi 5, compatible rack 19 pouces, avec adaptateurs PCIe vers M.2 NVMe (4x) et afficheur OLED intégré.
-> - **Résultat** : les trois cartes sont sorties de leurs boîtiers individuels et montées nues dans le tiroir, chacune étiquetée (COQUILLE, WORKER1, WORKER2) directement sur la façade, avec ports USB/HDMI/réseau accessibles sans avoir à sortir quoi que ce soit du rack.
-> - **Bonus latent** : les adaptateurs NVMe ne sont pas encore utilisés. C'est une piste pour migrer plus tard du stockage SD/USB fragile vers du NVMe, sans toucher au reste du montage.
+> - **Résultat** : les trois cartes sont montées nues dans le tiroir, étiquetées sur la façade, ports accessibles sans rien sortir du rack.
+> - **Bonus latent** : les adaptateurs NVMe ne sont pas encore utilisés. Une piste pour quitter plus tard le stockage SD/USB fragile.
 
 Le rack mural du sous-sol, celui qui porte le switch, les deux onduleurs et une partie de mon infra locale, avait un problème que je traînais depuis un bout : `coquille`, `worker1` et `worker2`, mes trois Raspberry Pi 5, étaient chacun dans leur propre petit boîtier, simplement posés sur une tablette. Ça fonctionnait, mais accéder à un port USB ou un câble HDMI voulait dire sortir le bon boîtier de la pile, souvent en débranchant deux autres au passage.
 

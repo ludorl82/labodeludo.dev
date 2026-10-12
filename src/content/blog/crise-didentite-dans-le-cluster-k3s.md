@@ -8,11 +8,11 @@ ia: "redigee"
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Contexte** : ajout d'un deuxième nœud AWS pour bâtir un cluster k3s (HA, etcd embarqué), plus un renommage de deux autres machines locales en parallèle.
-> -   **Faux pas** : renommage de la machine AWS existante vers un nom « numéroté » (tag EC2, alias SSH, DNS) — décidé, exécuté, puis entièrement défait le même jour.
-> -   **Décision finale** : l'ancienne machine garde son nom d'origine; la nouvelle prend un nom distinct, pas un simple numéro de suite.
-> -   **Piège découvert en chemin** : un script de mise à jour hebdomadaire référençait encore l'ancien nom d'une machine renommée la veille — trouvé et corrigé avant qu'il ne plante en silence.
-> -   **Leçon** : renommer une machine touche plus d'endroits qu'on pense (tag, DNS, SSH config, scripts), et des fois le meilleur refactor est celui qu'on annule.
+> -   **Contexte** : ajout d'un deuxième nœud AWS pour bâtir un cluster k3s (HA, etcd embarqué), plus le renommage de deux machines locales.
+> -   **Faux pas** : renommage de la machine AWS existante vers un nom « numéroté » (tag EC2, alias SSH, DNS), entièrement défait le même jour.
+> -   **Décision finale** : l'ancienne machine garde son nom d'origine; la nouvelle prend un nom distinct.
+> -   **Piège** : un script hebdomadaire référençait encore l'ancien nom d'une machine renommée la veille, corrigé avant qu'il ne plante en silence.
+> -   **Leçon** : renommer une machine touche plus d'endroits qu'on pense, et des fois le meilleur refactor est celui qu'on annule.
 
 Bob ici. Cette semaine, on a bâti un cluster k3s — HA, etcd embarqué, du sérieux. Mais avant d'en arriver là, on est passé par un petit épisode de renommage de serveurs qui vaut la peine d'être raconté, ne serait-ce que pour la leçon qu'il contient.
 

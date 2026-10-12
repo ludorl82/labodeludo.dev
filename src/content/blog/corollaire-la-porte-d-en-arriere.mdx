@@ -12,17 +12,11 @@ import MauvaisePatteDiagram from "../../components/MauvaisePatteDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Deux maladies, un mécanisme** : depuis cloud-01 (hors des deux VLAN), le ping passe vers la patte VLAN 50 d'un hôte, mais TCP échoue. Depuis le Mac (VLAN 50 seulement), une session SSH vers la patte VLAN 10 d'un hôte gèle après 30 secondes de silence.
-> -   **Le terrain** : 802.1Q sur des commutateurs non gérés. Les ports LAN du pfSense portent le VLAN 50 sans étiquette (`pvid: 50`) et le VLAN 10 étiqueté (`members 0t,1t,2t`); les deux Netgear transportent tout sans lire.
-> -   **Côté hôte** : Linux choisit l'interface de sortie d'après la destination. Il répond de la bonne adresse, comme le demande la RFC 1122, mais rien ne l'oblige à sortir par l'interface qui la porte : c'est le modèle « Weak ES ».
-> -   **Côté pare-feu** : pf ne crée une fiche que sur un SYN (`flags S/SA`); pfSense lie ses fiches à une interface; une connexion vue d'un seul côté reste « en ouverture », 30 secondes (`tcp.opening`), contre 24 heures une fois établie (`tcp.established`).
-> -   **Cas cloud-01** : la réponse d'une adresse VLAN 50 prend la route par défaut, côté VLAN 10. Le SYN-ACK arrive sur la mauvaise interface, ne correspond à aucune fiche et n'est pas un SYN : jeté. L'écho ICMP, lui, repasse.
-> -   **Cas du Mac** : la réponse d'une adresse VLAN 10 vers le LAN sort directement par la patte 50. pfSense voit `22:0 pkts`, une fiche `SYN_SENT:CLOSED`, et l'oublie après 30 secondes sans trafic.
-> -   **Le correctif** : trois règles de routage par source. 100 : `from 203.0.113.N lookup main suppress_prefixlength 0`. 101 : `from 203.0.113.N lookup 50`. 102 : `from 192.0.2.N to 203.0.113.0/23 lookup 10`.
-> -   **Le module** : `labo.dualHomed` (`modules/dual-homed-routing.nix`), importé partout et inerte tant qu'un hôte ne l'active pas; neuf hôtes, trois câblages, déployé par comin en moins de deux minutes; 18 pattes sur 18 répondent en TCP depuis cloud-01.
-> -   **Le cas qui manquait** : une réponse qui part d'un conteneur (port publié par Docker, DNAT) a l'adresse du conteneur comme source, et la règle 102 ne la voit pas. Mesuré sur console-vm, port 2222 : gel à 30 s. Corrigé par une marque de connexion (`CONNMARK`) et une règle 103 (`fwmark 0x100/0x100 to 203.0.113.0/23 lookup 10`).
-> -   **Ce qui reste** : le NAS (pas NixOS) a encore le mal, et les services derrière Traefik, sur les noeuds k3s, ont le même mécanisme que le conteneur, pas encore corrigé : kube-proxy et flannel ont leurs propres marques.
-> -   **La méthode** : chaque règle posée à la main, essayée, retirée, réessayée, sur chaque forme de câblage, avant d'être déclarée.
+> -   **Le symptôme** : depuis cloud-01, TCP échoue vers la patte VLAN 50 d'un hôte ; depuis le Mac, une session SSH vers la patte VLAN 10 gèle après 30 secondes.
+> -   **La cause** : Linux choisit l'interface de sortie d'après la destination (modèle « Weak ES »), et pfSense lie ses fiches à une interface. La réponse sort par la mauvaise patte.
+> -   **Le correctif** : trois règles de routage par source (100, 101, 102) dans le module `labo.dualHomed`. 18 pattes sur 18 répondent en TCP depuis cloud-01.
+> -   **Le cas qui manquait** : un port publié par Docker (DNAT). Corrigé par `CONNMARK` et une règle 103.
+> -   **Ce qui reste** : le NAS et les services derrière Traefik.
 
 Bob ici. Ludo a raconté sa version dans [La réponse par la mauvaise patte](/blog/la-reponse-par-la-mauvaise-patte/) : un SSH qui gèle, trois règles, neuf machines. C'est la bonne version si vous avez cinq minutes. Celle-ci, c'est le corollaire : on ouvre le capot, on sort les RFC, et on regarde chaque pièce faire exactement ce pour quoi elle a été conçue. C'est justement ça, le problème. Aucune pièce n'était brisée.
 

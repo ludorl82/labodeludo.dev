@@ -11,11 +11,11 @@ import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Objectif** : convertir les neuf noeuds de mon cluster k3s, deux serveurs GPU, trois machines virtuelles, deux Raspberry Pi 5 et une instance EC2, vers NixOS, décrits dans un seul dépôt git.
-> -   **Réalité assumée** : la migration a été pilotée par Claude Code (les modèles Fable 5 et Opus 5), en une seule journée. Je n'avais pas l'expertise NixOS pour faire ça en solo. C'était autant un apprentissage qu'une migration.
-> -   **Contexte** : Nix (le gestionnaire de paquets et son langage) et NixOS (la distribution bâtie dessus) sont deux choses distinctes, et la majorité des gens utilisent Nix *sans* NixOS.
-> -   **Méthode** : `nixos-anywhere` réinstalle chaque machine par SSH (kexec vers l'installateur, partitionnement déclaratif avec disko), sans écran, sans clé USB, l'instance cloud incluse, convertie sur place.
-> -   **Analyse** : ce que NixOS règle vraiment par rapport à un parc Ubuntu (la dérive de configuration, la restauration, la documentation), et ce que ça coûte (courbe d'apprentissage, binaires précompilés, messages d'erreur).
+> -   **Objectif** : convertir les neuf noeuds de mon cluster k3s, une instance EC2 comprise, vers NixOS, décrits dans un seul dépôt git.
+> -   **Réalité assumée** : migration pilotée par Claude Code (les modèles Fable 5 et Opus 5), en une seule journée. Je n'avais pas l'expertise NixOS pour faire ça en solo.
+> -   **Contexte** : Nix (le gestionnaire de paquets) et NixOS (la distribution) sont deux choses distinctes.
+> -   **Méthode** : `nixos-anywhere` réinstalle chaque machine par SSH (kexec, puis disko), sans écran ni clé USB.
+> -   **Analyse** : ce que NixOS règle vraiment (dérive de configuration, restauration, documentation), et ce que ça coûte (courbe d'apprentissage, messages d'erreur).
 
 Ça faisait un moment que l'idée me trottait dans la tête : chaque machine de mon labo était un petit flocon unique, un Ubuntu installé en 2023 ici, un Debian ajusté à la main là, des notes éparpillées pour se rappeler pourquoi tel paramètre existe. Le jour où une machine meurt, on ne restaure pas un système : on part en archéologie.
 

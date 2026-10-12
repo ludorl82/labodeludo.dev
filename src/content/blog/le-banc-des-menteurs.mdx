@@ -12,13 +12,11 @@ import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Pourquoi partir** : les conditions d'utilisation d'Anthropic réservent l'abonnement à un « usage ordinaire, individuel » et interdisent de router des requêtes pour des tiers. Le chat du site n'a donc jamais pu y rouler, et un job de nuit en `claude -p` est au mieux une zone grise. En avril 2026, Claude Code a disparu du plan Pro pendant un jour. Et Opus à la facturation par jeton coûterait environ 64 $US par mois pour un pipeline quotidien. J'ai choisi de mitiger : Alibaba Cloud Model Studio et Qwen, à travers Qwen Code. Tout ce travail a été fait avec Claude Code, en Opus 5 puis Fable 5.1, qui reste mon outil de développement.
-> -   **Le piège** : les premiers runs du modèle local étaient verts. Sur un dessin où **tout est vrai**, un modèle qui répond « vrai » partout passe. Il fallait des mensonges.
-> -   **Le banc** : le vrai dessin de `/architecture` avec **une phrase rendue fausse** (cinq variantes, dont celle sur WireGuard qu'une session avait réellement corrigée le 8 août), plus le dessin intact pour compter les fausses alertes, trois tirages par cas. Puis la même chose sur un document privé, pour la session qui le réconcilie.
-> -   **Les résultats, en agent** : Opus 5 (Claude Code) **15/15**. Dans Qwen Code : **qwen3.8-flash 15/15**, qwen3.8-max 5/5, qwen3.8-27b 12/15, et toute la génération 3.5, dont mon modèle local, 0. Sonnet 5 : 0/15. Sur le document privé : flash **5/5**, zéro fausse alerte, et il a corrigé au passage la vraie dérive du soir dans chacun des six runs.
-> -   **Les coûts** : 0,06 $US par dessin, 0,15 $ par réconciliation, **moins de 0,50 $ par nuit**. Le cache d'Alibaba sert 94 à 98 % des jetons d'entrée.
-> -   **La réserve** : le banc, ses garde-fous et sa notation ont été construits par Opus 5, qui est à égalité en tête. Ça ne change pas ce que chaque modèle a écrit, mais ça mérite d'être dit.
-> -   **La décision** : les quatre sessions du pipeline, plus les deux petites qui trient les questions du chatbot, roulent **chaque nuit sur qwen3.8-flash**. La [politique de confidentialité](/politique-de-confidentialite/) dit ce qui part chez qui.
+> -   **Pourquoi partir** : les conditions d'Anthropic réservent l'abonnement à un « usage ordinaire, individuel ». J'ai choisi de mitiger avec Alibaba Cloud Model Studio et Qwen, à travers Qwen Code.
+> -   **Le banc** : le vrai dessin de `/architecture` avec **une phrase rendue fausse**. Sur un dessin où **tout est vrai**, tout le monde passe.
+> -   **Les résultats** : Opus 5 **15/15**, **qwen3.8-flash 15/15**, Sonnet 5 0/15, mon modèle local 0. Le banc a été construit par Opus 5, à égalité en tête.
+> -   **La décision** : le pipeline roule **chaque nuit sur qwen3.8-flash**, pour **moins de 0,50 $ par nuit**.
+> -   **Transparence** : fait avec Claude Code, en Opus 5 puis Fable 5.1.
 
 Il y a une session dans mon pipeline de nuit que j'aurais aimé ramener à la maison. Chaque dimanche, elle relisait les instantanés publics de mes quatre dépôts d'infrastructure et décidait si le dessin en haut de [/architecture](/architecture/) disait encore la vérité. Elle roulait sur Opus 5, dans Claude Code, sur mon abonnement Claude Pro. Trois autres sessions faisaient le même genre de travail sur mes documents privés et sur la page des baies.
 

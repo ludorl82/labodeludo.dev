@@ -13,12 +13,11 @@ import SurvivorIslandDiagram from "../../components/SurvivorIslandDiagram.astro"
 
 > **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Problem**: monitoring and orchestration die with what they watch. During a power outage, the host that should alert, log and restart machines is itself down.
-> -   **Concept**: a "survivor island", the router, the WAN modem and a single Raspberry Pi grouped on the least-loaded UPS in the house (about 15 W, hours of runtime), the Pi plugged directly into a hardware switch port on the router. The island routes, alerts and keeps remote access alive while everything else shuts down cleanly.
-> -   **Recovery in two complementary mechanisms**: BMC `always-on` policy covers outages where the outlets lose power (mains transition = restart). An IPMI wake latch on the survivor Pi covers those where the outlets stay powered (clean shutdown = no transition). The latch only arms on a real electrical event: a machine turned off on purpose stays off.
-> -   **Heartbeat semantics**: the dead-man switch's "the house is alive" signal (S3, then Lambda, then email) is emitted from the island, precisely because it is the last thing to die. A stale heartbeat then means "nothing can communicate anymore", the only case where an external email adds information.
-> -   **Validation**: four deliberate plug-pulls. They found a battery threshold inert without `ignorelb`, a UPS firmware that never re-energizes its outlets on its own, and a BMC whose VLAN tag corrupted itself across a power cycle, repaired in-band via raw IPMI over WMI, no physical access.
-> -   **Method**: design, NixOS implementation and diagnostics done in sessions with Claude Code (Fable 5 model). The pull tests and the architectural decisions stayed human.
+> -   **Problem**: during a power outage, the host that should alert and restart machines is itself down.
+> -   **Concept**: a "survivor island", the router, the modem and a Raspberry Pi on the least-loaded UPS (about 15 W, hours of runtime).
+> -   **Recovery**: BMC `always-on` policy when the outlets lose power, an IPMI wake latch on the Pi when they stay powered.
+> -   **Validation**: four deliberate plug-pulls, which found a battery threshold inert without `ignorelb` and a BMC whose VLAN tag corrupted itself.
+> -   **Method**: done in sessions with Claude Code (Fable 5 model). The architectural decisions stayed human.
 
 Last week my NAS died during a series of power flickers. [Bob told the full story](/en/blog/le-nas-le-courant-et-l-appel-de-reveil/), including the four plug-pull tests that followed. This post covers the same ground from a different angle: not what happened, but *how the architecture that came out of it is designed*, and why I think the central concept, a survivor island, transfers to most infrastructures, professional ones included. As usual, the work was done in sessions with Claude Code (Fable 5 model): the design emerged from the conversation, the NixOS implementation and the diagnostics are largely its work, and the pulled plugs are mine.
 

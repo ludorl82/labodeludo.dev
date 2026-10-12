@@ -11,12 +11,11 @@ import ArcadePassthroughDiagram from "../../components/ArcadePassthroughDiagram.
 
 > **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **The idea**: GPU on demand, at home. Nobody walks to a physical machine: a switch brings up a gaming session accelerated by a real graphics card, and you play it over Steam Remote Play from any device in the house.
-> -   **The setup**: a Supermicro X11SRA-F workstation (Xeon W-2135, 48 GB) cut into two NixOS VMs of 8 vCPU / 16 GB, each with its card passed through with `vfio`, an RTX 3060 for one station, an RTX 3050 for the other. One VM per player, not a shared session.
-> -   **The resource is pooled**: between games, that same tower is a node in the Kubernetes cluster. A libvirt `hook` evacuates it when a gaming VM starts, and hands it back when the VM stops.
-> -   **The code is public**: [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public), both stations and their shared desktop module, sanitized. A gaming station comes down to three values that change; the rest is common.
-> -   **What breaks anyway**: a card that outlives its VM in a state it never wakes from, a dying SSD that pauses the VM (indistinguishable from a network outage), and a small card suffocating under the big one.
-> -   **Owned up front**: this job was done with Claude Code (the Fable 5 and Opus 5 models). My part: deciding, validating, screwing the card in, asking questions.
+> -   **The idea**: GPU on demand, at home. A switch brings up a gaming session, played over Steam Remote Play from any device.
+> -   **The setup**: a Supermicro X11SRA-F cut into two NixOS VMs, an RTX 3060 and an RTX 3050 passed through with `vfio`. Between games, the tower goes back to the Kubernetes cluster.
+> -   **The code**: [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public), a gaming station in three values.
+> -   **What breaks anyway**: a card that never wakes, a dying SSD, a small card suffocating under the big one.
+> -   **Owned up front**: this job was done with Claude Code (the Fable 5 and Opus 5 models).
 
 The change I like most about this setup isn't technical, it's domestic: **my partner and I no longer have to walk up to a physical machine to play.**
 

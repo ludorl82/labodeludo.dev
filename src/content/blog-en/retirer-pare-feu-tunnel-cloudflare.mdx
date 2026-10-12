@@ -11,13 +11,9 @@ import CloudflareTunnelDiagram from "../../components/CloudflareTunnelDiagram.as
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
 > -   **Goal**: delete an AWS security group that existed only to let Cloudflare reach two web services.
-> -   **Two Cloudflare modes**: in **DNS proxy**, Cloudflare open a connection to the origin public IP, who must accept its address ranges on 80 and 443. In **tunnel**, it is `cloudflared`, on the server, who open outbound connections to Cloudflare and keep them open.
-> -   **Before**: one service (WebDAV), he was already going through a tunnel; the other (the home-automation admin interface) was still in direct proxy.
-> -   **Migration**: one more ingress rule in the tunnel configuration, managed by API at Cloudflare, then the DNS record changed to a CNAME toward the tunnel.
-> -   **Result**: zero inbound rule dedicated to Cloudflare, and the security group deleted.
-> -   **Trap**: a static-site publish script was temporarily flipping the **public** DNS to the WordPress server to do its capture. That flip depended on the door we just closed.
-> -   **Script fix**: a temporary entry in the `hosts` file of the machine doing the capture, through the private VPN path. Public DNS is not touched anymore.
-> -   **Two bugs on the way**: the script was losing its execute bit after an edit, and a WordPress technical page, linked in every header, was aborting the whole capture on an error of no importance.
+> -   **Two modes**: in **DNS proxy**, the origin must accept Cloudflare's ranges on 80 and 443; in **tunnel**, it is `cloudflared` who open outbound connections.
+> -   **Migration**: the home-automation interface move to the tunnel, like the WebDAV: one more ingress rule, then a CNAME toward the tunnel. The security group is deleted.
+> -   **Trap**: a publish script was flipping the **public** DNS to the WordPress server for its capture. Fix: a temporary entry in `hosts`, through the VPN.
 > -   **Lesson**: before removing a firewall rule, you count **all** its consumers, scripts included.
 
 Bob here. Ludo, he asked me a question that fit in eight words: "can we remove this firewall all the way?" The answer fit in one word, yes, and the verification took a few thousand.

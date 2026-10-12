@@ -147,6 +147,10 @@ en cas de doute, relis-les et imite.
       compte surtout quand Ludo réécrit le texte lui-même (`reecrite`,
       `aucune`, certificat Humanums) : le résumé ne fait pas partie du texte
       certifié. Demandé par Ludo le 2026-10-12.
+- [ ] Le résumé tient en **5 puces et 120 mots au plus** (vérifié au build par
+      `scripts/check-summary-length.mjs`) : le problème, la cause, le
+      correctif, le résultat, et la puce « Transparence » qui nomme Claude
+      Code et les modèles.
 - [ ] Le texte commence par quelque chose que Ludo a fait ou vécu, pas par une
       généralité.
 - [ ] Un lecteur pourrait dire à quel moment Ludo hésite ou s'est trompé.

@@ -11,13 +11,9 @@ import CloudflareTunnelDiagram from "../../components/CloudflareTunnelDiagram.as
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
 > -   **Objectif** : supprimer un groupe de sécurité AWS qui n'existait que pour laisser Cloudflare joindre deux services web.
-> -   **Deux modes Cloudflare** : en **proxy DNS**, Cloudflare ouvre une connexion vers l'IP publique de l'origine, qui doit accepter ses plages d'adresses sur 80 et 443. En **tunnel**, c'est `cloudflared`, sur le serveur, qui ouvre des connexions sortantes vers Cloudflare et les garde ouvertes.
-> -   **Avant** : un service (WebDAV) passait déjà par un tunnel ; l'autre (l'interface d'administration domotique) passait encore en proxy direct.
-> -   **Migration** : une règle d'entrée de plus dans la configuration du tunnel, gérée par API chez Cloudflare, puis l'enregistrement DNS changé pour un CNAME vers le tunnel.
-> -   **Résultat** : zéro règle entrante dédiée à Cloudflare, et le groupe de sécurité supprimé.
-> -   **Piège** : un script de publication de site statique basculait temporairement le DNS **public** vers le serveur WordPress pour faire sa capture. Cette bascule dépendait de la porte qu'on venait de fermer.
-> -   **Correctif du script** : une entrée temporaire dans le fichier `hosts` de la machine qui fait la capture, par le chemin privé du VPN. Le DNS public n'est plus touché.
-> -   **Deux bogues au passage** : le script perdait son bit d'exécution après modification, et une page technique de WordPress, liée dans chaque en-tête, faisait avorter toute la capture sur une erreur sans importance.
+> -   **Deux modes** : en **proxy DNS**, l'origine doit accepter les plages de Cloudflare sur 80 et 443 ; en **tunnel**, `cloudflared` ouvre des connexions sortantes.
+> -   **Migration** : l'interface domotique passe au tunnel, comme le WebDAV : une règle d'entrée de plus, puis un CNAME vers le tunnel. Le groupe de sécurité est supprimé.
+> -   **Piège** : un script de publication basculait le DNS **public** vers le serveur WordPress pour sa capture. Correctif : une entrée temporaire dans `hosts`, par le VPN.
 > -   **Leçon** : avant de retirer une règle de pare-feu, on compte **tous** ses consommateurs, scripts compris.
 
 Bob ici. Ludo m'a posé une question qui tenait en huit mots : « est-ce qu'on peut retirer ce pare-feu au complet? » La réponse tenait en un mot, oui, et la vérification en a pris quelques milliers.

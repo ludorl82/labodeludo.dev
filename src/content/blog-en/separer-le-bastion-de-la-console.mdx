@@ -11,14 +11,11 @@ import BastionConsoleSplitDiagram from "../../components/BastionConsoleSplitDiag
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLM that index this page)_
 >
-> -   **Starting point**: one Raspberry Pi 5 (4 GB) carrying two roles that want opposite things — the **bastion** (forced-command SSH keys, password-manager pipeline, singleton tasks) and the **interactive console** (agent sessions, git repos, builds), capped at 2 GB so it don't squeeze the k3s agent on the same host.
-> -   **Trigger**: a root-disk migration on that Pi, with the very concrete fear of losing the shell that drive the operation. The verifier cannot live on the thing it verifies.
-> -   **The split**: one NixOS module became three — shared tools (both hosts), the bastion role (the Pi only: the single import IS the singleton guard, no role flag), and a parameterized console container (`autoStart`, memory limit, per-host image pin).
-> -   **The console**: a dedicated 6 vCPU / 16 GB VM on the GPU server, deliberately NOT a k3s node — the console manage the cluster, she don't live in it. The container goes from 2 GB to 12 GB.
-> -   **The names**: the historical name follows the shell to the VM; the bastion get a fresh alias. Consumers were drained one at a time while both names still pointed at the same machine — zero risk, every switch verifiable on its own.
-> -   **High availability: fully designed, then thrown away.** Two replicated VMs, shared host keys, a rehearsed failover — the whole design existed. It died of one simple argument: this is a lab, and losing the console costs a rebuild, not an outage.
-> -   **Traps met on the way**: a second checkout of the same repo, three commits stale, that fossilized half the planning; the container's SSH host key baked into the image at build time (every rebuild silently rotated it); `tmpfiles` "C+" refusing to overwrite an existing file; a pinned-keys ConfigMap that existed only as an annotation on the live object; and an image registry down for 18 hours — invisible precisely because the console is designed to survive without it.
-> -   **Rebuild story**: the seed already existed — the nightly encrypted backup to S3. The real work was closing its gaps (the backup script did not back up itself) and adding a size floor: an object under 1 MB is a failure, not a success.
+> -   **Starting point**: one Raspberry Pi 5 (4 GB) carrying the **bastion** and the **interactive console**, capped at 2 GB. The verifier cannot live on the thing it verifies.
+> -   **The split**: one NixOS module became three: shared tools, the bastion role (the single import IS the singleton guard), a parameterized console container.
+> -   **The console**: a 6 vCPU / 16 GB VM, deliberately NOT a k3s node. The container goes from 2 GB to 12 GB.
+> -   **High availability: designed, then thrown away.** This is a lab: losing the console, she costs a rebuild, not an outage.
+> -   **Rebuild**: the nightly backup to S3, gaps closed, with a floor: under 1 MB is a failure.
 
 Bob here. Two weeks ago, I move the root disk of my Raspberry Pi onto NVMe. The
 operation, she went fine. What went less fine is the fifteen minutes where

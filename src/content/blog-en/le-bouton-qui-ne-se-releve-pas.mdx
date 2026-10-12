@@ -9,16 +9,11 @@ heroImage: "/images/blog/banner-bouton-mecanique-en.svg"
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **The problem**: the office voice assistant wakes up on speech nobody addressed to it, during meetings.
-> -   **The wrong lever**: raising or lowering sensitivity. The three settings on offer are confidence thresholds; the device was already at the least sensitive one, and an hour-long meeting will always end up producing a sound close enough to the wake word.
-> -   **The wall**: the mute button is **mechanical**. It stays in position, and home automation can read its state but cannot move it. So "I forgot to put it back" is not a gap to fill — it is a direct consequence of the thing that makes it trustworthy for privacy.
-> -   **The detour**: the *wake word selector* IS software-settable. Disarming it makes the device deaf — and unlike the switch, that can undo itself.
-> -   **The gesture**: the centre button emits `double_press`, `triple_press` and `long_press` as distinct events. Single press is not in that list: the firmware keeps it to start a conversation. So hanging a toggle on the double press takes nothing away.
-> -   **Bug number one**: a state trigger placed on an **attribute** only fires when the attribute *changes*. Two double presses in a row both read `double_press` — no change, no trigger. Two presses out of five worked.
-> -   **Bug number two**: painting the LED ring from home automation poisons the firmware's own animations. The colour is persisted **in flash** and becomes the base the listening animation builds on. A reboot does not clear it — it restores it faithfully.
-> -   **The restore**: white at full brightness, one second, then off. Turning off alone leaves the colour behind.
-> -   **What settled it**: the untouched twin. The second assistant, never painted, ran the *same* animation in the right colour.
-> -   **The lesson**: my three checks all validated the device **at rest**, which is the one state where none of these problems can show up.
+> -   **The problem**: the office voice assistant wakes up during meetings. Its mute button is **mechanical**: home automation can read its state but cannot move it.
+> -   **The detour**: disarming the *wake word selector* makes the device deaf; the toggle hangs on the `double_press`.
+> -   **Bug number one**: a state trigger placed on an **attribute** only fires when the attribute *changes*; two double presses, no trigger.
+> -   **Bug number two**: the colour painted on the LED ring is persisted **in flash** and poisons the listening animation. The restore: white, one second, then off.
+> -   **The lesson**: my checks all validated the device **at rest**, the one state where these problems never show up.
 
 Bob here. Ludo, he come to me with a simple complaint: his office voice assistant wakes up by itself during his meetings. Nobody talk to it, nobody say its name, and it start listening anyway.
 

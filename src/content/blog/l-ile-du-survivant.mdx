@@ -13,12 +13,11 @@ import SurvivorIslandDiagram from "../../components/SurvivorIslandDiagram.astro"
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Problème** : la surveillance et l'orchestration meurent avec ce qu'elles surveillent. Pendant une panne électrique, l'hôte qui devrait alerter, journaliser et rallumer les machines est lui-même éteint.
-> -   **Concept** : une « île du survivant », soit le routeur, le modem WAN et un seul Raspberry Pi regroupés sur l'onduleur le moins chargé de la maison (environ 15 W, des heures d'autonomie), le Pi branché directement dans un port de commutateur matériel du routeur. L'île route, alerte et garde un accès distant pendant que tout le reste s'éteint proprement.
-> -   **Reprise en deux mécanismes complémentaires** : la politique BMC `always-on` couvre les pannes où les prises perdent le courant (transition secteur = redémarrage). Un verrou de réveil IPMI sur le Pi survivant couvre celles où les prises restent alimentées (arrêt propre = pas de transition). Le verrou ne s'arme que sur un vrai événement électrique : une machine éteinte volontairement reste éteinte.
-> -   **Sémantique des battements de coeur** : le signal « la maison est vivante » du commutateur d'homme mort (S3, puis Lambda, puis courriel) est émis depuis l'île, précisément parce qu'elle est la dernière chose à mourir. Un battement absent signifie alors « plus rien ne peut communiquer », le seul cas où un courriel externe ajoute de l'information.
-> -   **Validation** : quatre débranchements volontaires. Ils ont trouvé un seuil de batterie inopérant sans `ignorelb`, un firmware d'onduleur qui ne réalimente pas ses prises seul, et un BMC dont l'étiquette VLAN s'est corrompue dans un cycle d'alimentation, réparé in-band par IPMI brut via WMI, sans accès physique.
-> -   **Méthode** : conception, implémentation NixOS et diagnostics menés en session avec Claude Code (modèle Fable 5). Les tests de traction et les décisions d'architecture restent humains.
+> -   **Problème** : pendant une panne électrique, l'hôte qui devrait alerter et rallumer les machines est lui-même éteint.
+> -   **Concept** : une « île du survivant », soit le routeur, le modem et un Raspberry Pi sur l'onduleur le moins chargé (environ 15 W, des heures d'autonomie).
+> -   **Reprise** : la politique BMC `always-on` quand les prises perdent le courant, un verrou de réveil IPMI sur le Pi quand elles restent alimentées.
+> -   **Validation** : quatre débranchements volontaires, qui ont trouvé un seuil de batterie inopérant sans `ignorelb` et un BMC dont l'étiquette VLAN s'est corrompue.
+> -   **Méthode** : menée en session avec Claude Code (modèle Fable 5). Les décisions d'architecture restent humaines.
 
 La semaine dernière, mon NAS est mort pendant une série de microcoupures. [Bob en a fait le récit complet](/blog/le-nas-le-courant-et-l-appel-de-reveil/), y compris les quatre tests de débranchement qui ont suivi. Ce billet-ci reprend le même terrain sous un autre angle : non pas ce qui s'est passé, mais *comment l'architecture qui en est sortie est conçue*, et pourquoi je pense que le concept central, une île du survivant, se transpose à peu près à n'importe quelle infrastructure, y compris professionnelle. Comme d'habitude, le travail s'est fait en sessions avec Claude Code (modèle Fable 5) : la conception a émergé de la conversation, l'implémentation NixOS et les diagnostics sont largement les siens, et les fiches débranchées sont de moi.
 

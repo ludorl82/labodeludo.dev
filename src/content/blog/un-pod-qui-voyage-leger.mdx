@@ -12,13 +12,11 @@ import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Point de départ** : Cronicle, le planificateur qui déclenche à peu près tout dans mon labo, stockait ses données sur le disque de son noeud k3s. Conséquence structurelle : le pod ne pouvait tourner que là. Un drain du noeud laissait le remplaçant `Pending` avec `volume node affinity conflict`, huit noeuds en santé, zéro candidat.
-> -   **Bascule** : le moteur de stockage fichier de Cronicle est remplacé par son moteur S3 (déjà inclus dans l'image, SDK AWS compris). Migration avec l'outil fourni, `storage-migrate.js` : 1 136 enregistrements, 16 Mo, 21 secondes.
-> -   **Résultat** : un pod sans volume. Évincé, replanifié, prêt sur un autre noeud en 12 secondes, historique intact, parce que l'état vit dans un bucket S3 versionné qui ne remarque même pas le drain.
-> -   **La leçon** : « stateless » ne veut pas dire « sans état ». Le pod a toujours un état : événements, usagers, historique de jobs. Il a juste cessé d'en être le gardien. On déménage l'état vers un service dont la durabilité est le métier. Ce qui reste dans le pod, c'est du scratch qu'on peut perdre sans regret.
-> -   **Les coûts, assumés** : chaque lecture devient un aller-retour réseau (un cache LRU règle l'essentiel), les identifiants S3 deviennent un secret à gérer, et la config du logiciel doit être possédée déclarativement, ce qui a exposé au passage combien d'état se cachait ailleurs que dans le volume.
-> -   **Ce qui ne devrait pas être stateless** : les applications à base de SQLite et les bases de données restent volontairement épinglées dans mon cluster. Le pire endroit sur le spectre, c'est le milieu, un pod qui a l'air mobile mais qui traîne un état que personne ne protège.
-> -   **Transparence** : la migration a été menée en session avec Claude Code (Fable 5). J'ai validé les décisions et tranché les appels qui m'appartenaient, notamment celui de retirer la job de sauvegarde nocturne au profit du versionnage du bucket.
+> -   **Point de départ** : Cronicle stockait ses données sur le disque de son noeud k3s. Un drain laissait le remplaçant `Pending`, huit noeuds en santé, zéro candidat.
+> -   **Bascule** : son moteur de stockage S3, migré avec `storage-migrate.js` : 1 136 enregistrements, 21 secondes.
+> -   **Résultat** : un pod sans volume, prêt sur un autre noeud en 12 secondes, l'état dans un bucket S3 versionné.
+> -   **La leçon** : « stateless » ne veut pas dire « sans état ». Le pod a juste cessé d'en être le gardien. Les bases de données restent épinglées.
+> -   **Transparence** : menée en session avec Claude Code (Fable 5). J'ai tranché, dont le retrait de la sauvegarde nocturne au profit du versionnage du bucket.
 
 J'ai voulu redémarrer un noeud de mon cluster k3s. Rien de spécial : un drain, un reboot, un uncordon, l'affaire de dix minutes. Sauf que sur ce noeud tournait mon planificateur de tâches, et que le drain a produit un résultat que je connaissais en théorie mais que je n'avais jamais regardé en face : le pod évincé s'est fait remplacer par un pod `Pending`, et il serait resté `Pending` pour l'éternité.
 

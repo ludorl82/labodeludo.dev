@@ -12,11 +12,11 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Contexte** : mon labo tournait sur un seul hôte conteneurs Docker. Pratique, mais un point de panne unique pour tout ce qui roulait dessus, dont ce site.
-> -   **Solution** : bâtir une petite grappe **k3s**, une distribution Kubernetes allégée, plus adaptée qu'un Kubernetes « classique » à six machines dont deux sont des Raspberry Pi, répartie entre un plan de contrôle dans le nuage et cinq noeuds à la maison.
-> -   **Pièges rencontrés** : chaque type de machine avait sa propre étape cachée avant d'accepter de démarrer l'agent k3s. Cgroups désactivés par défaut sur les Raspberry Pi, `iptables` absent des images cloud minimalistes.
-> -   **Constat** : Claude Code a créé et provisionné les VM Linux de bout en bout, sans intervention de ma part. Sur la VM Windows sous Hyper-V, un réglage de mémoire dynamique a demandé que je mette la main à la pâte moi-même.
-> -   **Résultat** : le pipeline de déploiement de ce site roule maintenant sur la grappe plutôt que sur une seule machine, avec un vrai gain de résilience.
+> -   **Contexte** : mon labo tournait sur un seul hôte Docker, un point de panne unique, ce site compris.
+> -   **Solution** : une petite grappe **k3s** sur six machines dont deux Raspberry Pi, avec un plan de contrôle dans le nuage.
+> -   **Pièges rencontrés** : cgroups désactivés sur les Raspberry Pi, `iptables` absent des images cloud minimalistes.
+> -   **Constat** : Claude Code a provisionné les VM Linux de bout en bout. Sur Hyper-V, la mémoire dynamique m'a demandé de mettre la main à la pâte.
+> -   **Résultat** : le déploiement de ce site roule sur la grappe, avec un vrai gain de résilience.
 
 Cette semaine, j'ai pris l'hôte conteneurs unique qui faisait tourner mon labo, dont ce site, et je l'ai transformé en une vraie petite grappe Kubernetes. Comme pour la plupart des projets d'infrastructure ici, j'ai fait le gros du travail en session avec Claude Code (j'explique comment dans [un article dédié](/blog/claude-code-headless-bastion/)). Ce qui m'a frappé cette fois-ci, c'est à quel point son niveau d'autonomie a varié d'une plateforme à l'autre. J'y reviens plus bas.
 

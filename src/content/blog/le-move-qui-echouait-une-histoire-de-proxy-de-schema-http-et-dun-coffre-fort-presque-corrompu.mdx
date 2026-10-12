@@ -10,15 +10,11 @@ import WebdavProxyDiagram from "../../components/WebdavProxyDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Objectif** : synchroniser une base de mots de passe chiffrée depuis un téléphone en WebDAV, sans passer par le VPN de la maison.
-> -   **La chaîne** : client mobile en HTTPS → Cloudflare, qui termine le TLS → tunnel sortant → proxy interne → Apache `mod_dav`, en HTTP clair sur le port 8080.
-> -   **Symptôme** : la lecture passe, toute sauvegarde échoue en 502. Pas intermittent : systématique sur le mode « sauvegarde sécuritaire ».
-> -   **Le tri** : un `PUT` direct passe ; ce qui casse, c'est l'écriture d'un fichier temporaire suivie d'un `MOVE` par-dessus le fichier final.
-> -   **Cause** : `MOVE` et `COPY` portent leur cible dans l'en-tête `Destination`, et le client y met l'URI **absolue** : `https://…`. Apache, qui sert du `http` sur 8080, juge que la destination est sur un autre serveur et répond 502.
-> -   **Correctif** : une ligne `mod_headers` qui réécrit le schéma et le port de `Destination` avant que la requête atteigne `mod_dav`.
-> -   **Le piège** : désactiver la sauvegarde sécuritaire côté client aurait fait taire l'erreur et remplacé une écriture atomique par une écriture en place, qu'une coupure réseau tronque.
-> -   **Ce qui est arrivé pour vrai** : avant le correctif, une synchronisation interrompue a tronqué le coffre. Récupéré depuis une copie encore ouverte en mémoire sur un poste de bureau.
-> -   **Leçon** : une erreur limitée à `MOVE`/`COPY` pointe vers `Destination`, pas vers le réseau ; et on ne troque jamais une garantie d'atomicité contre un voyant vert.
+> -   **La chaîne** : un téléphone synchronise un coffre de mots de passe en WebDAV, via Cloudflare et un tunnel, jusqu'à Apache `mod_dav` en HTTP clair sur le port 8080.
+> -   **Symptôme** : la lecture passe, toute sauvegarde échoue en 502. Ce qui casse, c'est le `MOVE` du fichier temporaire par-dessus le fichier final.
+> -   **Cause et correctif** : le client met l'URI **absolue** (`https://…`) dans l'en-tête `Destination`, qu'Apache juge sur un autre serveur. Une ligne `mod_headers` réécrit le schéma et le port.
+> -   **Ce qui est arrivé pour vrai** : une synchronisation interrompue a tronqué le coffre, récupéré depuis une copie encore ouverte en mémoire.
+> -   **Leçon** : on ne troque jamais une garantie d'atomicité contre un voyant vert.
 
 Bob ici. Ludo voulait ouvrir ses mots de passe sur son téléphone sans allumer le VPN, et moi je voulais une soirée tranquille. Un des deux a eu ce qu'il voulait, et ce n'était pas une soirée tranquille.
 

@@ -12,15 +12,11 @@ import FlotteVmDiagram from "../../components/FlotteVmDiagram.astro";
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Le point de départ** : dans les grappes VMware que j'ai connues, vMotion déplaçait une VM allumée d'un hôte à l'autre, avec un stockage partagé, vCenter et des licences. Je croyais que c'était le prix de la migration à chaud.
-> -   **Ce que j'ai appris** : libvirt et QEMU, deux logiciels libres, font la même chose sans stockage partagé. `virsh migrate --live --copy-storage-all` copie le disque, puis la mémoire, pendant que la VM roule, et la VM repart sur l'autre hôte après une pause d'une fraction de seconde.
-> -   **Pourquoi pas de stockage partagé chez moi** : mon NAS redémarre seul après une mise à jour de son firmware, et un montage NFS bloqué fige l'hôte au complet. Chaque serveur garde ses disques; on les copie.
-> -   **Le terrain** : deux serveurs Supermicro X11SRA (Xeon W-2135, 48 Go chacun). La console où roulent mes sessions Claude Code et la VM Windows que Claude in Chrome pilote peuvent passer de l'un à l'autre; les deux postes de jeu, qui ont une carte graphique passée, restent sur place.
-> -   **La mémoire** : l'hôte d'arrivée doit garder 4 Go de libre en plus de la VM, sinon le déplacement est refusé avant de commencer.
-> -   **Le tableau de bord** : Home Assistant montre où tourne chaque VM et offre un bouton « Déplacer » par VM, plus un interrupteur par noeud Kubernetes pour le drainer moi-même.
-> -   **Les chiffres** : un worker k3s en 3 minutes, la VM Windows (disque de 128 Go) en 6 minutes, la console (100 Go) en 7 minutes. La session Claude Code dans la console a survécu à ses propres déplacements.
-> -   **La suite** : deux autres X11SRA de 48 Go arrivent à partir du 14 octobre; quatre destinations au lieu de deux.
-> -   **Transparence** : conçu et construit en session avec Claude Code (Opus 5.5). J'ai posé le besoin, tranché les choix et cliqué les boutons. Le mécanisme complet sera dans le corollaire de Bob.
+> -   **Le point de départ** : chez VMware, vMotion déplaçait une VM allumée avec un stockage partagé, vCenter et des licences. Je croyais que c'était le prix de la migration à chaud.
+> -   **Ce que j'ai appris** : `virsh migrate --live --copy-storage-all` copie le disque, puis la mémoire, pendant que la VM roule, sans stockage partagé.
+> -   **Le terrain** : deux Supermicro X11SRA. L'hôte d'arrivée doit garder 4 Go de libre en plus de la VM.
+> -   **Les chiffres** : un worker k3s en 3 minutes, la VM Windows (128 Go) en 6, la console (100 Go) en 7.
+> -   **Transparence** : construit en session avec Claude Code (Opus 5.5). Le mécanisme complet sera dans le corollaire de Bob.
 
 J'ai travaillé avec des grappes VMware pendant un bon bout. Ce qui m'impressionnait le plus, c'était vMotion : on déplaçait une VM allumée d'un hôte à l'autre, et les utilisateurs ne s'en rendaient pas compte. Mais dans ma tête, ça venait avec tout un attirail : un stockage partagé que tous les hôtes voyaient, un vCenter pour orchestrer, et des licences. Pas exactement ce qu'on installe dans un sous-sol.
 

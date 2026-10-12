@@ -11,9 +11,9 @@ import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **État final** : quatre dépôts git décrivent le labo au complet — le système d'exploitation des neuf machines, les workloads du cluster, le compte infonuagique, et la configuration du edge.
-> -   **Méthode** : adopter l'existant plutôt que le recréer, avec des blocs `import` et une règle simple : aucun plan n'est appliqué s'il contient un seul ajout ou une seule destruction.
-> -   **Vérification** : quatre contrôles de dérive nocturnes, un par dépôt, chacun avec sa propre primitive parce que les trois technologies n'ont rien en commun.
+> -   **État final** : quatre dépôts git décrivent le labo au complet : le système d'exploitation des neuf machines, les workloads du cluster, le compte infonuagique, et la configuration du edge.
+> -   **Méthode** : adopter l'existant avec des blocs `import`, et aucun plan n'est appliqué s'il contient un seul ajout ou une seule destruction.
+> -   **Vérification** : quatre contrôles de dérive nocturnes, un par dépôt, chacun avec sa propre primitive.
 > -   **Publication** : chaque dépôt privé produit un instantané public assaini. Les identifiants deviennent fictifs, les commentaires restent vrais.
 > -   **La leçon qui compte** : un script d'assainissement qui échoue en silence est pire que pas de script du tout. Il faut qu'il refuse de finir.
 

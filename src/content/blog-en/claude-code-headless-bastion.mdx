@@ -12,12 +12,10 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 > **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Context**: Claude Code runs day to day inside the console container on my bastion, in a persistent tmux session.
-> -   **Goal**: get it to run recurring tasks (backups, system upgrades) without me having to open an interactive session.
-> -   **Solution**: scheduled tasks start a Claude Code instance in headless mode on the bastion. The remote control feature lets me check in on or steer a running session from my phone when needed, no SSH terminal required.
-> -   **In between**: an auto mode that turns a tiny starting prompt into long stretches of work, making the reasonable calls itself instead of stopping at every step to ask for confirmation.
-> -   **Cost**: moved from pay-per-use billing (up to $100 in a single heavy day) to the Claude Pro subscription, $40/month, covering both interactive sessions and headless work.
-> -   **Also**: Claude Code also writes some of this blog's posts end to end, under the name "Bob," drawing on its own session notes.
-> -   **Correction (2026-08-01)**: the weekly backups and system upgrades are not, in the end, executed by a headless instance. See the note in that section.
+> -   **Solution**: scheduled tasks start it in headless mode. Remote control lets me steer a session from my phone, no SSH required.
+> -   **Auto mode**: a tiny prompt is enough for long stretches of work where it makes the reasonable calls itself.
+> -   **Cost**: from pay-per-use (up to $100 in a heavy day) to the Claude Pro subscription, $40/month.
+> -   **Correction (2026-08-01)**: the weekly backups and system upgrades do not, in the end, run headless.
 
 For several months now, Claude Code has been my main tool for everything infrastructure-related in my home lab. What's changed recently is that I'm no longer the only one triggering it: part of that work now runs entirely on its own, without me sitting down at a keyboard.
 

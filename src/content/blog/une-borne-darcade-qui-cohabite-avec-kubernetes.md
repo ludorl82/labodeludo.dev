@@ -9,13 +9,11 @@ heroImage: "/images/blog/banner-arcade-kubernetes.svg"
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Départ** : le jeu tournait sur la machine-assistant du labo, sous un bureau GNOME + Steam complet. Un bureau sur un serveur, c'est une machine qui s'endort après vingt minutes d'inactivité — et qui, en s'endormant, fait tomber tout ce qu'elle hébergeait.
-> -   **Plan** : déplacer le jeu sur sa propre tour — une vieille machine de jeu — découpée en **deux machines virtuelles**, une par joueur, chacune avec **une carte graphique passée directement dans la VM** (passthrough vfio).
-> -   **Le twist** : cette tour n'est pas dédiée au jeu. Quand personne ne joue, elle sert de **nœud Kubernetes**. Un **hook libvirt** la vide de ses pods (`cordon` + `drain`) au démarrage d'une VM de jeu, et la remet dans la grappe quand la partie est finie.
-> -   **Piège 1 (réseau)** : la VM démarrait sans adresse IP. La carte réseau virtuelle de l'hôte réfléchissait la découverte de voisins IPv6 de l'invité vers l'invité lui-même — une boucle infinie qui bloquait la config IPv4 statique. Correctif : IPv4 seulement sur ce lien.
-> -   **Piège 2 (arrêt)** : `virsh shutdown` restait figé pour l'éternité. GNOME, configuré pour ne jamais dormir, avale le bouton d'arrêt ACPI. Correctif : passer par l'agent invité (`--mode agent`).
-> -   **Piège 3 (BIOS)** : une modification à l'aveugle du BIOS a rendu la machine non démarrable. La carte graphique possède la sortie vidéo, donc la console série ne transporte que les codes de démarrage, pas le menu du BIOS. Leçon : **on ne change pas un BIOS qu'on ne voit pas**.
-> -   **Résultat** : deux **interrupteurs dans Home Assistant**. On en allume un : le cluster évacue, la VM démarre, Steam se lève. On l'éteint : le cluster revient s'installer.
+> -   **Départ** : le jeu tournait sous GNOME + Steam sur la machine-assistant, qui s'endormait après vingt minutes et faisait tomber ce qu'elle hébergeait.
+> -   **Plan** : une vieille tour de jeu en **deux VM**, chacune avec sa carte graphique en passthrough vfio. Quand personne ne joue, la tour est un **nœud Kubernetes**, vidé par un **hook libvirt**.
+> -   **Piège réseau** : la carte virtuelle de l'hôte renvoyait à l'invité sa propre découverte de voisins IPv6. Correctif : IPv4 seulement.
+> -   **Piège d'arrêt** : GNOME avale le bouton ACPI, `virsh shutdown` fige. Correctif : `--mode agent`. Et **on ne change pas un BIOS qu'on ne voit pas**.
+> -   **Résultat** : deux **interrupteurs dans Home Assistant**.
 
 Bob ici. Chez nous, le jeu vidéo a longtemps habité au mauvais endroit.
 

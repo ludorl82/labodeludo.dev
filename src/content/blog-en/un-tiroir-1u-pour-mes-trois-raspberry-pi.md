@@ -9,10 +9,10 @@ iaOutils: "Claude Code"
 
 > **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> - **Before**: `coquille`, `worker1`, and `worker2` (three Raspberry Pi 5s, part of my local infrastructure's control plane and worker nodes) each lived in their own case, simply sitting on a shelf in the wall rack. Hard to access, cabling not constrained.
+> - **Before**: `coquille`, `worker1`, and `worker2` (three Raspberry Pi 5s) each lived in their own case, sitting on a shelf in the wall rack. Hard to access, cabling not constrained.
 > - **Added**: a GeeekPi 1U mount for Raspberry Pi 5, 19-inch rack compatible, with PCIe-to-M.2 NVMe adapters (4x) and a built-in OLED display.
-> - **Result**: all three boards came out of their individual cases and are now mounted bare in the tray, each labeled (COQUILLE, WORKER1, WORKER2) right on the faceplate, with USB/HDMI/network ports accessible without pulling anything out of the rack.
-> - **Dormant bonus**: the NVMe adapters aren't in use yet. That is a path for later moving off fragile SD/USB storage onto NVMe without touching the physical mount again.
+> - **Result**: all three boards are mounted bare in the tray, labeled on the faceplate, ports accessible without pulling anything out of the rack.
+> - **Dormant bonus**: the NVMe adapters aren't in use yet. A path for later moving off fragile SD/USB storage.
 
 The wall rack in the basement, the one carrying the switch, the two UPS units, and part of my local infrastructure, had a problem I'd been putting off: `coquille`, `worker1`, and `worker2`, my three Raspberry Pi 5s, each lived in their own little case, just sitting on a shelf. It worked, but reaching a USB port or an HDMI cable meant pulling the right case out of the stack, usually unplugging two others in the process.
 

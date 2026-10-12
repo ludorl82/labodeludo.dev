@@ -9,15 +9,11 @@ iaOutils: "Claude Code"
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Le point de départ** : une carte achetée pour la machine de jeu en libère une autre. Le noeud GPU du cluster passe de deux à trois cartes.
-> -   **La vérification qui change tout** : un balayage de tous les pods (runtime class et demandes de ressources) ne ramène **qu'un seul** pod GPU dans le cluster, épinglé par `nodeSelector` sur un autre noeud. « De la capacité GPU pour Kubernetes » n'avait donc aucun consommateur.
-> -   **Le passage vfio** : la liaison se fait par **identifiant de périphérique**, pas par adresse PCI. Une carte de remplacement du même modèle est captée sans rien changer. Le domaine libvirt, lui, épingle une adresse de bus : un `<hostdev>` qui pointe sur une adresse absente **empêche la VM de démarrer**, ce n'est pas une dégradation silencieuse.
-> -   **Le partage des cartes** : épingler par **UUID**, jamais par index. `nvidia-smi` ordonne par bus PCI, CUDA par « le plus rapide d'abord ». « 0,1 » ne désigne pas les mêmes cartes selon l'outil.
-> -   **La charge d'essai** : un service de reconnaissance vocale sur GPU, pour rapatrier la transcription de l'assistant vocal. Déployé, mesuré **10/12** sur un banc de sondes synthétiques, contre 9/12 au service infonuagique.
-> -   **Ce que le banc ne mesurait pas** : sur de vrais énoncés d'une seconde captés au micro, le modèle local **invente** du texte là où le service infonuagique rend une chaîne vide. Un échec inventé déclenche une action. Un échec vide dit « je n'ai pas compris ».
-> -   **Le verdict** : retour au service infonuagique pour la voix, et retrait du pod.
-> -   **Où la carte a fini** : à servir la recherche sémantique du site, d'abord dans le service de l'hôte par facilité, puis **dans un pod**, pour que la carte réservée à Kubernetes ait un vrai consommateur. Le tunnel routait `/api/embed` vers le pod **par chemin**, donc pas de nouveau nom d'hôte à exposer ni à garder. *(Cette réservation a été défaite, refaite, puis défaite pour de bon le 15 septembre, quand le cluster s'est trouvé un noeud GPU ailleurs. Les trois mises à jour datées plus bas racontent chaque retournement et sa raison. Aujourd'hui : les trois cartes au modèle de conversation, le modèle d'embeddings de retour sur l'hôte.)*
-> -   **La leçon** : un GPU dans un cluster est une *capacité*, pas une *charge de travail*, et une réservation sans consommateur est une promesse que personne ne peut vérifier. Plus une deuxième : un banc d'essai qui ne reproduit pas la panne ne mesure rien, même quand il affiche 10/12.
+> -   **Le point de départ** : le noeud GPU du cluster passe de deux à trois cartes. Un balayage de tous les pods n'en ramène **qu'un seul** qui utilise un GPU.
+> -   **Le piège** : épingler les cartes par **UUID**, jamais par index, car `nvidia-smi` et CUDA ne les ordonnent pas pareil.
+> -   **La charge d'essai** : une reconnaissance vocale, **10/12** sur un banc synthétique. Sur de vrais énoncés, elle **invente** du texte : retrait du pod.
+> -   **Aujourd'hui** : les trois cartes au modèle de conversation, le modèle d'embeddings sur l'hôte.
+> -   **La leçon** : un GPU dans un cluster est une *capacité*, pas une *charge de travail*. Et un banc qui ne reproduit pas la panne ne mesure rien.
 
 J'ai commandé une carte graphique pour la machine de jeu du sous-sol. Rien de dramatique : la machine héberge deux VM de jeu en passthrough, chacune avec sa carte, et je voulais en remplacer une. L'effet secondaire était plus intéressant que l'achat lui-même. La carte remplacée se libérait, et le noeud GPU du cluster passait de deux à trois cartes.
 

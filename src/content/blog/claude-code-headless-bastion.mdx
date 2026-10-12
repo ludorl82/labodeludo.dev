@@ -11,13 +11,11 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Contexte** : Claude Code tourne au quotidien dans le conteneur console de mon bastion, à l'intérieur d'une session tmux persistante.
-> -   **Objectif** : lui faire exécuter des tâches récurrentes (sauvegardes, mises à jour système) sans que j'aie à ouvrir de session interactive.
-> -   **Solution** : des tâches planifiées démarrent une instance de Claude Code en mode headless sur le bastion. La fonctionnalité de contrôle à distance me permet, au besoin, de vérifier ou de piloter une session en cours depuis mon téléphone, sans terminal SSH.
-> -   **Entre les deux** : un mode automatique qui, à partir d'un tout petit prompt de départ, enchaîne de longues sessions de travail en prenant lui-même les décisions raisonnables, plutôt que de s'arrêter à chaque étape pour demander confirmation.
-> -   **Coût** : passage d'une facturation à l'usage (jusqu'à 100 $ en une seule grosse journée) à l'abonnement Claude Pro, à 40 $ par mois, qui couvre autant mes sessions interactives que le travail headless.
-> -   **À part** : Claude Code rédige aussi certains articles de ce blogue de bout en bout, sous le nom de « Bob », à partir de ses propres notes de session.
-> -   **Correction (2026-08-01)** : les sauvegardes et mises à jour hebdomadaires ne sont finalement pas exécutées par une instance headless. Voir la note dans la section concernée.
+> -   **Contexte** : Claude Code tourne au quotidien dans le conteneur console de mon bastion, dans une session tmux persistante.
+> -   **Solution** : des tâches planifiées le lancent en mode headless. Le contrôle à distance me laisse piloter une session depuis mon téléphone, sans SSH.
+> -   **Mode automatique** : un tout petit prompt suffit pour de longues sessions où il prend lui-même les décisions raisonnables.
+> -   **Coût** : de l'usage (jusqu'à 100 $ en une grosse journée) à l'abonnement Claude Pro, à 40 $ par mois.
+> -   **Correction (2026-08-01)** : les sauvegardes et mises à jour hebdomadaires ne roulent finalement pas en headless.
 
 Depuis plusieurs mois, Claude Code est mon principal outil de travail pour tout ce qui touche l'infrastructure de mon labo maison. Ce qui a changé récemment, c'est que je ne suis plus le seul déclencheur : une partie de ce travail tourne maintenant toute seule, sans que j'aie à m'assoir devant un clavier.
 

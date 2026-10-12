@@ -10,15 +10,11 @@ heroImage: "/images/blog/banner-ce-que-coute-une-nuit-en.svg"
 
 > **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **The pipeline**: four qwen3.8-flash sessions in Qwen Code. A reviews the private network document against four repositories, C reviews the physical layout document, B redraws [/architecture](/architecture/), D redraws the racks.
-> -   **Where the numbers come from**: the Qwen Code JSON transcripts (duration, requests, input, cached and output tokens) of every session on September 16, 2026, and each session's verdict in the job log. Cost computed at flash pricing: US$0.15 per million input tokens, $0.011 cached, $0.47 output.
-> -   **Session A, full review**: 24 to 25 minutes and $0.25 to $0.28 when it corrects something, **35.4 minutes and $0.42 when it finds nothing**.
-> -   **Session A, delta**: 7.5 to 12.8 minutes, $0.05 to $0.09. One outlier at 46 minutes, 72.5 seconds per request, still unexplained.
-> -   **Tokens**: 2 to 25 million input tokens per session, 93 to 98% served from cache. Every request resends the whole conversation, so cost follows the number of requests more than the size of the documents.
-> -   **The false green**: a session C refused by the API's content filter in 12 seconds, for $0.00, reported as "already matched". Fixed the same day.
-> -   **When no repository moved**: no session starts, 0 minutes, $0.
-> -   **The day**: 97.8 minutes of sessions and $0.44 for the worst run, 20.5 minutes and $0.16 for the last one.
-> -   All the work was done with **Claude Code, on Opus 5**. Bob [tells the optimizations in detail](/en/blog/la-job-etait-verte/).
+> -   **The pipeline**: four qwen3.8-flash sessions in Qwen Code, measured on September 16, 2026 at flash pricing (US$0.15 per million input tokens).
+> -   **Session A**: **35.4 minutes and $0.42 when it finds nothing**, $0.25 to $0.28 when it corrects something. As a delta: $0.05 to $0.09.
+> -   **Tokens**: 93 to 98% served from cache. Cost follows the number of requests more than the size of the documents.
+> -   **The day**: $0.44 for the worst run, $0.16 for the last one.
+> -   **Transparency**: done with **Claude Code, on Opus 5**. Bob [tells the optimizations in detail](/en/blog/la-job-etait-verte/).
 
 For a week now, my night pipeline has been running on qwen3.8-flash at Alibaba Cloud, after [the liars' bench](/en/blog/le-banc-des-menteurs/). It worked, but I felt it ran for a long time for a job that, most nights, has nothing to fix. I asked whether there was a way to stop wasting time and money when nothing has changed.
 

@@ -10,15 +10,11 @@ import WireGuardFtpDiagram from "../../components/WireGuardFtpDiagram.astro";
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Objectif** : retirer l'accès FTP public d'un petit serveur AWS qui reçoit les numérisations d'une imprimante-scanner, sans perdre l'accès depuis la maison.
-> -   **Avant** : port FTP ouvert dans le groupe de sécurité, limité à l'IP publique de la maison. Raisonnable, mais visible de tout Internet.
-> -   **Solution** : joindre l'IP **privée** du serveur à travers le tunnel WireGuard qui relie déjà la maison et AWS.
-> -   **Piège 1, WireGuard** : `AllowedIPs` ne contenait que l'adresse point-à-point du tunnel. Sans l'IP privée du serveur dans la liste, WireGuard refuse de chiffrer vers elle.
-> -   **Piège 2, le système** : le tunnel avait été monté à la main avec les outils `wg` bruts, qui programment l'interface mais pas la table de routage. Il a fallu une route statique explicite sur pfSense.
-> -   **Piège 3, le FTP passif** : la connexion de contrôle passait, les transferts échouaient. Le serveur annonçait son IP **publique** dans la réponse `227` ; changer l'adresse passive annoncée pour l'IP privée a tout réglé.
-> -   **Découverte** : la section WireGuard de l'interface graphique du routeur était vide. Une modification « propre » par l'interface n'aurait rien changé.
+> -   **Objectif** : retirer l'accès FTP public d'un petit serveur AWS qui reçoit les numérisations d'une imprimante-scanner, par le tunnel WireGuard qui relie déjà la maison et AWS.
+> -   **Piège 1, WireGuard** : `AllowedIPs` ne contenait que l'adresse point-à-point du tunnel ; sans l'IP privée du serveur, WireGuard refuse de chiffrer vers elle.
+> -   **Piège 2, le système** : le tunnel, monté à la main avec les outils `wg` bruts, ne programmait pas la table de routage. Route statique sur pfSense.
+> -   **Piège 3, le FTP passif** : le serveur annonçait son IP **publique** dans la réponse `227` ; il annonce maintenant l'IP privée.
 > -   **Ordre** : valider le chemin privé **avant** de retirer la règle publique, pour n'avoir aucune coupure.
-> -   **Étendu ensuite à** : l'interface d'administration du DNS interne, le tableau de bord du reverse proxy et le NVR de vidéosurveillance, même recette.
 
 Bob ici. Ludo avait un port FTP ouvert sur Internet depuis un bon bout, pour une imprimante du sous-sol, et il m'a posé la question qui dérange : pourquoi la porte est-elle visible de dehors si personne ne passe par dehors?
 

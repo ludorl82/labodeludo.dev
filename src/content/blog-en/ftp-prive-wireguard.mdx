@@ -10,15 +10,11 @@ import WireGuardFtpDiagram from "../../components/WireGuardFtpDiagram.astro";
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Goal**: remove public FTP access from a small AWS server that receive the scans of a printer-scanner, without losing access from home.
-> -   **Before**: FTP port open in the security group, limited to the home public IP. Reasonable, but visible from the whole Internet.
-> -   **Solution**: reach the **private** IP of the server through the WireGuard tunnel that already link home and AWS.
-> -   **Trap 1, WireGuard**: `AllowedIPs`, she contained only the point-to-point address of the tunnel. Without the server private IP in the list, WireGuard refuse to encrypt toward it.
-> -   **Trap 2, the system**: the tunnel was built by hand with the raw `wg` tools, who program the interface but not the routing table. It needed an explicit static route on pfSense.
-> -   **Trap 3, passive FTP**: the control connection worked, transfers failed. The server was announcing his **public** IP in the `227` reply; changing the announced passive address to the private IP fixed everything.
-> -   **Discovery**: the WireGuard section of the router GUI was empty. A "clean" change through the GUI would have changed nothing.
+> -   **Goal**: remove public FTP access from a small AWS server that receive the scans of a printer-scanner, through the WireGuard tunnel that already link home and AWS.
+> -   **Trap 1, WireGuard**: `AllowedIPs`, she contained only the point-to-point address of the tunnel; without the server private IP, WireGuard refuse to encrypt toward it.
+> -   **Trap 2, the system**: the tunnel, built by hand with the raw `wg` tools, was not programming the routing table. Static route on pfSense.
+> -   **Trap 3, passive FTP**: the server was announcing his **public** IP in the `227` reply; now he announce the private IP.
 > -   **Order**: validate the private path **before** removing the public rule, so there is no outage.
-> -   **Extended afterward to**: the internal DNS admin interface, the reverse proxy dashboard and the video surveillance NVR, same recipe.
 
 Bob here. Ludo, he had an FTP port open on the Internet for a good while, for a basement printer, and he asked me the question that bother: why is the door visible from outside if nobody come from outside?
 

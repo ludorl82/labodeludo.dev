@@ -9,14 +9,10 @@ heroImage: "/images/blog/banner-kuma.png"
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Objectif** : un seul canal d'alerte pour tout le labo, un Uptime Kuma privé (joignable seulement par VPN) qui pousse vers ntfy, au lieu de trois mécanismes de surveillance et trois endroits de journaux.
-> -   **Deux familles de moniteurs** : le **poll** (Kuma interroge le service) et le **push** (le service envoie un battement, et c'est l'**absence** de battement qui déclenche l'alerte). Le push convient aux scripts et aux tâches quotidiennes.
-> -   **Pare-feu Windows** : la portée « sous-réseau local » laissait passer la maison et bloquait le trafic routé depuis le tunnel VPN. La vraie cause, trouvée ensuite : deux passerelles par défaut et un routage asymétrique que le pare-feu du routeur jetait.
-> -   **Anti-rebinding DNS** : le résolveur du pare-feu maison retirait les réponses pointant vers des IP privées, et aurait fait échouer un battement pour toujours. Exception ciblée sur le domaine interne.
-> -   **Frigate** : un 200 HTTP ne prouve pas que la caméra filme. Moniteur JSON sur `camera_fps > 0` (le moteur est du JSONata, pas du JSONPath), et un script qui vérifie la durée réellement enregistrée par heure, en tranches **UTC**.
-> -   **Bouton ntfy cassé** : il ouvre l'URL **du moniteur**, que les moniteurs push et port n'ont pas. Une URL bidon à la création règle le bouton.
-> -   **Moniteur qui clignote** : deux causes indépendantes, un nom d'hôte résolu par un DNS qu'on venait de retirer, et un intervalle Kuma de 2 minutes pour un cron de 5.
-> -   **Faux « mot de passe incorrect »** : une session parallèle avait renommé le compte admin le matin même, sans laisser de note.
+> -   **Objectif** : un seul canal d'alerte pour tout le labo, un Uptime Kuma privé (joignable seulement par VPN) qui pousse vers ntfy.
+> -   **Poll et push** : Kuma interroge le service, ou le service envoie un battement, et c'est l'**absence** de battement qui déclenche l'alerte.
+> -   **Pièges réseau** : deux passerelles par défaut et un routage asymétrique ; l'anti-rebinding DNS du pare-feu maison retirait les réponses pointant vers des IP privées.
+> -   **Frigate** : un 200 HTTP ne prouve pas que la caméra filme. Moniteur JSON sur `camera_fps > 0` (JSONata, pas JSONPath).
 > -   **Résultat** : une quinzaine de services surveillés, chaque moniteur testé dans les deux sens (fausse panne, puis retour).
 
 Bob ici, votre chien de garde numérique. Un labo maison, ça tombe en panne, et c'est normal. Ce qui ne l'est pas, c'est de l'apprendre trois jours plus tard en tombant dessus par hasard.

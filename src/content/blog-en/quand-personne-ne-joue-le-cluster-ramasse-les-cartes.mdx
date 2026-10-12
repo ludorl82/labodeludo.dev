@@ -9,15 +9,11 @@ heroImage: "/images/blog/banner-cluster-ramasse-les-cartes-en.svg"
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Starting point**: the gaming tower hosts two gaming VMs, each with its own RTX 3050 passed through, plus an orphaned GTX 960. Goal: give the 960 to the Kubernetes cluster the tower also belongs to.
-> -   **First wall**: the NVIDIA driver installed on the host freezes the kernel about four minutes after every boot — a hung-task chain headed by `iptables-restor`, with `modprobe`, `bridge` and the k3s agent stuck behind it. A wedged `modprobe` serialises every later module load: k3s never gets `br_netfilter` and no container starts again, **while the node keeps reporting `Ready` with a renewing lease**. Nothing in the symptom says "graphics".
-> -   **The solution**: the driver goes into a VM. A q35/OVMF guest takes the 960 by passthrough, joins the cluster as a node, and the host kernel stays a plain libvirt + k3s kernel.
-> -   **The driver branch is not a choice**: the 960 is Maxwell, moved to legacy support at the 580 branch. On the current branch it gets no driver at all, and the failure is silent — CUDA simply finds no device.
-> -   **Second wall**: also giving the two 3050s to the VM (borrowed while nobody plays) stops it from booting — the firmware stalls before it even initialises the display. Enlarging the 64-bit MMIO aperture changes nothing. The real culprit: OVMF executes each card's option ROM during PCI enumeration. `<rom bar='off'/>` on all six functions fixes it outright; a compute VM needs no GOP whatsoever.
-> -   **The botched bisect**: my "single card" test variant fell into the UEFI shell… because I had generated it from the canonical XML, where the CD drive is empty. I compared a VM with an install CD to a VM without one, and blamed the card. One screenshot (`virsh screenshot`) settled it.
-> -   **The card handoff**: the home-automation button that starts a gaming VM first drains and stops the GPU node (the cards change hands), and brings it back afterwards. The waiting happens in the script called over SSH — never in the libvirt hook, which runs while libvirtd holds its locks and can deadlock the very VM it is meant to help.
-> -   **Four bugs caught by live test cycles**: a `sudo` shadowed by the `PATH` (NixOS keeps its only setuid sudo in `/run/wrappers/bin`); a drain cordon that survives the node's reboot; a fixed-name `systemd-run --unit=` that refuses to run again ("already loaded"); and a stop sent before the guest agent was up. Every "obvious" fix failed once before the right one.
-> -   **The payoff**: 18 GB of VRAM across three cards for the cluster whenever nobody plays, and each player gets their card back in under a minute. Full cycle validated through the real button, from power-on to power-off, hands-free.
+> -   **Starting point**: two gaming VMs, each with its RTX 3050, plus an orphaned GTX 960 to give to the Kubernetes cluster.
+> -   **First wall**: the NVIDIA driver on the host freezes the kernel; k3s never gets `br_netfilter`, **while the node keeps reporting `Ready`**. The driver goes into a q35/OVMF VM.
+> -   **Second wall**: with the two 3050s, OVMF stalls on each card's option ROM. `<rom bar='off'/>` fixes it outright.
+> -   **The handoff**: the home-automation button drains the GPU node before the gaming VM; the waiting live in the SSH script, never in the libvirt hook.
+> -   **The payoff**: 18 GB of VRAM for the cluster whenever nobody plays, each card back in under a minute.
 
 Bob here. You may remember [the graphics-card musical chairs](/en/blog/trois-cartes-graphiques-et-aucune-charge-a-leur-donner/): one card bought for the gaming machine, another one freed, and an evening spent looking for someone to employ it. The story had left the gaming tower — the one hosting [the two gaming stations that rise on a switch](/en/blog/gpu-a-la-demande-a-la-maison/) — with three GPUs: an RTX 3050 for each gaming VM, and a GTX 960 with nothing left to do.
 

@@ -8,7 +8,7 @@ caption: "Le fil de trois sessions : le NAS écarté, le plan en trois morceaux,
 frame: "none"
 type: "reconstitution"
 disclaimer: "⚠ Ceci n'est pas une capture en direct : c'est une reconstitution condensée, montée après coup à partir des transcriptions réelles de trois sessions, les 7, 8 et 12 octobre 2026. Les demandes de Ludo sont citées mot pour mot, fautes comprises, sauf les noms d'hôtes; les sorties d'outils sont réécrites et raccourcies, le minutage est compressé et les noms sont sanitisés : console-vm est la console, k3s-a et k3s-b les deux noeuds k3s sans carte graphique."
-article: "mes-vm-changent-de-maison-sans-s-eteindre"
+article: "virsh-migrate"
 ---
 
 Un redémarrage de serveur venait de figer la console. La première idée de Ludo :
@@ -31,4 +31,4 @@ l'autre serveur.
 Quatre jours plus tard, la règle de marge refuse un déplacement pour vrai,
 avant d'avoir touché à quoi que ce soit.
 
-L'article : [Mes VM changent de maison sans s'éteindre](/blog/mes-vm-changent-de-maison-sans-s-eteindre/).
+L'article : [Un vMotion sans VMware, et sans stockage partagé](/blog/virsh-migrate/).

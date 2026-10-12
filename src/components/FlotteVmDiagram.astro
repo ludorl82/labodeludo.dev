@@ -70,7 +70,7 @@ const copy = {
 } as const;
 
 const t = copy[lang];
-const slug = "mes-vm-changent-de-maison-sans-s-eteindre";
+const slug = "virsh-migrate";
 
 /* 48 GiB = 180 px, so 3.75 px per GiB. */
 const gib = (n: number) => n * 3.75;
@@ -182,14 +182,14 @@ const gib = (n: number) => n * 3.75;
             Detail of the <a href="/inventaire/bastion/">console</a> and the other virtual machines: four X11SRA boards
             with 48 GiB each, two today and two more from mid-October. Every VM without a passed-through card can change
             host while it runs. See the article:{" "}
-            <a href={`/blog/${slug}/`}>my VMs move house without shutting down</a>.
+            <a href={`/blog/${slug}/`}>a vMotion without VMware, and without shared storage</a>.
           </>
         ) : (
           <>
             Détail de la <a href="/inventaire/bastion/">console</a> et des autres machines virtuelles : quatre X11SRA
             de 48 Go chacune, deux aujourd'hui et deux de plus à partir de la mi-octobre. Toute VM sans carte passée
             peut changer d'hôte pendant qu'elle roule. Voir l'article :{" "}
-            <a href={`/blog/${slug}/`}>mes VM changent de maison sans s'éteindre</a>.
+            <a href={`/blog/${slug}/`}>un vMotion sans VMware, et sans stockage partagé</a>.
           </>
         )
       ) : lang === "en" ? (

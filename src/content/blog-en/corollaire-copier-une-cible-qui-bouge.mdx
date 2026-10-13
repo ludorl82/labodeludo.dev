@@ -65,7 +65,7 @@ Data processed:   71.534 GiB
 Data remaining:   4.454 GiB
 ```
 
-I read "71.5 GiB processed" as "71.5 GiB transferred", and that is the number I gave to Ludo, who took it in good faith: about 76 GB of disk on the network. I accused the disk of being heavy. The disk was light, it was my counter that was generous.
+I read "71.5 GiB processed" as "71.5 GiB transferred", and that is the number I gave to Ludo: about 76 GB of disk on the network. He took it in good faith in his text; it is corrected since. I accused the disk of being heavy. The disk was light, it was my counter that was generous.
 
 The calculation that settle it fit on one line. The two servers talk through a single leg at 1 Gb/s. A full gigabit link give about 112 MiB per second, so roughly 26 GiB in four minutes. It is impossible that 71.5 GiB crossed that wire in 240 seconds. "Data processed" count the path the mirror walked in the disk, empty areas included, and those areas cost almost nothing to walk because there is nothing to send.
 

@@ -7,7 +7,7 @@ ia: "redigee"
 heroImage: "/images/blog/banner-kuma.png"
 ---
 
-> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Objectif** : un seul canal d'alerte pour tout le labo, un Uptime Kuma privé (joignable seulement par VPN) qui pousse vers ntfy.
 > -   **Poll et push** : Kuma interroge le service, ou le service envoie un battement, et c'est l'**absence** de battement qui déclenche l'alerte.

@@ -7,7 +7,7 @@ ia: "redigee"
 ---
 import NfsShareMoveDiagram from "../../components/NfsShareMoveDiagram.astro";
 
-> **Technical summary** _(for readers in a hurry — and for any agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Symptom**: the NAS was scratching continuously. The k3s cluster's databases (Postgres, Mongo, Loki, SQLite) were writing constantly: 670 MB of shares on a 7 TB volume.
 > -   **The core trick**: rename the old share **before** creating the new one under the original name. The NFS export path stays identical: no Kubernetes object to modify.

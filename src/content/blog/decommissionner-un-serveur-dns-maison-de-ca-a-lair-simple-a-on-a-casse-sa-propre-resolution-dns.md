@@ -7,7 +7,7 @@ ia: "redigee"
 heroImage: "/images/blog/banner-technitium.png"
 ---
 
-> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Point de départ** : une instance EC2 (2 vCPU, 4 Go) à plus de 90 % inactive. Et si on retirait complètement le DNS maison, le plus gros consommateur?
 > -   **Statistiques sur 30 jours** : plus de 70 millions de requêtes, 99 % de bruit d'Internet, 0,12 % de vraie récursion.

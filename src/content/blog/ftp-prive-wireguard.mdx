@@ -8,7 +8,7 @@ heroImage: "/images/blog/banner-ftp-wireguard.png"
 ---
 import WireGuardFtpDiagram from "../../components/WireGuardFtpDiagram.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Objectif** : retirer l'accès FTP public d'un petit serveur AWS qui reçoit les numérisations d'une imprimante-scanner, par le tunnel WireGuard qui relie déjà la maison et AWS.
 > -   **Piège 1, WireGuard** : `AllowedIPs` ne contenait que l'adresse point-à-point du tunnel ; sans l'IP privée du serveur, WireGuard refuse de chiffrer vers elle.

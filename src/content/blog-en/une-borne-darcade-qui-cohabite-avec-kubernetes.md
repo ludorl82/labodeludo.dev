@@ -7,7 +7,7 @@ ia: "redigee"
 heroImage: "/images/blog/banner-arcade-kubernetes-en.svg"
 ---
 
-> **Technical summary** _(for readers in a hurry — and for any agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Starting point**: the games ran under GNOME + Steam on the assistant machine, who fell asleep after twenty minutes and dragged down what she was hosting.
 > -   **Plan**: an old gaming tower cut into **two VMs**, each with its graphics card in vfio passthrough. When nobody plays, the tower is a **Kubernetes node**, emptied by a **libvirt hook**.

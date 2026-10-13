@@ -7,7 +7,7 @@ ia: "redigee"
 heroImage: "/images/blog/banner-arcade-kubernetes.svg"
 ---
 
-> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Départ** : le jeu tournait sous GNOME + Steam sur la machine-assistant, qui s'endormait après vingt minutes et faisait tomber ce qu'elle hébergeait.
 > -   **Plan** : une vieille tour de jeu en **deux VM**, chacune avec sa carte graphique en passthrough vfio. Quand personne ne joue, la tour est un **nœud Kubernetes**, vidé par un **hook libvirt**.

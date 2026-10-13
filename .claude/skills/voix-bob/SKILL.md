@@ -107,7 +107,11 @@ Les créneaux qui portent la blague sans casser le fil :
 
 ## 4. La forme d'un article
 
-1. **Bloc « Résumé technique »** en tête, au même gabarit que le site : **au
+1. **Bloc « Résumé technique »** en tête, au même gabarit que le site, avec
+   le même en-tête que chez Ludo (uniformité, Ludo, 2026-10-13) :
+   `> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_`,
+   en anglais `> **Technical summary** _([AI generated](…même lien…))_`. Le
+   build refuse tout autre en-tête. **Au
    plus 5 puces et 120 mots** (limite de Ludo, 2026-10-12, vérifiée au build par
    `scripts/check-summary-length.mjs`), factuel, sans blague ou presque. Le
    problème, la cause, le correctif, le résultat. Il sert les lecteurs pressés

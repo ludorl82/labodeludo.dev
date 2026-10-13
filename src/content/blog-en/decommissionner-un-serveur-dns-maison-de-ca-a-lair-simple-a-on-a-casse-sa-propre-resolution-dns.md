@@ -7,7 +7,7 @@ ia: "redigee"
 heroImage: "/images/blog/banner-technitium-en.svg"
 ---
 
-> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Starting point**: an EC2 instance (2 vCPU, 4 GB) more than 90% idle. And what if we removed the home DNS completely, the biggest consumer?
 > -   **30-day statistics**: more than 70 million queries, 99% Internet noise, 0.12% real recursion.

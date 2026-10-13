@@ -7,7 +7,7 @@ ia: "redigee"
 heroImage: "/images/blog/banner-nas-ups-wake.svg"
 ---
 
-> **Technical summary** _(for the readers in a hurry — and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Trigger**: the NAS, only device without a UPS, power recovery disabled, she stay off.
 > -   **Fixes**: recovery enabled, NAS onto the rack UPS, CyberPower OR700 UPSes watched by NUT, one Raspberry Pi master per UPS.

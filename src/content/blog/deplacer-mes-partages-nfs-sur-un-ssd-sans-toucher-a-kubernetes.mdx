@@ -7,7 +7,7 @@ ia: "redigee"
 ---
 import NfsShareMoveDiagram from "../../components/NfsShareMoveDiagram.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Symptôme** : le NAS grattait en continu. Les bases de données du cluster k3s (Postgres, Mongo, Loki, SQLite) écrivaient sans arrêt : 670 Mo de partages sur un volume de 7 To.
 > -   **Le truc central** : renommer l'ancien partage **avant** de créer le nouveau sous le nom d'origine. Le chemin d'export NFS reste identique : aucun objet Kubernetes à modifier.

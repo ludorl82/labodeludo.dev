@@ -7,7 +7,7 @@ ia: "redigee"
 heroImage: "/images/blog/banner-nas-ups-wake.svg"
 ---
 
-> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Déclencheur** : le NAS, seul appareil sans onduleur, reprise après panne désactivée, est resté éteint.
 > -   **Correctifs** : reprise activée, NAS sur l'onduleur du rack, onduleurs CyberPower OR700 suivis par NUT, un Raspberry Pi maître par onduleur.

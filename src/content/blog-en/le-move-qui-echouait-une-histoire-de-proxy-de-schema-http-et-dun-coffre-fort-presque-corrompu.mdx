@@ -10,15 +10,11 @@ import WebdavProxyDiagram from "../../components/WebdavProxyDiagram.astro";
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Goal**: sync an encrypted password vault from a phone over WebDAV, without turning on the home VPN.
-> -   **The chain**: mobile client in HTTPS → Cloudflare, who terminate TLS → outbound tunnel → internal proxy → Apache `mod_dav`, in plain HTTP on port 8080.
-> -   **Symptom**: reading work, every save fail with a 502. Not intermittent: systematic on the "safe save" mode.
-> -   **The sorting**: a direct `PUT` go through; what break is writing a temporary file, then a `MOVE` over the final file.
-> -   **Cause**: `MOVE` and `COPY`, they carry their target in the `Destination` header, and the client put there the **absolute** URI: `https://…`. Apache, who serve `http` on 8080, decide the destination is on another server and answer 502.
-> -   **Fix**: one `mod_headers` line that rewrite the scheme and port of `Destination` before the request reach `mod_dav`.
-> -   **The trap**: turning off safe save in the client would have silenced the error, and replaced an atomic write with an in-place write that a network drop truncate.
-> -   **What really happened**: before the fix, an interrupted sync truncated the vault. Recovered from a copy still open in memory on a desktop machine.
-> -   **Lesson**: an error limited to `MOVE`/`COPY` point to `Destination`, not to the network; and you never trade an atomicity guarantee for a green light.
+> -   **The chain**: a phone sync an encrypted password vault over WebDAV, through Cloudflare and a tunnel, to Apache `mod_dav` in plain HTTP on port 8080.
+> -   **Symptom**: reading work, every save fail with a 502. What break is the `MOVE` of the temporary file over the final file.
+> -   **Cause and fix**: the client put the **absolute** URI (`https://…`) in the `Destination` header, and Apache decide it is on another server. One `mod_headers` line rewrite the scheme and port.
+> -   **What really happened**: an interrupted sync truncated the vault, recovered from a copy still open in memory.
+> -   **Lesson**: you never trade an atomicity guarantee for a green light.
 
 Bob here. Ludo, he wanted to open his passwords on his phone without turning on the VPN, and me, I wanted a quiet evening. One of us got what he wanted, and it was not the quiet evening.
 

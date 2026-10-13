@@ -15,6 +15,7 @@ import NfsShareMoveDiagram from "../components/NfsShareMoveDiagram.astro";
 import SurvivorIslandDiagram from "../components/SurvivorIslandDiagram.astro";
 import ArcadePassthroughDiagram from "../components/ArcadePassthroughDiagram.astro";
 import DeuxVlansUnFilDiagram from "../components/DeuxVlansUnFilDiagram.astro";
+import FlotteVmDiagram from "../components/FlotteVmDiagram.astro";
 import ScanPipelineDiagram from "../components/ScanPipelineDiagram.astro";
 
 // Two halves, on purpose. The top is ONE drawing, authored every night by
@@ -74,6 +75,8 @@ const DETAILS = [
     title: "tour de jeu (passthrough vfio et bureau partagé)", Component: ArcadePassthroughDiagram },
   { slug: "la-reponse-par-la-mauvaise-patte",
     title: "deux VLAN sur les mêmes fils (commutateurs non gérés)", Component: DeuxVlansUnFilDiagram },
+  { slug: "virsh-migrate",
+    title: "les VM qui changent d'hôte (migration à chaud)", Component: FlotteVmDiagram },
 ];
 
 // Fail LOUD on an unknown slug. Sorting on a missing date would quietly

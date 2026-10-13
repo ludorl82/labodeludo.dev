@@ -9,14 +9,13 @@ heroImage: "/images/blog/banner-arcade-deux-postes.svg"
 ---
 import ArcadePassthroughDiagram from "../../components/ArcadePassthroughDiagram.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **L'idée** : du GPU à la demande, à la maison. Personne ne se déplace vers une machine physique : un interrupteur lève une session de jeu accélérée par une vraie carte graphique, et on y joue par Steam Remote Play depuis n'importe quel appareil de la maison.
-> -   **Le montage** : une station Supermicro X11SRA-F (Xeon W-2135, 48 Go) découpée en deux VM NixOS de 8 vCPU / 16 Go, chacune avec sa carte passée en `vfio`, RTX 3060 pour un poste, RTX 3050 pour l'autre. Une VM par joueur, pas une session partagée.
-> -   **Le partage de la ressource** : entre deux parties, la même tour est un noeud du cluster Kubernetes. Un `hook` libvirt l'évacue quand une VM de jeu démarre, la rend au cluster quand elle s'arrête.
-> -   **Le code est public** : [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public), les deux postes et leur module de bureau partagé, assainis. Un poste de jeu y tient en trois valeurs qui changent, le reste est commun.
-> -   **Ce qui casse quand même** : une carte qui survit à sa VM dans un état d'où elle ne se réveille plus, un SSD mourant qui met la VM « en pause » (indiscernable d'une panne réseau), et une petite carte qui étouffe thermiquement sous la grande.
-> -   **Assumé d'avance** : chantier mené avec Claude Code (modèles Fable 5 et Opus 5). Mon rôle : décider, valider, visser, poser des questions.
+> -   **L'idée** : du GPU à la demande, à la maison. Un interrupteur lève une session de jeu, jouée par Steam Remote Play depuis n'importe quel appareil.
+> -   **Le montage** : une Supermicro X11SRA-F découpée en deux VM NixOS, une RTX 3060 et une RTX 3050 en `vfio`. Entre deux parties, la tour retourne au cluster Kubernetes.
+> -   **Le code** : [nixos-iac-public](https://github.com/ludorl82/nixos-iac-public), un poste de jeu en trois valeurs.
+> -   **Ce qui casse quand même** : une carte qui ne se réveille plus, un SSD mourant, une petite carte qui étouffe sous la grande.
+> -   **Assumé d'avance** : chantier mené avec Claude Code (modèles Fable 5 et Opus 5).
 
 Le changement que j'aime le plus dans ce montage n'est pas technique, il est domestique : **ma conjointe et moi n'avons plus à aller devant une machine physique pour jouer.**
 

@@ -11,9 +11,9 @@ import AsciiCast from "../../components/AsciiCast.astro";
 
 > **Technical summary** _(for readers in a hurry — and for any agent/LLM indexing this page)_
 >
-> -   **End state**: four git repositories describe the whole lab — the operating system of nine machines, the cluster workloads, the cloud account, and the edge configuration.
-> -   **Method**: adopt what already exists instead of recreating it, using `import` blocks and one simple rule: no plan gets applied if it contains a single addition or a single destruction.
-> -   **Verification**: four nightly drift checks, one per repository, each with its own primitive — because the three technologies share no common notion of "correct".
+> -   **End state**: four git repositories describe the whole lab: the operating system of nine machines, the cluster workloads, the cloud account, and the edge configuration.
+> -   **Method**: adopt what already exists with `import` blocks, and no plan gets applied if it contains a single addition or a single destruction.
+> -   **Verification**: four nightly drift checks, one per repository, each with its own primitive.
 > -   **Publication**: each private repository produces a sanitized public snapshot. Identifiers become fictional, comments stay real.
 > -   **The lesson that matters**: a sanitizer that fails silently is worse than no sanitizer at all. It has to refuse to finish.
 

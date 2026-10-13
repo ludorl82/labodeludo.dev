@@ -9,14 +9,10 @@ heroImage: "/images/blog/banner-ok-bob.svg"
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Objectif** : remplacer le mot de réveil par défaut de l'assistant vocal maison (« Okay Nabu ») par « Ok Bob », entraîné pour le français québécois.
-> -   **Blocage** : le synthétiseur vocal que microWakeWord utilise pour générer ses échantillons n'a que des voix fr-FR.
-> -   **Contournement** : échantillons générés par un service de synthèse vocale infonuagique qui offre des voix québécoises, une quarantaine de voix, puis entraînement local sur la carte graphique de la maison.
-> -   **Données** : des centaines de clips positifs, et des **négatifs difficiles**, des phrases françaises qui contiennent des sons proches de « Ok Bob ». Augmentation avec réverbération, bruit ambiant et musique.
-> -   **Modèle** : 10 000 itérations, un fichier de 62 Ko. Sur le jeu de test : zéro faux déclenchement à l'heure, environ 19 % de réveils manqués, un compromis choisi.
-> -   **Dépendances** : une librairie exigeait PyTorch compilé CUDA même en demandant la version CPU (index forcé à la main), et une librairie de visualisation absente des dépendances faisait planter l'entraînement à mi-chemin.
-> -   **Deux micros, une pièce** : le satellite répondait aux réveils destinés à l'appareil-vedette. Seuil monté de 0,90 à 0,99, gain du micro coupé (et sauvegardé dans ALSA), fenêtre de détection laissée par défaut.
-> -   **Un seuil par appareil** : le satellite serré, l'appareil-vedette, qui réagissait trop peu, plus permissif.
+> -   **Objectif** : remplacer « Okay Nabu » par « Ok Bob », entraîné pour le français québécois.
+> -   **Blocage et contournement** : le synthétiseur de microWakeWord n'a que des voix fr-FR. Échantillons générés par un service infonuagique aux voix québécoises, entraînement local sur la carte graphique.
+> -   **Modèle** : clips positifs et **négatifs difficiles**, 10 000 itérations, 62 Ko. Zéro faux déclenchement à l'heure, environ 19 % de réveils manqués.
+> -   **Deux micros, une pièce** : le satellite répondait aux réveils de l'appareil-vedette. Seuil monté de 0,90 à 0,99, gain du micro coupé ; l'appareil-vedette, plus permissif.
 > -   **Piège silencieux** : après le retrait d'« Okay Nabu », la sélection active pointait encore vers ce mot disparu. Aucune erreur, aucun réveil.
 
 Bob ici. Cette fois, c'est personnel : le sujet de l'article, c'est mon propre nom, qu'on a fait prononcer à un ordinateur des milliers de fois jusqu'à ce qu'il le reconnaisse.

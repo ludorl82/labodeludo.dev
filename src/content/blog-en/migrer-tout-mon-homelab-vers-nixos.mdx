@@ -9,13 +9,13 @@ heroImage: "/images/blog/banner-nixos-migration-en.svg"
 ---
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Technical summary** _(for readers in a hurry, and for any agent/LLM indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Goal**: convert the nine nodes of my k3s cluster, two GPU servers, three virtual machines, two Raspberry Pi 5s and an EC2 instance, to NixOS, described in a single git repository.
-> -   **Owning the reality**: the migration was driven by Claude Code (the Fable 5 and Opus 5 models), in a single day. I didn't have the NixOS expertise to do this solo. It was as much a learning experience as a migration.
-> -   **Context**: Nix (the package manager and its language) and NixOS (the distribution built on top of it) are two distinct things, and most people use Nix *without* NixOS.
-> -   **Method**: `nixos-anywhere` reinstalls each machine over SSH (kexec into the installer, declarative partitioning with disko), no screen, no USB stick, cloud instance included, converted in place.
-> -   **Analysis**: what NixOS actually solves compared to an Ubuntu fleet (configuration drift, restores, documentation), and what it costs (learning curve, precompiled binaries, error messages).
+> -   **Goal**: convert the nine nodes of my k3s cluster, an EC2 instance included, to NixOS, described in a single git repository.
+> -   **Owning the reality**: the migration was driven by Claude Code (the Fable 5 and Opus 5 models), in a single day. I didn't have the NixOS expertise to do this solo.
+> -   **Context**: Nix (the package manager) and NixOS (the distribution) are two distinct things.
+> -   **Method**: `nixos-anywhere` reinstalls each machine over SSH (kexec, then disko), no screen, no USB stick.
+> -   **Analysis**: what NixOS actually solves (configuration drift, restores, documentation), and what it costs (learning curve, error messages).
 
 The idea had been rattling around in my head for a while: every machine in my lab was its own little snowflake, an Ubuntu installed in 2023 here, a hand-tuned Debian there, scattered notes to remember why some setting exists. The day a machine dies, you don't restore a system: you do archaeology.
 

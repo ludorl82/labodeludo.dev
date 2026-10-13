@@ -9,14 +9,10 @@ heroImage: "/images/blog/banner-kuma-en.svg"
 
 > **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Goal**: one single alert channel for the whole lab, a private Uptime Kuma (reachable only over VPN) that push to ntfy, instead of three monitoring mechanisms and three log locations.
-> -   **Two families of monitors**: **poll** (Kuma query the service) and **push** (the service send a heartbeat, and it is the **absence** of heartbeat that trigger the alert). Push fit scripts and daily jobs.
-> -   **Windows firewall**: the "local subnet" scope was letting the house in and blocking traffic routed from the VPN tunnel. The real cause, found later: two default gateways and an asymmetric routing that the router firewall was dropping.
-> -   **DNS anti-rebinding**: the home firewall resolver was stripping answers pointing to private IPs, and would have made a heartbeat fail forever. Targeted exception on the internal domain.
-> -   **Frigate**: an HTTP 200 don't prove the camera is filming. JSON monitor on `camera_fps > 0` (the engine is JSONata, not JSONPath), and a script that check the duration really recorded per hour, in **UTC** buckets.
-> -   **Broken ntfy button**: it open the **monitor** URL, which push and port monitors don't have. A dummy URL at creation fix the button.
-> -   **Flapping monitor**: two independent causes, a host name resolved by a DNS we just retired, and a 2-minute Kuma interval for a 5-minute cron.
-> -   **Fake "wrong password"**: a parallel session had renamed the admin account that same morning, leaving no note.
+> -   **Goal**: one single alert channel for the whole lab, a private Uptime Kuma (reachable only over VPN) that push to ntfy.
+> -   **Poll and push**: Kuma query the service, or the service send a heartbeat, and it is the **absence** of heartbeat that trigger the alert.
+> -   **Network traps**: two default gateways and an asymmetric routing; the home firewall's DNS anti-rebinding was stripping answers pointing to private IPs.
+> -   **Frigate**: an HTTP 200 don't prove the camera is filming. JSON monitor on `camera_fps > 0` (JSONata, not JSONPath).
 > -   **Result**: about fifteen services monitored, each monitor tested both ways (fake outage, then recovery).
 
 Bob here, your digital watchdog. A home lab, she break down, and that is normal. What is not normal is learning it three days later by stumbling on it.

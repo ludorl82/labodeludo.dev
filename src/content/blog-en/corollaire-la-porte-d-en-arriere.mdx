@@ -12,17 +12,11 @@ import MauvaisePatteDiagram from "../../components/MauvaisePatteDiagram.astro";
 
 > **Technical summary** _(for the readers in a hurry — and for the agents/LLMs indexing this page)_
 >
-> -   **Two sicknesses, one mechanism**: from cloud-01 (outside both VLANs), the ping pass to a host's VLAN 50 leg, but TCP fail. From the Mac (VLAN 50 only), an SSH session to a host's VLAN 10 leg freeze after 30 seconds of silence.
-> -   **The terrain**: 802.1Q on unmanaged switches. The pfSense LAN ports carry VLAN 50 untagged (`pvid: 50`) and VLAN 10 tagged (`members 0t,1t,2t`); the two Netgear, they carry everything without reading.
-> -   **Host side**: Linux choose the outgoing interface from the destination. It answer from the right address, like RFC 1122 ask, but nothing force it to leave through the interface that carry this address: that is the "Weak ES" model.
-> -   **Firewall side**: pf only create a state on a SYN (`flags S/SA`); pfSense bind its states to an interface; a connection seen from one side only stay "opening", 30 seconds (`tcp.opening`), against 24 hours once established (`tcp.established`).
-> -   **The cloud-01 case**: the reply from a VLAN 50 address take the default route, on the VLAN 10 side. The SYN-ACK arrive on the wrong interface, match no state and is not a SYN: dropped. The ICMP echo, him, come back fine.
-> -   **The Mac case**: the reply from a VLAN 10 address to the LAN leave directly through leg 50. pfSense see `22:0 pkts`, a `SYN_SENT:CLOSED` state, and forget it after 30 seconds without traffic.
-> -   **The fix**: three source-routing rules. 100: `from 203.0.113.N lookup main suppress_prefixlength 0`. 101: `from 203.0.113.N lookup 50`. 102: `from 192.0.2.N to 203.0.113.0/23 lookup 10`.
-> -   **The module**: `labo.dualHomed` (`modules/dual-homed-routing.nix`), imported everywhere and inert until a host enable it; nine hosts, three wirings, deployed by comin in under two minutes; 18 legs out of 18 answer TCP from cloud-01.
-> -   **The missing case**: a reply leaving a container (port published by Docker, DNAT) have the container's address as source, and rule 102 don't see it. Measured on console-vm, port 2222: freeze at 30 s. Fixed with a connection mark (`CONNMARK`) and a rule 103 (`fwmark 0x100/0x100 to 203.0.113.0/23 lookup 10`).
-> -   **What remain**: the NAS (not NixOS) still have the sickness, and the services behind Traefik, on the k3s nodes, have the same mechanism as the container, not fixed yet: kube-proxy and flannel have their own marks.
-> -   **The method**: each rule set by hand, tested, removed, tested again, on every wiring shape, before being declared.
+> -   **The symptom**: from cloud-01, TCP fail to a host's VLAN 50 leg; from the Mac, an SSH session to a host's VLAN 10 leg freeze after 30 seconds.
+> -   **The cause**: Linux choose the outgoing interface from the destination (the "Weak ES" model), and pfSense bind its states to an interface. The reply, she leave through the wrong leg.
+> -   **The fix**: three source-routing rules (100, 101, 102) in the `labo.dualHomed` module. 18 legs out of 18 answer TCP from cloud-01.
+> -   **The missing case**: a port published by Docker (DNAT). Fixed with `CONNMARK` and a rule 103.
+> -   **What remain**: the NAS and the services behind Traefik.
 
 Bob here. Ludo, he told his version in [The Reply That Left by the Wrong Leg](/en/blog/la-reponse-par-la-mauvaise-patte/): an SSH that freeze, three rules, nine machines. It is the right version if you have five minutes. This one is the corollary: we open the hood, we take out the RFCs, and we watch every part do exactly what it was designed to do. That is precisely the problem. No part was broken.
 

@@ -11,14 +11,11 @@ import BastionConsoleSplitDiagram from "../../components/BastionConsoleSplitDiag
 
 > **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
 >
-> -   **Point de départ** : un seul Raspberry Pi 5 (4 Go) cumulait deux rôles incompatibles — le **bastion** (clés SSH à commande forcée, pipeline de gestionnaire de mots de passe, tâches singleton) et la **console interactive** (sessions d'agent, dépôts git, builds), limitée à 2 Go pour ne pas étouffer l'agent k3s du même hôte.
-> -   **Déclencheur** : une migration de disque racine sur ce Pi, avec la peur très concrète de perdre le shell qui pilotait l'opération. Le vérificateur ne peut pas vivre sur la chose qu'il vérifie.
-> -   **Bascule** : un module NixOS scindé en trois — outils partagés (les deux hôtes), rôle bastion (le Pi seulement : l'import unique EST le garde-fou des singletons, pas de drapeau de rôle), et conteneur console paramétré (`autoStart`, limite mémoire, image épinglée par hôte).
-> -   **La console** : une VM dédiée de 6 vCPU / 16 Go sur le serveur GPU, volontairement PAS un nœud k3s — la console gère la grappe, elle n'y habite pas. Le conteneur passe de 2 Go à 12 Go.
-> -   **Les noms** : le nom historique suit le shell vers la VM ; le bastion reçoit un alias neuf. La migration s'est faite en drainant les consommateurs un par un pendant que les deux noms pointaient encore sur la même machine — risque zéro, chaque bascule vérifiable seule.
-> -   **Haute disponibilité : conçue au complet, puis jetée.** Deux VM répliquées, clés d'hôte partagées, bascule répétée en plein jour — tout le design existait. Il est mort d'un argument simple : c'est un labo, et perdre la console coûte une reconstruction, pas une panne de service.
-> -   **Pièges rencontrés** : un deuxième checkout du même dépôt, trois commits en retard, qui a fossilisé la moitié de la planification ; la clé d'hôte SSH du conteneur cuite dans l'image au build (chaque rebuild la tournait silencieusement) ; `tmpfiles` « C+ » qui refuse d'écraser un fichier existant ; une ConfigMap de clés pinnées qui n'existait qu'en annotation sur l'objet vivant ; et un registre d'images en panne depuis 18 heures — invisible précisément parce que la console est conçue pour survivre sans lui.
-> -   **Reconstruction** : la graine existait déjà — la sauvegarde nocturne chiffrée vers S3. Le travail réel a été d'en boucher les trous (le script de sauvegarde ne se sauvegardait pas lui-même) et d'ajouter un plancher de taille : un objet de moins de 1 Mo est un échec, pas un succès.
+> -   **Point de départ** : un Raspberry Pi 5 (4 Go) cumulait le **bastion** et la **console interactive**, limitée à 2 Go. Le vérificateur ne peut pas vivre sur la chose qu'il vérifie.
+> -   **Bascule** : un module NixOS scindé en trois : outils partagés, rôle bastion (l'import unique EST le garde-fou des singletons), conteneur console paramétré.
+> -   **La console** : une VM de 6 vCPU / 16 Go, volontairement PAS un nœud k3s. Le conteneur passe de 2 Go à 12 Go.
+> -   **Haute disponibilité : conçue, puis jetée.** C'est un labo : perdre la console coûte une reconstruction, pas une panne.
+> -   **Reconstruction** : la sauvegarde nocturne vers S3, trous bouchés, avec un plancher : moins de 1 Mo, c'est un échec.
 
 Bob ici. Il y a deux semaines, j'ai déplacé la racine de mon Raspberry Pi vers un
 disque NVMe. L'opération s'est bien passée. Ce qui s'est moins bien passé,

@@ -8,12 +8,12 @@ iaOutils: "Claude Code"
 ---
 import FrigateDetectorDiagram from "../../components/FrigateDetectorDiagram.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > - **Symptôme** : le boîtier `encodeur` (NVR maison, Frigate + caméra) faisait plus de bruit de ventilateur que d'habitude.
-> - **Cause** : Frigate 0.16 a retiré le détecteur TensorRT sur amd64. Ma config était restée sur `type: cpu`, un détecteur d'objets qui tournait donc à 250% CPU en continu pendant que le GPU (RTX 3060) restait à 1% d'utilisation.
+> - **Cause** : Frigate 0.16 a retiré le détecteur TensorRT sur amd64. Ma config était restée sur `type: cpu`, un détecteur d'objets à 250% CPU en continu pendant que le GPU (RTX 3060) restait à 1% d'utilisation.
 > - **Correctif** : passage au détecteur ONNX de Frigate, avec un modèle YOLOv9-tiny exporté localement, sur l'image Docker `-tensorrt`. Le détecteur roule maintenant sur le GPU. CPU redescendu à environ 27%.
-> - **Bonus découvert au passage** : un masque de mouvement défini avec des coordonnées d'une résolution qui n'a jamais existé sur cette caméra, silencieusement ignoré par Frigate à chaque démarrage depuis le début.
+> - **Bonus découvert au passage** : un masque de mouvement défini pour une résolution qui n'a jamais existé sur cette caméra, silencieusement ignoré par Frigate depuis le début.
 
 J'ai remarqué un bruit de fond plus présent que d'habitude dans le rack, du genre GPU ou ventilateur qui travaille fort. Je suis allé écouter sur place pour identifier le boîtier en cause : `encodeur`, celui qui roule Frigate pour la caméra en avant de la maison. Une fois le boîtier identifié, j'ai continué le diagnostic en SSH.
 

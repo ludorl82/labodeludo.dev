@@ -8,12 +8,12 @@ iaOutils: "Claude Code"
 heroImage: "/images/blog/banner-ok-bob-cinema.svg"
 ---
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Ce qui change** : l'assistant vocal de la maison (Home Assistant, mot de réveil « Ok Bob », modèle Qwen local sur le noeud GPU du labo) peut chercher sur internet, via [Tavily](https://tavily.com) au palier gratuit. La seule chose qui sort de la maison, c'est la requête. Le modèle décide seul quand chercher.
-> -   **Ce qu'il a fait de travers** : quand la recherche ne rapportait pas d'horaires, il en a inventé, des heures plausibles, énoncées du même ton assuré que les vraies.
-> -   **La correction** : pour du contenu qui change chaque jour, un moteur de recherche est le mauvais outil. Les horaires viennent maintenant directement de l'API du cinéma, par un second outil, et la règle « n'invente jamais une heure » est dans son prompt.
-> -   **Le comment**, soit les scripts Home Assistant, les pièges et le gabarit, est dans [l'article de Bob](/blog/comment-jai-appris-a-chercher-sur-internet/). Fait en session avec Claude Code (Opus 5). Ma part a été de poser la question, deux soirs de suite.
+> -   **Ce qui change** : l'assistant vocal de la maison (« Ok Bob », modèle Qwen local) peut chercher sur internet via [Tavily](https://tavily.com). Seule la requête sort de la maison.
+> -   **Ce qu'il a fait de travers** : quand la recherche ne rapportait pas d'horaires, il en a inventé, du même ton assuré que les vraies.
+> -   **La correction** : pour du contenu qui change chaque jour, un moteur de recherche est le mauvais outil. Les horaires viennent maintenant de l'API du cinéma, et le prompt dit « n'invente jamais une heure ».
+> -   **Transparence** : fait en session avec Claude Code (Opus 5). Le comment est dans [l'article de Bob](/blog/comment-jai-appris-a-chercher-sur-internet/).
 
 Depuis juillet, [un modèle Qwen roule sur une carte graphique dans mon sous-sol](/blog/ce-que-peut-faire-un-llm-local-sur-une-carte-a-300-mon-assistant-vocal-maison-avec-qwen3/) et répond à « Ok Bob » dans la maison : les lumières, la température, la télé. Aujourd'hui c'est un Qwen3.5-35B-A3B, 35 milliards de paramètres dont 3 milliards actifs par jeton, quantifié en 4 bits, servi par Ollama sur deux RTX 3060 de 12 Go. C'est le même modèle qui fait [le chatbot de ce site](/blog/jai-lu-mes-propres-articles/). Il fait tout ça sans rien envoyer à personne, et c'est le point. Par contre, un modèle local a une limite dure : il ne sait rien de ce qui se passe dehors. Ni la date, ni la météo, ni l'horaire du cinéma du coin.
 

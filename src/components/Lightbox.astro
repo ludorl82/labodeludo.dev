@@ -1,5 +1,7 @@
 <div id="lightbox" class="lightbox" hidden>
   <img id="lightbox-img" src="" alt="" />
+  <button type="button" id="lightbox-close" class="lightbox-close" hidden></button>
+  <div id="lightbox-svg" class="lightbox-svg" hidden></div>
 </div>
 
 <style>
@@ -16,7 +18,8 @@
     cursor: zoom-out;
   }
 
-  .lightbox[hidden] {
+  .lightbox[hidden],
+  .lightbox [hidden] {
     display: none;
   }
 
@@ -27,21 +30,82 @@
     border-radius: 6px;
     box-shadow: 0 20px 60px -20px rgb(0 0 0 / 0.6);
   }
+
+  /* Schéma sur téléphone : à la largeur de son dessin, qu'on parcourt du
+     doigt, au lieu d'être réduit à la largeur de l'écran. */
+  .lightbox.is-svg {
+    display: block;
+    padding: 0;
+    background: var(--bg);
+    backdrop-filter: none;
+    cursor: auto;
+  }
+
+  .lightbox-svg {
+    height: 100%;
+    overflow: auto;
+    padding: 3.25rem 1rem 1rem;
+    box-sizing: border-box;
+  }
+
+  .lightbox-svg :global(svg) {
+    display: block;
+    height: auto;
+  }
+
+  .lightbox-close {
+    position: fixed;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 1;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--accent-live);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
 </style>
 
 <script>
   const overlay = document.getElementById("lightbox") as HTMLDivElement;
   const overlayImg = document.getElementById("lightbox-img") as HTMLImageElement;
+  const overlaySvg = document.getElementById("lightbox-svg") as HTMLDivElement;
+  const closeBtn = document.getElementById("lightbox-close") as HTMLButtonElement;
 
   function open(src: string, alt: string) {
     overlayImg.src = src;
     overlayImg.alt = alt;
+    overlayImg.hidden = false;
+    overlay.hidden = false;
+  }
+
+  /* The copy keeps the drawing's own width (its viewBox), so its text is
+     the size it was drawn at; the overlay scrolls, and the browser's pinch
+     zoom works as anywhere else. */
+  function openSvg(svg: SVGSVGElement) {
+    const copy = svg.cloneNode(true) as SVGSVGElement;
+    const vb = svg.viewBox.baseVal;
+    const w = vb && vb.width ? vb.width : svg.getBoundingClientRect().width * 2;
+    copy.removeAttribute("id");
+    copy.style.cssText = `width:${w}px;min-width:0;max-width:none;height:auto`;
+    overlaySvg.replaceChildren(copy);
+    overlaySvg.hidden = false;
+    overlayImg.hidden = true;
+    closeBtn.textContent = document.documentElement.lang.startsWith("en") ? "Close ✕" : "Fermer ✕";
+    closeBtn.hidden = false;
+    overlay.classList.add("is-svg");
     overlay.hidden = false;
   }
 
   function close() {
     overlay.hidden = true;
+    overlay.classList.remove("is-svg");
     overlayImg.src = "";
+    overlaySvg.replaceChildren();
+    overlaySvg.hidden = true;
+    closeBtn.hidden = true;
   }
 
   document.querySelectorAll<HTMLImageElement>(".prose img").forEach((img) => {
@@ -49,7 +113,23 @@
     img.addEventListener("click", () => open(img.currentSrc || img.src, img.alt));
   });
 
-  overlay.addEventListener("click", close);
+  /* Schémas d'article, sur un écran étroit seulement (même seuil que
+     global.css, « Schémas »). LiveArch reste à part : ses boîtes sont des
+     boutons, un toucher doit les allumer. Un lien dans un dessin marche
+     toujours. */
+  const narrow = window.matchMedia("(max-width: 44rem)");
+  document.querySelectorAll<HTMLElement>(".prose figure:not(.live-arch) > .diagram-wrap").forEach((wrap) => {
+    wrap.addEventListener("click", (e) => {
+      if (!narrow.matches || (e.target as Element).closest("a")) return;
+      const svg = wrap.querySelector("svg");
+      if (svg) openSvg(svg);
+    });
+  });
+
+  overlay.addEventListener("click", (e) => {
+    // in diagram mode, only the button closes: a tap is how you pan
+    if (!overlay.classList.contains("is-svg") || (e.target as Element).closest(".lightbox-close")) close();
+  });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") close();
   });

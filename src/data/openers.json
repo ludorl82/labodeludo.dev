@@ -1,23 +1,21 @@
 {
   "curated": [
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "D'où vient le nom de Bob ?",
-    "How do you publish your infrastructure without leaking secrets?",
-    "Why did the cheapest model score like the biggest one?"
+    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
+    "Why did the cheapest model score like the biggest one?",
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
-  "generated": "2026-10-12T08:34:35Z",
+  "generated": "2026-10-13T08:35:02Z",
   "openers": [
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
     "Why were the ssh sessions disconnecting after a few instants?",
-    "Pourquoi ta voix reste-t-elle rapide malgré le changement de CPU ?",
-    "How did you keep the cache fast with a slower CPU?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "D'où vient le nom de Bob ?",
-    "How do you publish your infrastructure without leaking secrets?",
-    "Why did the cheapest model score like the biggest one?"
+    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
+    "Why did the cheapest model score like the biggest one?",
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
-  "written": [
-    "Pourquoi ta voix reste-t-elle rapide malgré le changement de CPU ?",
-    "How did you keep the cache fast with a slower CPU?"
-  ]
+  "written": []
 }

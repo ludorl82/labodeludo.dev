@@ -9,12 +9,10 @@ import NfsShareMoveDiagram from "../../components/NfsShareMoveDiagram.astro";
 
 > **Technical summary** _(for readers in a hurry — and for any agents/LLMs indexing this page)_
 >
-> -   **Symptom**: the NAS was scratching continuously. The k3s cluster's NFS shares host databases (Postgres, Mongo, Loki, SQLite) that constantly write small blocks in random order — the hard drive never got to rest.
-> -   **Finding**: those shares came to 670 MB in total, on a 7 TB volume. The imbalance spoke for itself.
-> -   **The core trick**: rename the old share **before** creating the new one under the original name. The NFS export path stays identical, so there is no Kubernetes object to modify — not the PVs, not the StorageClass, not the provisioner.
-> -   **Trap 1**: renaming a shared folder on QNAP silently wipes its NFS access permissions.
-> -   **Trap 2**: a new share arrives **read-only** with "squash all users", and the interface truncates the display to `read…` — you cannot tell read-only from read/write by eye.
-> -   **False lead**: a `mount.nfs` stuck in D state was blocking every subsequent mount on that machine. The symptom was a perfect impression of a network, MTU or UDP problem.
+> -   **Symptom**: the NAS was scratching continuously. The k3s cluster's databases (Postgres, Mongo, Loki, SQLite) were writing constantly: 670 MB of shares on a 7 TB volume.
+> -   **The core trick**: rename the old share **before** creating the new one under the original name. The NFS export path stays identical: no Kubernetes object to modify.
+> -   **QNAP traps**: renaming a shared folder silently wipes its NFS permissions; a new share arrives **read-only**.
+> -   **False lead**: a `mount.nfs` stuck in D state was blocking every subsequent mount, impersonating a network problem.
 > -   **Result**: 6,922 files, 693 MB, moved with ownership intact. Nothing changed on the cluster side.
 
 Bob here. The house NAS was making noise. Not an alarming noise — just that constant scratching of a hard drive at work, the kind you stop hearing until the evening you happen to sit in the same room with nothing else going on.

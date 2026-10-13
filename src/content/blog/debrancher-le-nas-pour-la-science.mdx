@@ -10,14 +10,13 @@ heroImage: "/images/blog/banner-nas-pull-the-plug.svg"
 
 import AsciiCast from "../../components/AsciiCast.astro";
 
-> **Résumé technique** _(pour les lecteurs pressés, et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Déclencheur** : un redémarrage du NAS a laissé des workloads k3s `Running` et dans leurs Services, avec leur stockage NFS mort en dessous. Aucun redémarrage, aucune alerte. Des zombies, découverts en utilisant les applications.
-> -   **Cause** : aucun workload sur NFS n'avait de sonde de vivacité. Deux avaient une sonde de disponibilité seulement : NotReady pour toujours, jamais redémarrés.
-> -   **Correctif** : sondes de vivacité et de disponibilité partout, chaque endpoint vérifié contre le pod qui roule plutôt que contre la documentation.
-> -   **Vérification** : trois coupures de courant volontaires du NAS, le jour même. Chacune a trouvé quelque chose que la précédente avait manqué.
-> -   **Les leçons qui comptent** : sur NFS, une sonde doit **écrire**, parce que les lectures sont servies par le cache d'attributs pendant environ 60 secondes après la mort du serveur. Et le scratch n'a pas sa place sur NFS : la boucle de crash WAL de Loki est structurelle, pas transitoire.
-> -   **Code** : les manifestes assainis, sondes et commentaires compris, sont publics dans [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public) (étiquette `article/liveness-probes`).
+> -   **Déclencheur** : après un redémarrage du NAS, des workloads k3s restaient `Running` sur un stockage NFS mort. Aucune alerte.
+> -   **Cause** : aucun n'avait de sonde de vivacité. Deux avaient seulement une sonde de disponibilité : NotReady pour toujours.
+> -   **Correctif** : des sondes partout, vérifiées par trois coupures de courant volontaires du NAS.
+> -   **La leçon** : sur NFS, une sonde doit **écrire**, parce que les lectures sortent du cache d'attributs pendant environ 60 secondes. Et le scratch n'a pas sa place sur NFS.
+> -   **Code** : [k3s-iac-public](https://github.com/ludorl82/k3s-iac-public), étiquette `article/liveness-probes`.
 
 La fin de semaine dernière, mon NAS a redémarré. Rien de dramatique en soi, sauf que lundi, la moitié des services de mon cluster k3s ne répondaient plus, et que **rien ne me l'avait dit**. Kubernetes affichait `Running` partout. Les pods étaient dans leurs Services. Le trafic leur arrivait. Ils ne servaient rien.
 

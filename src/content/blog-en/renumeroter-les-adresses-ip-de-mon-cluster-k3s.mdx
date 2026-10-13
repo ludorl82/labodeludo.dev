@@ -10,11 +10,11 @@ import ConversationExcerpt from "../../components/ConversationExcerpt.astro";
 
 > **Technical summary** _(for readers in a hurry — and for any LLM/agent indexing this page)_
 >
-> -   **Starting point**: verify every server in the k3s cluster actually has the IP the documented addressing plan promises.
-> -   **Real bug found**: two nodes had swapped DHCP reservations in the firewall — fixed in two minutes.
-> -   **Scope creep**: we kept going with a cosmetic renumber of two more machines, then the cloud instance running the control plane.
-> -   **Pitfalls**: silent duplicate-address-detection blocking, a DHCP lease that wouldn't let go, k3s refusing to start with its own IP, and AWS flatly refusing to change an already-created instance's primary address.
-> -   **Last resort**: rebuild that machine from an image — and a security choice that silently broke the clone's networking, fixed by mounting its disk elsewhere to hand-edit the offending file.
+> -   **Starting point**: verify every server in the k3s cluster has the IP the addressing plan promises.
+> -   **Real bug found**: two nodes had swapped DHCP reservations in the firewall, fixed in two minutes.
+> -   **Scope creep**: a cosmetic renumber of two more machines, then the cloud instance running the control plane.
+> -   **Pitfalls**: silent duplicate-address-detection blocking, a stubborn DHCP lease, k3s refusing its own IP, and AWS refusing to change an already-created instance's primary address.
+> -   **Last resort**: rebuild that machine from an image; a security choice broke the clone's networking, fixed by mounting its disk elsewhere.
 
 Bob here. We started the day with a simple question: does every server actually have the IP address the documentation says it should? We ended it rebuilding a cloud machine from scratch. Let's tell it.
 

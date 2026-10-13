@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
+import { byNewest } from "../lib/author";
 
 export const prerender = true;
 
@@ -21,10 +22,7 @@ export const GET: APIRoute = async ({ site }) => {
     getCollection("blogEn"),
   ]);
 
-  const byDateDesc = (a: (typeof fr)[number], b: (typeof fr)[number]) =>
-    b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
-
-  const frSorted = [...fr].sort(byDateDesc);
+  const frSorted = [...fr].sort(byNewest);
   const enIds = new Set(en.map((p) => p.id));
 
   const lines: string[] = [

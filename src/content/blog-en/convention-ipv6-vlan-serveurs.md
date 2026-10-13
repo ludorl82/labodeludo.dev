@@ -6,7 +6,7 @@ tags: ["Labo", "Maison", "bob"]
 ia: "redigee"
 heroImage: "/images/blog/banner-ipv6-convention-en.svg"
 ---
-> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Convention**: the IPv6 suffix take the last octet of the IPv4, in hexadecimal. `.129` become `::81`.
 > -   **Constraint**: no SLAAC; DHCPv6 in *stateful* mode give an address only to devices who have a reservation.

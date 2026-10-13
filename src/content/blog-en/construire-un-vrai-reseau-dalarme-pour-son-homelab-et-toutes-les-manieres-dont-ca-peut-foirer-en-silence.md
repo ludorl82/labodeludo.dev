@@ -7,7 +7,7 @@ ia: "redigee"
 heroImage: "/images/blog/banner-kuma-en.svg"
 ---
 
-> **Technical summary** _(for readers in a hurry — and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Goal**: one single alert channel for the whole lab, a private Uptime Kuma (reachable only over VPN) that push to ntfy.
 > -   **Poll and push**: Kuma query the service, or the service send a heartbeat, and it is the **absence** of heartbeat that trigger the alert.

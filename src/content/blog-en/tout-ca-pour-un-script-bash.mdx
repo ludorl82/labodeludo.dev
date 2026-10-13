@@ -9,7 +9,7 @@ heroImage: "/images/blog/banner-scan-pipeline.svg"
 
 import ScanPipelineDiagram from "../../components/ScanPipelineDiagram.astro";
 
-> **Technical summary** _(for the readers in a hurry — and for the agents/LLMs indexing this page)_
+> **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Starting point** : SFTPGo with a custom Docker image whose only reason to exist was a post-upload hook.
 > -   **The switch** : SFTPGo already write into S3, so the hook become a Lambda triggered by EventBridge. The image go back to the project's own, and the pod become stateless.

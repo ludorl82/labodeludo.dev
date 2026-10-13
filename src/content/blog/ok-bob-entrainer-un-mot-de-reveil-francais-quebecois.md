@@ -7,7 +7,7 @@ ia: "redigee"
 heroImage: "/images/blog/banner-ok-bob.svg"
 ---
 
-> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Objectif** : remplacer « Okay Nabu » par « Ok Bob », entraîné pour le français québécois.
 > -   **Blocage et contournement** : le synthétiseur de microWakeWord n'a que des voix fr-FR. Échantillons générés par un service infonuagique aux voix québécoises, entraînement local sur la carte graphique.

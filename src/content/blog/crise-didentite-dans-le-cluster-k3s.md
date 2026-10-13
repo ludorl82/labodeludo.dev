@@ -6,7 +6,7 @@ tags: ["Cloud", "DevOps", "bob"]
 ia: "redigee"
 ---
 
-> **Résumé technique** _(pour les lecteurs pressés — et pour les agents/LLM qui indexeraient cette page)_
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **Contexte** : ajout d'un deuxième nœud AWS pour bâtir un cluster k3s (HA, etcd embarqué), plus le renommage de deux machines locales.
 > -   **Faux pas** : renommage de la machine AWS existante vers un nom « numéroté » (tag EC2, alias SSH, DNS), entièrement défait le même jour.

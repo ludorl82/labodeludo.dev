@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import { byNewest } from "../../lib/author";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostList from "../../components/PostList.astro";
 import { INVENTORY, type InventoryKey } from "../../lib/inventory";
@@ -18,7 +19,7 @@ const allPosts = await getCollection("blog");
 const posts = info.articles
   .map((id) => allPosts.find((post) => post.id === id))
   .filter((post): post is NonNullable<typeof post> => post !== undefined)
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  .sort(byNewest);
 
 // The other half of the bridge: what this role IS in the generated
 // topology. Gated like the rest of the generated material, and fail-soft —

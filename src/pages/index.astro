@@ -1,12 +1,11 @@
 ---
 import { getCollection } from "astro:content";
+import { byNewest } from "../lib/author";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import TopologyStrip from "../components/TopologyStrip.astro";
 import PostList from "../components/PostList.astro";
 
-const posts = (await getCollection("blog")).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-);
+const posts = (await getCollection("blog")).sort(byNewest);
 ---
 
 <BaseLayout

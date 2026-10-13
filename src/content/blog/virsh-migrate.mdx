@@ -1,6 +1,6 @@
 ---
 title: "Un vMotion sans VMware, et sans stockage partagé"
-pubDate: 2026-10-19
+pubDate: 2026-10-13
 description: "Je connaissais vMotion chez VMware, avec un stockage partagé et sous licence. En session avec Claude Code (Opus 5.5), j'ai appris qu'on fait la même chose avec des outils libres, libvirt et QEMU, sans stockage partagé : virsh migrate copie le disque puis la mémoire pendant que la VM roule. Deux serveurs de 48 Go, un bouton par VM dans Home Assistant, de deux à sept minutes par déplacement, et deux autres serveurs qui se joindront bientôt à la flotte."
 tags: ["Labo", "DevOps", "ludo"]
 ia: "reecrite"
@@ -17,7 +17,7 @@ import FlotteVmDiagram from "../../components/FlotteVmDiagram.astro";
 > -   **Ce que j'ai appris** : `virsh migrate --live --copy-storage-all` copie le disque, puis la mémoire, pendant que la VM roule, sans stockage partagé.
 > -   **Le terrain** : deux Supermicro X11SRA. L'hôte d'arrivée doit garder 4 Go de libre en plus de la VM.
 > -   **Les chiffres** : un worker k3s en 3 minutes, la VM Windows (128 Go) en 6, la console (100 Go) en 7.
-> -   **Transparence** : construit en session avec Claude Code (Opus 5.5). Le mécanisme complet sera dans le corollaire de Bob.
+> -   **Transparence** : construit en session avec Claude Code (Opus 5.5). Le mécanisme complet est dans [le corollaire de Bob](/blog/corollaire-copier-une-cible-qui-bouge/).
 
 Je connaissais VMware et vMotion, et j'ai toujours eu pour notion que c'était une feature qui distinguait les hyperviseurs propriétaires de ceux disponibles librement. Depuis le tout début de mon labo, j'ai toujours visé à avoir une redondance qui me permettrait de faire basculer mes charges de travail d'un hôte à l'autre. Toutefois, le coût de VMware et l'effort que cela demandait pour maintenir de tels services dans mon labo m'ont rebuté plus d'une fois. Mais ces derniers mois, avec Claude Code, j'ai repoussé ces limites. Une première fois en déployant k3s sur mon infra et en y déployant mes petits services, comme la numérisation. Ensuite une deuxième fois, que je vous raconte ici, en facilitant la migration à chaud de mes machines virtuelles.
 
@@ -51,7 +51,7 @@ virsh migrate --live --persistent --undefinesource --copy-storage-all \
 
 Autour de la commande, Claude Code a écrit un petit script, `vm-move`, qui vérifie avant de commencer que la VM n'a pas de carte graphique attachée, que l'hôte d'arrivée a assez de mémoire et que la VM n'y est pas déjà définie.
 
-Le compromis, comparé à un vMotion avec stockage partagé, c'est le temps. On copie des dizaines de gigaoctets chaque fois, plutôt que quelques gigaoctets de mémoire. Pour le comment détaillé, la pré-copie de la mémoire, les refus de libvirt qu'on a rencontrés et pourquoi, je vous renvoie au corollaire de Bob.
+Le compromis, comparé à un vMotion avec stockage partagé, c'est le temps. On copie des dizaines de gigaoctets chaque fois, plutôt que quelques gigaoctets de mémoire. Pour le comment détaillé, la pré-copie de la mémoire, les refus de libvirt qu'on a rencontrés et pourquoi, je vous renvoie au [corollaire de Bob](/blog/corollaire-copier-une-cible-qui-bouge/).
 
 ## La mémoire : 48 Go de chaque bord
 
@@ -93,7 +93,7 @@ Déjà, il y a quelques jours, ça m'a servi alors que je devais changer le mat�
 | win11 | 128 Go | 6 min |
 | coquille | 100 Go | 7 min |
 
-Le disque compte pour l'essentiel du temps. Les fichiers qcow2 ne copient que ce qui est réellement écrit : pour coquille, environ 76 Go ont traversé le réseau, puis 16 Go de mémoire.
+Le disque compte pour l'essentiel du temps. Les fichiers qcow2 ne copient que ce qui est réellement écrit : pour coquille, environ 26 Go de disque ont traversé le réseau, puis 16 Go de mémoire.
 
 Le moment que je retiens, c'est le premier déplacement de coquille. La session Claude Code qui avait écrit le script roulait dans coquille. Elle m'a prévenu qu'elle allait figer quelques instants. Je lui ai demandé « U there? », elle m'a répondu tout de suite, et quelques minutes plus tard elle était active sur stella. Dans les faits, la coupure, je ne l'ai pas remarquée du tout.
 

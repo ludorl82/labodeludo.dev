@@ -6,7 +6,7 @@ import architecture from "../data/architecture.json";
 import dispatch from "../data/dispatch.json";
 import { SITE_SELF } from "../data/site-self";
 import { INVENTORY, type InventoryKey } from "../lib/inventory";
-import { AUTHORS, authorFromTags } from "../lib/author";
+import { AUTHORS, authorFromTags, byNewest } from "../lib/author";
 import { PERSONA_CHAT, personaFingerprint } from "../lib/bob-persona";
 
 export const prerender = true;
@@ -171,7 +171,7 @@ export const GET: APIRoute = async () => {
   // it finds here, so a /casts/<slug>/ he writes anyway is shown as plain
   // text, never as a broken link. Decided by Ludo, over raising the budget.
   const corpus = [...posts]
-    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+    .sort(byNewest)
     .map(entry("article"));
 
   // "C'est quoi ton dernier article ?" is a question the index answers — its
@@ -182,7 +182,7 @@ export const GET: APIRoute = async () => {
   // signature, from the same sort the index uses. (There was one for the casts
   // too; it went with them, since its link is no longer one the Worker keeps.)
   const newest = (list: typeof posts, pred: (e: (typeof posts)[number]) => boolean = () => true) =>
-    [...list].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()).find(pred);
+    [...list].sort(byNewest).find(pred);
   const line = (label: string, base: string, e: (typeof posts)[number] | undefined) =>
     e ? `${label} : ${base}${e.id}/ (${e.data.pubDate.toISOString().slice(0, 10)}) — « ${oneLine(e.data.title)} »` : null;
   const latest = [

@@ -6,6 +6,17 @@ export function authorFromTags(tags: string[]): Author {
   return tags.includes("bob") ? "bob" : "ludo";
 }
 
+// Newest first. Ludo's article and Bob's corollary usually share a date, and
+// on a tie the list fell back to file order, which put « corollaire-… » ahead
+// of the article it follows. On the same date, Ludo comes first.
+export function byNewest(
+  a: { data: { pubDate: Date; tags?: string[] } },
+  b: { data: { pubDate: Date; tags?: string[] } },
+): number {
+  const rank = (e: typeof a) => (authorFromTags(e.data.tags ?? []) === "ludo" ? 0 : 1);
+  return b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || rank(a) - rank(b);
+}
+
 interface AuthorInfo {
   name: string;
   tagline: string;

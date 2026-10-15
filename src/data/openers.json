@@ -1,22 +1,22 @@
 {
   "curated": [
-    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
-    "How does Bob pick which parts of your articles to quote?",
-    "What broke on a Thursday night with MongoDB?"
+    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
+    "What broke on a Thursday night with MongoDB?",
+    "Why is renumbering a k3s cluster harder than it looks?"
   ],
-  "generated": "2026-10-14T08:35:46Z",
+  "generated": "2026-10-15T08:34:14Z",
   "openers": [
     "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "Comment la cache est elle gérée avec Bob en vocal?",
     "Why were the ssh sessions disconnecting after a few instants?",
-    "Pourquoi ton vMotion se passe sans VMware ?",
-    "How do you move a running VM without shared storage?",
-    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
-    "How does Bob pick which parts of your articles to quote?",
-    "What broke on a Thursday night with MongoDB?"
+    "Comment faire migrer une VM sans stockage partagé ?",
+    "How did you migrate a running VM without shared storage?",
+    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
+    "What broke on a Thursday night with MongoDB?",
+    "Why is renumbering a k3s cluster harder than it looks?"
   ],
   "written": [
-    "Pourquoi ton vMotion se passe sans VMware ?",
-    "How do you move a running VM without shared storage?"
+    "Comment faire migrer une VM sans stockage partagé ?",
+    "How did you migrate a running VM without shared storage?"
   ]
 }

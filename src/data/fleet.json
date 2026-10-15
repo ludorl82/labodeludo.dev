@@ -240,14 +240,20 @@
         {
           "die": "GA106",
           "model": "RTX 3050",
-          "passthrough": true,
+          "passthrough": false,
           "vram": "8 Go"
         },
         {
-          "die": "GM206",
-          "model": "GTX 960",
+          "die": "TU116",
+          "model": "GTX 1650",
           "passthrough": true,
           "vram": "4 Go"
+        },
+        {
+          "die": "TU116",
+          "model": "GTX 1660",
+          "passthrough": true,
+          "vram": "6 Go"
         }
       ],
       "iacDeclared": true,
@@ -258,7 +264,7 @@
       "power": "ups-03",
       "rackOrder": 2,
       "role": "agent k3s à la demande, hôte de jeu (libvirt)",
-      "spec": "RTX 3050 (GA106, 8 Go, vfio) + GTX 960 (GM206, 4 Go, vfio)"
+      "spec": "RTX 3050 (GA106, 8 Go) + GTX 1650 (TU116, 4 Go, vfio) + GTX 1660 (TU116, 6 Go, vfio)"
     },
     {
       "class": "server",
@@ -311,6 +317,25 @@
       "rackOrder": 3,
       "role": "transcodage vidéo, agent k3s (tainted, NVR)",
       "spec": "RTX 3060 Laptop (GA106M, 6 Go)"
+    },
+    {
+      "class": "server",
+      "gpus": [
+        {
+          "die": "Cedar",
+          "model": "Radeon HD 5000/6000/7350",
+          "passthrough": false,
+          "vram": "1 Go"
+        }
+      ],
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "model": "Supermicro X9SCL/X9SCM",
+      "name": "kiosque",
+      "network": "vlan10",
+      "rackOrder": 7,
+      "role": "écran du rack : kiosque des iKVM et des captures HDMI — pas un nœud k3s",
+      "spec": "Radeon HD 5000/6000/7350 (Cedar, 1 Go)"
     },
     {
       "class": "server",
@@ -383,10 +408,10 @@
       "gpu": true,
       "gpus": [
         {
-          "die": "GA106",
-          "model": "RTX 3050",
+          "die": "TU116",
+          "model": "GTX 1650",
           "passthrough": true,
-          "vram": "8 Go"
+          "vram": "4 Go"
         }
       ],
       "hostedBy": "gaming-01",
@@ -394,17 +419,17 @@
       "name": "arcade1",
       "network": "vlan10",
       "role": "VM de jeu, GPU en passthrough, streamée par Steam Remote Play — pas un nœud k3s",
-      "spec": "RTX 3050 (GA106, 8 Go, vfio)"
+      "spec": "GTX 1650 (TU116, 4 Go, vfio)"
     },
     {
       "class": "vm",
       "gpu": true,
       "gpus": [
         {
-          "die": "GM206",
-          "model": "GTX 960",
+          "die": "TU116",
+          "model": "GTX 1660",
           "passthrough": true,
-          "vram": "4 Go"
+          "vram": "6 Go"
         }
       ],
       "hostedBy": "gaming-01",
@@ -412,7 +437,7 @@
       "name": "arcade2",
       "network": "vlan10",
       "role": "VM de jeu, GPU en passthrough, streamée par Steam Remote Play — pas un nœud k3s",
-      "spec": "GTX 960 (GM206, 4 Go, vfio)"
+      "spec": "GTX 1660 (TU116, 6 Go, vfio)"
     },
     {
       "class": "vm",
@@ -443,25 +468,25 @@
     },
     {
       "class": "vm",
-      "gpu": true,
-      "gpus": [
-        {
-          "die": "GA106",
-          "model": "RTX 3050",
-          "passthrough": true,
-          "vram": "8 Go"
-        }
-      ],
+      "gpu": false,
       "hostedBy": "gaming-01",
+      "iacDeclared": true,
+      "name": "vm-03",
+      "network": "vlan10",
+      "role": "agent k3s (CPU seulement), déplaçable entre les hôtes X11SRA"
+    },
+    {
+      "class": "vm",
+      "gpu": false,
+      "hostedBy": "gpu-01",
       "iacDeclared": false,
       "name": "win11",
       "network": "vlan10",
-      "role": "VM de bureau Windows 11 Pro, à la demande — emprunte la RTX 3050 6GB d'arcade1 quand arcade1 est éteinte ; pas un nœud k3s",
-      "spec": "RTX 3050 (GA106, 8 Go, vfio)"
+      "role": "VM de bureau Windows 11 Pro, à la demande, sans carte graphique ; pas un nœud k3s"
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-10-07T08:45:15Z",
+  "generated": "2026-10-15T08:45:16Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

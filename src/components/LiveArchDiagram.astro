@@ -264,8 +264,26 @@ const fleetExtras = fleetDevices.filter(
 // pas tenu au même rythme que le repo privé, et le join ne lit que le public.
 // Donc ni « l'IaC a cessé de les nommer » ni « jamais déclarés » ne tiennent —
 // seul le désaccord des deux graines est un fait, et il porte sur un nœud.
+// SAUF un, et c'est pour ça que cette table existe. `vm-03` est le seul nom du
+// parc où l'instantané public ne se contente pas de se taire : il le dit mort,
+// à quatre endroits de nixos-iac-public, avec la même date — hosts/gaming-01
+// (« vm-03 … is retired », et le GTX 960 prêté à personne depuis), hosts/arcade1,
+// hosts/gpu-01, et modules/jumphost.nix, qui l'a retiré de son distributeur.
+// Ni hosts/vm-03/ ni une nixosConfiguration du flake n'en parlent plus, donc
+// emit-topology ne peut pas en faire un nœud, et le join n'en a aucun. La
+// graine du parc, plus récente, le liste pourtant toujours, posé sur gaming-01
+// et « agent k3s ». Écrire cela, c'est affirmer qu'un agent tourne aujourd'hui
+// sur une machine que son propre repo dit retirée : la case reste dessinée — le
+// désaccord des deux graines est un fait — mais elle ne peut plus faire tomber
+// le compte des agents, qui est celui des nœuds joints.
+const RETIRED: Record<string, string> = {
+  "vm-03": "2026-09-26",
+};
+const retired = fleetExtras.filter((d) => RETIRED[d.name]);
+const oneRetired = retired.length === 1;
 const orphans = fleetDevices.filter(
-  (d) => d.iacDeclared === true && !drawnNames.has(d.name),
+  (d) =>
+    d.iacDeclared === true && !drawnNames.has(d.name) && !RETIRED[d.name],
 );
 const oneOrphan = orphans.length === 1;
 // un orphelin que l'inventaire dit agent k3s est le seul cas où la bande du bas
@@ -437,6 +455,20 @@ const fleetNotes = [
           : []),
       ]
     : []),
+  // un nom que l'instantané date, lui, n'est pas un désaccord à raconter des
+  // deux côtés : le repo public parle. La ligne le dit avec la date, et ne
+  // laisse plus le compte des agents du schéma se lire comme un oubli.
+  ...(retired.length
+    ? [
+        `↑ ${retired
+          .map((d) => `${d.name} : retiré le ${RETIRED[d.name]}`)
+          .join(", ")} — l'inventaire ${
+          oneRetired
+            ? "le compte encore, l'IaC publique non ; la case reste pour la trace."
+            : "les compte encore, l'IaC publique non ; les cases restent pour la trace."
+        }`,
+      ]
+    : []),
   // la couture inverse de `carriers` : un appareil que la graine dit posé sur
   // une machine, elle, déclarée. Le haut du schéma dessine le châssis, le bas
   // dessine l'invité, et personne ne dessine le lien — c'est donc ici qu'il se
@@ -567,6 +599,26 @@ const ariaLabel =
                 .join(", ")} s'y dit agent k3s : les ${k3sAgents} agents de ` +
               `ce schéma sont les déclarés, pas les seuls branchés.`
             : "")
+        : "") +
+      (retired.length
+        ? ` Là, l'instantané ne se tait pas : ${retired
+            .map(
+              (d) =>
+                `${d.name} — que le parc dit ${d.role ?? d.class} — est retiré le ${RETIRED[d.name]}, et nixos-iac-public l'écrit noir sur blanc`,
+            )
+            .join("; ")}. Aucun repo public n'en ${
+            oneRetired ? "fait plus une machine" : "fait plus des machines"
+          }, et le parc ${
+            oneRetired ? "le compte" : "les compte"
+          } encore : ${
+            oneRetired
+              ? "la case reste pour la trace, pas pour la machine"
+              : "les cases restent pour la trace, pas pour les machines"
+          }. Ce ${
+            oneRetired
+              ? "n'est donc pas un agent de plus qui échappe au schéma"
+              : "ne sont donc pas des agents de plus qui échappent au schéma"
+          }, et les ${k3sAgents} agents dessinés sont ceux que l'IaC joint.`
         : "") +
       (carriers.length
         ? ` ${carriers.length > 1 ? "Certains d'entre eux portent" : "L'un d'eux porte"} ` +
@@ -777,7 +829,7 @@ const ariaLabel =
               <text x="58" y={band.items[0].y - 6} font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{band.label} — {band.items.length}</text>
               {band.items.map(({ d, x, y }) => (
                 <g>
-                  <title>{d.name} — {d.role ?? d.class}</title>
+                  <title>{d.name} — {d.role ?? d.class}{RETIRED[d.name] ? ` · retiré le ${RETIRED[d.name]} (nixos-iac-public) — le parc le compte encore` : ""}</title>
                   <rect x={x} y={y} width={F_CHIP_W} height={F_CHIP_H} rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
                   <text x={x + F_CHIP_W / 2} y={y + 13} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{d.count && d.count > 1 ? `${d.name} ×${d.count}` : d.name}</text>
                   <text x={x + F_CHIP_W / 2} y={y + 24} text-anchor="middle" font-family="var(--font-mono)" font-size="7.5" fill="var(--text-faint)">{CLASS_FR[d.class] ?? d.class}</text>
@@ -808,7 +860,20 @@ const ariaLabel =
             }, alors que la topologie publique ne ${
               oneOrphan ? "lui connaît" : "leur connaît"
             } aucun nœud — le nom, lui, se lit peut-être ailleurs dans un repo.`
-          : "que nul repo public ne compte dans sa topologie.")}
+          : "que nul repo public ne compte dans sa topologie.") +
+        (retired.length
+          ? ` ${
+              oneRetired
+                ? "Un dernier nom ne fait plus partie du parc"
+                : `${retired.length} derniers noms ne font plus partie du parc`
+            } : ${retired
+              .map((d) => `${d.name}, retiré le ${RETIRED[d.name]}`)
+              .join(", ")} — l'inventaire ${
+              oneRetired
+                ? "ne l'a pas encore su ; la case reste, la machine non"
+                : "ne l'a pas encore su ; les cases restent, les machines non"
+            }.`
+          : "")}
   </figcaption>
 </figure>
 

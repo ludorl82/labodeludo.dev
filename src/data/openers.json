@@ -1,22 +1,22 @@
 {
   "curated": [
-    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
-    "What broke on a Thursday night with MongoDB?",
-    "Why is renumbering a k3s cluster harder than it looks?"
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
+    "Why is renumbering a k3s cluster harder than it looks?",
+    "How do your diagrams redraw themselves every night?"
   ],
-  "generated": "2026-10-15T08:34:14Z",
+  "generated": "2026-10-16T08:35:29Z",
   "openers": [
     "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
-    "Comment la cache est elle gérée avec Bob en vocal?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Why were the ssh sessions disconnecting after a few instants?",
-    "Comment faire migrer une VM sans stockage partagé ?",
-    "How did you migrate a running VM without shared storage?",
-    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
-    "What broke on a Thursday night with MongoDB?",
-    "Why is renumbering a k3s cluster harder than it looks?"
+    "Comment tu fais un vMotion sans stockage partagé ?",
+    "How can you migrate a VM without shared storage?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
+    "Why is renumbering a k3s cluster harder than it looks?",
+    "How do your diagrams redraw themselves every night?"
   ],
   "written": [
-    "Comment faire migrer une VM sans stockage partagé ?",
-    "How did you migrate a running VM without shared storage?"
+    "Comment tu fais un vMotion sans stockage partagé ?",
+    "How can you migrate a VM without shared storage?"
   ]
 }

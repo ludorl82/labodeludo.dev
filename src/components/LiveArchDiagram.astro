@@ -311,14 +311,50 @@ const oneUnpowered = unpowered.length === 1;
 // « vm » n'a jamais eu de prise à lui. La puce de la bande l'affiche déjà
 // (CLASS_FR plus bas), donc le sous-titre ne peut pas promettre « bien
 // branchés » à ces cases-là sans se contredire lui-même. L'hôte n'est nommé
-// que s'il est dessiné plus haut — c'est le seul rapprochement que la graine
-// du parc permet, et le seul que ce schéma puisse attester.
+// que s'il est dessiné plus haut — c'était le seul rapprochement que la graine
+// du parc permettait, et le seul que ce schéma croyait pouvoir attester. Pour
+// une boîte, il se trompe, et le repo public la nomme ailleurs.
+//
+// `hostedBy` s'écrit à la main dans la graine du parc, et le script qui valide
+// cette graine le dit sans détour (nixos-iac-public, scripts/emit-fleet.py :
+// rien ne reconcilie ce fichier, il peut vieillir en silence). Cette entrée-là
+// s'est d'ailleurs contredite toute seule — une carte dans `gpus` pendant que
+// `role` écrit « sans carte graphique », et pas de `spec` là où l'émetteur
+// l'aurait rendu — donc elle ne se vérifie pas toute seule non plus.
+//
+// L'instantané public, lui, ne se tait pas : guests/win11/libvirt-domain.xml
+// s'ouvre sur « a Windows 11 Pro desktop VM on gaming-01 », sa NIC est un
+// macvtap sur le vlan10 de gaming-01, hosts/gaming-01 lui colle un proxy VNC
+// sur son adresse à elle et son interrupteur passe par arcade-ctl, sur cette
+// même bécane. La graine, plus fraîche, la dit posée sur gpu-01, machine où le
+// repo n'écrit win11 nulle part. Le dessin répétait la graine sans vérifier
+// plus loin qu'elle : c'est cette affirmation qu'il retire, pas la case.
+//
+// Le tracé ne remplace donc pas la graine, il arrête la phrase qui affirmait :
+// les deux noms restent lisibles, la case reste, et je ne tranche pas — lequel
+// des deux a bougé, rien ici ne peut le savoir. La table ne nomme que ce qui
+// est dessiné plus haut, et seulement en contradiction ; partout ailleurs le
+// dessin suit la graine comme avant.
+const SNAPSHOT_GUEST_HOST: Record<string, string> = {
+  win11: "gaming-01",
+};
 const virtuals = fleetExtras.filter((d) => /(^|-)vm$/.test(d.class));
 const oneVirtual = virtuals.length === 1;
+const disputedHost = (d: FDevice) => {
+  const trace = SNAPSHOT_GUEST_HOST[d.name];
+  return trace && trace !== d.hostedBy && drawnNames.has(trace)
+    ? trace
+    : undefined;
+};
 const guestHost = (d: FDevice) =>
-  d.hostedBy && drawnNames.has(d.hostedBy) ? d.hostedBy : undefined;
+  !disputedHost(d) && d.hostedBy && drawnNames.has(d.hostedBy)
+    ? d.hostedBy
+    : undefined;
 const virtualList = virtuals
   .map((d) => {
+    const dispute = disputedHost(d);
+    if (dispute)
+      return `${d.name}, que la graine dit posée sur ${d.hostedBy} et l'instantané sur ${dispute}`;
     const host = guestHost(d);
     return host ? `${d.name}, posée sur ${host}` : d.name;
   })
@@ -473,12 +509,17 @@ const fleetNotes = [
   // une machine, elle, déclarée. Le haut du schéma dessine le châssis, le bas
   // dessine l'invité, et personne ne dessine le lien — c'est donc ici qu'il se
   // nomme, avec l'hôte seulement quand il est vraiment dessiné plus haut.
+  // Quand les deux graines ne désignent pas la même bécane, la ligne les nomme
+  // toutes les deux et n'en choisit aucune : ce que la case doit rendre, c'est
+  // le désaccord, pas une hypothèse.
   ...virtuals.map(
     (d) =>
       `↑ ${d.name} : domaine invité, pas une prise — ${
-        guestHost(d)
-          ? `son hôte ${guestHost(d)}, lui, est dessiné plus haut`
-          : "la graine ne lui connaît pas d'hôte dessiné ici"
+        disputedHost(d)
+          ? `la graine la dit sur ${d.hostedBy}, l'instantané la définit sur ${disputedHost(d)}`
+          : guestHost(d)
+            ? `son hôte ${guestHost(d)}, lui, est dessiné plus haut`
+            : "la graine ne lui connaît pas d'hôte dessiné ici"
       }.`,
   ),
 ];

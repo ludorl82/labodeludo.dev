@@ -1,22 +1,23 @@
 {
   "curated": [
-    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
-    "How do your diagrams redraw themselves every night?"
+    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
   ],
-  "generated": "2026-10-16T08:35:29Z",
+  "generated": "2026-10-18T08:35:11Z",
   "openers": [
-    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "Why were the ssh sessions disconnecting after a few instants?",
-    "Comment tu fais un vMotion sans stockage partagé ?",
-    "How can you migrate a VM without shared storage?",
-    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
-    "How do your diagrams redraw themselves every night?"
+    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
+    "Pourquoi ton vMotion n'utilise pas de stockage partagé ?",
+    "How did you live migrate a VM without shared storage?",
+    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
   ],
   "written": [
-    "Comment tu fais un vMotion sans stockage partagé ?",
-    "How can you migrate a VM without shared storage?"
+    "Pourquoi ton vMotion n'utilise pas de stockage partagé ?",
+    "How did you live migrate a VM without shared storage?"
   ]
 }

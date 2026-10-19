@@ -147,6 +147,9 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     nodes: [
       "host:worker2",
       "host:coquille",
+      // The rack's screen (2026-10-14): the iKVM and HDMI-capture kiosk, the
+      // console you stand in front of. Not a k3s node.
+      "host:kiosque",
     ],
   },
   ordonnancement: {
@@ -253,12 +256,15 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     // luna, and was retired and purged again on 2026-09-26 (its card
     // went to a Windows VM). The first snapshot published after that, on
     // 2026-09-28, dropped it from the topology and turned the nightly chain
-    // red on this very line.
+    // red on this very line. It came back once more on 2026-10-08, CPU-only,
+    // and is listed again as worker5 since the machines publish under their
+    // real names (2026-10-19).
     nodes: [
       "cluster:k3s",
       "host:worker1",
       "host:worker3",
       "host:worker4",
+      "host:worker5",
       "app:argocd",
       // The gate that reverts a red commit and blocks the branch for thirty
       // days. Same family as ArgoCD and it belongs beside it: both are the

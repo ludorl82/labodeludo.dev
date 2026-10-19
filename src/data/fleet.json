@@ -16,7 +16,7 @@
       "hostedBy": "gaming-01",
       "iacDeclared": false,
       "location": "rolling-rack",
-      "model": "Supermicro X11SRA-RF",
+      "model": "Supermicro X11SRA-F",
       "name": "bmc-gaming-01",
       "network": "vlan10",
       "role": "gestion hors bande (iKVM)"
@@ -36,18 +36,8 @@
       "hostedBy": "gpu-02",
       "iacDeclared": false,
       "location": "rolling-rack",
-      "model": "Supermicro X9SCL/X9SCM",
+      "model": "Supermicro X11SRA-RF",
       "name": "bmc-gpu-02",
-      "network": "vlan10",
-      "role": "gestion hors bande (iKVM)"
-    },
-    {
-      "class": "bmc",
-      "hostedBy": "srv-01",
-      "iacDeclared": false,
-      "location": "rolling-rack",
-      "model": "Supermicro X9SCL/X9SCM",
-      "name": "bmc-srv-01",
       "network": "vlan10",
       "role": "gestion hors bande (iKVM)"
     },
@@ -258,12 +248,12 @@
       ],
       "iacDeclared": true,
       "location": "rolling-rack",
-      "model": "Supermicro X11SRA-RF",
+      "model": "Supermicro X11SRA-F",
       "name": "gaming-01",
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 2,
-      "role": "agent k3s à la demande, hôte de jeu (libvirt)",
+      "role": "agent k3s (GPU, non taint) : NVR Frigate sur la RTX 3050 ; hôte de jeu (libvirt) pour les deux arcades",
       "spec": "RTX 3050 (GA106, 8 Go) + GTX 1650 (TU116, 4 Go, vfio) + GTX 1660 (TU116, 6 Go, vfio)"
     },
     {
@@ -310,12 +300,12 @@
       ],
       "iacDeclared": true,
       "location": "rolling-rack",
-      "model": "Supermicro X9SCL/X9SCM",
+      "model": "Supermicro X11SRA-RF",
       "name": "gpu-02",
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 3,
-      "role": "transcodage vidéo, agent k3s (tainted, NVR)",
+      "role": "agent k3s (GPU, non taint)",
       "spec": "RTX 3060 Laptop (GA106M, 6 Go)"
     },
     {
@@ -341,12 +331,12 @@
       "class": "server",
       "iacDeclared": true,
       "location": "rolling-rack",
-      "model": "Supermicro X9SCL/X9SCM",
+      "model": "Supermicro X11SRA",
       "name": "srv-01",
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 4,
-      "role": "agent k3s, hôte libvirt — lecteurs optiques présents, outillage de ripping non rétabli depuis le passage à NixOS"
+      "role": "agent k3s, hôte libvirt, stockage (RAID5 + deux disques de 8 To) — deux graveurs Blu-ray présents, outillage de ripping non rétabli depuis le passage à NixOS"
     },
     {
       "class": "switch",
@@ -486,7 +476,7 @@
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-10-18T08:45:16Z",
+  "generated": "2026-10-19T00:35:43Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

@@ -533,7 +533,7 @@ const fleetNotes = [
 // NUT. Le seul fait que la graine garantisse, c'est l'absence de nœud — et
 // c'est déjà tout ce qui explique qu'il n'y ait rien à cliquer.
 const fleetSubtitle = orphans.length
-  ? `${pluggedIn}, déclarés par l'inventaire mais sans nœud : rien à allumer, aucune source à ouvrir`
+  ? `${pluggedIn}, dont ${oneOrphan ? "un" : orphans.length} que l'inventaire croit déclaré : rien à allumer, aucune source à ouvrir`
   : `${pluggedIn}, hors de la topologie : rien à allumer, aucune source à ouvrir`;
 const svgH = fleetExtras.length
   ? fleetBottom + 26 + fleetNotes.length * 14
@@ -896,9 +896,8 @@ const ariaLabel =
         pluggedClause +
         (offDuty ? `${offDuty} et ` : ", et ") +
         (orphans.length
-          ? `que l'inventaire croit ${
-              oneOrphan ? "déjà déclaré" : "déjà déclarés"
-            }, alors que la topologie publique ne ${
+          ? `dont ${oneOrphan ? "un seul est cru" : `${orphans.length} sont crus`} ` +
+            `déclaré${oneOrphan ? "" : "s"} par l'inventaire, alors que la topologie publique ne ${
               oneOrphan ? "lui connaît" : "leur connaît"
             } aucun nœud — le nom, lui, se lit peut-être ailleurs dans un repo.`
           : "que nul repo public ne compte dans sa topologie.") +

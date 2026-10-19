@@ -101,7 +101,7 @@ const tone = (d: Device) => NETWORK_TONE[d.network ?? ""] ?? "var(--accent-defau
 const NETWORK_LABEL: Record<string, string> = {
   vlan10: "VLAN serveurs",
   vlan50: "VLAN maison",
-  "out-of-band": "hors réseau",
+  "out-of-band": "réseau hors bande",
   aws: "hors site",
 };
 // the network, spelled out. On the page it is a gray bar at the left of a row
@@ -110,8 +110,10 @@ const NETWORK_LABEL: Record<string, string> = {
 // subtree, so the legend they read in the picture is not read aloud here. The
 // value is the seed's, the French is the label map's, and a key the map does
 // not know is spoken as it arrives rather than paraphrased. A label that
-// already carries the word is not doubled: « réseau hors réseau » is a
-// riddle, not a fact.
+// already carries the word is not doubled: this segment is the one the seed
+// names itself — its BMC rows read « gestion hors bande » — and the
+// architecture drawing prints the same three words, so « réseau hors bande »
+// is said once, not twice.
 const networkWord = (d: Device) => {
   if (!d.network) return "";
   const net = NETWORK_LABEL[d.network] ?? d.network;
@@ -452,7 +454,7 @@ const ariaLabel = hasRacks
       ? " La barre grise à gauche d'une rangée ou d'une puce porte son réseau, et la légende la traduit en bas du dessin ; une couleur ne se lit pas à l'oreille, alors ce réseau est écrit en mots, boîte par boîte."
       : "") +
     (shownGpu
-      ? " Le drapeau GPU écrit près d'un nom vient de l'inventaire : le champ gpu quand le document répond oui sans détailler, et le champ gpus quand il énumère les cartes — le nombre écrit après le drapeau est alors le compte de cette énumération, carte par carte. Une carte passée en passthrough à une machine invitée est celle de son hôte : elle est comptée une fois, sur la rangée de la boîte où elle est vissée, jamais reprise sous la puce."
+      ? " Le drapeau GPU écrit près d'un nom vient de l'inventaire : le champ gpu quand le document répond oui sans détailler, et le champ gpus quand il énumère les cartes — le nombre écrit après le drapeau est alors le compte de cette énumération, carte par carte. Une carte passée en passthrough à une machine invitée est celle de son hôte : elle est comptée une fois, sur la rangée de la boîte où elle est vissée — la puce d'en dessous la nomme, elle ne la recompte pas."
       : "")
   : "Élévation des baies — l'inventaire matériel ne place aucun équipement en baie.";
 ---

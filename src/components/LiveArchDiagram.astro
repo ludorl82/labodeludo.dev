@@ -154,14 +154,14 @@ const originIds = new Set(
 // Le pointillé ne veut pas dire « rien derrière », et un cas le prouve :
 // `external:ollama` est le service qu'un des repos déclare bel et bien, sur
 // une machine déjà dessinée en trait plein dans la grille du haut. Vu dans
-// nixos-iac (hosts/gpu-01/configuration.nix) : l'origine LAN du tunnel est
+// nixos-iac (hosts/bob/configuration.nix) : l'origine LAN du tunnel est
 // l'adresse VLAN10 de la machine, le port est ouvert, le service est activé
 // là. architecture.json ne porte aucune adresse de machine — la graine ne
 // peut pas faire le rapprochement, seul le snapshot le voit. Le nom affiché
 // vient quand même de `byId`, pour qu'un châssis renommé suive tout seul ;
 // si l'origine disparaît ou change de bécane, diagram-delta le signalera.
 const originOnHost: Record<string, string> = {
-  "external:ollama": "host:gpu-01",
+  "external:ollama": "host:bob",
 };
 const extBoxes = externals.map((n, i) => {
   const c = cell(i, EXT_Y0);
@@ -255,17 +255,37 @@ const fleetExtras = fleetDevices.filter(
 // publics ne leur connaît aucun nœud. Ne pas dire de plus : pas « aucun repo
 // ne les nomme ». Ça s'est vérifié dans l'instantané et ça fait tomber la
 // phrase — win11 se lit bel et bien dans nixos-iac-public (guests/win11/libvirt-
-// domain.xml, et le hook de game mode de hosts/gaming-01), seulement sous
-// guests/ et non sous hosts/, là où emit-topology ne regarde pas : le script ne
-// marche que les nixosConfigurations. Les deux graines peuvent donc avoir raison
+// domain.xml, et les listes labo.vmHost.alwaysOn de hosts/bob comme de
+// hosts/luna), mais sa définition vit sous guests/ et non sous hosts/, là où
+// emit-topology ne regarde pas : le script ne marche que les
+// nixosConfigurations. Les deux graines peuvent donc avoir raison
 // chacune dans son registre, et « l'inventaire a tort » n'est pas décidable
 // d'ici. Ils restent branchés, ils tirent du courant — ça se dit, et rien de
-// plus : le drapeau est posé par une session privée, l'instantané public n'est
-// pas tenu au même rythme que le repo privé, et le join ne lit que le public.
+// plus : le drapeau se pose dans le net-cfgs/fleet.json du repo privé, tenu à
+// la main, et son émetteur ne le croise qu'avec les hosts/ de ce même repo
+// privé (scripts/emit-fleet.py, check_declared ; son docstring dit sans détour
+// que rien d'autre ne reconcilie ce fichier). L'instantané public n'est pas
+// tenu au même rythme que lui, et le join ne lit que l'instantané.
 // Donc ni « l'IaC a cessé de les nommer » ni « jamais déclarés » ne tiennent —
 // seul le désaccord des deux graines est un fait, et il porte sur un nœud.
+// SAUF un — et ce « sauf un » ne tient plus ce soir, ce qui se vérifie plutôt
+// que ça s'hérite. La table datait `vm-03` du 2026-09-26 en citant quatre
+// endroits de nixos-iac-public, dont hosts/gaming-01 et hosts/gpu-01 : ces
+// chemins n'existent plus, les machines publiant sous leur vrai nom depuis le
+// 2026-10-18. Le nom a quitté la graine du parc avec eux — rien nommé vm-03
+// dans les appareils d'aujourd'hui — et l'instantané ne l'appelle plus
+// nulle part hors une ferraille de test (scripts/tests/emit-fleet-gpus-test.sh) :
+// ni un hosts/, ni modules/jumphost.nix n'en parlent. Donc rien à dater, rien
+// à dessiner. La table reste, vide, parce que le cas qu'elle tient — un nom
+// que l'instantané date pendant que la graine le compte encore — ne se
+// discute pas, il se note : la case reste pour la trace, et le compte des
+// agents du schéma doit rester celui des nœuds joints.
+const RETIRED: Record<string, string> = {};
+const retired = fleetExtras.filter((d) => RETIRED[d.name]);
+const oneRetired = retired.length === 1;
 const orphans = fleetDevices.filter(
-  (d) => d.iacDeclared === true && !drawnNames.has(d.name),
+  (d) =>
+    d.iacDeclared === true && !drawnNames.has(d.name) && !RETIRED[d.name],
 );
 const oneOrphan = orphans.length === 1;
 // un orphelin que l'inventaire dit agent k3s est le seul cas où la bande du bas
@@ -293,28 +313,74 @@ const oneUnpowered = unpowered.length === 1;
 // « vm » n'a jamais eu de prise à lui. La puce de la bande l'affiche déjà
 // (CLASS_FR plus bas), donc le sous-titre ne peut pas promettre « bien
 // branchés » à ces cases-là sans se contredire lui-même. L'hôte n'est nommé
-// que s'il est dessiné plus haut — c'est le seul rapprochement que la graine
-// du parc permet, et le seul que ce schéma puisse attester.
+// que s'il est dessiné plus haut — c'était le seul rapprochement que la graine
+// du parc permettait, et le seul que ce schéma croyait pouvoir attester. Pour
+// une boîte, il se trompe, et le repo public la nomme ailleurs.
+//
+// `hostedBy` s'écrit à la main dans la graine du parc, et le script qui valide
+// cette graine le dit sans détour (nixos-iac-public, scripts/emit-fleet.py :
+// rien ne reconcilie ce fichier, il peut vieillir en silence). Cette entrée-là
+// s'est d'ailleurs contredite toute seule — une carte dans `gpus` pendant que
+// `role` écrit « sans carte graphique », et pas de `spec` là où l'émetteur
+// l'aurait rendu — donc elle ne se vérifie pas toute seule non plus.
+//
+// L'instantané public, lui, ne se tait pas — et il ne contredit plus la
+// graine : guests/win11/libvirt-domain.xml s'ouvre sur « a Windows 11 Pro
+// desktop VM on `bob` or `stella` », et hosts/bob la tient dans son
+// labo.vmHost.alwaysOn, avec son proxy VNC. La table n'inscrivait win11 que
+// parce que l'instantané la définissait sur une autre bécane que la graine ;
+// depuis, hosts/luna écrit que « win11 left this list » (2026-10-08) et ne lui
+// prête plus de carte. Le désaccord est tombé de lui-même, et la phrase que le
+// dessin posait avec lui. La case reste ; le nom vient de la graine, comme
+// pour les autres invités.
+//
+// Ce qui n'est pas départagé pour autant, et qui dit pourquoi la table reste
+// ouverte au lieu d'être supprimée : les trois fiches du repo ne disent pas la
+// même chose — le domaine et hosts/bob disent bob ou stella, hosts/luna, qui
+// la liste pourtant en alwaysOn, dit bob ou ici. Choisir la bécane n'est pas
+// le travail du dessin ; nommer une contradiction, si. La table ne retient donc
+// que ce qui est dessiné plus haut, et seulement en contradiction ; partout
+// ailleurs le dessin suit la graine.
+const SNAPSHOT_GUEST_HOST: Record<string, string> = {};
 const virtuals = fleetExtras.filter((d) => /(^|-)vm$/.test(d.class));
 const oneVirtual = virtuals.length === 1;
+const disputedHost = (d: FDevice) => {
+  const trace = SNAPSHOT_GUEST_HOST[d.name];
+  return trace && trace !== d.hostedBy && drawnNames.has(trace)
+    ? trace
+    : undefined;
+};
 const guestHost = (d: FDevice) =>
-  d.hostedBy && drawnNames.has(d.hostedBy) ? d.hostedBy : undefined;
+  !disputedHost(d) && d.hostedBy && drawnNames.has(d.hostedBy)
+    ? d.hostedBy
+    : undefined;
 const virtualList = virtuals
   .map((d) => {
+    const dispute = disputedHost(d);
+    if (dispute)
+      return `${d.name}, que la graine dit posée sur ${d.hostedBy} et l'instantané sur ${dispute}`;
     const host = guestHost(d);
     return host ? `${d.name}, posée sur ${host}` : d.name;
   })
   .join(", ");
 // Le mot de classe des châssis du haut se vérifie, lui aussi, contre le parc.
-// `meta.class` sort d'un heuristic de PRÉFIXE DE NOM dans nixos-iac
-// (scripts/emit-topology.py : « gpu- », « vm- », « console- »…), et « arcade- »
-// ne matche rien — arcade1 et arcade2 étaient étiquetés « server » sur le
-// dessin. L'instantané dit autre chose, et les deux graines tombent d'accord :
-// `class: vm`, `hostedBy: gaming-01` dans fleet.json, et
-// hosts/arcade1/configuration.nix s'ouvre par « a NixOS libvirt guest on
-// gaming-01 ». Le châssis qui les porte étant déjà dessiné juste à côté, la
-// grille du haut est la seule case du schéma où ce lien pouvait se lire : la
-// bande du bas, elle, les dédoublonne et ne les note donc nulle part.
+// `meta.class` ne sort plus d'un heuristic de préfixe de nom : depuis que les
+// machines publient sous leur vrai nom, scripts/emit-topology.py le pose dans
+// une table par hôte et rend « server » à tout ce qui n'y est pas inscrit —
+// arcade1 et arcade2 restent donc étiquetés serveurs dans la topologie, et ce
+// sont les deux seules cases de la grille dont le parc dit autre chose
+// (`class: vm`, `hostedBy: luna`). Les deux graines, cette fois, tombent
+// d'accord, et c'est le châssis qui porte la preuve :
+// hosts/luna/configuration.nix nomme ses « gaming guests (arcade1 on a GTX
+// 1650, arcade2 on a GTX 1660) » et leur donne arcade-ctl plus les proxys VNC.
+// Ses fiches à elles s'ouvrent encore sur « a NixOS libvirt guest on `stella` »
+// avec la RTX 3050 — j'ai accusé les en-têtes, ils ont peut-être raison, mais
+// rien d'autre ne les suit : ni le parc, ni l'hôte ne mettent une carte sur
+// stella, et la vedette que la graine prête à chaque invitée est celle de
+// luna. C'est donc la version de l'hôte que la case rend. Le châssis qui les
+// porte étant dessiné juste à côté, la grille du haut est la seule du schéma
+// où ce lien pouvait se lire : la bande du bas, elle, les dédoublonne et ne
+// les note donc nulle part.
 const fleetIsGuest = (h: TNode) => {
   const d = fleetDevices.find((f) => f.name === h.label);
   const host = d?.hostedBy;
@@ -437,30 +503,51 @@ const fleetNotes = [
           : []),
       ]
     : []),
+  // un nom que l'instantané date, lui, n'est pas un désaccord à raconter des
+  // deux côtés : le repo public parle. La ligne le dit avec la date, et ne
+  // laisse plus le compte des agents du schéma se lire comme un oubli.
+  ...(retired.length
+    ? [
+        `↑ ${retired
+          .map((d) => `${d.name} : retiré le ${RETIRED[d.name]}`)
+          .join(", ")} — l'inventaire ${
+          oneRetired
+            ? "le compte encore, l'IaC publique non ; la case reste pour la trace."
+            : "les compte encore, l'IaC publique non ; les cases restent pour la trace."
+        }`,
+      ]
+    : []),
   // la couture inverse de `carriers` : un appareil que la graine dit posé sur
   // une machine, elle, déclarée. Le haut du schéma dessine le châssis, le bas
   // dessine l'invité, et personne ne dessine le lien — c'est donc ici qu'il se
   // nomme, avec l'hôte seulement quand il est vraiment dessiné plus haut.
+  // Quand les deux graines ne désignent pas la même bécane, la ligne les nomme
+  // toutes les deux et n'en choisit aucune : ce que la case doit rendre, c'est
+  // le désaccord, pas une hypothèse.
   ...virtuals.map(
     (d) =>
       `↑ ${d.name} : domaine invité, pas une prise — ${
-        guestHost(d)
-          ? `son hôte ${guestHost(d)}, lui, est dessiné plus haut`
-          : "la graine ne lui connaît pas d'hôte dessiné ici"
+        disputedHost(d)
+          ? `la graine la dit sur ${d.hostedBy}, l'instantané la définit sur ${disputedHost(d)}`
+          : guestHost(d)
+            ? `son hôte ${guestHost(d)}, lui, est dessiné plus haut`
+            : "la graine ne lui connaît pas d'hôte dessiné ici"
       }.`,
   ),
 ];
 // « jamais déclarés » serait faux deux fois. D'abord dès qu'un orphelin est
 // dans la bande : lui, le drapeau du parc le dit déclaré, et la topologie
 // publique ne le confirme pas — sans le nier non plus, car un repo peut fort
-// bien le nommer hors des nœuds qu'emit-topology ramasse (win11, encore, tenu
-// par le hook de game mode dans hosts/gaming-01). Ensuite pour les
+// bien le nommer hors des nœuds qu'emit-topology ramasse (win11, encore :
+// hosts/bob et hosts/luna la tiennent tous deux dans labo.vmHost.alwaysOn,
+// mais sa définition est sous guests/, sans nixosConfiguration, donc sans
+// nœud). Ensuite pour les
 // onduleurs, redescendus ici parce qu'aucun nœud de topologie ne les nomme
 // plus, alors que le repo NixOS les pilote toujours, module NUT par module
 // NUT. Le seul fait que la graine garantisse, c'est l'absence de nœud — et
 // c'est déjà tout ce qui explique qu'il n'y ait rien à cliquer.
 const fleetSubtitle = orphans.length
-  ? `${pluggedIn}, déclarés par l'inventaire mais sans nœud : rien à allumer, aucune source à ouvrir`
+  ? `${pluggedIn}, dont ${oneOrphan ? "un" : orphans.length} que l'inventaire croit déclaré : rien à allumer, aucune source à ouvrir`
   : `${pluggedIn}, hors de la topologie : rien à allumer, aucune source à ouvrir`;
 const svgH = fleetExtras.length
   ? fleetBottom + 26 + fleetNotes.length * 14
@@ -567,6 +654,26 @@ const ariaLabel =
                 .join(", ")} s'y dit agent k3s : les ${k3sAgents} agents de ` +
               `ce schéma sont les déclarés, pas les seuls branchés.`
             : "")
+        : "") +
+      (retired.length
+        ? ` Là, l'instantané ne se tait pas : ${retired
+            .map(
+              (d) =>
+                `${d.name} — que le parc dit ${d.role ?? d.class} — est retiré le ${RETIRED[d.name]}, et nixos-iac-public l'écrit noir sur blanc`,
+            )
+            .join("; ")}. Aucun repo public n'en ${
+            oneRetired ? "fait plus une machine" : "fait plus des machines"
+          }, et le parc ${
+            oneRetired ? "le compte" : "les compte"
+          } encore : ${
+            oneRetired
+              ? "la case reste pour la trace, pas pour la machine"
+              : "les cases restent pour la trace, pas pour les machines"
+          }. Ce ${
+            oneRetired
+              ? "n'est donc pas un agent de plus qui échappe au schéma"
+              : "ne sont donc pas des agents de plus qui échappent au schéma"
+          }, et les ${k3sAgents} agents dessinés sont ceux que l'IaC joint.`
         : "") +
       (carriers.length
         ? ` ${carriers.length > 1 ? "Certains d'entre eux portent" : "L'un d'eux porte"} ` +
@@ -687,9 +794,9 @@ const ariaLabel =
 
       <!-- control-plane EC2 (dans le cluster) -->
       <a class="svg-node" data-node={cloudHost?.id} href={cloudHost && src(cloudHost)}>
-        <title>cloud-01 — cliquer pour allumer les chemins qui passent par lui</title>
+        <title>aws — cliquer pour allumer les chemins qui passent par lui</title>
         <rect x="450" y="470" width="230" height="80" rx="6" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="1.5" />
-        <text x="565" y="494" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{cloudHost?.label ?? "cloud-01"}</text>
+        <text x="565" y="494" text-anchor="middle" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--text)">{cloudHost?.label ?? "aws"}</text>
         <text x="565" y="509" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">EC2 — UNIQUE control-plane</text>
         <text x="565" y="524" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">etcd · taint dédiée · site AWS</text>
         <text x="565" y="539" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">connecteur tunnel résident</text>
@@ -697,11 +804,11 @@ const ariaLabel =
       <path d="M450,455 L400,436" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />
 
       <!-- WireGuard entre les deux moitiés du cluster (décoratif).
-           Direction : cloud-01 est le hub (il écoute), son unique pair est le
+           Direction : aws est le hub (il écoute), son unique pair est le
            pare-feu et n'a pas d'endpoint — c'est donc la maison qui compose.
            La maison n'ouvre rien, ce qui rejoint le « 0 port ouvert » de l'edge. -->
       <path d="M310,510 H448" fill="none" stroke="var(--accent-live)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#la-arrow-live)" />
-      <text x="380" y="560" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">WireGuard — la maison compose vers le hub {cloudHost?.label ?? "cloud-01"}</text>
+      <text x="380" y="560" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">WireGuard — la maison compose vers le hub {cloudHost?.label ?? "aws"}</text>
       <text x="380" y="573" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent-live)">côté maison : le pare-feu, hors IaC · aucun port ouvert</text>
 
       <!-- ============ les deux sites, physiquement ============ -->
@@ -745,9 +852,9 @@ const ariaLabel =
       <rect x="490" y={SITE_TOP} width="230" height={SITE_BOTTOM - SITE_TOP} rx="8" fill="none" stroke="var(--panel-border)" stroke-width="1.2" />
       <text x="508" y="644" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">AWS ca-central</text>
       <a class="svg-node" data-node={cloudHost?.id} href={cloudHost && src(cloudHost)}>
-        <title>cloud-01, côté matériel</title>
+        <title>aws, côté matériel</title>
         <rect x="508" y="660" width="194" height="34" rx="4" fill="var(--panel)" stroke="var(--panel-border)" />
-        <text x="605" y="681" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{cloudHost?.label ?? "cloud-01"} (EC2)</text>
+        <text x="605" y="681" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text)">{cloudHost?.label ?? "aws"} (EC2)</text>
       </a>
       <g class="svg-node" data-nodes={lambdaIds}>
         <title>les fonctions Lambda</title>
@@ -777,7 +884,7 @@ const ariaLabel =
               <text x="58" y={band.items[0].y - 6} font-family="var(--font-mono)" font-size="10" fill="var(--text-faint)">{band.label} — {band.items.length}</text>
               {band.items.map(({ d, x, y }) => (
                 <g>
-                  <title>{d.name} — {d.role ?? d.class}</title>
+                  <title>{d.name} — {d.role ?? d.class}{RETIRED[d.name] ? ` · retiré le ${RETIRED[d.name]} (nixos-iac-public) — le parc le compte encore` : ""}</title>
                   <rect x={x} y={y} width={F_CHIP_W} height={F_CHIP_H} rx="4" fill="none" stroke="var(--text-faint)" stroke-dasharray="4 3" />
                   <text x={x + F_CHIP_W / 2} y={y + 13} text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--text-faint)">{d.count && d.count > 1 ? `${d.name} ×${d.count}` : d.name}</text>
                   <text x={x + F_CHIP_W / 2} y={y + 24} text-anchor="middle" font-family="var(--font-mono)" font-size="7.5" fill="var(--text-faint)">{CLASS_FR[d.class] ?? d.class}</text>
@@ -803,12 +910,24 @@ const ariaLabel =
         pluggedClause +
         (offDuty ? `${offDuty} et ` : ", et ") +
         (orphans.length
-          ? `que l'inventaire croit ${
-              oneOrphan ? "déjà déclaré" : "déjà déclarés"
-            }, alors que la topologie publique ne ${
+          ? `dont ${oneOrphan ? "un seul est cru" : `${orphans.length} sont crus`} ` +
+            `déclaré${oneOrphan ? "" : "s"} par l'inventaire, alors que la topologie publique ne ${
               oneOrphan ? "lui connaît" : "leur connaît"
             } aucun nœud — le nom, lui, se lit peut-être ailleurs dans un repo.`
-          : "que nul repo public ne compte dans sa topologie.")}
+          : "que nul repo public ne compte dans sa topologie.") +
+        (retired.length
+          ? ` ${
+              oneRetired
+                ? "Un dernier nom ne fait plus partie du parc"
+                : `${retired.length} derniers noms ne font plus partie du parc`
+            } : ${retired
+              .map((d) => `${d.name}, retiré le ${RETIRED[d.name]}`)
+              .join(", ")} — l'inventaire ${
+              oneRetired
+                ? "ne l'a pas encore su ; la case reste, la machine non"
+                : "ne l'a pas encore su ; les cases restent, les machines non"
+            }.`
+          : "")}
   </figcaption>
 </figure>
 

@@ -282,7 +282,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "ok-bob-entrainer-un-mot-de-reveil-francais-quebecois",
     ],
     nodes: [
-      "external:ha-01",
+      "external:automatron",
     ],
   },
   "postes-personnels": {

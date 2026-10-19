@@ -8,8 +8,8 @@ Two files feed the nightly author, and they answer different questions:
   no repo declares (the switch, the AP, the printer, cameras, personal
   machines). It is derived from a hand-maintained PRIVATE document by the
   nightly job's private session, sanitized through the same host map the
-  `*-iac` sanitizers use (since 2026-10-18 that map keeps only the router,
-  the NAS and Home Assistant generic; the machines carry their real names),
+  `*-iac` sanitizers use (since 2026-10-18 that map keeps only the router
+  and the NAS generic; the machines carry their real names),
   and it crosses into this repo only after two
   mechanical gates: the positive allowlist (`scan-public.py`) and a
   denylist of real names that lives in the private driver and is never

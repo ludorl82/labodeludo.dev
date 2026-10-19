@@ -142,8 +142,8 @@ ne pas mélanger les deux.
 2. **Only public naming may appear**: documentation IPs (192.0.2.x,
    198.51.100.x, 203.0.113.x, 2001:db8::) and example-family domains. The
    lab's machines appear under their real names since 2026-10-18 (bob,
-   stella, luna, vega, worker2, aws...); the router, the NAS and Home
-   Assistant keep generic names (router, nas, ha-01). Use only names the
+   stella, luna, vega, automatron, worker2, aws...); the router and the
+   NAS keep generic names (router, nas). Use only names the
    data gives you. Your output is
    mechanically scanned (`scan-public.py`) and the commit is refused on any
    violation — do not test that boundary.

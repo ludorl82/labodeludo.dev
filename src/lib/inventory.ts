@@ -57,7 +57,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "app:cert-manager",
       "app:tls",
       "app:cloudflared",
-      "host:cloud-01",
+      "host:aws",
       "instance:aws_node",
       "app:cluster-dns",
     ],
@@ -145,8 +145,8 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "virsh-migrate",
     ],
     nodes: [
-      "host:pi-02",
-      "host:console-vm",
+      "host:worker2",
+      "host:coquille",
     ],
   },
   ordonnancement: {
@@ -193,8 +193,8 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     nodes: [
       "app:plex",
       "app:frigate",
-      "host:srv-01",
-      "host:gpu-02",
+      "host:vega",
+      "host:luna",
       "app:numeriseur",
     ],
   },
@@ -209,8 +209,9 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "migrer-tout-mon-homelab-vers-nixos",
       "laisser-le-pipeline-appuyer-sur-apply",
     ],
-    // gpu-02 belongs to pipeline-media (it runs the NVR); a node maps to
-    // exactly one role so the reverse lookup stays unambiguous
+    // luna belongs to pipeline-media (it runs the NVR since 2026-10-17, on its
+    // RTX 3050); stella, the other X11SRA-RF GPU node, sits here instead. A node
+    // maps to exactly one role so the reverse lookup stays unambiguous
     //
     // The chatbot's retrieval side landed in September 2026 and is the same
     // thing this role already names — local LLM inference. `external:ollama`
@@ -221,8 +222,8 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     // the topology with that move — the work did not go away, it went one
     // layer down into a node this role already claims.
     nodes: [
-      "host:gpu-01",
-      "host:gaming-01",
+      "host:bob",
+      "host:stella",
       "external:ollama",
     ],
   },
@@ -249,15 +250,15 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
     ],
     // host:docker was retired out from under this list. host:vm-03 was too —
     // twice: it came back in September 2026 as a GPU k3s agent on
-    // gaming-01, and was retired and purged again on 2026-09-26 (its card
+    // luna, and was retired and purged again on 2026-09-26 (its card
     // went to a Windows VM). The first snapshot published after that, on
     // 2026-09-28, dropped it from the topology and turned the nightly chain
     // red on this very line.
     nodes: [
       "cluster:k3s",
-      "host:pi-01",
-      "host:vm-01",
-      "host:vm-02",
+      "host:worker1",
+      "host:worker3",
+      "host:worker4",
       "app:argocd",
       // The gate that reverts a red commit and blocks the branch for thirty
       // days. Same family as ArgoCD and it belongs beside it: both are the
@@ -281,7 +282,7 @@ export const INVENTORY: Record<InventoryKey, InventoryItem> = {
       "ok-bob-entrainer-un-mot-de-reveil-francais-quebecois",
     ],
     nodes: [
-      "external:ha-01",
+      "external:automatron",
     ],
   },
   "postes-personnels": {

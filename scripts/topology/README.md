@@ -8,7 +8,9 @@ Two files feed the nightly author, and they answer different questions:
   no repo declares (the switch, the AP, the printer, cameras, personal
   machines). It is derived from a hand-maintained PRIVATE document by the
   nightly job's private session, sanitized through the same host map the
-  `*-iac` sanitizers use, and it crosses into this repo only after two
+  `*-iac` sanitizers use (since 2026-10-18 that map keeps only the router,
+  the NAS and Home Assistant generic; the machines carry their real names),
+  and it crosses into this repo only after two
   mechanical gates: the positive allowlist (`scan-public.py`) and a
   denylist of real names that lives in the private driver and is never
   published. Shape:
@@ -18,7 +20,7 @@ Two files feed the nightly author, and they answer different questions:
   "fleetVersion": 1,
   "generated": "2026-08-08T09:00:00+00:00",
   "devices": [
-    { "name": "gpu-01", "class": "server", "network": "vlan10",
+    { "name": "bob", "class": "server", "network": "vlan10",
       "role": "agent k3s, GPU", "iacDeclared": true,
       "location": "rolling-rack", "rackOrder": 1, "power": "ups-03" }
   ]
@@ -78,7 +80,7 @@ that is the design, not a detail.
     }
   ],
   "edges": [
-    { "from": "workload:kuma/kuma", "to": "host:cloud-01", "kind": "pinned-to" }
+    { "from": "workload:kuma/kuma", "to": "host:aws", "kind": "pinned-to" }
   ]
 }
 ```
@@ -96,7 +98,7 @@ Ids are `namespace:rest`, lowercase, matching `[a-z0-9.:/@_-]+`.
 
 | namespace | emitted by | meaning |
 |---|---|---|
-| `host:` | nixos | a machine (`host:gpu-01`) |
+| `host:` | nixos | a machine (`host:bob`) |
 | `cluster:` | k3s | the k3s cluster grouping node (`cluster:k3s`) |
 | `app:` | k3s | an Argo CD Application (`app:kuma`) |
 | `workload:` | k3s | Deployment/StatefulSet/DaemonSet/CronJob (`workload:<app>/<name>`) |
@@ -117,7 +119,7 @@ Ids are `namespace:rest`, lowercase, matching `[a-z0-9.:/@_-]+`.
 | `pinned-to` | workload → host (nodeSelector) |
 | `member-of` | host → cluster:k3s (the host runs a k3s server/agent) |
 | `routes-to` | dns → tunnel; tunnel → cluster; route → workload |
-| `is` | identity across layers (`instance:...` → `host:cloud-01`) |
+| `is` | identity across layers (`instance:...` → `host:aws`) |
 | `protects` | access app → dns hostname |
 | `uses` | app/host → external hardware it leans on (NFS, plex backend), or app → an S3 bucket its manifests name (`meta.s3Refs` on the app node, captured by the k3s emitter; the join promotes a ref to an edge only when the aws layer declares that bucket) |
 | `powered-by` | host → its UPS |

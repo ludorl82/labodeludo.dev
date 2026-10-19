@@ -255,30 +255,32 @@ const fleetExtras = fleetDevices.filter(
 // publics ne leur connaît aucun nœud. Ne pas dire de plus : pas « aucun repo
 // ne les nomme ». Ça s'est vérifié dans l'instantané et ça fait tomber la
 // phrase — win11 se lit bel et bien dans nixos-iac-public (guests/win11/libvirt-
-// domain.xml, et le hook de game mode de hosts/luna), seulement sous
-// guests/ et non sous hosts/, là où emit-topology ne regarde pas : le script ne
-// marche que les nixosConfigurations. Les deux graines peuvent donc avoir raison
+// domain.xml, et les listes labo.vmHost.alwaysOn de hosts/bob comme de
+// hosts/luna), mais sa définition vit sous guests/ et non sous hosts/, là où
+// emit-topology ne regarde pas : le script ne marche que les
+// nixosConfigurations. Les deux graines peuvent donc avoir raison
 // chacune dans son registre, et « l'inventaire a tort » n'est pas décidable
 // d'ici. Ils restent branchés, ils tirent du courant — ça se dit, et rien de
-// plus : le drapeau est posé par une session privée, l'instantané public n'est
-// pas tenu au même rythme que le repo privé, et le join ne lit que le public.
+// plus : le drapeau se pose dans le net-cfgs/fleet.json du repo privé, tenu à
+// la main, et son émetteur ne le croise qu'avec les hosts/ de ce même repo
+// privé (scripts/emit-fleet.py, check_declared ; son docstring dit sans détour
+// que rien d'autre ne reconcilie ce fichier). L'instantané public n'est pas
+// tenu au même rythme que lui, et le join ne lit que l'instantané.
 // Donc ni « l'IaC a cessé de les nommer » ni « jamais déclarés » ne tiennent —
 // seul le désaccord des deux graines est un fait, et il porte sur un nœud.
-// SAUF un, et c'est pour ça que cette table existe. `vm-03` est le seul nom du
-// parc où l'instantané public ne se contente pas de se taire : il le dit mort,
-// à quatre endroits de nixos-iac-public, avec la même date — hosts/gaming-01
-// (« vm-03 … is retired », et le GTX 960 prêté à personne depuis), hosts/arcade1,
-// hosts/gpu-01, et modules/jumphost.nix, qui l'a retiré de son distributeur.
-// Ni hosts/vm-03/ ni une nixosConfiguration du flake n'en parlent plus, donc
-// emit-topology ne peut pas en faire un nœud, et le join n'en a aucun. La
-// graine du parc, plus récente, le liste pourtant toujours, posé sur gaming-01
-// et « agent k3s ». Écrire cela, c'est affirmer qu'un agent tourne aujourd'hui
-// sur une machine que son propre repo dit retirée : la case reste dessinée — le
-// désaccord des deux graines est un fait — mais elle ne peut plus faire tomber
-// le compte des agents, qui est celui des nœuds joints.
-const RETIRED: Record<string, string> = {
-  "vm-03": "2026-09-26",
-};
+// SAUF un — et ce « sauf un » ne tient plus ce soir, ce qui se vérifie plutôt
+// que ça s'hérite. La table datait `vm-03` du 2026-09-26 en citant quatre
+// endroits de nixos-iac-public, dont hosts/gaming-01 et hosts/gpu-01 : ces
+// chemins n'existent plus, les machines publiant sous leur vrai nom depuis le
+// 2026-10-18. Le nom a quitté la graine du parc avec eux — rien nommé vm-03
+// dans les appareils d'aujourd'hui — et l'instantané ne l'appelle plus
+// nulle part hors une ferraille de test (scripts/tests/emit-fleet-gpus-test.sh) :
+// ni un hosts/, ni modules/jumphost.nix n'en parlent. Donc rien à dater, rien
+// à dessiner. La table reste, vide, parce que le cas qu'elle tient — un nom
+// que l'instantané date pendant que la graine le compte encore — ne se
+// discute pas, il se note : la case reste pour la trace, et le compte des
+// agents du schéma doit rester celui des nœuds joints.
+const RETIRED: Record<string, string> = {};
 const retired = fleetExtras.filter((d) => RETIRED[d.name]);
 const oneRetired = retired.length === 1;
 const orphans = fleetDevices.filter(
@@ -322,22 +324,24 @@ const oneUnpowered = unpowered.length === 1;
 // `role` écrit « sans carte graphique », et pas de `spec` là où l'émetteur
 // l'aurait rendu — donc elle ne se vérifie pas toute seule non plus.
 //
-// L'instantané public, lui, ne se tait pas : guests/win11/libvirt-domain.xml
-// s'ouvre sur « a Windows 11 Pro desktop VM on luna », sa NIC est un
-// macvtap sur le vlan10 de luna, hosts/luna lui colle un proxy VNC
-// sur son adresse à elle et son interrupteur passe par arcade-ctl, sur cette
-// même bécane. La graine, plus fraîche, la dit posée sur bob, machine où le
-// repo n'écrit win11 nulle part. Le dessin répétait la graine sans vérifier
-// plus loin qu'elle : c'est cette affirmation qu'il retire, pas la case.
+// L'instantané public, lui, ne se tait pas — et il ne contredit plus la
+// graine : guests/win11/libvirt-domain.xml s'ouvre sur « a Windows 11 Pro
+// desktop VM on `bob` or `stella` », et hosts/bob la tient dans son
+// labo.vmHost.alwaysOn, avec son proxy VNC. La table n'inscrivait win11 que
+// parce que l'instantané la définissait sur une autre bécane que la graine ;
+// depuis, hosts/luna écrit que « win11 left this list » (2026-10-08) et ne lui
+// prête plus de carte. Le désaccord est tombé de lui-même, et la phrase que le
+// dessin posait avec lui. La case reste ; le nom vient de la graine, comme
+// pour les autres invités.
 //
-// Le tracé ne remplace donc pas la graine, il arrête la phrase qui affirmait :
-// les deux noms restent lisibles, la case reste, et je ne tranche pas — lequel
-// des deux a bougé, rien ici ne peut le savoir. La table ne nomme que ce qui
-// est dessiné plus haut, et seulement en contradiction ; partout ailleurs le
-// dessin suit la graine comme avant.
-const SNAPSHOT_GUEST_HOST: Record<string, string> = {
-  win11: "luna",
-};
+// Ce qui n'est pas départagé pour autant, et qui dit pourquoi la table reste
+// ouverte au lieu d'être supprimée : les trois fiches du repo ne disent pas la
+// même chose — le domaine et hosts/bob disent bob ou stella, hosts/luna, qui
+// la liste pourtant en alwaysOn, dit bob ou ici. Choisir la bécane n'est pas
+// le travail du dessin ; nommer une contradiction, si. La table ne retient donc
+// que ce qui est dessiné plus haut, et seulement en contradiction ; partout
+// ailleurs le dessin suit la graine.
+const SNAPSHOT_GUEST_HOST: Record<string, string> = {};
 const virtuals = fleetExtras.filter((d) => /(^|-)vm$/.test(d.class));
 const oneVirtual = virtuals.length === 1;
 const disputedHost = (d: FDevice) => {
@@ -360,15 +364,23 @@ const virtualList = virtuals
   })
   .join(", ");
 // Le mot de classe des châssis du haut se vérifie, lui aussi, contre le parc.
-// `meta.class` sort d'un heuristic de PRÉFIXE DE NOM dans nixos-iac
-// (scripts/emit-topology.py : « gpu- », « vm- », « console- »…), et « arcade- »
-// ne matche rien — arcade1 et arcade2 étaient étiquetés « server » sur le
-// dessin. L'instantané dit autre chose, et les deux graines tombent d'accord :
-// `class: vm`, `hostedBy: luna` dans fleet.json, et
-// hosts/arcade1/configuration.nix s'ouvre par « a NixOS libvirt guest on
-// luna ». Le châssis qui les porte étant déjà dessiné juste à côté, la
-// grille du haut est la seule case du schéma où ce lien pouvait se lire : la
-// bande du bas, elle, les dédoublonne et ne les note donc nulle part.
+// `meta.class` ne sort plus d'un heuristic de préfixe de nom : depuis que les
+// machines publient sous leur vrai nom, scripts/emit-topology.py le pose dans
+// une table par hôte et rend « server » à tout ce qui n'y est pas inscrit —
+// arcade1 et arcade2 restent donc étiquetés serveurs dans la topologie, et ce
+// sont les deux seules cases de la grille dont le parc dit autre chose
+// (`class: vm`, `hostedBy: luna`). Les deux graines, cette fois, tombent
+// d'accord, et c'est le châssis qui porte la preuve :
+// hosts/luna/configuration.nix nomme ses « gaming guests (arcade1 on a GTX
+// 1650, arcade2 on a GTX 1660) » et leur donne arcade-ctl plus les proxys VNC.
+// Ses fiches à elles s'ouvrent encore sur « a NixOS libvirt guest on `stella` »
+// avec la RTX 3050 — j'ai accusé les en-têtes, ils ont peut-être raison, mais
+// rien d'autre ne les suit : ni le parc, ni l'hôte ne mettent une carte sur
+// stella, et la vedette que la graine prête à chaque invitée est celle de
+// luna. C'est donc la version de l'hôte que la case rend. Le châssis qui les
+// porte étant dessiné juste à côté, la grille du haut est la seule du schéma
+// où ce lien pouvait se lire : la bande du bas, elle, les dédoublonne et ne
+// les note donc nulle part.
 const fleetIsGuest = (h: TNode) => {
   const d = fleetDevices.find((f) => f.name === h.label);
   const host = d?.hostedBy;
@@ -526,8 +538,10 @@ const fleetNotes = [
 // « jamais déclarés » serait faux deux fois. D'abord dès qu'un orphelin est
 // dans la bande : lui, le drapeau du parc le dit déclaré, et la topologie
 // publique ne le confirme pas — sans le nier non plus, car un repo peut fort
-// bien le nommer hors des nœuds qu'emit-topology ramasse (win11, encore, tenu
-// par le hook de game mode dans hosts/luna). Ensuite pour les
+// bien le nommer hors des nœuds qu'emit-topology ramasse (win11, encore :
+// hosts/bob et hosts/luna la tiennent tous deux dans labo.vmHost.alwaysOn,
+// mais sa définition est sous guests/, sans nixosConfiguration, donc sans
+// nœud). Ensuite pour les
 // onduleurs, redescendus ici parce qu'aucun nœud de topologie ne les nomme
 // plus, alors que le repo NixOS les pilote toujours, module NUT par module
 // NUT. Le seul fait que la graine garantisse, c'est l'absence de nœud — et

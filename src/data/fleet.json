@@ -13,31 +13,31 @@
     },
     {
       "class": "bmc",
-      "hostedBy": "gaming-01",
+      "hostedBy": "bob",
+      "iacDeclared": false,
+      "location": "rolling-rack",
+      "model": "Supermicro X11SRA-RF",
+      "name": "bmc-bob",
+      "network": "vlan10",
+      "role": "gestion hors bande (iKVM)"
+    },
+    {
+      "class": "bmc",
+      "hostedBy": "luna",
       "iacDeclared": false,
       "location": "rolling-rack",
       "model": "Supermicro X11SRA-F",
-      "name": "bmc-gaming-01",
+      "name": "bmc-luna",
       "network": "vlan10",
       "role": "gestion hors bande (iKVM)"
     },
     {
       "class": "bmc",
-      "hostedBy": "gpu-01",
+      "hostedBy": "stella",
       "iacDeclared": false,
       "location": "rolling-rack",
       "model": "Supermicro X11SRA-RF",
-      "name": "bmc-gpu-01",
-      "network": "vlan10",
-      "role": "gestion hors bande (iKVM)"
-    },
-    {
-      "class": "bmc",
-      "hostedBy": "gpu-02",
-      "iacDeclared": false,
-      "location": "rolling-rack",
-      "model": "Supermicro X11SRA-RF",
-      "name": "bmc-gpu-02",
+      "name": "bmc-stella",
       "network": "vlan10",
       "role": "gestion hors bande (iKVM)"
     },
@@ -53,7 +53,7 @@
       "class": "cloud-vm",
       "iacDeclared": true,
       "location": "off-site",
-      "name": "cloud-01",
+      "name": "aws",
       "network": "aws",
       "role": "unique nœud control-plane/etcd du cluster k3s"
     },
@@ -185,34 +185,10 @@
       "iacDeclared": false,
       "location": "wall-rack",
       "model": "Home Assistant Green",
-      "name": "ha-01",
+      "name": "automatron",
       "network": "vlan10",
       "rackOrder": 7,
       "role": "Home Assistant, domotique"
-    },
-    {
-      "class": "sbc",
-      "iacDeclared": true,
-      "location": "wall-rack",
-      "model": "Raspberry Pi 5",
-      "name": "pi-01",
-      "network": "vlan10",
-      "power": "ups-01",
-      "rackOrder": 5,
-      "role": "agent k3s",
-      "spec": "arm64"
-    },
-    {
-      "class": "sbc",
-      "iacDeclared": true,
-      "location": "wall-rack",
-      "model": "Raspberry Pi 5",
-      "name": "pi-02",
-      "network": "vlan10",
-      "power": "ups-01",
-      "rackOrder": 6,
-      "role": "agent k3s, bastion, registre de conteneurs privé",
-      "spec": "arm64, NVMe"
     },
     {
       "class": "sbc",
@@ -225,36 +201,28 @@
       "role": "carte de rechange, hors tension"
     },
     {
-      "class": "server",
-      "gpus": [
-        {
-          "die": "GA106",
-          "model": "RTX 3050",
-          "passthrough": false,
-          "vram": "8 Go"
-        },
-        {
-          "die": "TU116",
-          "model": "GTX 1650",
-          "passthrough": true,
-          "vram": "4 Go"
-        },
-        {
-          "die": "TU116",
-          "model": "GTX 1660",
-          "passthrough": true,
-          "vram": "6 Go"
-        }
-      ],
+      "class": "sbc",
       "iacDeclared": true,
-      "location": "rolling-rack",
-      "model": "Supermicro X11SRA-F",
-      "name": "gaming-01",
+      "location": "wall-rack",
+      "model": "Raspberry Pi 5",
+      "name": "worker1",
       "network": "vlan10",
-      "power": "ups-03",
-      "rackOrder": 2,
-      "role": "agent k3s (GPU, non taint) : NVR Frigate sur la RTX 3050 ; hôte de jeu (libvirt) pour les deux arcades",
-      "spec": "RTX 3050 (GA106, 8 Go) + GTX 1650 (TU116, 4 Go, vfio) + GTX 1660 (TU116, 6 Go, vfio)"
+      "power": "ups-01",
+      "rackOrder": 5,
+      "role": "agent k3s",
+      "spec": "arm64"
+    },
+    {
+      "class": "sbc",
+      "iacDeclared": true,
+      "location": "wall-rack",
+      "model": "Raspberry Pi 5",
+      "name": "worker2",
+      "network": "vlan10",
+      "power": "ups-01",
+      "rackOrder": 6,
+      "role": "agent k3s, bastion, registre de conteneurs privé",
+      "spec": "arm64, NVMe"
     },
     {
       "class": "server",
@@ -281,32 +249,12 @@
       "iacDeclared": true,
       "location": "rolling-rack",
       "model": "Supermicro X11SRA-RF",
-      "name": "gpu-01",
+      "name": "bob",
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 1,
       "role": "agent k3s (GPU, non taint), maître NUT de l'onduleur de la baie",
       "spec": "2x RTX 3060 (GA106, 12 Go) + RTX 3060 Lite Hash Rate (GA106, 12 Go)"
-    },
-    {
-      "class": "server",
-      "gpus": [
-        {
-          "die": "GA106M",
-          "model": "RTX 3060 Laptop",
-          "passthrough": false,
-          "vram": "6 Go"
-        }
-      ],
-      "iacDeclared": true,
-      "location": "rolling-rack",
-      "model": "Supermicro X11SRA-RF",
-      "name": "gpu-02",
-      "network": "vlan10",
-      "power": "ups-03",
-      "rackOrder": 3,
-      "role": "agent k3s (GPU, non taint)",
-      "spec": "RTX 3060 Laptop (GA106M, 6 Go)"
     },
     {
       "class": "server",
@@ -329,10 +277,62 @@
     },
     {
       "class": "server",
+      "gpus": [
+        {
+          "die": "GA106",
+          "model": "RTX 3050",
+          "passthrough": false,
+          "vram": "8 Go"
+        },
+        {
+          "die": "TU116",
+          "model": "GTX 1650",
+          "passthrough": true,
+          "vram": "4 Go"
+        },
+        {
+          "die": "TU116",
+          "model": "GTX 1660",
+          "passthrough": true,
+          "vram": "6 Go"
+        }
+      ],
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "model": "Supermicro X11SRA-F",
+      "name": "luna",
+      "network": "vlan10",
+      "power": "ups-03",
+      "rackOrder": 2,
+      "role": "agent k3s (GPU, non taint) : NVR Frigate sur la RTX 3050 ; hôte de jeu (libvirt) pour les deux arcades",
+      "spec": "RTX 3050 (GA106, 8 Go) + GTX 1650 (TU116, 4 Go, vfio) + GTX 1660 (TU116, 6 Go, vfio)"
+    },
+    {
+      "class": "server",
+      "gpus": [
+        {
+          "die": "GA106M",
+          "model": "RTX 3060 Laptop",
+          "passthrough": false,
+          "vram": "6 Go"
+        }
+      ],
+      "iacDeclared": true,
+      "location": "rolling-rack",
+      "model": "Supermicro X11SRA-RF",
+      "name": "stella",
+      "network": "vlan10",
+      "power": "ups-03",
+      "rackOrder": 3,
+      "role": "agent k3s (GPU, non taint)",
+      "spec": "RTX 3060 Laptop (GA106M, 6 Go)"
+    },
+    {
+      "class": "server",
       "iacDeclared": true,
       "location": "rolling-rack",
       "model": "Supermicro X11SRA",
-      "name": "srv-01",
+      "name": "vega",
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 4,
@@ -404,7 +404,7 @@
           "vram": "4 Go"
         }
       ],
-      "hostedBy": "gaming-01",
+      "hostedBy": "luna",
       "iacDeclared": true,
       "name": "arcade1",
       "network": "vlan10",
@@ -422,7 +422,7 @@
           "vram": "6 Go"
         }
       ],
-      "hostedBy": "gaming-01",
+      "hostedBy": "luna",
       "iacDeclared": true,
       "name": "arcade2",
       "network": "vlan10",
@@ -432,51 +432,51 @@
     {
       "class": "vm",
       "gpu": false,
-      "hostedBy": "gpu-01",
+      "hostedBy": "bob",
       "iacDeclared": true,
-      "name": "console-vm",
+      "name": "coquille",
       "network": "vlan10",
       "role": "console de gestion du cluster (pas un nœud k3s)"
     },
     {
       "class": "vm",
       "gpu": false,
-      "hostedBy": "gpu-01",
-      "iacDeclared": true,
-      "name": "vm-01",
-      "network": "vlan10",
-      "role": "agent k3s"
-    },
-    {
-      "class": "vm",
-      "gpu": false,
-      "hostedBy": "srv-01",
-      "iacDeclared": true,
-      "name": "vm-02",
-      "network": "vlan10",
-      "role": "agent k3s"
-    },
-    {
-      "class": "vm",
-      "gpu": false,
-      "hostedBy": "gaming-01",
-      "iacDeclared": true,
-      "name": "vm-03",
-      "network": "vlan10",
-      "role": "agent k3s (CPU seulement), déplaçable entre les hôtes X11SRA"
-    },
-    {
-      "class": "vm",
-      "gpu": false,
-      "hostedBy": "gpu-01",
+      "hostedBy": "bob",
       "iacDeclared": false,
       "name": "win11",
       "network": "vlan10",
       "role": "VM de bureau Windows 11 Pro, à la demande, sans carte graphique ; pas un nœud k3s"
+    },
+    {
+      "class": "vm",
+      "gpu": false,
+      "hostedBy": "bob",
+      "iacDeclared": true,
+      "name": "worker3",
+      "network": "vlan10",
+      "role": "agent k3s"
+    },
+    {
+      "class": "vm",
+      "gpu": false,
+      "hostedBy": "vega",
+      "iacDeclared": true,
+      "name": "worker4",
+      "network": "vlan10",
+      "role": "agent k3s"
+    },
+    {
+      "class": "vm",
+      "gpu": false,
+      "hostedBy": "luna",
+      "iacDeclared": true,
+      "name": "worker5",
+      "network": "vlan10",
+      "role": "agent k3s (CPU seulement), déplaçable entre les hôtes X11SRA"
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-10-19T08:45:16Z",
+  "generated": "2026-10-19T17:58:25Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

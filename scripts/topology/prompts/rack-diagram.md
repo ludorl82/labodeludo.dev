@@ -98,7 +98,7 @@ ne pas mélanger les deux.
 
 1. Touch only `site/src/components/RackDiagram.astro`.
 2. Only the data's own names may appear — machines under their real names
-   since 2026-10-18, the router/NAS/HA under generic ones; the data is
+   since 2026-10-18, the router and the NAS under generic ones; the data is
    already sanitized, so just do not invent anything that is not in it. Your output is
    mechanically scanned and the commit is refused on any violation.
 3. Keep the site's idiom: inline SVG, theme tokens (`var(--panel)`,

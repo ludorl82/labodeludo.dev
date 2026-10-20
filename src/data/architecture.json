@@ -41,7 +41,7 @@
       "to": "dns:n8n.pub.example.com"
     },
     {
-      "from": "access:pfsense_passerelle",
+      "from": "access:pfsense_router",
       "kind": "protects",
       "to": "dns:router.pub.example.com"
     },
@@ -216,6 +216,16 @@
       "to": "external:nas"
     },
     {
+      "from": "dns:automatron.family.example",
+      "kind": "routes-to",
+      "to": "external:automatron"
+    },
+    {
+      "from": "dns:automatron.family.example",
+      "kind": "routes-to",
+      "to": "tunnel:k3s"
+    },
+    {
       "from": "dns:cronicle.pub.example.com",
       "kind": "routes-to",
       "to": "app:traefik"
@@ -242,16 +252,6 @@
     },
     {
       "from": "dns:grafana.pub.example.com",
-      "kind": "routes-to",
-      "to": "tunnel:k3s"
-    },
-    {
-      "from": "dns:ha-01.family.example",
-      "kind": "routes-to",
-      "to": "external:ha-01"
-    },
-    {
-      "from": "dns:ha-01.family.example",
       "kind": "routes-to",
       "to": "tunnel:k3s"
     },
@@ -341,59 +341,64 @@
       "to": "tunnel:k3s"
     },
     {
-      "from": "host:cloud-01",
+      "from": "host:aws",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
-      "from": "host:gaming-01",
+      "from": "host:bob",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
-      "from": "host:gpu-01",
+      "from": "host:luna",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
-      "from": "host:gpu-02",
+      "from": "host:stella",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
-      "from": "host:pi-01",
+      "from": "host:vega",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
-      "from": "host:pi-01",
+      "from": "host:worker1",
+      "kind": "member-of",
+      "to": "cluster:k3s"
+    },
+    {
+      "from": "host:worker1",
       "kind": "uses",
       "to": "external:nas"
     },
     {
-      "from": "host:pi-02",
+      "from": "host:worker2",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
-      "from": "host:srv-01",
+      "from": "host:worker3",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
-      "from": "host:vm-01",
+      "from": "host:worker4",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
-      "from": "host:vm-02",
+      "from": "host:worker5",
       "kind": "member-of",
       "to": "cluster:k3s"
     },
     {
       "from": "instance:aws_node",
       "kind": "is",
-      "to": "host:cloud-01"
+      "to": "host:aws"
     },
     {
       "from": "route:argocd/argocd",
@@ -586,14 +591,14 @@
       "to": "app:cloudflared"
     },
     {
-      "from": "workload:cloudflared/cloudflared-cloud-01",
+      "from": "workload:cloudflared/cloudflared-aws",
       "kind": "part-of",
       "to": "app:cloudflared"
     },
     {
-      "from": "workload:cloudflared/cloudflared-cloud-01",
+      "from": "workload:cloudflared/cloudflared-aws",
       "kind": "pinned-to",
-      "to": "host:cloud-01"
+      "to": "host:aws"
     },
     {
       "from": "workload:cronicle/cronicle",
@@ -608,7 +613,7 @@
     {
       "from": "workload:frigate/frigate",
       "kind": "pinned-to",
-      "to": "host:gpu-02"
+      "to": "host:luna"
     },
     {
       "from": "workload:iac-gate/iac-gate",
@@ -623,7 +628,7 @@
     {
       "from": "workload:keepass-webdav/webdav",
       "kind": "pinned-to",
-      "to": "host:cloud-01"
+      "to": "host:aws"
     },
     {
       "from": "workload:kuma/deadman-heartbeat",
@@ -638,7 +643,7 @@
     {
       "from": "workload:kuma/kuma-backup",
       "kind": "pinned-to",
-      "to": "host:cloud-01"
+      "to": "host:aws"
     },
     {
       "from": "workload:kuma/uptime-kuma",
@@ -648,7 +653,7 @@
     {
       "from": "workload:kuma/uptime-kuma",
       "kind": "pinned-to",
-      "to": "host:cloud-01"
+      "to": "host:aws"
     },
     {
       "from": "workload:labodeludo/gh-runner",
@@ -693,7 +698,7 @@
     {
       "from": "workload:ntfy/ntfy",
       "kind": "pinned-to",
-      "to": "host:cloud-01"
+      "to": "host:aws"
     },
     {
       "from": "workload:ntfy/ntfy-backup",
@@ -703,7 +708,7 @@
     {
       "from": "workload:ntfy/ntfy-backup",
       "kind": "pinned-to",
-      "to": "host:cloud-01"
+      "to": "host:aws"
     },
     {
       "from": "workload:numeriseur/numeriseur-sftpgo",
@@ -718,7 +723,7 @@
     {
       "from": "workload:unifi/unifi",
       "kind": "pinned-to",
-      "to": "host:gpu-01"
+      "to": "host:bob"
     },
     {
       "from": "workload:unifi/unifi-mongo-backup",
@@ -726,7 +731,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-10-19T09:19:56+00:00",
+  "generated": "2026-10-20T08:32:29+00:00",
   "nodes": [
     {
       "id": "access:cronicle",
@@ -817,7 +822,7 @@
       "source": "live/access-apps.tf"
     },
     {
-      "id": "access:pfsense_passerelle",
+      "id": "access:pfsense_router",
       "kind": "access",
       "label": "pfSense (router)",
       "layer": "edge",
@@ -1201,6 +1206,17 @@
       "source": "argocd/README.md"
     },
     {
+      "id": "dns:automatron.family.example",
+      "kind": "dns",
+      "label": "automatron.family.example",
+      "layer": "edge",
+      "meta": {
+        "origin": "https://192.0.2.34:443"
+      },
+      "repo": "cloudflare-iac-public",
+      "source": "live/tunnels.tf"
+    },
+    {
       "id": "dns:cronicle.pub.example.com",
       "kind": "dns",
       "label": "cronicle.pub.example.com",
@@ -1238,17 +1254,6 @@
       "layer": "edge",
       "meta": {
         "origin": "https://traefik.kube-system.svc.cluster.local:443"
-      },
-      "repo": "cloudflare-iac-public",
-      "source": "live/tunnels.tf"
-    },
-    {
-      "id": "dns:ha-01.family.example",
-      "kind": "dns",
-      "label": "ha-01.family.example",
-      "layer": "edge",
-      "meta": {
-        "origin": "https://192.0.2.34:443"
       },
       "repo": "cloudflare-iac-public",
       "source": "live/tunnels.tf"
@@ -1362,9 +1367,9 @@
       "source": "live/tunnels.tf"
     },
     {
-      "id": "external:ha-01",
+      "id": "external:automatron",
       "kind": "external",
-      "label": "ha-01",
+      "label": "automatron",
       "layer": "external",
       "meta": {
         "origin": "https://192.0.2.34:443"
@@ -1419,6 +1424,7 @@
         "class": "server",
         "modules": [
           "arcade-desktop",
+          "nvidia-driver",
           "private-ca"
         ],
         "networks": []
@@ -1436,6 +1442,7 @@
         "class": "server",
         "modules": [
           "arcade-desktop",
+          "nvidia-driver",
           "private-ca"
         ],
         "networks": []
@@ -1444,9 +1451,9 @@
       "source": "hosts/arcade2/configuration.nix"
     },
     {
-      "id": "host:cloud-01",
+      "id": "host:aws",
       "kind": "host",
-      "label": "cloud-01",
+      "label": "aws",
       "layer": "hardware",
       "meta": {
         "arch": "x86_64-linux",
@@ -1462,12 +1469,39 @@
         ]
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/cloud-01/configuration.nix"
+      "source": "hosts/aws/configuration.nix"
     },
     {
-      "id": "host:console-vm",
+      "id": "host:bob",
       "kind": "host",
-      "label": "console-vm",
+      "label": "bob",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "server",
+        "k3sRole": "agent",
+        "modules": [
+          "caps-ctrl",
+          "dual-homed-routing",
+          "k3s-agent",
+          "kiosk",
+          "nvidia-driver",
+          "private-ca",
+          "rack-wake",
+          "ups-cp-1",
+          "vm-host"
+        ],
+        "networks": [
+          "vlan10"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/bob/configuration.nix"
+    },
+    {
+      "id": "host:coquille",
+      "kind": "host",
+      "label": "coquille",
       "layer": "hardware",
       "meta": {
         "arch": "x86_64-linux",
@@ -1482,21 +1516,73 @@
         "networks": []
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/console-vm/configuration.nix"
+      "source": "hosts/coquille/configuration.nix"
     },
     {
-      "id": "host:gaming-01",
+      "id": "host:kiosque",
       "kind": "host",
-      "label": "gaming-01",
+      "label": "kiosque",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "server",
+        "modules": [
+          "caps-ctrl",
+          "kiosk",
+          "kiosk-capture",
+          "private-ca"
+        ],
+        "networks": [
+          "vlan10"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/kiosque/configuration.nix"
+    },
+    {
+      "id": "host:luna",
+      "kind": "host",
+      "label": "luna",
       "layer": "hardware",
       "meta": {
         "arch": "x86_64-linux",
         "class": "server",
         "k3sRole": "agent",
         "modules": [
+          "caps-ctrl",
+          "drift-check",
           "dual-homed-routing",
+          "frigate-host",
           "k3s-agent",
+          "kiosk-capture",
           "labo-gpus",
+          "nvidia-driver",
+          "private-ca",
+          "ups-client",
+          "vm-host"
+        ],
+        "networks": [
+          "vlan10"
+        ]
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/luna/configuration.nix"
+    },
+    {
+      "id": "host:stella",
+      "kind": "host",
+      "label": "stella",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "server",
+        "k3sRole": "agent",
+        "modules": [
+          "caps-ctrl",
+          "dual-homed-routing",
+          "frigate-host",
+          "k3s-agent",
+          "nvidia-driver",
           "private-ca",
           "ups-client"
         ],
@@ -1505,41 +1591,19 @@
         ]
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/gaming-01/configuration.nix"
+      "source": "hosts/stella/configuration.nix"
     },
     {
-      "id": "host:gpu-01",
+      "id": "host:vega",
       "kind": "host",
-      "label": "gpu-01",
+      "label": "vega",
       "layer": "hardware",
       "meta": {
         "arch": "x86_64-linux",
         "class": "server",
         "k3sRole": "agent",
         "modules": [
-          "dual-homed-routing",
-          "k3s-agent",
-          "private-ca",
-          "rack-wake",
-          "ups-cp-1"
-        ],
-        "networks": [
-          "vlan10"
-        ]
-      },
-      "repo": "nixos-iac-public",
-      "source": "hosts/gpu-01/configuration.nix"
-    },
-    {
-      "id": "host:gpu-02",
-      "kind": "host",
-      "label": "gpu-02",
-      "layer": "hardware",
-      "meta": {
-        "arch": "x86_64-linux",
-        "class": "server",
-        "k3sRole": "agent",
-        "modules": [
+          "caps-ctrl",
           "dual-homed-routing",
           "k3s-agent",
           "private-ca",
@@ -1550,12 +1614,12 @@
         ]
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/gpu-02/configuration.nix"
+      "source": "hosts/vega/configuration.nix"
     },
     {
-      "id": "host:pi-01",
+      "id": "host:worker1",
       "kind": "host",
-      "label": "pi-01",
+      "label": "worker1",
       "layer": "hardware",
       "meta": {
         "arch": "aarch64-linux",
@@ -1574,18 +1638,19 @@
         ]
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/pi-01/configuration.nix"
+      "source": "hosts/worker1/configuration.nix"
     },
     {
-      "id": "host:pi-02",
+      "id": "host:worker2",
       "kind": "host",
-      "label": "pi-02",
+      "label": "worker2",
       "layer": "hardware",
       "meta": {
         "arch": "aarch64-linux",
         "class": "sbc",
         "k3sRole": "agent",
         "modules": [
+          "bob-voice-warm",
           "console-container",
           "dual-homed-routing",
           "ha-backup",
@@ -1602,69 +1667,66 @@
         ]
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/pi-02/configuration.nix"
+      "source": "hosts/worker2/configuration.nix"
     },
     {
-      "id": "host:srv-01",
+      "id": "host:worker3",
       "kind": "host",
-      "label": "srv-01",
+      "label": "worker3",
       "layer": "hardware",
       "meta": {
         "arch": "x86_64-linux",
-        "class": "server",
+        "class": "vm",
         "k3sRole": "agent",
         "modules": [
+          "comin",
           "dual-homed-routing",
+          "k3s-agent",
+          "private-ca"
+        ],
+        "networks": []
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/worker3/configuration.nix"
+    },
+    {
+      "id": "host:worker4",
+      "kind": "host",
+      "label": "worker4",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "vm",
+        "k3sRole": "agent",
+        "modules": [
+          "comin",
+          "dual-homed-routing",
+          "k3s-agent",
+          "private-ca"
+        ],
+        "networks": []
+      },
+      "repo": "nixos-iac-public",
+      "source": "hosts/worker4/configuration.nix"
+    },
+    {
+      "id": "host:worker5",
+      "kind": "host",
+      "label": "worker5",
+      "layer": "hardware",
+      "meta": {
+        "arch": "x86_64-linux",
+        "class": "vm",
+        "k3sRole": "agent",
+        "modules": [
           "k3s-agent",
           "private-ca",
-          "ups-client"
-        ],
-        "networks": [
-          "vlan10"
-        ]
-      },
-      "repo": "nixos-iac-public",
-      "source": "hosts/srv-01/configuration.nix"
-    },
-    {
-      "id": "host:vm-01",
-      "kind": "host",
-      "label": "vm-01",
-      "layer": "hardware",
-      "meta": {
-        "arch": "x86_64-linux",
-        "class": "vm",
-        "k3sRole": "agent",
-        "modules": [
-          "comin",
-          "dual-homed-routing",
-          "k3s-agent",
-          "private-ca"
+          "vm-host"
         ],
         "networks": []
       },
       "repo": "nixos-iac-public",
-      "source": "hosts/vm-01/configuration.nix"
-    },
-    {
-      "id": "host:vm-02",
-      "kind": "host",
-      "label": "vm-02",
-      "layer": "hardware",
-      "meta": {
-        "arch": "x86_64-linux",
-        "class": "vm",
-        "k3sRole": "agent",
-        "modules": [
-          "comin",
-          "dual-homed-routing",
-          "k3s-agent",
-          "private-ca"
-        ],
-        "networks": []
-      },
-      "repo": "nixos-iac-public",
-      "source": "hosts/vm-02/configuration.nix"
+      "source": "hosts/worker5/configuration.nix"
     },
     {
       "id": "instance:aws_node",
@@ -2039,9 +2101,9 @@
       "source": "cloudflared/deployment.yaml"
     },
     {
-      "id": "workload:cloudflared/cloudflared-cloud-01",
+      "id": "workload:cloudflared/cloudflared-aws",
       "kind": "workload",
-      "label": "cloudflared-cloud-01",
+      "label": "cloudflared-aws",
       "layer": "cluster",
       "meta": {
         "kind": "Deployment"
@@ -2264,20 +2326,20 @@
   ],
   "sources": {
     "aws-iac-public": {
-      "commit": "63ecb26",
-      "date": "2026-09-28T16:56:16-04:00"
+      "commit": "3441751",
+      "date": "2026-10-19T11:42:52-04:00"
     },
     "cloudflare-iac-public": {
-      "commit": "e8dff20",
-      "date": "2026-09-28T16:56:26-04:00"
+      "commit": "bcdcba3",
+      "date": "2026-10-19T11:43:01-04:00"
     },
     "k3s-iac-public": {
-      "commit": "f60a214",
-      "date": "2026-09-28T16:56:11-04:00"
+      "commit": "0c7f62a",
+      "date": "2026-10-19T11:42:48-04:00"
     },
     "nixos-iac-public": {
-      "commit": "f19f525",
-      "date": "2026-09-28T16:56:06-04:00"
+      "commit": "a98793d",
+      "date": "2026-10-19T11:42:44-04:00"
     }
   },
   "topologyVersion": 1

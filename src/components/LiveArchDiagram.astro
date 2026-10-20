@@ -374,10 +374,13 @@ const virtualList = virtuals
 // hosts/luna/configuration.nix nomme ses « gaming guests (arcade1 on a GTX
 // 1650, arcade2 on a GTX 1660) » et leur donne arcade-ctl plus les proxys VNC.
 // Ses fiches à elles s'ouvrent encore sur « a NixOS libvirt guest on `stella` »
-// avec la RTX 3050 — j'ai accusé les en-têtes, ils ont peut-être raison, mais
-// rien d'autre ne les suit : ni le parc, ni l'hôte ne mettent une carte sur
-// stella, et la vedette que la graine prête à chaque invitée est celle de
-// luna. C'est donc la version de l'hôte que la case rend. Le châssis qui les
+// — arcade1 avec la RTX 3050, arcade2 avec une GTX 960 — et j'ai accusé les
+// en-têtes. Vérifié ce soir : ils portent un nom d'avant le 2026-10-17, car
+// la machine définie sous hosts/stella est l'ex-encodeur. Le parc comme
+// l'hôte lui mettent bien une carte, désormais, mais c'est une RTX 3060
+// Laptop que le host conduit lui-même pour k3s, jamais passée en vfio — ni
+// la 1650 ni la 1660 des invitées, qui sont dans la liste de luna. C'est
+// donc la version de l'hôte que la case rend. Le châssis qui les
 // porte étant dessiné juste à côté, la grille du haut est la seule du schéma
 // où ce lien pouvait se lire : la bande du bas, elle, les dédoublonne et ne
 // les note donc nulle part.
@@ -392,6 +395,15 @@ const fleetIsGuest = (h: TNode) => {
     : undefined;
 };
 const homeGuests = homeHosts.filter((h) => fleetIsGuest(h));
+// Les cases que la topologie dit déjà « vm » : le compte des machines qui ne
+// sont pas du fer ne s'arrête pas aux deux dont le parc contredit
+// l'étiquette. Écrites dans le frontmatter plutôt que sous-entendues dans le
+// aria-label, pour que la phrase rende le compte complet et pas le seul
+// sous-ensemble corrigé.
+const homeVms = homeHosts.filter((h) =>
+  /(^|-)vm$/.test(String(h.meta.class ?? "")),
+);
+const metalHome = homeHosts.length - homeGuests.length - homeVms.length;
 const pluggedIn =
   unpowered.length || virtuals.length
     ? "sous tension pour la plupart"
@@ -592,12 +604,15 @@ const ariaLabel =
     : "") +
   (homeGuests.length
     ? ` Méfie-toi du mot « machines » : ${homeGuests.length} des ` +
-      `${homeHosts.length} de la grille ne sont pas du fer mais des invitées ` +
-      `libvirt, posées sur un châssis dessiné dans la même grille (${homeGuests
+      `${homeHosts.length} de la grille portent une étiquette de fer que le ` +
+      `parc contredit — des invitées libvirt posées sur un châssis dessiné ` +
+      `dans la même grille (${homeGuests
         .map((h) => `${h.label} sur ${fleetIsGuest(h)}`)
-        .join(", ")}). Le nombre ne bouge pas — elles sont bien NixOS et bien ` +
-      `gérées par l'IaC ; c'est la nature de la case qui se corrige, pas le ` +
-      `compte.`
+        .join(", ")}). Elles ne sont pas seules à ne pas respirer l'air du ` +
+      `rack : ${homeVms.length} cases l'écrivent déjà (« vm ») et ` +
+      `${metalHome} sont de la ferraille pour de vrai. Le compte ne bouge pas ` +
+      `— elles sont bien NixOS et bien gérées par l'IaC ; c'est la nature de ` +
+      `la case qui se corrige, pas le nombre.`
     : "") +
   (externals.length
     ? ` Toujours côté maison, ${externals.length} boîtes en pointillés ` +

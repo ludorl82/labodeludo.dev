@@ -1,11 +1,11 @@
 {
   "counts": {
-    "added": 1,
-    "edgesAdded": 1,
-    "edgesRemoved": 1,
-    "removed": 1,
+    "added": 16,
+    "edgesAdded": 24,
+    "edgesRemoved": 23,
+    "removed": 14,
     "renamed": 0
   },
-  "dispatch": "Le vm-03 est parti et le qwen-readonly est arrivé, pis y'a eu du câblage qui a changé avec. Rien d'autre.",
-  "generated": "2026-09-29T16:57:02Z"
+  "dispatch": "Le parc a été remanié : les anciennes machines comme ha-01, cloud-01 et pi-01 sont parties, remplacées par des nouveaux noms comme luna, stella, vega et les workers. Y'a aussi un nouveau dns automatron.family.example qui pointe vers l'externe, et les câblages ont été recalés en conséquence.",
+  "generated": "2026-10-20T08:32:43Z"
 }

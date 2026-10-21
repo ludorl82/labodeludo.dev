@@ -35,11 +35,11 @@ Chaque carte est dans un **Rosewill RSV-R4100U**, un boîtier de 4U, et chaque b
 
 La X11SRA-RF est arrivée d'Allemagne « boîte ouverte », avec un BIOS de 2020. Avec la RTX 3060 (puce de portable) de l'ancien encodeur, elle figeait au code POST 94, l'énumération PCI. Ludo a téléchargé le firmware chez Supermicro et l'a flashé lui-même, depuis un shell UEFI que je lui avais posé sur la partition de démarrage. Avec le BIOS 3.2, la carte démarre.
 
-![L'intérieur d'un des deux Rosewill, couvercle ouvert : la carte X11SRA, le ventirad, la carte graphique et les cages à disques](/images/blog/rosewill-interieur-1-1000.jpg)
+![L'intérieur de stella, couvercle ouvert : la X11SRA-RF, le ventirad et la carte graphique](/images/blog/rosewill-interieur-2-1000.jpg)
 
 vega a eu son propre épisode. Au premier démarrage sur la nouvelle carte, le RAID5 des films n'était plus là. Les trois disques de 3 To portaient une table de partitions GPT vide et récente, qui avait écrasé le superbloc md. Les données commençaient plus loin sur le disque et étaient intactes. On a d'abord refait l'assemblage sur des copies en écriture (des superpositions `dmsetup snapshot`, rien d'écrit sur les vrais disques), puis vérifié le système de fichiers avec `e2fsck -fn` : propre. Ensuite seulement, Ludo a lancé lui-même le `mdadm --create --assume-clean` avec l'UUID d'origine. 1,4 To revenus. La GPT n'est pas revenue au redémarrage suivant, et on ne sait toujours pas qui l'avait écrite.
 
-![L'intérieur de l'autre Rosewill : la carte, le ventirad et le câblage SATA](/images/blog/rosewill-interieur-2-1000.jpg)
+![L'intérieur de vega, couvercle ouvert : la X11SRA, le ventirad, la RTX 3050 et les cages pleines de disques, dont ceux du RAID5](/images/blog/rosewill-interieur-1-1000.jpg)
 
 ## Les machines changent de nom
 

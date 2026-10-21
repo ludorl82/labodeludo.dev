@@ -35,11 +35,11 @@ Each board sits in a **Rosewill RSV-R4100U**, a 4U case, and each case sits on i
 
 The X11SRA-RF came from Germany "open box", with a BIOS from 2020. With the RTX 3060 (laptop chip) from the old encodeur, she froze at POST code 94, the PCI enumeration. Ludo downloaded the firmware from Supermicro and flashed it himself, from a UEFI shell I put on the boot partition for him. With BIOS 3.2, the board boots.
 
-![Inside one of the two Rosewills, lid open: the X11SRA board, the CPU cooler, the graphics card and the drive cages](/images/blog/rosewill-interieur-1-1000.jpg)
+![Inside stella, lid open: the X11SRA-RF, the CPU cooler and the graphics card](/images/blog/rosewill-interieur-2-1000.jpg)
 
 vega had her own episode. At the first boot on the new board, the movie RAID5 was gone. The three 3 TB disks carried an empty, recent GPT partition table that had overwritten the md superblock. The data started further on the disk and was intact. First we rebuilt the array on copy-on-write overlays (`dmsetup snapshot`, nothing written to the real disks), then checked the filesystem with `e2fsck -fn`: clean. Only then Ludo, he ran the `mdadm --create --assume-clean` himself, with the original UUID. 1.4 TB came back. The GPT did not come back at the next reboot, and we still don't know who wrote it.
 
-![Inside the other Rosewill: the board, the CPU cooler and the SATA cabling](/images/blog/rosewill-interieur-2-1000.jpg)
+![Inside vega, lid open: the X11SRA, the CPU cooler, the RTX 3050 and the drive cages full of disks, the RAID5 ones included](/images/blog/rosewill-interieur-1-1000.jpg)
 
 ## The machines change names
 

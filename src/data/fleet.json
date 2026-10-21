@@ -329,6 +329,14 @@
     },
     {
       "class": "server",
+      "gpus": [
+        {
+          "die": "GA107",
+          "model": "RTX 3050",
+          "passthrough": false,
+          "vram": "6 Go"
+        }
+      ],
       "iacDeclared": true,
       "location": "rolling-rack",
       "model": "Supermicro X11SRA",
@@ -336,7 +344,8 @@
       "network": "vlan10",
       "power": "ups-03",
       "rackOrder": 4,
-      "role": "agent k3s, hôte libvirt, stockage (RAID5 + deux disques de 8 To) — deux graveurs Blu-ray présents, outillage de ripping non rétabli depuis le passage à NixOS"
+      "role": "agent k3s, hôte libvirt, stockage (RAID5 + deux disques de 8 To) — deux graveurs Blu-ray présents, outillage de ripping non rétabli depuis le passage à NixOS",
+      "spec": "RTX 3050 (GA107, 6 Go)"
     },
     {
       "class": "switch",
@@ -476,7 +485,7 @@
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-10-20T08:45:15Z",
+  "generated": "2026-10-21T11:08:55Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

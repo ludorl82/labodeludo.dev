@@ -1,22 +1,21 @@
 {
   "curated": [
-    "How do your gaming rigs and your cluster share the graphics cards?",
+    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
     "What happens to the cluster when you start a game?",
-    "Why did you split the bastion from the console?"
+    "Why did you split the bastion from the console?",
+    "What is the last thing still running when everything else is down?",
+    "How do you publish your infrastructure without leaking secrets?"
   ],
-  "generated": "2026-10-20T08:35:38Z",
+  "generated": "2026-10-21T08:35:01Z",
   "openers": [
-    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
     "Comment migrer une VM sans stockage partagé ?",
-    "Comment la cache est elle gérée avec Bob en vocal?",
-    "Quel est ton secret pour migrer une VM en cours d'exécution ?",
-    "What was involved in that vMotion setup?",
-    "How do your gaming rigs and your cluster share the graphics cards?",
+    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
+    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
     "What happens to the cluster when you start a game?",
-    "Why did you split the bastion from the console?"
+    "Why did you split the bastion from the console?",
+    "What is the last thing still running when everything else is down?",
+    "How do you publish your infrastructure without leaking secrets?"
   ],
-  "written": [
-    "Quel est ton secret pour migrer une VM en cours d'exécution ?",
-    "What was involved in that vMotion setup?"
-  ]
+  "written": []
 }

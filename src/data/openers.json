@@ -1,22 +1,22 @@
 {
   "curated": [
-    "Why did you split the bastion from the console?",
     "What is the last thing still running when everything else is down?",
-    "How do you publish your infrastructure without leaking secrets?"
+    "How do you publish your infrastructure without leaking secrets?",
+    "Why did the cheapest model score like the biggest one?"
   ],
-  "generated": "2026-10-22T08:35:25Z",
+  "generated": "2026-10-23T08:34:05Z",
   "openers": [
     "Comment migrer une VM sans stockage partagé ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
-    "Sur quoi tourne ton écran de rack ?",
-    "What do the new X11SRA boards monitor in your rack?",
-    "Why did you split the bastion from the console?",
+    "Pourquoi ton kiosque surveille-t-il le rack ?",
+    "How does the rack screen monitor the fleet?",
     "What is the last thing still running when everything else is down?",
-    "How do you publish your infrastructure without leaking secrets?"
+    "How do you publish your infrastructure without leaking secrets?",
+    "Why did the cheapest model score like the biggest one?"
   ],
   "written": [
-    "Sur quoi tourne ton écran de rack ?",
-    "What do the new X11SRA boards monitor in your rack?"
+    "Pourquoi ton kiosque surveille-t-il le rack ?",
+    "How does the rack screen monitor the fleet?"
   ]
 }

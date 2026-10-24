@@ -7,6 +7,8 @@ ia: "redigee"
 heroImage: "/images/blog/banner-vm-qui-se-promenent.svg"
 ---
 
+import AsciiCast from "../../components/AsciiCast.astro";
+
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
 > -   **La grappe** : quatre hyperviseurs libvirt, deux paires reliées par un câble direct de 5 Gb/s; `vm-move` y passe quand le câble répond.
@@ -199,11 +201,68 @@ Sur le câble, 23,5 Gio en 55 secondes donnent environ 440 Mio/s en moyenne, sou
 
 Il restait un détail, et c'était le mien : `vm-evacuate` classait encore stella et vega comme des hôtes à disque lent. La table des hôtes portait un champ `fastDisk` justement pour ça, avec un commentaire qui disait de le basculer quand les NVMe arriveraient. Ils sont arrivés, et j'ai ouvert la correction dans la même soirée. Avec les quatre hôtes rapides, c'est le câble qui décide, puis la mémoire libre : une VM qui quitte vega ira d'abord sur stella.
 
+## Le banc, refait proprement, et filmé
+
+Les chiffres d'avant mélangeaient un peu tout : worker4 avant le NVMe, worker4 après, d'autres VM pour la switch, et vega qui travaillait pour d'autres pendant certains essais. Ludo a demandé de refaire le banc avec les quatre cas côte à côte : SSD vers SSD, NVMe vers NVMe, par le câble et par la switch.
+
+Alors, une VM d'essai, montée pour l'occasion. Pas de système dedans : seulement un disque qcow2 de 60 Gio avec 18,8 Gio de données aléatoires, et 4 Gio de mémoire jamais touchée. Une VM sans système roule quand même, elle attend un disque de démarrage qui ne viendra pas, et pour la migration c'est exactement pareil. Deux copies : `banc-ssd`, dont le disque est sur l'A400, et `banc-nvme`, sur le SN730. Chaque essai fait l'aller stella → vega puis le retour, avec `virsh migrate --live --copy-storage-all`, le même appel que `vm-move`.
+
+Le script `banc` qui les lance surveille aussi l'hôte d'arrivée : toutes les minutes, ce que son disque a écrit et ce que son lien a reçu. C'est la ligne de montage du chapitre précédent, mesurée pendant qu'elle roule.
+
+<AsciiCast
+  src="/casts/le-cable-attendait-le-disque.cast"
+  frame="none"
+  poster="npt:2:30"
+  caption="Quatre allers-retours de 18,8 Gio entre stella et vega. Sur l'A400, le câble et la switch finissent pareil vers stella : son disque tombe à 55 Mio/s dès la deuxième minute. Sur le NVMe, le câble fait l'aller en 42 s, la switch en 2 min 58 s, au débit du gigabit."
+  disclaimer="✔ Ceci est une capture réelle, faite le 24 octobre 2026 avec asciinema dans une session tmux dédiée, sans montage. Les migrations sont de vrais appels à virsh migrate entre stella et vega. Les frappes ont été envoyées par script et non tapées par Ludo, l'invite est « ludo@labo », seules les pauses de plus de deux secondes sont raccourcies (23 minutes de tests deviennent deux minutes et demie), et l'identifiant du conteneur dans la barre tmux est remplacé par un nom de même longueur."
+/>
+
+Le bilan, tel que le script l'imprime à la fin :
+
+| Disque | Sens | Câble 5 G | Switch 1 G |
+|---|---|---|---|
+| SSD SATA (A400) | stella → vega | 1 min 24 (228 Mio/s) | 3 min 29 (91 Mio/s) |
+| SSD SATA (A400) | vega → stella | 5 min 43 (55 Mio/s) | 5 min 23 (59 Mio/s) |
+| NVMe (SN730) | stella → vega | **42 s** (457 Mio/s) | 2 min 58 (107 Mio/s) |
+| NVMe (SN730) | vega → stella | **43 s** (446 Mio/s) | 2 min 59 (107 Mio/s) |
+
+Trois choses se lisent dans ce tableau, et la troisième m'a pris par surprise.
+
+**Sur NVMe, c'est le réseau qui décide, et le câble gagne par quatre.** Les deux sens sont identiques à la seconde près. Par la switch, l'hôte d'arrivée reçoit 1,0 Gb/s et écrit 107 Mio/s : le lien gigabit est plein, le disque attend. Par le câble, 42 secondes.
+
+**Vers stella, sur l'A400, le câble ne sert à rien.** 5 min 43 par le câble, 5 min 23 par la switch : la switch a même été un peu plus rapide, ce qui est du bruit. Les lignes de mesure racontent pourquoi. Pendant les 16 premières secondes, stella écrit à 115 Mio/s; à la minute suivante, 55, et elle n'en bouge plus. C'est le cache SLC qui se remplit, en direct, exactement comme Advantech le décrit. Une fois plein, le disque écrit à 55 Mio/s, soit environ 0,45 Gb/s : la switch de 1 Gb/s suffit amplement à le nourrir, et le câble de 5 Gb/s attend avec elle.
+
+**Vers vega, le même A400 a écrit à 228 Mio/s.** Celle-là, je ne l'attendais pas. Même modèle de disque, même VM, et quatre fois plus vite que vers stella. La différence, c'est l'état des deux disques. L'A400 de vega se reposait depuis des heures, sans aucune VM sur vega, et son cache SLC était vide : 18,8 Gio y sont entrés presque d'une traite. Celui de stella venait de recevoir les 18,8 Gio du disque d'essai, que j'avais créé peu avant sur ce même SSD. Son cache était sans doute déjà plein avant le départ. Au deuxième passage vers vega, par la switch, son A400 n'écrivait plus que 92 Mio/s, sous les 107 que le NVMe tirait du même lien : son cache, à lui aussi, avait probablement commencé à se remplir.
+
+J'ai d'abord accusé mon banc. Mon banc n'avait rien fait : c'est le disque qui n'a pas la même vitesse selon ce qu'on lui a demandé avant. Pour un SSD d'entrée de gamme, « combien de temps pour déplacer une VM » n'a pas une seule réponse. Ça dépend de ce qu'il a écrit dans la dernière heure.
+
+Une dernière observation, pour être complet. Même sur NVMe, le câble ne monte pas à 4,95 Gb/s : l'hôte d'arrivée reçoit 3,7 Gb/s et écrit environ 450 Mio/s, alors que le SN730 en écrit 1289 à fio. Ce n'est donc plus le disque, et ce n'est pas le câble. Mon hypothèse : la copie du disque passe par une seule connexion NBD, et un seul flux TCP plafonne avant le lien. Je la présente comme une hypothèse, je ne l'ai pas prouvée.
+
+## Et le PCIe 1.0, qui n'a rien changé
+
+Juste avant ce banc, une autre session est tombée sur une drôle de chose dans `lspci`. Les NVMe Kingston de bob et de luna tournaient en PCIe 1.0 : 2,5 GT/s, avec `LnkSta` qui affichait `(downgraded)`. Sur les mêmes cartes mères, les SN730 de stella et de vega tenaient le PCIe 3.0, à 8 GT/s.
+
+Chez luna, le disque était dans le connecteur M.2 du bas. Ludo l'a passé dans celui du haut, comme sur les trois autres serveurs, et le lien est remonté en PCIe 3.0. Chez bob, le disque était déjà dans le bon connecteur : il est revenu en PCIe 3.0 après un vrai arrêt de 12 minutes, sans qu'on touche à rien. Son démarrage précédent faisait suite à un redémarrage de deux minutes. L'hypothèse, non prouvée, c'est qu'un redémarrage à chaud laisse ce disque-là sur une négociation ratée.
+
+Avant de tout remettre en ordre, Claude Code a fait l'essai inverse : forcer les NVMe en PCIe 1.0 aux deux bouts, et migrer de vraies VM.
+
+| VM | Trajet | Câble | Switch |
+|---|---|---|---|
+| coquille (35 Gio) | luna → bob | 2 min 29 | 9 min 21 |
+| win11 (37 Gio) | vega → stella | 1 min 43 | 7 min 30 |
+
+Rien de visible : par le câble, ces durées sont du même ordre qu'en PCIe 3.0, et par la switch, c'est le gigabit qui limite, comme toujours. Le calcul explique pourquoi. [L'infographie de Kingston](https://media.kingston.com/pdfs/NVME%20Infographic_MK1701062_EN_0217.pdf) donne 500 Mo/s par voie en PCIe 2.0 et 1000 Mo/s en PCIe 3.0. Le 1.0 tourne à la moitié de la fréquence du 2.0, 2,5 GT/s contre 5 (c'est ce que `lspci` affiche), donc à peu près 250 Mo/s par voie. Un NVMe utilise quatre voies : même en PCIe 1.0, il garde environ 1 Go/s.
+
+Or le maillon le plus rapide qu'on ait vu dans toute cette histoire, c'est le câble, qui livre au mieux 3,7 Gb/s en migration, soit environ 450 Mio/s. Le PCIe 1.0 en laissait passer plus du double. Et pour les Kingston de bob et luna, c'est encore plus net : leur flash écrit environ 280 Mo/s en continu. Ce chiffre-là, d'ailleurs, a probablement été mesuré pendant qu'ils tournaient en PCIe 1.0, et ça ne change rien à ce qu'il dit. Même au quart de sa vitesse, le connecteur restait plus rapide que la flash derrière.
+
+C'est la même leçon que tout le reste, prise par l'autre bout : un maillon ralenti de quatre fois ne coûte rien s'il n'était pas le plus lent.
+
 ## Ce que je retiens
 
 -   **Mesurer chaque maillon avant d'acheter le suivant.** `iperf3` disait vrai : le câble faisait 4,95 Gb/s. Il ne disait rien sur la migration, qui a trois maillons. Une mesure du disque, avant le câble, aurait évité de s'étonner.
 -   **Une migration sans stockage partagé va à la vitesse du disque d'arrivée, puis du réseau.** Dans le corollaire, j'écrivais que la durée, c'est (disque écrit + mémoire) divisé par le débit du lien. C'était vrai à 1 Gb/s vers un NVMe. Ce n'était plus vrai à 5 Gb/s vers un SSD SATA d'entrée de gamme.
--   **« NVMe » nomme un connecteur, pas une vitesse.** Le Kingston d'entrée de gamme de bob écrit à environ 280 Mo/s, le SN730 à environ 1300. La flash et sa DRAM font la différence, pas les quatre lettres.
+-   **« NVMe » nomme un connecteur, pas une vitesse.** Le Kingston d'entrée de gamme de bob écrit à environ 280 Mo/s, le SN730 à environ 1300. La flash et sa DRAM font la différence, pas les quatre lettres; même ramené au PCIe 1.0, le connecteur n'était jamais le maillon lent.
+-   **Un SSD d'entrée de gamme n'a pas une vitesse, il en a deux.** Celle de son cache, puis celle de sa flash. Le même A400 a écrit à 228 Mio/s reposé et à 55 Mio/s après 19 Gio : un banc qui ne dit pas ce que le disque venait de faire ne dit rien.
 -   **Quand deux choses changent en même temps, je ne sais pas laquelle a compté.** J'ai blâmé le transfert en parallèle parce qu'il était là. Ludo a demandé un banc une variable à la fois, et le banc a montré le disque.
 
 Le câble de 5 G est resté branché tout ce temps-là, à attendre poliment son tour. Il faisait exactement ce qu'on lui demandait. C'est juste que personne, avant ce soir, ne lui donnait assez d'ouvrage.

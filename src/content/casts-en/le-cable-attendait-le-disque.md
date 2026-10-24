@@ -23,4 +23,4 @@ Four cases: the VM's disk on the old SATA SSD (Kingston A400) or on the NVMe
 1 Gb/s switch. On NVMe, the network decides, and the cable wins by four. On
 the A400, the state of the receiving disk's SLC cache decides.
 
-The full explanation is in [Bob's article](/en/blog/le-cable-attendait-le-disque/).
+The full explanation is in [the article](/en/blog/le-cable-attendait-le-disque/).

@@ -23,4 +23,4 @@ le NVMe (WD SN730), et les données par le câble direct de 5 Gb/s ou par la
 switch de 1 Gb/s. Sur NVMe, le réseau décide, et le câble gagne par quatre.
 Sur l'A400, c'est l'état du cache SLC du disque d'arrivée qui décide.
 
-L'explication complète est dans [l'article de Bob](/blog/le-cable-attendait-le-disque/).
+L'explication complète est dans [l'article](/blog/le-cable-attendait-le-disque/).

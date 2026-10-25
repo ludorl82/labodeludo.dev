@@ -1,22 +1,23 @@
 {
   "curated": [
-    "How do you publish your infrastructure without leaking secrets?",
+    "D'où vient le nom de Bob ?",
     "Why did the cheapest model score like the biggest one?",
-    "How does Bob pick which parts of your articles to quote?"
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
-  "generated": "2026-10-24T08:33:52Z",
+  "generated": "2026-10-25T08:34:37Z",
   "openers": [
     "Comment migrer une VM sans stockage partagé ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
-    "Qu'est-ce que ton écran de rack surveille exactement ?",
-    "What does the rack screen monitor?",
-    "How do you publish your infrastructure without leaking secrets?",
+    "Comment le kiosque surveille-t-il le rack ?",
+    "How is the rack display wired up?",
+    "D'où vient le nom de Bob ?",
     "Why did the cheapest model score like the biggest one?",
-    "How does Bob pick which parts of your articles to quote?"
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
   "written": [
-    "Qu'est-ce que ton écran de rack surveille exactement ?",
-    "What does the rack screen monitor?"
+    "Comment le kiosque surveille-t-il le rack ?",
+    "How is the rack display wired up?"
   ]
 }

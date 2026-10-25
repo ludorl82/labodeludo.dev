@@ -1,0 +1,96 @@
+---
+title: "Un câble de 5 G entre mes serveurs, et c'est le disque qui m'a fait attendre"
+pubDate: 2026-10-24
+description: "J'ai relié mes hyperviseurs deux par deux avec un câble direct de 5 Gb/s pour déplacer mes VM plus vite. Avec Claude Code (Opus 5.5), on a mesuré : le câble ne changeait presque rien, parce que le SSD qui recevait la VM écrivait à 55 Mo/s. Un NVMe plus tard, la même VM passe de plus de 7 minutes à 42 secondes. La démo en terminal, ce que j'ai compris sur les SSD, et pourquoi le PCIe 1.0 n'a rien changé."
+tags: ["Labo", "DevOps", "ludo"]
+ia: "assistee"
+iaOutils: "Claude Code"
+heroImage: "/images/blog/banner-vm-qui-se-promenent.svg"
+---
+
+import AsciiCast from "../../components/AsciiCast.astro";
+
+> **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
+>
+> -   **Le projet** : quatre hyperviseurs libvirt reliés deux par deux par un câble direct de 5 Gb/s, pour déplacer les VM à chaud plus vite.
+> -   **La surprise** : le câble faisait 4,95 Gb/s, mais une migration ne gagnait que 10 à 40 %. Le SSD SATA d'arrivée écrivait à 35-71 Mio/s une fois son cache plein.
+> -   **Le correctif** : un NVMe pour les images des VM. Une VM de 19 Gio passe en 42 s par le câble, contre 2 min 58 s par la switch.
+> -   **Le PCIe 1.0** : même forcé, aucun effet, parce qu'il laisse passer environ 1 Go/s.
+> -   **Transparence** : mesures, scripts et configuration faits en session avec Claude Code (Opus 5.5).
+
+Dans [Un vMotion sans VMware](/blog/virsh-migrate/), je racontais comment mes VM changent de serveur sans s'éteindre. Depuis, la flotte est passée de deux à quatre hyperviseurs, et je voulais que les déplacements aillent plus vite. Comme pour le reste du labo, j'ai fait ce projet en session avec Claude Code (Opus 5.5) : c'est lui qui a fait les mesures, écrit les scripts et préparé la configuration. Moi j'ai branché les câbles, installé les disques et tranché. Et je ne m'attendais pas du tout à ce qu'on a trouvé.
+
+## Un peu de contexte
+
+Mes quatre serveurs, bob, luna, stella et vega, ont la même carte mère Supermicro X11SRA. Elle a deux ports réseau : un Intel à 1 Gb/s, et un Aquantia qui fait du 5 Gb/s sur du câble Ethernet ordinaire. Ma switch ne fait que du gigabit, donc ce deuxième port ne servait à rien de plus.
+
+J'ai d'abord demandé à Claude de me trouver la switch 5 Gb/s la moins chère pour relier les quatre, puis s'il ne serait pas moins cher de mettre des cartes réseau. Au final, j'ai décidé de commencer par des paires : bob avec luna, stella avec vega, un câble direct entre les deux ports Aquantia de chaque paire. Rien à acheter sauf du câble. Le script de déplacement, `vm-move`, passe maintenant par le câble quand l'autre serveur répond dessus, et par la switch sinon.
+
+Entre-temps, un autre ajout a changé ma façon de faire l'entretien. Quand j'éteins un serveur, ses VM déménagent toutes seules sur un autre serveur avant qu'il coupe. Le script choisit le serveur qui les recevra le plus vite. Si la maison est sur la batterie de l'onduleur, il les laisse sur place, pour ne pas vider la batterie à copier des disques. Je l'ai vu marcher pour vrai : j'ai éteint vega pour y installer un disque, et le journal montre win11 puis worker3 qui partent vers bob en douze minutes, avant que vega s'éteigne vide. Je n'ai rien déplacé à la main.
+
+## Le câble, et la déception
+
+Sur papier, c'était gagné. Claude a mesuré le câble avec `iperf3` : 4,95 Gb/s, contre 940 Mb/s par la switch. Cinq fois plus vite.
+
+Sauf que les migrations, elles, n'allaient presque pas plus vite. Pour worker4, une VM avec 19 Gio sur son disque, on parlait de 10 à 40 % de gain selon le sens. Pire, par la switch, elle n'arrivait même pas à remplir le lien de 1 Gb/s. Le premier soir, Claude a même blâmé le fait que deux migrations roulaient en même temps. Ce n'était pas ça.
+
+Ce qu'il a fini par m'expliquer, c'est qu'une migration, c'est une chaîne de trois maillons : le serveur de départ lit le disque, le réseau transporte, le serveur d'arrivée écrit. Les trois travaillent en même temps, comme une ligne de montage, et ça avance à la vitesse du plus lent. Le câble avait rendu le maillon du milieu cinq fois plus rapide, mais ce n'était pas lui qui bloquait.
+
+C'était le disque. Les images des VM sur stella et vega étaient sur un Kingston A400, un SSD SATA d'entrée de gamme. Mesuré avec fio, il écrivait à environ 71 Mio/s sur stella et 35 Mio/s sur vega, qui avait d'autres VM en même temps. Le compte tombait juste : 23,5 Gio à 71 Mio/s, ça donne 5 min 39, et la migration avait pris 5 min 38.
+
+## Pourquoi un SSD peut être aussi lent
+
+C'est la partie que j'ai trouvée la plus intéressante, parce que je pensais qu'un SSD, c'était rapide, point.
+
+L'interface n'était pas en cause. En lecture, l'A400 donnait 534 Mio/s, presque le plafond du SATA. [L'infographie de Kingston sur le NVMe](https://media.kingston.com/pdfs/NVME%20Infographic_MK1701062_EN_0217.pdf) explique bien la différence entre les deux : le SATA plafonne à 600 Mo/s avec une seule file de 32 commandes, alors que le NVMe passe par le PCI Express avec jusqu'à 64 K files. Mais ce n'est pas ce qui ralentissait mes écritures.
+
+Le problème est dans la mémoire flash. Les SSD bon marché stockent trois ou quatre bits par cellule, et c'est lent à écrire. Pour le cacher, le fabricant réserve une partie de la flash qui fonctionne à un seul bit par cellule : le cache SLC. Les écritures y entrent vite, puis le disque les recopie plus tard. [Advantech l'explique](https://www.advantech.com/en/resources/news/maximizing-ssd-performance-with-slc-cache) : une fois ce cache plein, l'écriture tombe à la vitesse de la flash, et c'est pire sur un SSD sans DRAM. Une migration, c'est 20 à 50 Gio écrits d'une traite, exactement ce qui remplit le cache et le garde plein.
+
+Et « NVMe » ne règle pas tout. bob et luna ont déjà un NVMe, mais un modèle Kingston d'entrée de gamme, qui écrit à environ 280 Mo/s en continu. C'est mieux que l'A400, mais loin de ce que le PCI Express permet. Ce qui compte, c'est la flash derrière le connecteur.
+
+## Le NVMe, et un disque débranché
+
+J'ai donc installé un WD SN730 de 512 Go dans vega, puis dans stella, juste pour les images des VM. En installant celui de vega, j'ai accroché un câble SATA, et vega a redémarré avec un disque de moins dans son RAID. Claude l'a vu tout de suite. J'ai rebranché le câble, et la grappe est revenue entière, sans reconstruction. J'ajoutais un disque et j'en perdais un, je sais. 😅
+
+Le SN730 écrit à environ 1 290 Mio/s avec le même test fio. Et worker4, entre stella et vega par le câble, est passée de 7 min 28 à 56 secondes.
+
+## Le banc, en démo
+
+Pour être certain de comparer la même chose, j'ai demandé à Claude de refaire les tests proprement : SSD vers SSD, NVMe vers NVMe, par le câble et par la switch. Il a monté une VM d'essai sans système, avec 18,8 Gio de données sur son disque, qui fait l'aller-retour entre stella et vega. Pendant chaque trajet, son script note toutes les minutes ce que le disque d'arrivée écrit et ce que le réseau reçoit. Voici la vraie prise :
+
+<AsciiCast
+  src="/casts/le-cable-attendait-le-disque.cast"
+  frame="none"
+  poster="npt:2:30"
+  caption="Quatre allers-retours de 18,8 Gio entre stella et vega. Sur l'A400, vers stella, le câble et la switch finissent pareil : le disque tombe à 55 Mio/s dès la deuxième minute. Sur le NVMe, le câble fait l'aller en 42 s, la switch en 2 min 58 s."
+  disclaimer="✔ Ceci est une capture réelle, faite le 24 octobre 2026 avec asciinema dans une session tmux dédiée, sans montage. Les migrations sont de vrais appels à virsh migrate entre stella et vega. Les frappes ont été envoyées par script et non tapées par moi, l'invite est « ludo@labo », seules les pauses de plus de deux secondes sont raccourcies (23 minutes de tests deviennent deux minutes et demie), et l'identifiant du conteneur dans la barre tmux est remplacé par un nom de même longueur."
+/>
+
+| Disque | Sens | Câble 5 G | Switch 1 G |
+|---|---|---|---|
+| SSD SATA (A400) | stella → vega | 1 min 24 | 3 min 29 |
+| SSD SATA (A400) | vega → stella | 5 min 43 | 5 min 23 |
+| NVMe (SN730) | stella → vega | **42 s** | 2 min 58 |
+| NVMe (SN730) | vega → stella | **43 s** | 2 min 59 |
+
+Sur NVMe, c'est enfin le réseau qui limite. Par la switch, le lien de 1 Gb/s est plein, et le câble va quatre fois plus vite. C'est exactement ce que je voulais en branchant ce câble.
+
+Sur l'A400, vers stella, le câble ne sert à rien : 5 min 43 contre 5 min 23. On voit le cache se remplir dans les lignes de mesure. stella écrit à 115 Mio/s pendant quelques secondes, puis tombe à 55 et n'en bouge plus.
+
+Par contre, vers vega, le même modèle de SSD a écrit à 228 Mio/s. Celle-là m'a surpris. Le disque de vega se reposait depuis des heures, sans VM dessus, et son cache était vide. Celui de stella venait de recevoir le disque d'essai que Claude avait créé juste avant. Donc un SSD d'entrée de gamme n'a pas une vitesse : il dépend de ce qu'il a écrit dans la dernière heure.
+
+Même sur NVMe, le câble ne monte pas à 4,95 Gb/s : on plafonne autour de 3,7 Gb/s. Claude soupçonne que la copie du disque passe par une seule connexion. On ne l'a pas prouvé, peut-être un sujet pour une autre fois.
+
+## Et le PCIe 1.0?
+
+En chemin, Claude a remarqué que les NVMe de bob et luna tournaient en PCIe 1.0 au lieu de 3.0. Chez luna, le disque était dans le mauvais connecteur M.2, et je l'ai changé de place. Chez bob, il est revenu en 3.0 après un vrai arrêt de 12 minutes, sans qu'on touche à rien.
+
+Avant de tout remettre en ordre, on a fait le test inverse : forcer les NVMe en PCIe 1.0 aux deux bouts, et déplacer de vraies VM. coquille (35 Gio) est passée de luna à bob en 2 min 29 par le câble, et win11 (37 Gio) de vega à stella en 1 min 43. Rien de visible.
+
+Le calcul explique pourquoi. D'après l'infographie de Kingston, le PCIe 3.0 donne 1 000 Mo/s par voie et le 2.0, 500 Mo/s. Le 1.0 tourne à la moitié de la fréquence du 2.0, donc environ 250 Mo/s par voie. Un NVMe utilise quatre voies, ce qui donne encore environ 1 Go/s. C'est plus du double de ce que le câble livre pendant une migration. Même ralenti de quatre fois, ce maillon-là n'était jamais le plus lent.
+
+## Mot de la fin
+
+Ce projet m'a appris à regarder toute la chaîne au lieu du seul morceau que je venais d'améliorer. J'avais branché un câble cinq fois plus rapide, et le vrai gain est venu d'un disque NVMe. Aujourd'hui, une VM change de serveur en moins d'une minute, et quand j'éteins un serveur pour l'entretien, je n'ai plus à y penser.
+
+Alors si vous voulez accélérer vos migrations, mesurez votre disque avant d'acheter du réseau.

@@ -10,10 +10,10 @@ court: "mcp"
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_
 >
-> -   **Le besoin** : Claude Code fait le gros du travail dans le labo, mais on ne peut pas lui parler. L'appli Claude et Bob, l'assistant vocal de Home Assistant, ne savaient rien du labo.
-> -   **La solution** : de petits serveurs MCP, le standard qui laisse un modèle de langage appeler des outils. Trois publics (hockey, météo, articles) et un privé pour le labo.
+> -   **Le besoin** : Claude Code fait le gros du travail, mais on ne peut pas lui parler. L'appli Claude et Bob (Home Assistant) ne savaient rien du labo.
+> -   **La solution** : de petits serveurs MCP, le standard qui laisse un modèle appeler des outils. Trois publics (hockey, météo, articles) et un privé pour le labo, qui relaie aussi les serveurs MCP de Radar et de Home Assistant.
 > -   **L'accès** : un tunnel Cloudflare, aucun port ouvert. Le serveur privé émet ses propres jetons OAuth, et sa page d'autorisation reste derrière Cloudflare Access.
-> -   **La leçon** : la phrase que rend un outil est tout ce que l'agent voit.
+> -   **La leçon** : la phrase rendue par un outil est tout ce que l'agent voit.
 > -   **Transparence** : construit en session avec Claude Code (Opus 5.5). La théorie est dans [le corollaire de Bob](/blog/corollaire-une-porte-ca-doit-etre-etroit/).
 
 Mon labo roule sur Claude Code depuis juillet. C'est lui qui écrit la configuration de mes serveurs, ouvre les pull requests, vérifie après chaque déploiement et tient la documentation à jour. Il a un large accès dans le labo, et mon infrastructure est conçue pour qu'il reste opérationnel en tout temps : sa console est une VM qui [change d'hôte sans s'éteindre](/blog/virsh-migrate/). Avec Remote Control, je peux même suivre et piloter mes sessions depuis l'appli Claude sur mon téléphone.
@@ -25,6 +25,8 @@ Donc j'avais deux agents vocaux qui ne savaient rien de mon labo, et un agent de
 ## MCP en deux mots
 
 MCP (Model Context Protocol) est un standard ouvert qu'Anthropic a lancé à la fin de 2024 pour permettre aux modèles de langage d'opérer des outils. ChatGPT, Gemini, Copilot et plusieurs autres l'ont adopté depuis, et Anthropic l'a [confié à la Linux Foundation](https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation) en décembre 2025. On en parle maintenant un peu comme du nouveau concept d'API.
+
+Ce qui me frappe le plus, c'est le côté des serveurs. GitHub, [Cloudflare](https://developers.cloudflare.com/agents/model-context-protocol/mcp-servers-for-cloudflare/), [Grafana](https://github.com/grafana/mcp-grafana) et [les créateurs d'Argo CD](https://github.com/akuity/argocd-mcp) publient maintenant leur propre serveur MCP, Home Assistant en a un intégré, et le projet tient un [registre officiel](https://registry.modelcontextprotocol.io) où n'importe qui peut publier le sien. Un outil qui parle MCP fonctionne avec tous les agents qui parlent MCP, et c'est ce qui rend l'approche évolutive : on bâtit une porte une fois, et elle sert à l'agent d'aujourd'hui comme à celui de demain.
 
 Le principe est simple. Un serveur MCP publie une liste d'outils, chacun avec un nom et une description en phrases. Quand je pose une question, le modèle lit ces descriptions, choisit l'outil qui convient et l'appelle. Le serveur répond, et le modèle me rapporte le résultat dans ses mots. Dans l'appli Claude, il suffit d'ajouter l'adresse du serveur comme connecteur personnalisé, et le connecteur fonctionne aussi en mode vocal. Dans Home Assistant, une intégration MCP fait la même chose pour Bob.
 
@@ -60,6 +62,16 @@ Un serveur comme celui-là ne peut évidemment pas être ouvert à tout le monde
 
 **Les écritures, seulement sur demande.** Sur ses 29 outils, six seulement écrivent quelque chose, et leur description le dit : seulement quand je le demande. Les outils de Home Assistant, eux, portent la même consigne. L'appli Claude, elle, me demande la permission pour chaque outil, jusqu'à ce que je lui dise de toujours l'autoriser.
 
+## Deux portes que je n'ai pas eu à bâtir
+
+Ce qui m'a le plus convaincu que MCP était la bonne direction, c'est que je n'ai pas eu à tout écrire. Deux des outils que j'utilisais déjà dans le labo parlent MCP d'eux-mêmes, et labo-mcp les relaie.
+
+Le premier, c'est [Radar](https://github.com/skyhook-io/radar), une interface web open source pour Kubernetes. Je l'ai installé pour voir mon cluster k3s, et il vient avec son propre serveur MCP, dont [un point en lecture seule](https://github.com/skyhook-io/radar/blob/main/docs/mcp.md) qui retire tous les outils capables de modifier le cluster. labo-mcp n'appelle que celui-là. J'en ai gardé dix outils (les problèmes en cours, les derniers changements, les événements, la consommation, les journaux d'un pod, etc.), avec des descriptions réécrites en français pour la voix. Je n'ai écrit aucune ligne pour interroger l'API de Kubernetes : Radar le fait mieux que moi, et il suivra les nouvelles versions de k3s à ma place.
+
+Le deuxième, c'est Home Assistant. Depuis la version 2025.2, il a [un serveur MCP intégré](https://www.home-assistant.io/integrations/mcp_server/) qui offre les mêmes actions qu'Assist : allumer, éteindre, régler une lumière ou le volume d'un haut-parleur, par nom, par pièce ou par étage. Le premier soir, Claude Code avait écrit son propre outil pour agir dans la maison, avec sa liste de services permis. Je l'ai remplacé le soir même par un relais vers le serveur de Home Assistant, parce que je voulais une approche qui évolue toute seule : quand Home Assistant ajoute une action, l'appli Claude la reçoit sans que je touche au code. En plus, le serveur natif ne voit que les appareils exposés à Assist, donc Claude ne peut agir que sur ce que Bob contrôle déjà.
+
+C'est un beau contraste avec mes trois serveurs publics. Pour le hockey et la météo, personne n'avait de porte MCP, alors je les ai bâties. Pour le cluster et la maison, la porte existait déjà, et mon travail s'est limité à choisir la plus étroite.
+
 ## Quand une porte répond mal
 
 Le 23 octobre, je voulais éteindre vega, un de mes serveurs, et Claude a voulu vérifier l'état du cluster dans l'appli avant de le faire. Sauf que vider vega avait aussi déplacé Radar, l'outil qui lit le cluster pour labo-mcp, et Radar était en train de redémarrer. Claude a reçu cette phrase, et rien d'autre :
@@ -85,6 +97,8 @@ La description de l'outil se termine par une phrase qui résume bien le problèm
 ## Mot de la fin
 
 En quelques jours, je suis passé de zéro à six serveurs MCP, dont trois sont maintenant publics. Je n'ai pas encore trouvé l'agent vocal idéal, et ce sera le sujet d'un prochain article. J'ai un pressentiment pour ElevenLabs, dont l'agent vocal accepte aussi des serveurs MCP, mais je dois encore l'essayer pour vrai. Ce qui est rassurant, c'est que mes portes vont me suivre, peu importe l'agent que je choisirai : c'est tout l'avantage d'un standard.
+
+En faisant le tour pour cet article, j'ai aussi découvert qu'il existe déjà des serveurs MCP pour presque tout ce qui roule chez moi : Grafana et Loki pour mes journaux, Argo CD pour mes déploiements, Cloudflare pour mon DNS et mon tunnel, et des projets de la communauté pour Frigate, Uptime Kuma et même pfSense, mon pare-feu. Je ne les brancherai pas tous, et sûrement pas avec des droits d'écriture : les règles de mon pare-feu passent par git et par une confirmation humaine, et ça ne changera pas. Par contre, la prochaine porte du labo n'est peut-être pas à bâtir, seulement à choisir.
 
 Si vous voulez essayer, ajoutez `https://articles.labodeludo.dev/mcp` comme connecteur personnalisé dans l'appli Claude, et demandez-lui ce que Bob a écrit sur un sujet qui vous intéresse. Le code est dans [le dépôt](https://github.com/ludorl82/mcp-servers). Pour la théorie (le protocole, les jetons, et pourquoi une porte doit être étroite), c'est Bob qui l'explique dans [son corollaire](/blog/corollaire-une-porte-ca-doit-etre-etroit/).
 

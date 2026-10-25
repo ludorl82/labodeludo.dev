@@ -140,9 +140,9 @@ La spécification le sait. Elle dit qu'il [devrait toujours y avoir un humain](h
 Alors la vraie barrière est ailleurs : dans la clé que chaque outil tient.
 
 - **GitHub** : un jeton qui ne fait que lire les dépôts listés, et un autre qui ne peut écrire que dans le dépôt de documentation.
-- **Home Assistant** : un utilisateur « Claude », sans droits d'administrateur, et marqué local seulement, donc refusé depuis Internet.
+- **Home Assistant** : un utilisateur « Claude », sans droits d'administrateur, et marqué local seulement, donc refusé depuis Internet. Il passe par le serveur MCP natif de Home Assistant, sur le point `/api/mcp/assist`, qui ne sert que l'API d'Assist et ne voit que les appareils exposés à Assist. Le point complet, `/api/mcp`, lui répond 401.
 - **Cronicle** : une clé qui peut lancer, arrêter, activer ou désactiver une tâche, et rien d'autre. J'ai vérifié qu'une suppression est refusée.
-- **Le cluster** : Radar, en lecture seule, sans exec et sans Secret, joignable seulement par labo-mcp grâce à une NetworkPolicy. Un pod d'un autre espace de noms se fait refuser.
+- **Le cluster** : Radar, en lecture seule, sans exec et sans Secret, joignable seulement par labo-mcp grâce à une NetworkPolicy. Un pod d'un autre espace de noms se fait refuser. Radar a [deux portes MCP](https://github.com/skyhook-io/radar/blob/main/docs/mcp.md) : `/mcp`, qui sait redémarrer, mettre à l'échelle ou vider un nœud, et `/mcp-readonly`, qui ne sait que lire. labo-mcp ne connaît que la deuxième. Et si quelqu'un cognait à la première, le rôle Kubernetes de Radar ne lui permet que de lire de toute façon. Deux serrures, une seule clé, et elle n'ouvre rien d'intéressant.
 - **Les hôtes** : une clé SSH à commande forcée, qui ne lance qu'un script avec une liste blanche de lectures.
 - **Claude Code** : `confier_a_claude_code` ne lance aucune commande. Il dépose une tâche, au plus trois en même temps, et la session qui la prend travaille dans son worktree, avec une pull request que Ludo fusionne lui-même, ou pas.
 

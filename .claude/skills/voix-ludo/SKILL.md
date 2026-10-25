@@ -132,6 +132,13 @@ en cas de doute, relis-les et imite.
   intéresser qqn: ».
 - **Français seulement** depuis 2026. Les anciens posts de carrière étaient en
   anglais avec mots-clics ; on garde le ton, pas la langue.
+- **Le lien garde l'adresse du site** : LinkedIn remplace par `lnkd.in` tout
+  lien de 26 caractères ou plus, compté tel que tapé, `https://` compris
+  (testé le 2026-10-24). On écrit donc le lien **sans `https://`** (LinkedIn le
+  rend quand même cliquable) et il doit tenir en 25 caractères :
+  `labodeludo.dev/` plus 10 caractères au plus (`labodeludo.dev/vmotion`).
+  L'adresse complète d'un article (`/blog/<slug>/`) dépasse presque toujours :
+  il faut alors un lien court qui redirige vers l'article.
 
 ## 6. Avant de livrer, vérifier
 
@@ -162,6 +169,9 @@ en cas de doute, relis-les et imite.
       dans un français (ou un anglais) plus soigné que le sien.
 - [ ] Pour LinkedIn : moins de cinq phrases, un lien, un « ! », au plus un ou deux
       emojis, aucune émoticône texte.
+- [ ] Pour LinkedIn : chaque lien est écrit sans `https://` et fait 25
+      caractères au plus (`echo -n 'labodeludo.dev/xxx' | wc -m`), sinon il
+      devient `lnkd.in`.
 
 ## 7. Extraits verbatim (imiter le rythme, pas copier)
 

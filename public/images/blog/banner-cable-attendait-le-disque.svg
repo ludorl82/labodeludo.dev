@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : deux serveurs, stella et vega, reliés par un câble direct de 5 Gb/s en plus de la switch de 1 Gb/s; une machine virtuelle de 19 Gio passe par le câble; dans chaque serveur, une barre courte pour le SSD SATA et une barre pleine pour le NVMe; en bas, 7 min 28 barré, puis 42 secondes">
+  <defs>
+    <linearGradient id="bgc5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2333"/>
+      <stop offset="100%" stop-color="#2e3f5c"/>
+    </linearGradient>
+    <marker id="c5-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7ec8ff"/>
+    </marker>
+  </defs>
+
+  <rect width="1024" height="320" fill="url(#bgc5)"/>
+
+  <g>
+    <rect x="56" y="70" width="190" height="200" rx="10" fill="#243149" stroke="#5a6f96" stroke-width="3"/>
+    <rect x="74" y="90" width="154" height="16" rx="3" fill="#3a4a68"/>
+    <circle cx="214" cy="98" r="4" fill="#7ec8ff"/>
+    <text x="74" y="132" fill="#8fa3c8" font-size="12">SSD SATA</text>
+    <text x="228" y="132" fill="#ff9b8f" font-size="12" text-anchor="end">55 Mo/s</text>
+    <rect x="74" y="138" width="154" height="12" rx="3" fill="#162033" stroke="#5a6f96" stroke-width="1.5"/>
+    <rect x="76" y="140" width="9" height="8" rx="2" fill="#ff7b72" opacity="0.85"/>
+    <text x="74" y="172" fill="#8fa3c8" font-size="12">NVMe</text>
+    <text x="228" y="172" fill="#5fd28c" font-size="12" text-anchor="end">1,3 Go/s</text>
+    <rect x="74" y="178" width="154" height="12" rx="3" fill="#162033" stroke="#5a6f96" stroke-width="1.5"/>
+    <rect x="76" y="180" width="150" height="8" rx="2" fill="#5fd28c" opacity="0.85"/>
+    <text x="151" y="252" fill="#dfe8f7" font-size="24" font-weight="bold" text-anchor="middle">stella</text>
+  </g>
+
+  <g>
+    <rect x="778" y="70" width="190" height="200" rx="10" fill="#243149" stroke="#5a6f96" stroke-width="3"/>
+    <rect x="796" y="90" width="154" height="16" rx="3" fill="#3a4a68"/>
+    <circle cx="936" cy="98" r="4" fill="#7ec8ff"/>
+    <text x="796" y="132" fill="#8fa3c8" font-size="12">SSD SATA</text>
+    <text x="950" y="132" fill="#ff9b8f" font-size="12" text-anchor="end">55 Mo/s</text>
+    <rect x="796" y="138" width="154" height="12" rx="3" fill="#162033" stroke="#5a6f96" stroke-width="1.5"/>
+    <rect x="798" y="140" width="9" height="8" rx="2" fill="#ff7b72" opacity="0.85"/>
+    <text x="796" y="172" fill="#8fa3c8" font-size="12">NVMe</text>
+    <text x="950" y="172" fill="#5fd28c" font-size="12" text-anchor="end">1,3 Go/s</text>
+    <rect x="796" y="178" width="154" height="12" rx="3" fill="#162033" stroke="#5a6f96" stroke-width="1.5"/>
+    <rect x="798" y="180" width="150" height="8" rx="2" fill="#5fd28c" opacity="0.85"/>
+    <text x="873" y="252" fill="#dfe8f7" font-size="24" font-weight="bold" text-anchor="middle">vega</text>
+  </g>
+
+  <!-- la switch, lente, en pointillé -->
+  <path d="M246,222 L778,222" fill="none" stroke="#5a6f96" stroke-width="2.5" stroke-dasharray="7 6"/>
+  <text x="512" y="214" fill="#8fa3c8" font-size="13" text-anchor="middle">switch · 1 Gb/s</text>
+
+  <!-- le câble direct -->
+  <path d="M246,110 L770,110" fill="none" stroke="#7ec8ff" stroke-width="6" stroke-linecap="round" marker-end="url(#c5-a)"/>
+  <text x="258" y="98" fill="#7ec8ff" font-size="13" font-weight="bold">câble direct · 5 Gb/s</text>
+
+  <!-- la VM sur le câble -->
+  <g>
+    <rect x="452" y="82" width="140" height="56" rx="8" fill="#162033" stroke="#ffd166" stroke-width="2.5"/>
+    <circle cx="468" cy="96" r="3.5" fill="#ff7b72"/>
+    <circle cx="480" cy="96" r="3.5" fill="#ffd166"/>
+    <circle cx="492" cy="96" r="3.5" fill="#5fd28c"/>
+    <text x="522" y="122" fill="#dfe8f7" font-size="15" font-weight="bold" text-anchor="middle">VM · 19 Gio</text>
+  </g>
+
+  <!-- avant, après -->
+  <g>
+    <circle cx="398" cy="270" r="24" fill="#243149" stroke="#ffd166" stroke-width="3"/>
+    <rect x="393" y="239" width="10" height="8" rx="2" fill="#ffd166"/>
+    <path d="M398,270 L398,255" stroke="#ffd166" stroke-width="3" stroke-linecap="round"/>
+    <path d="M398,270 L409,276" stroke="#ffd166" stroke-width="3" stroke-linecap="round"/>
+    <text x="442" y="282" fill="#8fa3c8" font-size="22">7 min 28</text>
+    <path d="M440,275 L534,275" stroke="#ff7b72" stroke-width="2.5"/>
+    <text x="566" y="282" fill="#8fa3c8" font-size="22" text-anchor="middle">→</text>
+    <text x="596" y="286" fill="#ffd166" font-size="32" font-weight="bold">42 s</text>
+  </g>
+</svg>

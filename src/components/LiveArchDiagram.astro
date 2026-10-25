@@ -65,10 +65,19 @@ const pinCount = (arch.edges as any[]).filter(
   (e) => e.kind === "pinned-to",
 ).length;
 const externals = kind("external");
-// Les onduleurs ont déjà quitté cette liste une fois : l'IaC les pilote
-// toujours (modules NUT), mais plus aucun nœud de topologie ne les nomme, donc
-// ils redescendent dans la bande du parc plus bas. upsCount reste le témoin de
-// ce va-et-vient — il décide dans quelle bande ils sont dessinés.
+// Les onduleurs ont déjà quitté cette liste une fois, et rien ne dit qu'ils
+// l'ont définitivement quittée. Vérifié ce soir contre nixos-iac-public : le
+// repo les pilote toujours (`ups-cp-1` est encore dans meta.modules de bob,
+// worker1 et worker2, donc dans la graine jointe) ET son scripts/emit-topology.py
+// en fabrique bel et bien un nœud `external:ups-<hôte>` par port USB, avec une
+// arête `powered-by`. Ce que la graine n'a pas, c'est le nœud : le
+// topology.json publié du repo est en retard sur son propre émetteur. Ça
+// s'écrit donc « le nœud manque, la trace est là » — la nuance déjà tenue plus
+// bas pour win11 — et surtout pas « l'IaC a cessé de les nommer » : le module
+// est là, l'émetteur est là, c'est l'artefact publié qui court derrière.
+// upsCount reste le témoin du va-et-vient : il décide dans quelle bande ils
+// sont dessinés, et si les trois nœuds remontent ici au prochain join, seul ce
+// déplacement se produit — la bande du parc les lâche toute seule.
 const upsNodes = externals.filter((n) => n.id.startsWith("external:ups"));
 const upsCount = upsNodes.length;
 const tunnel = kind("tunnel")[0];

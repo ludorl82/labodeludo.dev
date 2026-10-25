@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : un mur vu de haut sépare le dehors et le labo. Dehors, l'appli Claude sur un téléphone et Bob, l'assistant vocal, demandent si le cluster va bien. Le mur a trois portes larges et ouvertes, hockey, météo et articles, les serveurs MCP publics, et une porte étroite verrouillée vers labo-mcp, le serveur privé, derrière un tunnel Cloudflare, OAuth et Access. Derrière, labo-mcp relaie les serveurs MCP natifs de Radar, en lecture seule, et de Home Assistant.">
+  <defs>
+    <linearGradient id="bgmcp" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2333"/>
+      <stop offset="100%" stop-color="#2e3f5c"/>
+    </linearGradient>
+    <marker id="mcp-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ffd166"/>
+    </marker>
+    <marker id="mcp-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7ee0a4"/>
+    </marker>
+  </defs>
+
+  <rect width="1024" height="320" fill="url(#bgmcp)"/>
+  <rect x="500" y="0" width="524" height="320" fill="#ffffff" opacity="0.03"/>
+
+  <text x="40" y="34" fill="#8fa3c8" font-size="14" font-weight="bold" letter-spacing="2">DEHORS</text>
+  <text x="984" y="34" fill="#8fa3c8" font-size="14" font-weight="bold" letter-spacing="2" text-anchor="end">DEDANS : LE LABO</text>
+
+  <!-- le téléphone, l'appli Claude -->
+  <g>
+    <rect x="80" y="92" width="72" height="128" rx="12" fill="#162033" stroke="#7ec8ff" stroke-width="3"/>
+    <rect x="90" y="108" width="52" height="88" rx="3" fill="#243149"/>
+    <path d="M100,140 h32 M100,152 h24 M100,164 h28" stroke="#7ec8ff" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="116" cy="207" r="4" fill="#5a6f96"/>
+    <text x="116" y="244" fill="#dfe8f7" font-size="15" text-anchor="middle">appli Claude</text>
+  </g>
+
+  <!-- la bulle -->
+  <g>
+    <rect x="160" y="52" width="196" height="34" rx="17" fill="#dfe8f7"/>
+    <path d="M178,84 L168,100 L196,86 z" fill="#dfe8f7"/>
+    <text x="258" y="74" fill="#1c2333" font-size="15" text-anchor="middle">Le cluster va bien?</text>
+  </g>
+
+  <!-- Bob, l'assistant vocal -->
+  <g>
+    <circle cx="262" cy="214" r="34" fill="#162033" stroke="#7ec8ff" stroke-width="3"/>
+    <circle cx="262" cy="214" r="22" fill="none" stroke="#7ec8ff" stroke-width="2" stroke-dasharray="3 4"/>
+    <circle cx="262" cy="214" r="5" fill="#7ec8ff"/>
+    <text x="262" y="270" fill="#dfe8f7" font-size="15" text-anchor="middle">Bob</text>
+  </g>
+
+  <!-- le mur, vu de haut, et ses portes -->
+  <rect x="470" y="0" width="30" height="40" fill="#4b5a78"/><rect x="470" y="80" width="30" height="15" fill="#4b5a78"/><rect x="470" y="135" width="30" height="15" fill="#4b5a78"/><rect x="470" y="190" width="30" height="46" fill="#4b5a78"/><rect x="470" y="256" width="30" height="64" fill="#4b5a78"/>
+  <line x1="500" y1="40" x2="540" y2="40" stroke="#7ee0a4" stroke-width="3"/><path d="M540,40 A40,40 0 0 1 500,80" fill="none" stroke="#7ee0a4" stroke-width="1.5" stroke-dasharray="4 3"/><text x="560" y="65" fill="#dfe8f7" font-size="16">hockey</text><line x1="500" y1="95" x2="540" y2="95" stroke="#7ee0a4" stroke-width="3"/><path d="M540,95 A40,40 0 0 1 500,135" fill="none" stroke="#7ee0a4" stroke-width="1.5" stroke-dasharray="4 3"/><text x="560" y="120" fill="#dfe8f7" font-size="16">météo</text><line x1="500" y1="150" x2="540" y2="150" stroke="#7ee0a4" stroke-width="3"/><path d="M540,150 A40,40 0 0 1 500,190" fill="none" stroke="#7ee0a4" stroke-width="1.5" stroke-dasharray="4 3"/><text x="560" y="175" fill="#dfe8f7" font-size="16">articles</text>
+  <text x="560" y="210" fill="#7ee0a4" font-size="12">serveurs MCP publics</text>
+
+  <!-- la porte étroite du labo, verrouillée -->
+  <line x1="500" y1="236" x2="520" y2="236" stroke="#ffd166" stroke-width="3"/><path d="M520,236 A20,20 0 0 1 500,256" fill="none" stroke="#ffd166" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <g transform="translate(436,232)">
+    <rect x="0" y="10" width="22" height="18" rx="3" fill="#ffd166"/>
+    <path d="M5,10 v-5 a6,6 0 0 1 12,0 v5" fill="none" stroke="#ffd166" stroke-width="3"/>
+    <circle cx="11" cy="19" r="2.5" fill="#1c2333"/>
+  </g>
+
+  <!-- les trajets -->
+  <path d="M154,140 C300,120 380,130 466,116" fill="none" stroke="#7ee0a4" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#mcp-g)"/>
+  <path d="M154,200 C200,310 370,290 432,252" fill="none" stroke="#ffd166" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#mcp-a)"/>
+  <path d="M298,220 C360,226 400,240 432,246" fill="none" stroke="#ffd166" stroke-width="2.5" stroke-dasharray="8 6"/>
+
+  <!-- labo-mcp, derrière la porte étroite -->
+  <g>
+    <rect x="540" y="226" width="150" height="54" rx="8" fill="#162033" stroke="#ffd166" stroke-width="3"/>
+    <text x="615" y="250" fill="#dfe8f7" font-size="17" font-weight="bold" text-anchor="middle">labo-mcp</text>
+    <text x="615" y="270" fill="#ffd166" font-size="12" text-anchor="middle">privé</text>
+    <text x="615" y="304" fill="#8fa3c8" font-size="12" text-anchor="middle">tunnel Cloudflare · OAuth · Access</text>
+  </g>
+  <line x1="500" y1="246" x2="538" y2="250" stroke="#ffd166" stroke-width="2.5" marker-end="url(#mcp-a)"/>
+
+  <!-- les portes déjà là : Radar et Home Assistant -->
+  <path d="M692,240 C730,230 740,190 774,176" fill="none" stroke="#7ec8ff" stroke-width="2.5" marker-end="url(#mcp-a)"/>
+  <path d="M692,262 C730,268 740,262 774,262" fill="none" stroke="#7ec8ff" stroke-width="2.5" marker-end="url(#mcp-a)"/>
+  <g>
+    <rect x="778" y="148" width="206" height="56" rx="8" fill="#243149" stroke="#5a6f96" stroke-width="2.5"/>
+    <text x="790" y="172" fill="#dfe8f7" font-size="17" font-weight="bold">Radar</text>
+    <text x="790" y="192" fill="#8fa3c8" font-size="12">MCP natif, lecture seule</text>
+    <rect x="952" y="160" width="14" height="30" rx="2" fill="none" stroke="#7ec8ff" stroke-width="2"/>
+  </g>
+  <g>
+    <rect x="778" y="234" width="206" height="56" rx="8" fill="#243149" stroke="#5a6f96" stroke-width="2.5"/>
+    <text x="790" y="258" fill="#dfe8f7" font-size="16" font-weight="bold">Home Assistant</text>
+    <text x="790" y="278" fill="#8fa3c8" font-size="12">MCP natif</text>
+    <rect x="952" y="246" width="14" height="30" rx="2" fill="none" stroke="#7ec8ff" stroke-width="2"/>
+  </g>
+</svg>
+

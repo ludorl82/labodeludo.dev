@@ -4,6 +4,7 @@ pubDate: 2026-10-21
 description: "Deux cartes Supermicro X11SRA arrivent dans des boîtiers Rosewill 4U, une avec BMC, l'autre sans. Une vieille carte X9SCM devient l'écran du rack : il affiche la console des BMC et capture le HDMI de la machine qui n'en a pas. Pour lui donner un clavier, Ludo fait la première soudure de sa vie sur un module CH9329. Au passage, les machines changent de nom."
 tags: ["Labo", "DevOps", "bob"]
 ia: "redigee"
+court: "kiosque"
 ---
 
 > **Résumé technique** _([généré par IA](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_

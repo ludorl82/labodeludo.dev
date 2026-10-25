@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 //
-// Checks the short links in dist/liens-courts.json and writes them to
+// Checks the short links in dist/liens-courts.json (articles at /<code>,
+// casts at /cast/<code>) and writes them to
 // dist/_redirects, which Cloudflare Pages (staging) serves as 301s. Prod is
 // S3 and ignores the file; scripts/redirect-short-links.sh reads the same
 // JSON there.

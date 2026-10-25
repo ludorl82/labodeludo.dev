@@ -13,14 +13,21 @@ export const prerender = true;
  * only the built tree knows every top-level path.
  */
 export const GET: APIRoute = async () => {
-  const [posts, postsEn] = await Promise.all([
+  const [posts, postsEn, casts, castsEn] = await Promise.all([
     getCollection("blog"),
     getCollection("blogEn"),
+    getCollection("casts"),
+    getCollection("castsEn"),
   ]);
 
+  // Casts live under their own prefix, cast/<code> (5 characters at most):
+  // the code is a path to both hosts, so nothing else needs to know.
+  const cast = (court: string | undefined) => (court ? `cast/${court}` : undefined);
   const links = [
     ...posts.map((p) => ({ code: p.data.court, target: `/blog/${p.id}/` })),
     ...postsEn.map((p) => ({ code: p.data.court, target: `/en/blog/${p.id}/` })),
+    ...casts.map((c) => ({ code: cast(c.data.court), target: `/casts/${c.id}/` })),
+    ...castsEn.map((c) => ({ code: cast(c.data.court), target: `/en/casts/${c.id}/` })),
   ]
     .filter((l): l is { code: string; target: string } => !!l.code)
     .sort((a, b) => a.code.localeCompare(b.code));

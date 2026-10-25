@@ -89,11 +89,28 @@ jobs:
         with:
           fetch-depth: 0
       # Feature branch = dev + the branch (see above). Nothing to do on dev.
+      # public/bob-vectors.json is the one file every content branch and dev
+      # both regenerate (npm run build rewrites it), so it conflicts whenever
+      # dev gets content while an article branch waits (2026-10-25). That
+      # file alone is settled by taking dev's copy: the build below writes it
+      # again from the merged tree, or keeps it as the fallback under --soft.
+      # Any other conflict still fails the job and leaves staging as it was.
       - name: Merge dev into the feature branch
         if: github.ref != 'refs/heads/dev'
-        run: >-
-          git -c user.name=staging -c user.email=staging@invalid
-          merge --no-edit --no-ff origin/dev
+        run: |
+          G="git -c user.name=staging -c user.email=staging@invalid"
+          if ! $G merge --no-edit --no-ff origin/dev; then
+            conflicts=$(git diff --name-only --diff-filter=U)
+            if [ "$conflicts" = "public/bob-vectors.json" ]; then
+              echo "bob-vectors.json only: taking dev's copy, the build regenerates it"
+              git checkout --theirs public/bob-vectors.json
+              git add public/bob-vectors.json
+              $G commit --no-edit
+            else
+              echo "conflicts with dev:"; echo "$conflicts"
+              exit 1
+            fi
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22

@@ -93,12 +93,16 @@ en cas de doute, relis-les et imite.
 - **Français d'abord, anglais technique gardé tel quel** : job, build, plugin,
   feature, linting, background, buffer, laptop, IDE, DevOps, WAF, CDN, bots,
   config, deploy, pipeline, merge. Un job *roule*, un modèle *roule*.
-- **« oe » en deux lettres, jamais la ligature « œ »** : noeud, coeur, oeil,
-  oeuvre, voeu. Ludo écrit sur un clavier qui n'a pas la ligature, et il a nommé
-  ce caractère lui-même comme le premier signe qu'un texte est généré (2026-09-16).
-  Même règle pour tout ce qu'un clavier ordinaire ne produit pas : pas de tirets
-  cadratins, pas de points de suspension en un caractère, pas d'espaces insécables
-  fines. Les guillemets « » et les accents restent, il les tape.
+- **« œ » et tirets cadratins : permis dans les articles du blogue** (Ludo,
+  2026-10-25). La règle d'avant (« oe » en deux lettres, aucun cadratin) venait de
+  ce que Ludo voyait ces caractères comme le premier signe qu'un texte est généré
+  (2026-09-16). Depuis que chaque article affiche sa mention d'IA en tête, ce
+  n'est plus un problème : on écrit nœud, cœur, œil, et un cadratin quand la
+  phrase le demande. **Sur LinkedIn, la règle reste** : le post n'a pas de
+  mention d'IA, donc noeud, coeur, oeil en deux lettres et aucun cadratin. Pour
+  le reste de ce qu'un clavier ordinaire ne produit pas, rien n'a changé : pas de
+  points de suspension en un caractère, pas d'espaces insécables fines. Les
+  guillemets « » et les accents restent, il les tape.
 - **Traduit quand le mot français est courant au Québec** : compartiment S3,
   fureteur web, pourriel, saisie d'écran, disposition des touches, mot d'éveil,
   journaux (logs), boîtier (case). Le chatbot du site, c'est « le chat ».
@@ -112,7 +116,7 @@ en cas de doute, relis-les et imite.
   pogner, la patente, faire de quoi, ça marche, qqn.
 - **Jamais** : « n'hésitez pas », « dans cet article nous allons explorer »,
   « cher réseau », « J'ai le plaisir de vous annoncer », « voilà », séries
-  d'adjectifs (crucial, essentiel, robuste), tirets cadratins, émoticônes texte
+  d'adjectifs (crucial, essentiel, robuste), tirets cadratins sur LinkedIn, émoticônes texte
   (« :p », « :D » — c'était avant), conclusion qui répète l'intro, question
   rhétorique en accroche, storytelling en trois actes.
 - **Emojis** : des vrais, depuis 2026, avec parcimonie — un ou deux dans un post
@@ -132,6 +136,16 @@ en cas de doute, relis-les et imite.
   intéresser qqn: ».
 - **Français seulement** depuis 2026. Les anciens posts de carrière étaient en
   anglais avec mots-clics ; on garde le ton, pas la langue.
+- **Le lien garde l'adresse du site** : LinkedIn remplace par `lnkd.in` tout
+  lien de 26 caractères ou plus, compté tel que tapé, `https://` compris
+  (testé le 2026-10-24). On écrit donc le lien **sans `https://`** (LinkedIn le
+  rend quand même cliquable) et il doit tenir en 25 caractères :
+  `labodeludo.dev/` plus 10 caractères au plus (`labodeludo.dev/vmotion`).
+  L'adresse complète d'un article (`/blog/<slug>/`) dépasse presque toujours :
+  on lui donne un lien court avec le champ `court:` du frontmatter (ex.
+  `court: "vmotion"`, et `court: "vmotion-en"` dans la version anglaise), et
+  le post écrit `labodeludo.dev/vmotion`. Le build refuse un code de plus de
+  10 caractères, un doublon ou un code qui est déjà une page du site.
 
 ## 6. Avant de livrer, vérifier
 
@@ -155,13 +169,17 @@ en cas de doute, relis-les et imite.
       généralité.
 - [ ] Un lecteur pourrait dire à quel moment Ludo hésite ou s'est trompé.
 - [ ] L'opinion est à la fin, en une phrase.
-- [ ] Aucun mot de la liste « Jamais », et aucun « œ » ligaturé (grep œ avant de
-      livrer).
+- [ ] Aucun mot de la liste « Jamais ». Pour LinkedIn seulement : aucun « œ »
+      ligaturé ni tiret cadratin (grep avant de livrer) ; dans un article, ils
+      sont permis.
 - [ ] Les anglicismes sont ceux du métier, les mots courants sont en français.
 - [ ] Aucune réplique qui ferait rire Bob : c'est Ludo qui signe, plus sérieux,
       dans un français (ou un anglais) plus soigné que le sien.
 - [ ] Pour LinkedIn : moins de cinq phrases, un lien, un « ! », au plus un ou deux
       emojis, aucune émoticône texte.
+- [ ] Pour LinkedIn : chaque lien est écrit sans `https://` et fait 25
+      caractères au plus (`echo -n 'labodeludo.dev/xxx' | wc -m`), sinon il
+      devient `lnkd.in`.
 
 ## 7. Extraits verbatim (imiter le rythme, pas copier)
 

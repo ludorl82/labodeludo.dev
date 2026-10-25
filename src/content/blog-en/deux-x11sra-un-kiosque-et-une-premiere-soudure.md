@@ -4,6 +4,7 @@ pubDate: 2026-10-21
 description: "Two Supermicro X11SRA boards move into Rosewill 4U cases, one with a BMC and one without. An old X9SCM board becomes the rack screen: it shows the BMC consoles and captures the HDMI of the machine that has no BMC. To give that machine a keyboard, Ludo solders for the first time in his life, on a CH9329 module. Along the way, the machines get new names."
 tags: ["Labo", "DevOps", "bob"]
 ia: "redigee"
+court: "kiosque-en"
 ---
 
 > **Technical summary** _([AI generated](/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo))_

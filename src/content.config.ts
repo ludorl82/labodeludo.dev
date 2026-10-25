@@ -97,6 +97,16 @@ const castSchema = z.object({
   /* « none » quand la vraie barre tmux est dans l'enregistrement (prise
      réelle attachée à la session) : l'habillage en ferait une deuxième. */
   frame: z.enum(["alacritty", "none"]).optional(),
+  /* Code du lien court labodeludo.dev/cast/<court>, une 301 vers la page du
+     cast. `labodeludo.dev/cast/` fait 20 caractères : sous les 26 où LinkedIn
+     remplace un lien par lnkd.in, il en reste 5 au code. Un mot pertinent s'il
+     y en a un en 5 caractères (« nvme »), sinon une valeur aléatoire. Chaque
+     langue a le sien ; l'espace /cast/ est à part de celui des articles, donc
+     « nvme » peut servir aux deux (scripts/emit-short-links.mjs). */
+  court: z
+    .string()
+    .regex(/^[a-z0-9-]{1,5}$/, "court : 5 caractères au plus, a-z 0-9 -")
+    .optional(),
 });
 
 const casts = defineCollection({

@@ -146,6 +146,14 @@ en cas de doute, relis-les et imite.
   `court: "vmotion"`, et `court: "vmotion-en"` dans la version anglaise), et
   le post écrit `labodeludo.dev/vmotion`. Le build refuse un code de plus de
   10 caractères, un doublon ou un code qui est déjà une page du site.
+- **Un cast a son lien court sous `labodeludo.dev/cast/`** (Ludo, 2026-10-25).
+  Le préfixe fait 20 caractères, il en reste donc 5 au code : le champ
+  `court:` du frontmatter du cast, 5 caractères au plus. Un mot pertinent
+  s'il y en a un qui tient en 5 (`court: "nvme"` donne
+  `labodeludo.dev/cast/nvme`), sinon une valeur aléatoire (`head -c3
+  /dev/urandom | od -An -tx1 | tr -d ' \n' | cut -c1-5`). L'anglais a son
+  propre code (`court: "nv-en"`). Les casts ont leur espace à eux : un même
+  mot peut servir à l'article et à son cast.
 
 ## 6. Avant de livrer, vérifier
 

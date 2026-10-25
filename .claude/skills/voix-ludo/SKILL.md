@@ -138,7 +138,10 @@ en cas de doute, relis-les et imite.
   rend quand même cliquable) et il doit tenir en 25 caractères :
   `labodeludo.dev/` plus 10 caractères au plus (`labodeludo.dev/vmotion`).
   L'adresse complète d'un article (`/blog/<slug>/`) dépasse presque toujours :
-  il faut alors un lien court qui redirige vers l'article.
+  on lui donne un lien court avec le champ `court:` du frontmatter (ex.
+  `court: "vmotion"`, et `court: "vmotion-en"` dans la version anglaise), et
+  le post écrit `labodeludo.dev/vmotion`. Le build refuse un code de plus de
+  10 caractères, un doublon ou un code qui est déjà une page du site.
 
 ## 6. Avant de livrer, vérifier
 

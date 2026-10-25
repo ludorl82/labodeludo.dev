@@ -13,7 +13,13 @@ import { glob } from "astro/loaders";
    `certificatHumain` porte l'identifiant d'un certificat Humanums
    (humanums.com/verify/<id>) : le texte a été tapé par Ludo dans leur éditeur,
    qui signe une empreinte du texte exact. L'original français offre le texte
-   certifié à copier; la traduction renvoie au certificat. */
+   certifié à copier; la traduction renvoie au certificat.
+   `court` est le code du lien court labodeludo.dev/<court>, une 301 vers
+   l'article. LinkedIn remplace par lnkd.in tout lien de 26 caractères ou plus,
+   tel que tapé : `labodeludo.dev/` (15) laisse 10 caractères au code. Chaque
+   langue a le sien (ex. `vmotion` et `vmotion-en`) ; l'unicité et les
+   collisions avec les pages du site sont vérifiées après le build
+   (scripts/emit-short-links.mjs). */
 const postSchema = z
   .object({
     title: z.string(),
@@ -29,6 +35,10 @@ const postSchema = z
     certificatHumain: z
       .string()
       .regex(/^HM-[A-Z0-9]{4}-[A-Z0-9]{4}$/, "certificatHumain : HM-XXXX-XXXX")
+      .optional(),
+    court: z
+      .string()
+      .regex(/^[a-z0-9-]{1,10}$/, "court : 10 caractères au plus, a-z 0-9 -")
       .optional(),
   })
   .refine((d) => !d.tags.includes("bob") || d.ia === "redigee", {

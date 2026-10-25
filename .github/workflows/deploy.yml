@@ -50,31 +50,50 @@ jobs:
   # deliberately trades the free minutes and the deploy-while-cluster-is-down
   # property for a preview that tells the truth.
   deploy-staging:
-    # `dev` only, not "anything that is not main" (changed 2026-09-07). The
-    # publish below pins --branch=staging, which IS the Pages production
-    # deployment behind dev.labodeludo.dev — so ANY feature branch pushed a
-    # build over the preview. It happened three times in one day while the
-    # command palette lived on `dev`: a branch cut from `main` deployed a
-    # palette-less site and the work looked like it had vanished.
+    # Every push except to main, merged with `dev` first (2026-10-23, so
+    # Ludo can review an article on dev.labodeludo.dev before merging its PR).
     #
-    # The cost is that feature branches no longer get a preview at all. That is
-    # deliberate: a non-production Pages branch would publish to its own
-    # <hash>.pages.dev URL, which the Access app on dev.labodeludo.dev does not
-    # cover, so the alternative to no preview is an unauthenticated one.
-    if: github.ref == 'refs/heads/dev'
+    # From 2026-09-07 to 2026-10-23 this was `dev` only, and for a good
+    # reason. The publish below pins --branch=staging, which IS the Pages
+    # production deployment behind dev.labodeludo.dev. Back then, ANY feature
+    # branch published itself over the preview. That happened three times in
+    # one day while the command palette lived on `dev`: a branch cut from
+    # `main` deployed a palette-less site, and the work looked like it had
+    # vanished.
+    #
+    # The merge step below is what makes branches safe again. A feature
+    # branch is built as `dev` plus the branch, never as the branch alone, so
+    # staging never goes back behind `dev`. The next push to `dev` (or the
+    # nightly sync) puts plain `dev` back. If the branch does not merge
+    # cleanly into `dev`, the job fails and staging is left as it was.
+    #
+    # Still no per-branch Pages preview: a non-production Pages branch would
+    # publish to its own <hash>.pages.dev URL, which the Access app on
+    # dev.labodeludo.dev does not cover. That would make the preview public.
+    if: github.ref != 'refs/heads/main'
     needs: garde-publique
     runs-on: [self-hosted, k3s]
     # One runner, shared with deploy-prod and the nightly Architecture
     # workflow, and this job fires on EVERY non-main push — including the
     # nightly sync's pushes to dev. Superseded staging builds are cancelled
     # rather than queued behind each other; only the newest preview is worth
-    # anything. Job-level on purpose: at workflow level this would also cancel
-    # prod deploys, which must never be interrupted.
+    # anything. ONE group for every branch, since they all publish to the same
+    # place: the last push wins, and its build is not raced by an older one.
+    # Job-level on purpose: at workflow level this would also cancel prod
+    # deploys, which must never be interrupted.
     concurrency:
-      group: staging-${{ github.ref }}
+      group: staging
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Feature branch = dev + the branch (see above). Nothing to do on dev.
+      - name: Merge dev into the feature branch
+        if: github.ref != 'refs/heads/dev'
+        run: >-
+          git -c user.name=staging -c user.email=staging@invalid
+          merge --no-edit --no-ff origin/dev
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -99,8 +118,8 @@ jobs:
         # branch creates a *preview* deployment at its own <hash>.pages.dev URL,
         # which the Access app on dev.labodeludo.dev does not cover. Pinning the
         # value means previews are never created at all. It is the Pages branch,
-        # not the git branch — every non-main push lands here, same as the old
-        # single staging container.
+        # not the git branch — every non-main push lands here (merged with
+        # dev, see the job's comment), same as the old single staging container.
         run: >-
           npx --yes wrangler@4 pages deploy dist
           --project-name=labodeludo-dev
@@ -163,3 +182,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: us-east-1
         run: bash scripts/redirect-old-urls.sh
+      - env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LABODELUDO_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: bash scripts/redirect-short-links.sh

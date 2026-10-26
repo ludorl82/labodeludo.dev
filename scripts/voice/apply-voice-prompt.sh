@@ -4,7 +4,7 @@
 #   apply-voice-prompt.sh --check   exit 1 if HA's prompt differs from the render
 #   apply-voice-prompt.sh --apply   stop HA, write the prompt, start HA, verify
 #
-# HA keeps the Ollama conversation prompt in /config/.storage/core.config_entries
+# HA keeps the conversation prompt in /config/.storage/core.config_entries
 # and rewrites that file on shutdown, so an edit while it runs is overwritten:
 # the only safe order is stop, edit, start. The trap restarts HA even if this
 # script dies mid-way — a stop with no start left the house without automation
@@ -25,7 +25,11 @@ STORE=/config/.storage/core.config_entries
 # Bob's prompt into it, and --check would compare against both entries (it
 # only passed because an empty prompt adds a trailing newline that $( )
 # strips; a non-empty one there would read as drift).
-BOB='select(.domain=="ollama" and (.data.url | startswith("http://bob.tptpt.in:")))'
+#
+# Since 2026-10-26 Bob is the OpenRouter entry's conversation agent (Claude
+# Haiku 5.5, ha-iac#51); the Ollama agent on bob stays as the fallback and is
+# no longer written. There is one OpenRouter entry: scoped to its domain.
+BOB='select(.domain=="open_router")'
 JQ_READ='.data.entries[] | '"$BOB"' | .subentries[] | select(.subentry_type=="conversation") | .data.prompt'
 render=$(mktemp); trap 'rm -f "$render"' EXIT
 node scripts/voice/render-voice-prompt.mjs > "$render"
@@ -46,7 +50,7 @@ case "${1:-}" in
       trap "ha core start --no-progress >/dev/null 2>&1 || true" EXIT
       ha core stop --no-progress >/dev/null
       cp '"$STORE"' '"$STORE"'.bak-$(date +%Y%m%d%H%M)
-      jq --rawfile p /config/.bob-voice-prompt.txt '"'"'.data.entries |= map(if .domain=="ollama" and (.data.url | startswith("http://bob.tptpt.in:")) then (.subentries |= map(if .subentry_type=="conversation" then (.data.prompt=$p) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
+      jq --rawfile p /config/.bob-voice-prompt.txt '"'"'.data.entries |= map(if .domain=="open_router" then (.subentries |= map(if .subentry_type=="conversation" then (.data.prompt=$p) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
       mv '"$STORE"'.new '"$STORE"'
       rm -f /config/.bob-voice-prompt.txt'
     echo "voice prompt written; Home Assistant restarting"

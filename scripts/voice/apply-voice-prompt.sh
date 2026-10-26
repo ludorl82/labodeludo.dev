@@ -30,7 +30,12 @@ STORE=/config/.storage/core.config_entries
 # Haiku 5.5, ha-iac#51); the Ollama agent on bob stays as the fallback and is
 # no longer written. There is one OpenRouter entry: scoped to its domain.
 BOB='select(.domain=="open_router")'
-JQ_READ='.data.entries[] | '"$BOB"' | .subentries[] | select(.subentry_type=="conversation") | .data.prompt'
+# ONE agent of that entry, by id: since 2026-10-26 the entry also holds « Bob
+# téléphone » (the phone line's agent, with labo-mcp and its own prompt).
+# Unscoped, --check would read two prompts and --apply would write this one
+# into both.
+AGENT=01M5WR05PB5TD0TAHCKKRFF5P0
+JQ_READ='.data.entries[] | '"$BOB"' | .subentries[] | select(.subentry_id=="'"$AGENT"'") | .data.prompt'
 render=$(mktemp); trap 'rm -f "$render"' EXIT
 node scripts/voice/render-voice-prompt.mjs > "$render"
 
@@ -50,7 +55,7 @@ case "${1:-}" in
       trap "ha core start --no-progress >/dev/null 2>&1 || true" EXIT
       ha core stop --no-progress >/dev/null
       cp '"$STORE"' '"$STORE"'.bak-$(date +%Y%m%d%H%M)
-      jq --rawfile p /config/.bob-voice-prompt.txt '"'"'.data.entries |= map(if .domain=="open_router" then (.subentries |= map(if .subentry_type=="conversation" then (.data.prompt=$p) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
+      jq --rawfile p /config/.bob-voice-prompt.txt '"'"'.data.entries |= map(if .domain=="open_router" then (.subentries |= map(if .subentry_id=="'"$AGENT"'" then (.data.prompt=$p) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
       mv '"$STORE"'.new '"$STORE"'
       rm -f /config/.bob-voice-prompt.txt'
     echo "voice prompt written; Home Assistant restarting"

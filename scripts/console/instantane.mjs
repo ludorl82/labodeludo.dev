@@ -354,7 +354,7 @@ async function ask(what, system, user, format) {
         { role: "user", content: user },
       ],
       format,
-      options: { temperature: 0, num_ctx: 16384 },
+      options: { temperature: 0, num_ctx: 65536 }, // la valeur de tous les appelants de bob (2026-10-25)
     }),
     signal: AbortSignal.timeout(600_000),
   });

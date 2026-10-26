@@ -15,4 +15,6 @@ if (!voix) throw new Error("bob-persona.md: section Voix missing");
 const persona = voix.slice("Voix\n".length).trim().split("\n\n")[0].trim();
 if (!persona.startsWith("Tu es Bob")) throw new Error("Voix: first paragraph must be the spoken identity line");
 const rules = readFileSync("scripts/voice/voice-rules.txt", "utf8").replace(/\s+$/, "");
-process.stdout.write(`/no_think\n${persona}\n\n${rules}\n`);
+// No `/no_think` first line since 2026-10-26: that was Qwen's switch, and Bob
+// now runs on Claude Haiku 5.5 (Home Assistant's OpenRouter integration).
+process.stdout.write(`${persona}\n\n${rules}\n`);

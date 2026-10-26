@@ -1,23 +1,22 @@
 {
   "curated": [
     "D'où vient le nom de Bob ?",
-    "Why did the cheapest model score like the biggest one?",
     "How does Bob pick which parts of your articles to quote?",
-    "What broke on a Thursday night with MongoDB?"
+    "What broke on a Thursday night with MongoDB?",
+    "Why is renumbering a k3s cluster harder than it looks?"
   ],
-  "generated": "2026-10-25T08:34:37Z",
+  "generated": "2026-10-26T08:36:01Z",
   "openers": [
     "Comment migrer une VM sans stockage partagé ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
-    "Comment le kiosque surveille-t-il le rack ?",
-    "How is the rack display wired up?",
+    "Pourquoi tes sessions SSH gelaient-elles après une minute ?",
+    "How did you expose MCP servers in your lab?",
     "D'où vient le nom de Bob ?",
-    "Why did the cheapest model score like the biggest one?",
     "How does Bob pick which parts of your articles to quote?",
-    "What broke on a Thursday night with MongoDB?"
+    "What broke on a Thursday night with MongoDB?",
+    "Why is renumbering a k3s cluster harder than it looks?"
   ],
   "written": [
-    "Comment le kiosque surveille-t-il le rack ?",
-    "How is the rack display wired up?"
+    "How did you expose MCP servers in your lab?"
   ]
 }

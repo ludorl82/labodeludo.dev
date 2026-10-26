@@ -62,7 +62,7 @@ question() {
   esac
   jq -n --arg m "$MODELE" --arg s "$systeme" --arg q "$demande" '{
       model: $m, stream: false, think: false, keep_alive: -1,
-      options: { num_ctx: 16384, num_predict: 1 },
+      options: { num_ctx: 65536, num_predict: 1 },
       messages: [ { role: "system", content: $s },
                   { role: "user",   content: $q } ] }' |
     curl -sf "$OLLAMA/api/chat" -d @-

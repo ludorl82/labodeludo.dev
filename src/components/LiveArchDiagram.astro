@@ -131,6 +131,38 @@ const servedAtEdge = dnsNodes.filter(
   (n) => !routesTo.some((e) => e.from === n.id),
 );
 
+// Le compte « apps Access » dessiné sur la boîte de l'edge est celui des
+// nœuds JOINTS, et rien de plus. Vérifié ce soir contre cloudflare-iac-public :
+// `live/access-apps.tf` déclare bien les applications que la graine porte, mais
+// le repo en déclare d'autres sur le nom même dont le connecteur compose
+// l'origine en LAN — `live/access-ollama.tf` pose une porte sur tout
+// `ollama.pub.example.com` et deux trouées étroites sur `/api/chat` et
+// `/api/embed`, avec le commentaire qui dit pourquoi la porte doit poser
+// avant le nom. Elles ne remontent pas dans le join, et la raison est dans
+// l'émetteur, pas dans le repo : la passe Access de `scripts/emit-topology.py`
+// est un `read("live/access-apps.tf")` solitaire — un seul fichier, jamais un
+// glob. C'est le même genre de trou que les onduleurs et que win11, tenu par la
+// même nuance : le nœud manque, la porte est là. Le chiffre reste donc celui de
+// la graine (c'est lui que le checker réclame, et le seul que la donnée
+// fournit), mais il ne doit pas se lire « ce nom n'est pas protégé » : la
+// conséquence est dans le clic, qui allume les `protects` des autres noms et
+// n'a rien à allumer sur celui-là.
+// Pas un nœud inventé, une trace relevée dans l'instantané, comme `originOnHost`.
+// Si le join finit par porter ces applications, `ungated` laisse la table
+// sans prise et la ligne disparaît d'elle-même.
+const protectedNames = new Set(
+  (arch.edges as any[])
+    .filter((e) => e.kind === "protects")
+    .map((e) => e.to as string),
+);
+const ungated = dnsNodes.filter((n) => !protectedNames.has(n.id));
+const GATED_ELSEWHERE: Record<string, string> = {
+  "dns:ollama.pub.example.com": "live/access-ollama.tf",
+};
+const gateGap = ungated
+  .filter((n) => GATED_ELSEWHERE[n.id])
+  .map((n) => ({ n, where: GATED_ELSEWHERE[n.id] }));
+
 // ---- la bande « maison » ------------------------------------------------
 // Les machines ET les boîtes hors IaC se placent à partir des données. Elles
 // étaient énumérées à la main, ce qui a fini par se voir : le jour où les
@@ -641,6 +673,20 @@ const ariaLabel =
         : ` — mais rien ne descend du cluster sur ce nom : le connecteur ` +
           `compose le service du host, et aucun workload déclaré ne le sert.`)
     : "") +
+  (gateGap.length
+    ? ` Le « ${accessCount} applications Access » posé sur la boîte de l'edge ` +
+      `est le compte de la graine, pas celui du repo : ` +
+      gateGap
+        .map(
+          (g) =>
+            `${g.n.label} ne porte aucun nœud Access joint alors que ` +
+            `l'instantané déclare sa porte dans ${g.where}`,
+        )
+        .join(", ") +
+      `. L'émetteur du bord ne lit que son fichier d'Access à lui. Le nœud ` +
+      `manque, la porte est là : un visiteur qui demande l'un de ces noms ` +
+      `passe par Access quand même, et rien ne l'allumera dans son chemin.`
+    : "") +
   ` Chaque boîte cliquable répond à une seule question : le chemin qu'elle ` +
   `emprunte, d'un nom public jusqu'à la machine qui le sert — et l'inverse ` +
   `si tu pars d'une machine. Les groupes s'allument tels quels, et une ` +
@@ -743,6 +789,9 @@ const ariaLabel =
         <text x="380" y="143" text-anchor="middle" font-family="var(--font-display)" font-size="12.5" font-weight="600" fill="var(--text)">Cloudflare edge</text>
         <text x="380" y="161" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{dnsCount} noms publics · {accessCount} apps Access · 0 port ouvert vers la maison</text>
         <text x="380" y="178" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--text-faint)">{servedAtEdge.length} servis à l'edge · {toBucket.length} vers S3 · {toTunnel.length} par le tunnel</text>
+        {gateGap.length > 0 && (
+          <text x="380" y="192" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-faint)">Access : {accessCount} dans la graine · la porte de {gateGap.map((g) => g.n.label).join(", ")} est déclarée dans {gateGap.map((g) => g.where).join(", ")}</text>
+        )}
       </a>
 
       <path d="M190,74 L190,118" fill="none" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#la-arrow)" />

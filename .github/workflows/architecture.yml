@@ -75,8 +75,8 @@ jobs:
         run: aws s3 sync dist/ s3://labodeludo.dev/ --delete --exclude 'console/instantane.json'
       # The sync above deletes every redirect object, since none is in dist/ —
       # recreate them, same as deploy.yml does after its own sync. Without
-      # this, the old WordPress URLs and the short links (labodeludo.dev/<code>)
-      # 404 from this run until the next push to main.
+      # this, the old WordPress URLs 404 from this run until the next push to
+      # main. (The short links are not here: lbdl.dev serves them.)
       - name: Recreate redirects
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.LABODELUDO_S3_ACCESS_KEY_ID }}
@@ -84,7 +84,6 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
         run: |
           bash scripts/redirect-old-urls.sh
-          bash scripts/redirect-short-links.sh
       - name: Kuma heartbeat
         # push monitor "architecture-nightly" — fires on ABSENCE,
         # which also covers GitHub silently disabling the cron after 60 idle

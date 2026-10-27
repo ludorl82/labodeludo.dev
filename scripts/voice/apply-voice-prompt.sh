@@ -30,34 +30,49 @@ STORE=/config/.storage/core.config_entries
 # Haiku 5.5, ha-iac#51); the Ollama agent on bob stays as the fallback and is
 # no longer written. There is one OpenRouter entry: scoped to its domain.
 BOB='select(.domain=="open_router")'
-# ONE agent of that entry, by id: since 2026-10-26 the entry also holds « Bob
-# téléphone » (the phone line's agent, with labo-mcp and its own prompt).
-# Unscoped, --check would read two prompts and --apply would write this one
-# into both.
-AGENT=01M5WR05PB5TD0TAHCKKRFF5P0
-JQ_READ='.data.entries[] | '"$BOB"' | .subentries[] | select(.subentry_id=="'"$AGENT"'") | .data.prompt'
-render=$(mktemp); trap 'rm -f "$render"' EXIT
-node scripts/voice/render-voice-prompt.mjs > "$render"
+# The entry holds TWO agents since 2026-10-26: Bob (the house, the app) and
+# « Bob téléphone » (the phone line, with labo-mcp). Each is addressed by id,
+# each gets its own render: the phone one is the same persona with the lab
+# sentence swapped (render-voice-prompt.mjs --telephone). --check reads both,
+# so Kuma 76 sees the phone prompt drift too; --apply writes both in one stop.
+AGENTS="01M5WR05PB5TD0TAHCKKRFF5P0:bob 01M5X1R3J1ZMTNN0Y1WQXNR58V:telephone"
+work=$(mktemp -d); trap 'rm -rf "$work"' EXIT
+for a in $AGENTS; do
+  id=${a%%:*} nom=${a#*:}
+  if [ "$nom" = telephone ]; then
+    node scripts/voice/render-voice-prompt.mjs --telephone > "$work/$id"
+  else
+    node scripts/voice/render-voice-prompt.mjs > "$work/$id"
+  fi
+done
 
 case "${1:-}" in
   --check)
-    live=$(ssh "$HOST" "jq -r '$JQ_READ' $STORE")
-    if diff -u <(printf '%s\n' "$live") "$render" >/dev/null; then
-      echo "voice prompt: live matches src/data/bob-persona.md + voice-rules.txt"
-    else
-      echo "voice prompt: DRIFT between Home Assistant and the rendered prompt" >&2
-      diff -u <(printf '%s\n' "$live") "$render" >&2 || true
-      exit 1
-    fi ;;
+    drift=0
+    for a in $AGENTS; do
+      id=${a%%:*} nom=${a#*:}
+      live=$(ssh "$HOST" "jq -r '.data.entries[] | $BOB | .subentries[] | select(.subentry_id==\"$id\") | .data.prompt' $STORE")
+      if diff -u <(printf '%s\n' "$live") "$work/$id" >/dev/null; then
+        echo "voice prompt ($nom): live matches src/data/bob-persona.md + voice-rules.txt"
+      else
+        echo "voice prompt ($nom): DRIFT between Home Assistant and the rendered prompt" >&2
+        diff -u <(printf '%s\n' "$live") "$work/$id" >&2 || true
+        drift=1
+      fi
+    done
+    exit $drift ;;
   --apply)
-    scp -q "$render" "$HOST:/config/.bob-voice-prompt.txt"
+    for a in $AGENTS; do scp -q "$work/${a%%:*}" "$HOST:/config/.bob-voice-prompt-${a%%:*}.txt"; done
+    # One jq pass per agent, all inside the same stop/start.
     ssh "$HOST" 'set -e
       trap "ha core start --no-progress >/dev/null 2>&1 || true" EXIT
       ha core stop --no-progress >/dev/null
       cp '"$STORE"' '"$STORE"'.bak-$(date +%Y%m%d%H%M)
-      jq --rawfile p /config/.bob-voice-prompt.txt '"'"'.data.entries |= map(if .domain=="open_router" then (.subentries |= map(if .subentry_id=="'"$AGENT"'" then (.data.prompt=$p) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
-      mv '"$STORE"'.new '"$STORE"'
-      rm -f /config/.bob-voice-prompt.txt'
+      for id in '"$(for a in $AGENTS; do printf '%s ' "${a%%:*}"; done)"'; do
+        jq --arg id "$id" --rawfile p /config/.bob-voice-prompt-$id.txt '"'"'.data.entries |= map(if .domain=="open_router" then (.subentries |= map(if .subentry_id==$id then (.data.prompt=$p) else . end)) else . end)'"'"' '"$STORE"' > '"$STORE"'.new
+        mv '"$STORE"'.new '"$STORE"'
+        rm -f /config/.bob-voice-prompt-$id.txt
+      done'
     echo "voice prompt written; Home Assistant restarting"
     for i in $(seq 1 30); do
       # `ha core info` has no state line on this Supervisor (found 2026-09-28):

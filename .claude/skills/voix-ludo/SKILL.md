@@ -139,19 +139,22 @@ en cas de doute, relis-les et imite.
 - **Le lien garde l'adresse du site** : LinkedIn remplace par `lnkd.in` tout
   lien de 26 caractères ou plus, compté tel que tapé, `https://` compris
   (testé le 2026-10-24). On écrit donc le lien **sans `https://`** (LinkedIn le
-  rend quand même cliquable) et il doit tenir en 25 caractères :
-  `labodeludo.dev/` plus 10 caractères au plus (`labodeludo.dev/vmotion`).
-  L'adresse complète d'un article (`/blog/<slug>/`) dépasse presque toujours :
-  on lui donne un lien court avec le champ `court:` du frontmatter (ex.
-  `court: "vmotion"`, et `court: "vmotion-en"` dans la version anglaise), et
-  le post écrit `labodeludo.dev/vmotion`. Le build refuse un code de plus de
-  10 caractères, un doublon ou un code qui est déjà une page du site.
-- **Un cast a son lien court sous `labodeludo.dev/cast/`** (Ludo, 2026-10-25).
-  Le préfixe fait 20 caractères, il en reste donc 5 au code : le champ
-  `court:` du frontmatter du cast, 5 caractères au plus. Un mot pertinent
-  s'il y en a un qui tient en 5 (`court: "nvme"` donne
-  `labodeludo.dev/cast/nvme`), sinon une valeur aléatoire (`head -c3
-  /dev/urandom | od -An -tx1 | tr -d ' \n' | cut -c1-5`). L'anglais a son
+  rend quand même cliquable) et il doit tenir en 25 caractères. Le domaine
+  court est **`lbdl.dev/`** (Ludo, 2026-10-26) : il laisse 16 caractères au
+  code (`lbdl.dev/virsh-migrate`). L'adresse complète d'un article
+  (`/blog/<slug>/`) dépasse toujours : on lui donne un lien court avec le
+  champ `court:` du frontmatter, le slug lui-même s'il tient en 16 (ex.
+  `court: "virsh-migrate"`, et `court: "virsh-migrate-en"` dans la version
+  anglaise), et le post écrit `lbdl.dev/virsh-migrate`. Le build refuse un
+  code de plus de 16 caractères, un doublon ou un code qui est déjà une page
+  du site. On ne change jamais un code déjà paru dans un post : le lien du
+  post casserait (`vmotion` reste `vmotion`). Les anciens posts en
+  `labodeludo.dev/<code>` marchent toujours.
+- **Un cast a son lien court sous `lbdl.dev/cast/`** (Ludo, 2026-10-25).
+  Le préfixe fait 14 caractères, il en reste donc 11 au code : le champ
+  `court:` du frontmatter du cast, 11 caractères au plus. Un mot pertinent
+  (`court: "nvme"` donne `lbdl.dev/cast/nvme`), sinon une valeur aléatoire
+  (`head -c3 /dev/urandom | od -An -tx1 | tr -d ' \n'`). L'anglais a son
   propre code (`court: "nv-en"`). Les casts ont leur espace à eux : un même
   mot peut servir à l'article et à son cast.
 

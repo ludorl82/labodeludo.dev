@@ -14,9 +14,11 @@ import { glob } from "astro/loaders";
    (humanums.com/verify/<id>) : le texte a été tapé par Ludo dans leur éditeur,
    qui signe une empreinte du texte exact. L'original français offre le texte
    certifié à copier; la traduction renvoie au certificat.
-   `court` est le code du lien court labodeludo.dev/<court>, une 301 vers
-   l'article. LinkedIn remplace par lnkd.in tout lien de 26 caractères ou plus,
-   tel que tapé : `labodeludo.dev/` (15) laisse 10 caractères au code. Chaque
+   `court` est le code du lien court lbdl.dev/<court>, une 301 vers
+   l'article (le Worker `lbdl` de cloudflare-iac lit liens-courts.json ;
+   labodeludo.dev/<court> marche aussi). LinkedIn remplace par lnkd.in tout
+   lien de 26 caractères ou plus, tel que tapé : `lbdl.dev/` (9) laisse 16
+   caractères au code, assez pour la plupart des slugs tels quels. Chaque
    langue a le sien (ex. `vmotion` et `vmotion-en`) ; l'unicité et les
    collisions avec les pages du site sont vérifiées après le build
    (scripts/emit-short-links.mjs). */
@@ -38,7 +40,7 @@ const postSchema = z
       .optional(),
     court: z
       .string()
-      .regex(/^[a-z0-9-]{1,10}$/, "court : 10 caractères au plus, a-z 0-9 -")
+      .regex(/^[a-z0-9-]{1,16}$/, "court : 16 caractères au plus, a-z 0-9 -")
       .optional(),
   })
   .refine((d) => !d.tags.includes("bob") || d.ia === "redigee", {
@@ -97,15 +99,15 @@ const castSchema = z.object({
   /* « none » quand la vraie barre tmux est dans l'enregistrement (prise
      réelle attachée à la session) : l'habillage en ferait une deuxième. */
   frame: z.enum(["alacritty", "none"]).optional(),
-  /* Code du lien court labodeludo.dev/cast/<court>, une 301 vers la page du
-     cast. `labodeludo.dev/cast/` fait 20 caractères : sous les 26 où LinkedIn
-     remplace un lien par lnkd.in, il en reste 5 au code. Un mot pertinent s'il
-     y en a un en 5 caractères (« nvme »), sinon une valeur aléatoire. Chaque
+  /* Code du lien court lbdl.dev/cast/<court>, une 301 vers la page du
+     cast. `lbdl.dev/cast/` fait 14 caractères : sous les 26 où LinkedIn
+     remplace un lien par lnkd.in, il en reste 11 au code. Un mot pertinent
+     (« nvme »), sinon une valeur aléatoire. Chaque
      langue a le sien ; l'espace /cast/ est à part de celui des articles, donc
      « nvme » peut servir aux deux (scripts/emit-short-links.mjs). */
   court: z
     .string()
-    .regex(/^[a-z0-9-]{1,5}$/, "court : 5 caractères au plus, a-z 0-9 -")
+    .regex(/^[a-z0-9-]{1,11}$/, "court : 11 caractères au plus, a-z 0-9 -")
     .optional(),
 });
 

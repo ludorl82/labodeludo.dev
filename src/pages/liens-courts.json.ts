@@ -19,14 +19,13 @@ export const GET: APIRoute = async () => {
     getCollection("castsEn"),
   ]);
 
-  // Casts live under their own prefix, cast/<code> (11 characters at most):
-  // the code is a path to the Worker, so nothing else needs to know.
-  const cast = (court: string | undefined) => (court ? `cast/${court}` : undefined);
+  // Articles and casts share one space of codes (lbdl.dev/<code>); a code
+  // used by both is refused by scripts/check-short-links.mjs.
   const links = [
     ...posts.map((p) => ({ code: p.data.court, target: `/blog/${p.id}/` })),
     ...postsEn.map((p) => ({ code: p.data.court, target: `/en/blog/${p.id}/` })),
-    ...casts.map((c) => ({ code: cast(c.data.court), target: `/casts/${c.id}/` })),
-    ...castsEn.map((c) => ({ code: cast(c.data.court), target: `/en/casts/${c.id}/` })),
+    ...casts.map((c) => ({ code: c.data.court, target: `/casts/${c.id}/` })),
+    ...castsEn.map((c) => ({ code: c.data.court, target: `/en/casts/${c.id}/` })),
   ]
     .filter((l): l is { code: string; target: string } => !!l.code)
     .sort((a, b) => a.code.localeCompare(b.code));

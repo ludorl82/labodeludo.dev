@@ -150,13 +150,15 @@ en cas de doute, relis-les et imite.
   déjà paru dans un post : le lien du post casserait (`vmotion` reste
   `vmotion`). `labodeludo.dev/<code>` n'existe plus : seul `lbdl.dev` sert
   les liens courts.
-- **Un cast a son lien court sous `lbdl.dev/cast/`** (Ludo, 2026-10-25).
-  Le préfixe fait 14 caractères, il en reste donc 11 au code : le champ
-  `court:` du frontmatter du cast, 11 caractères au plus. Un mot pertinent
-  (`court: "nvme"` donne `lbdl.dev/cast/nvme`), sinon une valeur aléatoire
-  (`head -c3 /dev/urandom | od -An -tx1 | tr -d ' \n'`). L'anglais a son
-  propre code (`court: "nv-en"`). Les casts ont leur espace à eux : un même
-  mot peut servir à l'article et à son cast.
+- **Un cast a son lien court directement sous `lbdl.dev/`**, sans `/cast/`
+  (Ludo, 2026-10-26) : même champ `court:`, même limite de 16 caractères,
+  même espace que les articles. Le code d'un cast est celui de l'article
+  suivi de `-cast` (`court: "nvme-cast"` donne `lbdl.dev/nvme-cast`, et
+  `nvme-cast-en` en anglais). Le build refuse un code déjà pris par un
+  article.
+- **Pas de `https://`, et pas de carte d'aperçu à chercher** (Ludo,
+  2026-10-26) : Ludo joint sa propre image au post. Un lien nu ne donne pas
+  de carte, et c'est voulu.
 
 ## 6. Avant de livrer, vérifier
 

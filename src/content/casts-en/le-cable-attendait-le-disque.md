@@ -9,7 +9,7 @@ article: "le-cable-attendait-le-disque"
 session: "aucune"
 frame: "none"
 type: "prise-reelle"
-court: "nv-en"
+court: "nvme-cast-en"
 disclaimer: "✔ This is a real capture, made on October 24, 2026 with asciinema in a dedicated tmux session, with no editing. The migrations are real virsh migrate calls between stella and vega, on two test VMs with no operating system. The keystrokes were sent by a script and not typed by Ludo, the prompt is “ludo@labo”, only pauses longer than two seconds are shortened (23 minutes of tests become two and a half minutes), and the container ID in the tmux bar is replaced by a name of the same length. The terminal text and the narration are in French."
 ---
 

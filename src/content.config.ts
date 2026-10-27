@@ -98,15 +98,14 @@ const castSchema = z.object({
   /* « none » quand la vraie barre tmux est dans l'enregistrement (prise
      réelle attachée à la session) : l'habillage en ferait une deuxième. */
   frame: z.enum(["alacritty", "none"]).optional(),
-  /* Code du lien court lbdl.dev/cast/<court>, une 301 vers la page du
-     cast. `lbdl.dev/cast/` fait 14 caractères : sous les 26 où LinkedIn
-     remplace un lien par lnkd.in, il en reste 11 au code. Un mot pertinent
-     (« nvme »), sinon une valeur aléatoire. Chaque
-     langue a le sien ; l'espace /cast/ est à part de celui des articles, donc
-     « nvme » peut servir aux deux (scripts/check-short-links.mjs). */
+  /* Code du lien court lbdl.dev/<court>, une 301 vers la page du cast. Même
+     espace et même limite que les articles (16 caractères) : un cast prend
+     un code à lui, d'habitude celui de l'article suivi de « -cast »
+     (`nvme-cast`, `nvme-cast-en`). Un doublon avec un article est refusé
+     après le build (scripts/check-short-links.mjs). */
   court: z
     .string()
-    .regex(/^[a-z0-9-]{1,11}$/, "court : 11 caractères au plus, a-z 0-9 -")
+    .regex(/^[a-z0-9-]{1,16}$/, "court : 16 caractères au plus, a-z 0-9 -")
     .optional(),
 });
 

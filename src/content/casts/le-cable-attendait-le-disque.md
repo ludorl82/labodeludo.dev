@@ -9,7 +9,7 @@ article: "le-cable-attendait-le-disque"
 session: "aucune"
 frame: "none"
 type: "prise-reelle"
-court: "nvme"
+court: "nvme-cast"
 disclaimer: "✔ Ceci est une capture réelle, faite le 24 octobre 2026 avec asciinema dans une session tmux dédiée, sans montage. Les migrations sont de vrais appels à virsh migrate entre stella et vega, sur deux VM d'essai sans système. Les frappes ont été envoyées par script et non tapées par Ludo, l'invite est « ludo@labo », seules les pauses de plus de deux secondes sont raccourcies (23 minutes de tests deviennent deux minutes et demie), et l'identifiant du conteneur dans la barre tmux est remplacé par un nom de même longueur."
 ---
 

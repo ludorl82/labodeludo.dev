@@ -16,7 +16,8 @@ const persona = voix.slice("Voix\n".length).trim().split("\n\n")[0].trim();
 if (!persona.startsWith("Tu es Bob")) throw new Error("Voix: first paragraph must be the spoken identity line");
 const rules = readFileSync("scripts/voice/voice-rules.txt", "utf8").replace(/\s+$/, "");
 
-// `--telephone`: the phone line's agent (« Bob téléphone », since 2026-10-26).
+// `--telephone`: the phone line's agent (« Bob téléphone », since 2026-10-26),
+// also the office Voice PE's since 2026-10-27 (Ludo wanted the lab there).
 // Same Bob, except the voice persona's last sentences send lab questions to
 // the site's Bob — on the phone he HAS the lab tools (labo-mcp), so from that
 // sentence to the end of the paragraph becomes telephone.txt. Rendered from

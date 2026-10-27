@@ -15,6 +15,21 @@ if (!voix) throw new Error("bob-persona.md: section Voix missing");
 const persona = voix.slice("Voix\n".length).trim().split("\n\n")[0].trim();
 if (!persona.startsWith("Tu es Bob")) throw new Error("Voix: first paragraph must be the spoken identity line");
 const rules = readFileSync("scripts/voice/voice-rules.txt", "utf8").replace(/\s+$/, "");
+
+// `--telephone`: the phone line's agent (« Bob téléphone », since 2026-10-26).
+// Same Bob, except the voice persona's last sentences send lab questions to
+// the site's Bob — on the phone he HAS the lab tools (labo-mcp), so from that
+// sentence to the end of the paragraph becomes telephone.txt. Rendered from
+// the same persona, the phone prompt follows every persona change; a copy
+// made by hand once would have drifted with nothing to say so.
+const LABO = "Le labo, le cluster, les articles";
+let identity = persona;
+if (process.argv.includes("--telephone")) {
+  const at = persona.indexOf(LABO);
+  if (at < 0) throw new Error(`Voix: "${LABO}…" missing, nothing to swap for the phone`);
+  const tel = readFileSync("scripts/voice/telephone.txt", "utf8").trim();
+  identity = `${persona.slice(0, at)}${tel}`;
+}
 // No `/no_think` first line since 2026-10-26: that was Qwen's switch, and Bob
 // now runs on Claude Haiku 5.5 (Home Assistant's OpenRouter integration).
-process.stdout.write(`${persona}\n\n${rules}\n`);
+process.stdout.write(`${identity}\n\n${rules}\n`);

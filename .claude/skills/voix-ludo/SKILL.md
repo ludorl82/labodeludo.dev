@@ -136,7 +136,7 @@ en cas de doute, relis-les et imite.
   intéresser qqn: ».
 - **Français seulement** depuis 2026. Les anciens posts de carrière étaient en
   anglais avec mots-clics ; on garde le ton, pas la langue.
-- **Le lien garde l'adresse du site** : LinkedIn remplace par `lnkd.in` tout
+- **Le lien garde notre domaine, pas lnkd.in** : LinkedIn remplace par `lnkd.in` tout
   lien de 26 caractères ou plus, compté tel que tapé, `https://` compris
   (testé le 2026-10-24). On écrit donc le lien **sans `https://`** (LinkedIn le
   rend quand même cliquable) et il doit tenir en 25 caractères. Le domaine
@@ -146,10 +146,10 @@ en cas de doute, relis-les et imite.
   champ `court:` du frontmatter, le slug lui-même s'il tient en 16 (ex.
   `court: "virsh-migrate"`, et `court: "virsh-migrate-en"` dans la version
   anglaise), et le post écrit `lbdl.dev/virsh-migrate`. Le build refuse un
-  code de plus de 16 caractères, un doublon ou un code qui est déjà une page
-  du site. On ne change jamais un code déjà paru dans un post : le lien du
-  post casserait (`vmotion` reste `vmotion`). Les anciens posts en
-  `labodeludo.dev/<code>` marchent toujours.
+  code de plus de 16 caractères ou un doublon. On ne change jamais un code
+  déjà paru dans un post : le lien du post casserait (`vmotion` reste
+  `vmotion`). `labodeludo.dev/<code>` n'existe plus : seul `lbdl.dev` sert
+  les liens courts.
 - **Un cast a son lien court sous `lbdl.dev/cast/`** (Ludo, 2026-10-25).
   Le préfixe fait 14 caractères, il en reste donc 11 au code : le champ
   `court:` du frontmatter du cast, 11 caractères au plus. Un mot pertinent

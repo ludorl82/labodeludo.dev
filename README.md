@@ -23,7 +23,6 @@ Migrated from WordPress in July 2026. WordPress is fully decommissioned; this re
 ├── public/images/blog/     # article images, mirrors WordPress's wp-content/uploads relative paths
 ├── docker-compose.yml      # staging container (nginx serving dist/)
 ├── scripts/redirect-old-urls.sh  # recreates 301s from old WordPress URLs, runs every prod deploy
-├── scripts/redirect-short-links.sh  # 301s for short links (labodeludo.dev/<court>; lbdl.dev/<court> is a Worker in cloudflare-iac), runs every prod deploy
 └── .github/workflows/deploy.yml
 ```
 

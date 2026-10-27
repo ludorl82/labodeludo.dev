@@ -6,13 +6,10 @@ export const prerender = true;
 /**
  * The short links, code → article path, from each article's `court` field.
  *
- * The only source for every host: scripts/emit-short-links.mjs turns it into
- * dist/_redirects for Cloudflare Pages (staging),
- * scripts/redirect-short-links.sh into S3 redirect objects (prod), and the
- * `lbdl` Worker in cloudflare-iac reads the published file to serve lbdl.dev.
- * Renaming or reshaping it breaks the short domain. Duplicates
- * and collisions with real pages are refused there, after the build, because
- * only the built tree knows every top-level path.
+ * The `lbdl` Worker in cloudflare-iac reads the published file to serve
+ * lbdl.dev/<code>; labodeludo.dev itself serves no short link. Renaming or
+ * reshaping it breaks the short domain. Duplicates are refused after the
+ * build (scripts/check-short-links.mjs).
  */
 export const GET: APIRoute = async () => {
   const [posts, postsEn, casts, castsEn] = await Promise.all([
@@ -23,7 +20,7 @@ export const GET: APIRoute = async () => {
   ]);
 
   // Casts live under their own prefix, cast/<code> (11 characters at most):
-  // the code is a path to both hosts, so nothing else needs to know.
+  // the code is a path to the Worker, so nothing else needs to know.
   const cast = (court: string | undefined) => (court ? `cast/${court}` : undefined);
   const links = [
     ...posts.map((p) => ({ code: p.data.court, target: `/blog/${p.id}/` })),

@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
     "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
-    "What broke on a Thursday night with MongoDB?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
     "Why is renumbering a k3s cluster harder than it looks?",
-    "How do your diagrams redraw themselves every night?"
+    "How do your diagrams redraw themselves every night?",
+    "What did you learn moving your NFS shares to an SSD?"
   ],
-  "generated": "2026-10-27T08:34:45Z",
+  "generated": "2026-10-28T08:34:13Z",
   "openers": [
     "Comment migrer une VM sans stockage partagé ?",
-    "Pourquoi as-tu ajouté des serveurs MCP ?",
-    "What is an MCP server and why do you use one?",
-    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
+    "Qu'est-ce que tes serveurs MCP font exactement ?",
+    "What MCP servers are running in your lab?",
     "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
-    "What broke on a Thursday night with MongoDB?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
     "Why is renumbering a k3s cluster harder than it looks?",
-    "How do your diagrams redraw themselves every night?"
+    "How do your diagrams redraw themselves every night?",
+    "What did you learn moving your NFS shares to an SSD?"
   ],
   "written": [
-    "Pourquoi as-tu ajouté des serveurs MCP ?",
-    "What is an MCP server and why do you use one?"
+    "Qu'est-ce que tes serveurs MCP font exactement ?",
+    "What MCP servers are running in your lab?"
   ]
 }

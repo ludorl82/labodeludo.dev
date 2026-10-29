@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
     "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
+    "Comment tes dessins se redessinent tout seuls la nuit ?",
     "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?"
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?"
   ],
-  "generated": "2026-10-28T08:34:13Z",
+  "generated": "2026-10-29T08:34:07Z",
   "openers": [
     "Comment migrer une VM sans stockage partagé ?",
-    "Qu'est-ce que tes serveurs MCP font exactement ?",
-    "What MCP servers are running in your lab?",
-    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
+    "Pourquoi limiter l'accès MCP ?",
+    "What is the narrow door rule for your MCP servers?",
     "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
+    "Comment tes dessins se redessinent tout seuls la nuit ?",
     "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?"
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?"
   ],
   "written": [
-    "Qu'est-ce que tes serveurs MCP font exactement ?",
-    "What MCP servers are running in your lab?"
+    "Pourquoi limiter l'accès MCP ?",
+    "What is the narrow door rule for your MCP servers?"
   ]
 }

@@ -64,8 +64,17 @@ const CHARS_PER_TOKEN = 2.65;
  *
  * It fired on 2026-10-04, after a month rather than a year: the author column
  * and the fleet had grown too. The trim was the casts, see the corpus below.
+ *
+ * RAISED to 6500 on 2026-10-30, by Ludo, after it fired again (5,534 with the
+ * bench article; dev alone already sat at 5,470). The arithmetic above is no
+ * longer the live one: the Worker has sent num_ctx 65536 since 2026-10-25
+ * (LOCAL_NUM_CTX in cloudflare-iac live/workers/bob-chat/index.js, the same
+ * value nixos-iac sets on bob), so the 2026-09-12 worst case of 15,324 tokens
+ * now leaves ~50,000 of headroom instead of 560. The extra thousand is about
+ * forty more index rows at the current pace. The ceiling stays a ceiling: if
+ * num_ctx ever goes back down, re-measure the worst case before anything else.
  */
-const MAX_GROUNDING_TOKENS = 5500;
+const MAX_GROUNDING_TOKENS = 6500;
 
 const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
 

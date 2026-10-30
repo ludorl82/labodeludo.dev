@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
     "Comment tes dessins se redessinent tout seuls la nuit ?",
-    "How do your diagrams redraw themselves every night?",
+    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
     "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?"
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
   ],
-  "generated": "2026-10-29T08:34:07Z",
+  "generated": "2026-10-30T08:34:20Z",
   "openers": [
     "Comment migrer une VM sans stockage partagé ?",
-    "Pourquoi limiter l'accès MCP ?",
-    "What is the narrow door rule for your MCP servers?",
-    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
+    "Comment fonctionnent tes serveurs MCP ?",
+    "How did you set up those MCP servers in your lab?",
     "Comment tes dessins se redessinent tout seuls la nuit ?",
-    "How do your diagrams redraw themselves every night?",
+    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
     "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?"
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
   ],
   "written": [
-    "Pourquoi limiter l'accès MCP ?",
-    "What is the narrow door rule for your MCP servers?"
+    "Comment fonctionnent tes serveurs MCP ?",
+    "How did you set up those MCP servers in your lab?"
   ]
 }

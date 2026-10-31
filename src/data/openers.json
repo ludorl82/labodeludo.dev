@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Comment tes dessins se redessinent tout seuls la nuit ?",
     "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
-    "What did you learn moving your NFS shares to an SSD?",
+    "Qu'est-ce qui a mal tourné quand tu as migré tes neuf machines vers NixOS ?",
     "Why did you unplug the NAS on purpose?",
-    "How do your gaming rigs and your cluster share the graphics cards?"
+    "How do your gaming rigs and your cluster share the graphics cards?",
+    "What happens to the cluster when you start a game?"
   ],
-  "generated": "2026-10-30T08:34:20Z",
+  "generated": "2026-10-31T08:35:06Z",
   "openers": [
     "Comment migrer une VM sans stockage partagé ?",
-    "Comment fonctionnent tes serveurs MCP ?",
-    "How did you set up those MCP servers in your lab?",
-    "Comment tes dessins se redessinent tout seuls la nuit ?",
+    "Quels serveurs MCP as-tu déployés ?",
+    "Why did you set up MCP servers for your lab?",
     "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
-    "What did you learn moving your NFS shares to an SSD?",
+    "Qu'est-ce qui a mal tourné quand tu as migré tes neuf machines vers NixOS ?",
     "Why did you unplug the NAS on purpose?",
-    "How do your gaming rigs and your cluster share the graphics cards?"
+    "How do your gaming rigs and your cluster share the graphics cards?",
+    "What happens to the cluster when you start a game?"
   ],
   "written": [
-    "Comment fonctionnent tes serveurs MCP ?",
-    "How did you set up those MCP servers in your lab?"
+    "Quels serveurs MCP as-tu déployés ?",
+    "Why did you set up MCP servers for your lab?"
   ]
 }

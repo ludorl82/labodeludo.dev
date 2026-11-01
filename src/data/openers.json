@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
     "Qu'est-ce qui a mal tourné quand tu as migré tes neuf machines vers NixOS ?",
-    "Why did you unplug the NAS on purpose?",
+    "Pourquoi tu as débranché le NAS exprès ?",
     "How do your gaming rigs and your cluster share the graphics cards?",
-    "What happens to the cluster when you start a game?"
+    "What happens to the cluster when you start a game?",
+    "Why did you split the bastion from the console?"
   ],
-  "generated": "2026-10-31T08:35:06Z",
+  "generated": "2026-11-01T09:35:43Z",
   "openers": [
     "Comment migrer une VM sans stockage partagé ?",
-    "Quels serveurs MCP as-tu déployés ?",
-    "Why did you set up MCP servers for your lab?",
-    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
+    "Comment ouvrir ton labo via MCP ?",
+    "What do your MCP servers actually do?",
     "Qu'est-ce qui a mal tourné quand tu as migré tes neuf machines vers NixOS ?",
-    "Why did you unplug the NAS on purpose?",
+    "Pourquoi tu as débranché le NAS exprès ?",
     "How do your gaming rigs and your cluster share the graphics cards?",
-    "What happens to the cluster when you start a game?"
+    "What happens to the cluster when you start a game?",
+    "Why did you split the bastion from the console?"
   ],
   "written": [
-    "Quels serveurs MCP as-tu déployés ?",
-    "Why did you set up MCP servers for your lab?"
+    "Comment ouvrir ton labo via MCP ?",
+    "What do your MCP servers actually do?"
   ]
 }

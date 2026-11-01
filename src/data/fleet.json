@@ -192,13 +192,14 @@
     },
     {
       "class": "sbc",
-      "iacDeclared": false,
+      "iacDeclared": true,
       "location": "wall-rack",
       "model": "Raspberry Pi 4",
-      "name": "sbc-01",
-      "network": "out-of-band",
+      "name": "aria",
+      "network": "vlan50",
       "rackOrder": 4,
-      "role": "carte de rechange, hors tension"
+      "role": "futur haut-parleur de Bob (client LiveKit), en Wi-Fi ; pas un nœud k3s",
+      "spec": "arm64, 2 Go, Wi-Fi"
     },
     {
       "class": "sbc",
@@ -494,7 +495,7 @@
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-10-31T12:51:32Z",
+  "generated": "2026-11-01T12:03:02Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

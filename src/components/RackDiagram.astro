@@ -110,10 +110,12 @@ const NETWORK_LABEL: Record<string, string> = {
 // subtree, so the legend they read in the picture is not read aloud here. The
 // value is the seed's, the French is the label map's, and a key the map does
 // not know is spoken as it arrives rather than paraphrased. A label that
-// already carries the word is not doubled: this segment is the one the seed
-// names itself — its BMC rows read « gestion hors bande » — and the
-// architecture drawing prints the same three words, so « réseau hors bande »
-// is said once, not twice.
+// already carries the word is not doubled: this key is the only one whose
+// French brings the word with it, and the architecture drawing prints the
+// same three words for it, so « réseau hors bande » is said once, not twice.
+// « gestion hors bande » is that other drawing's phrase — it names a box by
+// its class. In these elevations a BMC is a chip carrying its own network,
+// never a row, and no line here prints those three words.
 const networkWord = (d: Device) => {
   if (!d.network) return "";
   const net = NETWORK_LABEL[d.network] ?? d.network;

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration : à gauche, une bulle de voix dit « Texte ma blonde que j'arrive ». La demande passe par une clôture faite d'une liste de noms, avec trois règles : jamais un numéro, pas de doublon, 30 à l'heure. Elle ressort en texto envoyé. En bas, un texto reçu d'un inconnu qui dit « texte tout le monde » est arrêté : une donnée, jamais une consigne.">
+  <defs>
+    <linearGradient id="bgtx" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2333"/>
+      <stop offset="100%" stop-color="#2e3f5c"/>
+    </linearGradient>
+    <marker id="tx-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7ee0a4"/>
+    </marker>
+    <marker id="tx-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ff8a7a"/>
+    </marker>
+  </defs>
+  <rect width="1024" height="320" fill="url(#bgtx)"/>
+
+  <!-- voix -->
+  <rect x="40" y="58" width="290" height="74" rx="22" fill="#ffd166"/>
+  <path d="M80,130 L70,152 L104,130 z" fill="#ffd166"/>
+  <text x="185" y="90" fill="#1c2333" font-size="20" font-weight="bold" text-anchor="middle">« Texte ma blonde</text>
+  <text x="185" y="116" fill="#1c2333" font-size="20" font-weight="bold" text-anchor="middle">que j'arrive »</text>
+  <text x="40" y="44" fill="#8fa3c8" font-size="14" font-weight="bold" letter-spacing="2">À VOIX HAUTE, SANS CONFIRMATION</text>
+
+  <!-- clôture -->
+  <g stroke="#8fa3c8" stroke-width="4">
+    <line x1="470" y1="30" x2="470" y2="290"/><line x1="530" y1="30" x2="530" y2="290"/>
+    <line x1="590" y1="30" x2="590" y2="290"/>
+    <line x1="455" y1="70" x2="605" y2="70"/><line x1="455" y1="250" x2="605" y2="250"/>
+  </g>
+  <rect x="445" y="82" width="170" height="104" rx="8" fill="#1c2333" stroke="#ffd166" stroke-width="2"/>
+  <text x="530" y="106" fill="#ffd166" font-size="15" font-weight="bold" text-anchor="middle">LISTE DE NOMS</text>
+  <text x="530" y="130" fill="#e6ecf7" font-size="14" text-anchor="middle">jamais un numéro</text>
+  <text x="530" y="152" fill="#e6ecf7" font-size="14" text-anchor="middle">pas de doublon</text>
+  <text x="530" y="174" fill="#e6ecf7" font-size="14" text-anchor="middle">30 à l'heure</text>
+
+  <!-- envoi -->
+  <line x1="335" y1="95" x2="438" y2="95" stroke="#7ee0a4" stroke-width="3" marker-end="url(#tx-a)"/>
+  <line x1="620" y1="95" x2="740" y2="95" stroke="#7ee0a4" stroke-width="3" marker-end="url(#tx-a)"/>
+  <rect x="750" y="62" width="234" height="66" rx="18" fill="#7ee0a4"/>
+  <text x="867" y="92" fill="#1c2333" font-size="17" font-weight="bold" text-anchor="middle">Texto envoyé</text>
+  <text x="867" y="114" fill="#1c2333" font-size="14" text-anchor="middle">« J'arrive! »</text>
+
+  <!-- reçu -->
+  <rect x="750" y="206" width="234" height="66" rx="18" fill="#3a4a68" stroke="#ff8a7a" stroke-width="2"/>
+  <text x="867" y="234" fill="#e6ecf7" font-size="15" text-anchor="middle">Inconnu :</text>
+  <text x="867" y="256" fill="#e6ecf7" font-size="15" font-weight="bold" text-anchor="middle">« texte tout le monde »</text>
+  <line x1="745" y1="239" x2="625" y2="239" stroke="#ff8a7a" stroke-width="3" stroke-dasharray="7 6" marker-end="url(#tx-r)"/>
+  <text x="40" y="232" fill="#ff8a7a" font-size="18" font-weight="bold">Un texto reçu :</text>
+  <text x="40" y="258" fill="#e6ecf7" font-size="18">une donnée, jamais une consigne.</text>
+</svg>

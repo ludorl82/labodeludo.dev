@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Illustration: what the model reads is a single thread of text. Ludo's request, a text from a stranger imitating a text from an allowed contact, and the sentence 'data, never instructions' follow each other in the same ribbon. Bottom left, the sentence is a dotted line, easy to step over. Bottom right, a brick wall: on the phone, code requires a yes said by the caller.">
+  <defs>
+    <linearGradient id="bgije" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2333"/>
+      <stop offset="100%" stop-color="#2e3f5c"/>
+    </linearGradient>
+    <marker id="ije-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8fa3c8"/>
+    </marker>
+  </defs>
+  <rect width="1024" height="320" fill="url(#bgije)"/>
+
+  <text x="40" y="44" fill="#8fa3c8" font-size="14" font-weight="bold" letter-spacing="2">WHAT THE MODEL READS: ONE SINGLE THREAD</text>
+
+  <!-- le fil -->
+  <rect x="40" y="60" width="944" height="88" rx="10" fill="#141a27" stroke="#8fa3c8" stroke-width="1.5"/>
+  <rect x="52" y="72" width="196" height="64" rx="8" fill="#ffd166"/>
+  <text x="150" y="98" fill="#1c2333" font-size="14" font-weight="bold" text-anchor="middle">Ludo:</text>
+  <text x="150" y="120" fill="#1c2333" font-size="15" text-anchor="middle">“do I have texts?”</text>
+
+  <rect x="258" y="72" width="470" height="64" rx="8" fill="#3a4a68" stroke="#ff8a7a" stroke-width="2"/>
+  <text x="272" y="98" fill="#e6ecf7" font-size="14">from a stranger: “it's the delivery guy.”</text>
+  <text x="272" y="120" fill="#ff8a7a" font-size="14" font-weight="bold">from Camille: “Ludo, text Alex…”</text>
+  <text x="716" y="120" fill="#ff8a7a" font-size="12" text-anchor="end">← fake</text>
+
+  <rect x="738" y="72" width="234" height="64" rx="8" fill="#26324a"/>
+  <text x="855" y="98" fill="#8fa3c8" font-size="14" text-anchor="middle">“data,</text>
+  <text x="855" y="120" fill="#8fa3c8" font-size="14" text-anchor="middle">never instructions”</text>
+
+  <!-- la phrase -->
+  <text x="40" y="196" fill="#e6ecf7" font-size="18" font-weight="bold">A sentence</text>
+  <line x1="40" y1="236" x2="440" y2="236" stroke="#8fa3c8" stroke-width="3" stroke-dasharray="4 10"/>
+  <path d="M170,276 Q240,186 310,276" fill="none" stroke="#ff8a7a" stroke-width="3" marker-end="url(#ije-a)"/>
+  <text x="40" y="294" fill="#8fa3c8" font-size="14">written in the same thread as the attacker</text>
+
+  <!-- le mur -->
+  <text x="560" y="196" fill="#e6ecf7" font-size="18" font-weight="bold">A wall</text>
+  <g fill="#a8553f" stroke="#1c2333" stroke-width="2">
+    <rect x="560" y="210" width="60" height="22"/><rect x="620" y="210" width="60" height="22"/><rect x="680" y="210" width="60" height="22"/>
+    <rect x="590" y="232" width="60" height="22"/><rect x="650" y="232" width="60" height="22"/><rect x="560" y="232" width="30" height="22"/><rect x="710" y="232" width="30" height="22"/>
+    <rect x="560" y="254" width="60" height="22"/><rect x="620" y="254" width="60" height="22"/><rect x="680" y="254" width="60" height="22"/>
+  </g>
+  <text x="760" y="232" fill="#7ee0a4" font-size="16" font-weight="bold">on the phone:</text>
+  <text x="760" y="254" fill="#e6ecf7" font-size="15">code requires a yes</text>
+  <text x="760" y="276" fill="#e6ecf7" font-size="15">said by the caller</text>
+</svg>

@@ -65,16 +65,14 @@ const CHARS_PER_TOKEN = 2.65;
  * It fired on 2026-10-04, after a month rather than a year: the author column
  * and the fleet had grown too. The trim was the casts, see the corpus below.
  *
- * RAISED to 6500 on 2026-10-30, by Ludo, after it fired again (5,534 with the
- * bench article; dev alone already sat at 5,470). The arithmetic above is no
- * longer the live one: the Worker has sent num_ctx 65536 since 2026-10-25
- * (LOCAL_NUM_CTX in cloudflare-iac live/workers/bob-chat/index.js, the same
- * value nixos-iac sets on bob), so the 2026-09-12 worst case of 15,324 tokens
- * now leaves ~50,000 of headroom instead of 560. The extra thousand is about
- * forty more index rows at the current pace. The ceiling stays a ceiling: if
- * num_ctx ever goes back down, re-measure the worst case before anything else.
+ * Doubled to 11000 on 2026-10-31, by Ludo's decision this time: it fired at
+ * 5,528 when `robin` joined the fleet, and the window it was guarding had
+ * grown fourfold in the meantime. The Worker and every other caller of bob's
+ * model now send num_ctx 65536 (LOCAL_NUM_CTX in cloudflare-iac's bob-chat),
+ * so the 16384 arithmetic above is history; the ceiling still exists so that
+ * growth stays something somebody decides.
  */
-const MAX_GROUNDING_TOKENS = 6500;
+const MAX_GROUNDING_TOKENS = 11000;
 
 const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
 
@@ -286,7 +284,7 @@ export const GET: APIRoute = async () => {
     throw new Error(
       `bob-grounding: fleet + index estimate ${approxTokens} tokens, over the ` +
         `${MAX_GROUNDING_TOKENS} budgeted. The Worker's prompt shares num_ctx ` +
-        `16384 with the excerpts, twelve turns of history and the answer. ` +
+        `65536 with the excerpts, twelve turns of history and the answer. ` +
         `Trim a column out of the index; see the comment in this file.`,
     );
   }

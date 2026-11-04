@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "Comment tes dessins se redessinent tout seuls la nuit ?",
-    "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?"
+    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
+    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?",
+    "Why did you split the bastion from the console?",
+    "What is the last thing still running when everything else is down?",
+    "How do you publish your infrastructure without leaking secrets?"
   ],
-  "generated": "2026-10-29T08:34:07Z",
+  "generated": "2026-11-03T09:34:20Z",
   "openers": [
     "Comment migrer une VM sans stockage partagé ?",
-    "Pourquoi limiter l'accès MCP ?",
-    "What is the narrow door rule for your MCP servers?",
-    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
-    "Comment tes dessins se redessinent tout seuls la nuit ?",
-    "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?"
+    "Qu'est-ce que tes serveurs MCP permettent de faire ?",
+    "Why did you set up MCP servers for your lab?",
+    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
+    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?",
+    "Why did you split the bastion from the console?",
+    "What is the last thing still running when everything else is down?",
+    "How do you publish your infrastructure without leaking secrets?"
   ],
   "written": [
-    "Pourquoi limiter l'accès MCP ?",
-    "What is the narrow door rule for your MCP servers?"
+    "Qu'est-ce que tes serveurs MCP permettent de faire ?",
+    "Why did you set up MCP servers for your lab?"
   ]
 }

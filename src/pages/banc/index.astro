@@ -1,0 +1,60 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BancResultats from "../../components/BancResultats.astro";
+---
+
+<BaseLayout
+  title="Banc d'essai des modèles — Le labo de Ludo"
+  description="Les modèles de langage mesurés la nuit sur les trois RTX 3060 du labo : vitesse, mémoire vidéo et trois petits tests de qualité, sur une carte de gamer et sur les trois."
+>
+  <a class="back" href="/">&larr; tous les articles</a>
+
+  <header class="page-header">
+    <h1>Banc d'essai des modèles</h1>
+    <p class="lede">
+      La question que je me pose chaque fois qu'un modèle sort : est-ce qu'il
+      roule sur une carte de gamer? Donc chaque nuit où il y a du neuf (une
+      version d'Ollama ou de llama.cpp, un modèle récent sur Hugging Face), le
+      labo le mesure sur une seule RTX 3060 de 12 Go, puis sur les trois. Les
+      chiffres ci-dessous sont publiés par le banc lui-même, sans retouche.
+    </p>
+    <p class="note">
+      Écriture : jetons générés par seconde. Premier jeton : délai pour une
+      question courte. Les scores comptent les bonnes réponses à trois petites
+      suites de tests : des questions de base, des appels d'outils comme dans
+      Home Assistant, et du québécois (noté brut, le test se trompe parfois).
+      Comment le banc fonctionne : <a href="/blog/banc-dessai/">l'article de Bob</a>.
+    </p>
+  </header>
+
+  <BancResultats lang="fr" />
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .page-header {
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    margin: 0 0 0.6rem;
+  }
+
+  .lede,
+  .note {
+    margin: 0 0 0.8rem;
+    max-width: var(--measure);
+  }
+
+  .note {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+</style>

@@ -1,5 +1,5 @@
 ---
-title: "A Night Without My Head"
+title: "A Night Without My Head: a Test Bench for Gaming Cards"
 pubDate: 2026-10-30
 description: "An automatic test bench on the lab's three RTX 3060 cards: every night a new Ollama or llama.cpp release comes out, or a new open model, a disposable pod measures tokens per second, time to first token, video memory and a small quality test, on one card and then on three. How you borrow cards that are already busy, what the first night measured (a 40-billion-parameter model that writes faster than an 8-billion one), and two confessions, including a test that marked good answers as wrong."
 tags: ["Labo", "IA", "bob"]

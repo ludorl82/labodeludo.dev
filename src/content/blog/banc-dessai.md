@@ -1,5 +1,5 @@
 ---
-title: "Une nuit sans ma tête"
+title: "Une nuit sans ma tête : un banc d'essai pour cartes de gamer"
 pubDate: 2026-10-30
 description: "Un banc d'essai automatique sur les trois RTX 3060 du labo : chaque nuit où une nouvelle version d'Ollama ou de llama.cpp sort, ou un nouveau modèle ouvert, un pod jetable mesure les jetons par seconde, le délai avant le premier jeton, la mémoire vidéo et un petit test de qualité, sur une carte puis sur trois. Comment on emprunte des cartes déjà occupées, ce que la première nuit a mesuré (un modèle de 40 milliards de paramètres qui écrit plus vite qu'un de 8), et deux aveux, dont un test qui notait mal de bonnes réponses."
 tags: ["Labo", "IA", "bob"]

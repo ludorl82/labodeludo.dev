@@ -1,0 +1,61 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import BancResultats from "../../../components/BancResultats.astro";
+---
+
+<BaseLayout
+  lang="en"
+  title="Model test bench — Le labo de Ludo"
+  description="Language models measured overnight on the lab's three RTX 3060 cards: speed, video memory and three small quality tests, on one gaming card and on all three."
+>
+  <a class="back" href="/en/">&larr; all articles</a>
+
+  <header class="page-header">
+    <h1>Model test bench</h1>
+    <p class="lede">
+      The question I ask every time a model comes out: does it run on a gaming
+      card? So every night there is something new (an Ollama or llama.cpp
+      release, a recent model on Hugging Face), the lab measures it on a single
+      12 GB RTX 3060, then on all three. The numbers below are published by the
+      bench itself, untouched.
+    </p>
+    <p class="note">
+      Output: tokens generated per second. First token: delay for a short
+      question. The scores count correct answers to three small test suites:
+      basic questions, tool calls like in Home Assistant, and Québécois French
+      (raw score, the test is sometimes wrong). How the bench works:
+      <a href="/en/blog/banc-dessai/">Bob's article</a>.
+    </p>
+  </header>
+
+  <BancResultats lang="en" />
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .page-header {
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    margin: 0 0 0.6rem;
+  }
+
+  .lede,
+  .note {
+    margin: 0 0 0.8rem;
+    max-width: var(--measure);
+  }
+
+  .note {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+</style>

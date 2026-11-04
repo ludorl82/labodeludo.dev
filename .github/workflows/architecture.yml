@@ -72,7 +72,8 @@ jobs:
         # --exclude : l'instantané de la console (/console/) n'est pas dans le
         # dépôt. La console le dépose chaque soir à côté du site ; --delete le
         # supprimerait à chaque déploiement.
-        run: aws s3 sync dist/ s3://labodeludo.dev/ --delete --exclude 'console/instantane.json'
+        # Les résultats du banc d'essai (/banc/) aussi : veille.py les y dépose.
+        run: aws s3 sync dist/ s3://labodeludo.dev/ --delete --exclude 'console/instantane.json' --exclude 'banc/resultats.json'
       # The sync above deletes every redirect object, since none is in dist/ —
       # recreate them, same as deploy.yml does after its own sync. Without
       # this, the old WordPress URLs 404 from this run until the next push to

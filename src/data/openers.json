@@ -1,24 +1,23 @@
 {
   "curated": [
-    "Pourquoi tu as séparé le bastion de la console ?",
     "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
-    "How do you publish your infrastructure without leaking secrets?",
     "Why did the cheapest model score like the biggest one?",
-    "How does Bob pick which parts of your articles to quote?"
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
-  "generated": "2026-11-05T09:35:52Z",
+  "generated": "2026-11-06T09:37:10Z",
   "openers": [
     "Tu as installé quoi comme serveurs MCP ?",
-    "Qu'est-ce que ton serveur MCP de textes permet de faire ?",
-    "How does the SMS MCP server work?",
-    "Pourquoi tu as séparé le bastion de la console ?",
+    "Comment migrer une VM sans stockage partagé ?",
+    "Comment fonctionne ton serveur MCP pour envoyer des SMS ?",
+    "How does your SMS MCP server handle message sending?",
     "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
-    "How do you publish your infrastructure without leaking secrets?",
     "Why did the cheapest model score like the biggest one?",
-    "How does Bob pick which parts of your articles to quote?"
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
   "written": [
-    "Qu'est-ce que ton serveur MCP de textes permet de faire ?",
-    "How does the SMS MCP server work?"
+    "Comment fonctionne ton serveur MCP pour envoyer des SMS ?",
+    "How does your SMS MCP server handle message sending?"
   ]
 }

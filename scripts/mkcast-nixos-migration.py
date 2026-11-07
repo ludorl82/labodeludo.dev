@@ -11,7 +11,7 @@ kept under its own name), its Hyper-V host is `hv-01`, and the
 fleet's build/deploy box is `gpu-01`. The technical narrative — Secure Boot
 blocking kexec, then an initrd that won't unpack in 4 GB — is unchanged.
 
-Palette and line grammar per net-cfgs/asciicast-style.md.
+Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-nixos-migration.py
 """

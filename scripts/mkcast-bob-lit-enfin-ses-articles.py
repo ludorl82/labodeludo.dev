@@ -27,7 +27,7 @@ The arc, in five beats:
 Prompts are verbatim. The two pasted conversations are cut short (marked […]),
 as the on-screen notice says. The cloud model is not named, hosts are not
 named beyond the public "bob" and the fictional gpu-01; repositories are not
-named. Palette and line grammar per net-cfgs/asciicast-style.md.
+named. Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-bob-lit-enfin-ses-articles.py
 """

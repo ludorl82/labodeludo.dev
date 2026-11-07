@@ -12,7 +12,7 @@ technical narrative — Setup that renders nothing over serial, keystrokes that
 were never arriving, the MEBx wrong turn, Load Optimized Defaults bricking the
 boot, and the virtual-media escape hatch — is unchanged.
 
-Palette and line grammar per net-cfgs/asciicast-style.md.
+Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-bios-blind.py
 """

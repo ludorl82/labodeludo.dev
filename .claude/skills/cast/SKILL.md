@@ -1,6 +1,6 @@
 ---
 name: cast
-description: "Enregistrer POUR VRAI un asciicast pour labodeludo.dev (pas une reconstitution) : monter le plateau tmux, laisser Ludo jouer, assainir et vérifier à l'écran, intégrer au site, ouvrir la PR. À charger dès qu'on parle d'enregistrer, refaire ou publier un cast. Pour le LOOK (palette, grammaire de la TUI, disclaimer, canal asciinema.org), c'est net-cfgs/asciicast-style.md qui fait foi."
+description: "Enregistrer POUR VRAI un asciicast pour labodeludo.dev (pas une reconstitution) : monter le plateau tmux, laisser Ludo jouer, assainir et vérifier à l'écran, intégrer au site, ouvrir la PR. À charger dès qu'on parle d'enregistrer, refaire ou publier un cast. Pour le LOOK (palette, grammaire de la TUI, disclaimer, canal asciinema.org), c'est labo/asciicast-style.md qui fait foi."
 ---
 
 # Un cast enregistré pour vrai
@@ -11,7 +11,7 @@ volonté. Les casts d'incidents restent des reconstitutions (`mkcast-*.py`),
 avec leur disclaimer, parce qu'on ne rejoue pas un BIOS invisible.
 
 Les faits qui ne bougent pas — palette, grammaire de la TUI, honnêteté,
-publication sur asciinema.org — vivent dans `net-cfgs/asciicast-style.md`.
+publication sur asciinema.org — vivent dans `labo/asciicast-style.md`.
 Ce skill ne les répète pas ; il dit dans quel ordre faire les gestes et
 pourquoi chaque ordre a été appris.
 
@@ -191,5 +191,5 @@ mais la relecture coûte 25 s).
 - [ ] Disclaimer inversé, `frame: "none"`, poster au bon instant, FR et EN.
 - [ ] `npm run check:leaks` rc 0 — la garde qui bloque aussi le déploiement :
       cast rejoué dans un émulateur, liste blanche publique + liste noire
-      privée (`net-cfgs/public-denylist.txt`). Un faux positif relu s'acquitte
+      privée (`labo/public-denylist.txt`). Un faux positif relu s'acquitte
       dans `scripts/public-leaks-ack.txt`, sans jamais y écrire la valeur.

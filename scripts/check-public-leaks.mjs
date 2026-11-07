@@ -24,7 +24,7 @@
 //  - privée : la liste noire du vrai inventaire. L'écrire ici serait la fuite,
 //    alors elle vient de la variable PUBLIC_DENYLIST (secret du dépôt en CI)
 //    ou du fichier PUBLIC_DENYLIST_FILE, par défaut
-//    ~/git/ludorl82/net-cfgs/public-denylist.txt. Une ligne par règle :
+//    ~/git/ludorl82/labo/public-denylist.txt. Une ligne par règle :
 //        étiquette [drapeaux] | expression régulière   (iu par défaut)
 //    plus une ligne « !cle <hex> », la clé des acquittements privés.
 //    Sans elle, la garde tourne à moitié et le dit ; avec GARDE_EXIGEE=1

@@ -22,7 +22,7 @@ for clarity. The disclaimer baked into the recording says so.
 
 Names sanitized per house convention: nodes gpu-01 / vm-01, bucket
 s3://scheduler-data. Palette and line grammar per
-net-cfgs/asciicast-style.md.
+labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-stateless-move.py
 """

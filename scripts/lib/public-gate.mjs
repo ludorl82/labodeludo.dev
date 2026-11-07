@@ -27,7 +27,7 @@ export function loadDenylist() {
   if (!text) {
     const file =
       process.env.PUBLIC_DENYLIST_FILE ??
-      join(homedir(), "git/ludorl82/net-cfgs/public-denylist.txt");
+      join(homedir(), "git/ludorl82/labo/public-denylist.txt");
     if (!existsSync(file)) return null;
     text = readFileSync(file, "utf8");
     from = file;

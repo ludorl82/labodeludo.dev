@@ -22,7 +22,7 @@ ask a one-option question, the harness rejected the call and told it to state
 its intent and proceed. It is real and it is funny, but it is unreadable
 without knowing the tool schema, so the cast goes straight from block to retry.
 
-Palette and line grammar per net-cfgs/asciicast-style.md.
+Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-control-plane-consolidation.py
 """

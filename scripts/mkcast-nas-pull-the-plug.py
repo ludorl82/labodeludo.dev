@@ -20,7 +20,7 @@ and it is honest — that block happened, and the user's "go ahead" is real.
 
 Names sanitized to the k3s-iac-public namespace (gpu-01 for the GPU node,
 plain `nas` for the NAS, RFC 5737 addressing). Palette and line grammar
-per net-cfgs/asciicast-style.md.
+per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-nas-pull-the-plug.py
 """

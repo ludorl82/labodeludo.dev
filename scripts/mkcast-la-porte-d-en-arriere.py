@@ -29,7 +29,7 @@ two of them is replaced by the article's. Tool output is rewritten short.
 Names and addresses follow the article: vm-02, console-vm, pi-01, srv-01,
 cloud-01, the Mac, pfSense; 192.0.2.0/24 (VLAN 10), 203.0.113.0/23 (VLAN 50),
 198.18.0.2 for cloud-01. No PR numbers or commit hashes from the real lab.
-Palette and line grammar per net-cfgs/asciicast-style.md; prompt helper is
+Palette and line grammar per labo/asciicast-style.md; prompt helper is
 the fixed (no-pause) one.
 
 Run from the repo root:  python3 scripts/mkcast-la-porte-d-en-arriere.py

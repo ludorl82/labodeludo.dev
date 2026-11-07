@@ -21,7 +21,7 @@ move around it, and keeps the agent's own mistakes on screen:
 
 Prompts are verbatim from the session. Tool output is rewritten short; commit
 hashes, private repo and file names, monitor ids and paths are left out. bob is
-public and stays. Palette and line grammar per net-cfgs/asciicast-style.md.
+public and stays. Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-le-cousin-le-moins-cher.py
 """

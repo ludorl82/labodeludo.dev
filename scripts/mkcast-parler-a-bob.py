@@ -77,7 +77,7 @@ def ask(text, second=None, d=1.4):
         t += random.uniform(0.045, 0.115)
     if second is not None:
         # One continuous flow across the wrap — the composer folds, it does
-        # not hesitate. See net-cfgs/asciicast-style.md.
+        # not hesitate. See labo/asciicast-style.md.
         out(R + "\r\n  ")
         out(FG)
         for ch in second:

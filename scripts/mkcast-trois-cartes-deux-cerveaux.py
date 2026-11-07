@@ -34,7 +34,7 @@ agent's wrong turns left in:
 Prompts are verbatim from the transcripts (typos kept). Tool output is
 rewritten short. Names follow the articles: the Ollama machine is gpu-01;
 no other host, domain, address, PR number or commit hash from the real lab.
-Palette and line grammar per net-cfgs/asciicast-style.md; prompt helper is
+Palette and line grammar per labo/asciicast-style.md; prompt helper is
 the fixed (no-pause) one.
 
 Run from the repo root:  python3 scripts/mkcast-trois-cartes-deux-cerveaux.py

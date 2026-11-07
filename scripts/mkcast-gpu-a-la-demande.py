@@ -27,7 +27,7 @@ Prompts are verbatim from the transcript (typos kept); one address inside a
 prompt is replaced by a documentation range. Tool output is rewritten short.
 Names follow the article: the host is gaming-01, the guests arcade1/arcade2.
 Addresses: 192.0.2.0/24 (server network), 198.51.100.0/24 (home network).
-Palette and line grammar per net-cfgs/asciicast-style.md; prompt helper is the
+Palette and line grammar per labo/asciicast-style.md; prompt helper is the
 fixed (no-pause) one.
 
 Run from the repo root:  python3 scripts/mkcast-gpu-a-la-demande.py

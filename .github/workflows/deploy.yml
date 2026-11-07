@@ -12,7 +12,7 @@ jobs:
   #
   # Sur un runner hébergé : elle n'a besoin de rien dans le cluster, et elle
   # doit pouvoir refuser même quand le cluster est à terre. La liste noire
-  # privée vient du secret PUBLIC_DENYLIST (source : net-cfgs/public-denylist.txt) ;
+  # privée vient du secret PUBLIC_DENYLIST (source : labo/public-denylist.txt) ;
   # GARDE_EXIGEE fait échouer le job si le secret manque, au lieu de tourner
   # à moitié. Le journal est public : la garde n'y écrit jamais la valeur
   # trouvée, seulement le fichier, l'instant et l'étiquette.

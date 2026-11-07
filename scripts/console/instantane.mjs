@@ -21,7 +21,7 @@
 //
 // L'ASSAINISSEMENT, dans l'ordre, fenêtre par fenêtre :
 //  1. exclusions privées : une fenêtre exclue n'apparaît pas du tout ;
-//  2. remplacements privés, vrai → fictif (net-cfgs/console-instantane.txt) ;
+//  2. remplacements privés, vrai → fictif (labo/console-instantane.txt) ;
 //  3. caviardage générique : adresses, MAC, courriels, domaines inconnus
 //     deviennent leur jumeau de documentation (allowlist.redact) ;
 //  4. les gardes de check-public-leaks.mjs, liste blanche et liste noire ;
@@ -53,7 +53,7 @@ const arg = (name, dflt) => {
 const flag = (name) => process.argv.includes(`--${name}`);
 
 const OUT = arg("out");
-const CONFIG = arg("config", join(homedir(), "git/ludorl82/net-cfgs/console-instantane.txt"));
+const CONFIG = arg("config", join(homedir(), "git/ludorl82/labo/console-instantane.txt"));
 const PROJECTS = arg("projects", join(homedir(), ".claude/projects"));
 const SOCKET = arg("socket", "console");
 const SESSION = arg("session", "claude");

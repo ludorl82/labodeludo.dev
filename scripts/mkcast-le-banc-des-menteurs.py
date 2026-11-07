@@ -16,7 +16,7 @@ grammar this site already uses), and flash's closing paragraph, lost with the
 truncation — so scene 3 shows no « ● » sentence at all, only tools and the diff.
 
 Hostnames are the public snapshot's fictional ones (cloud-01, router).
-Palette and line grammar per net-cfgs/asciicast-style.md.
+Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-le-banc-des-menteurs.py
 """

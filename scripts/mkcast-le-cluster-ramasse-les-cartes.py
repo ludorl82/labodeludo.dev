@@ -29,7 +29,7 @@ Prompts are verbatim from the transcript (typos kept); host names are
 replaced by the article's: the tower is gaming-01, the GPU node vm-03, the
 two gaming VMs jeu-01 / jeu-02, the swap script jeu-ctl. Tool output is
 rewritten short. No domains, addresses, keys or commit hashes from the real
-lab. Palette and line grammar per net-cfgs/asciicast-style.md.
+lab. Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-le-cluster-ramasse-les-cartes.py
 """

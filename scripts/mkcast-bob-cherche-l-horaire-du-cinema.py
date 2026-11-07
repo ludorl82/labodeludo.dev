@@ -21,7 +21,7 @@ The arc, in five beats:
    strict on dictated input; it becomes tolerant.
 
 Names follow the articles: « le cinéma du coin », theatre id 1234, no hosts,
-no addressing. Palette and line grammar per net-cfgs/asciicast-style.md.
+no addressing. Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-bob-cherche-l-horaire-du-cinema.py
 """

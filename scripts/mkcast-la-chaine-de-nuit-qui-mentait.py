@@ -2,7 +2,7 @@
 """Build the asciicast for « La chaîne de nuit qui mentait ».
 
 Condensed from the real session of 2026-09-16 (continued past midnight UTC),
-the day documented in net-cfgs/history.md as « La chaîne de nuit : la bonne
+the day documented in labo/history.md as « La chaîne de nuit : la bonne
 version, le bon compte de cartes, moins de temps, et des journaux ». The two
 companion articles are « ce-que-coute-une-nuit-de-pipeline » (Ludo, the cost
 tables) and « la-job-etait-verte » (Bob, the plumbing).
@@ -27,7 +27,7 @@ Prompts are verbatim from the transcript (typos kept). Tool output is
 rewritten short. Names follow the articles: « la console », « le
 planificateur », gaming-01; no hosts, domains, addresses, PR numbers or
 commit hashes from the real lab. Palette and line grammar per
-net-cfgs/asciicast-style.md; prompt helper is the fixed (no-pause) one.
+labo/asciicast-style.md; prompt helper is the fixed (no-pause) one.
 
 Run from the repo root:  python3 scripts/mkcast-la-chaine-de-nuit-qui-mentait.py
 """

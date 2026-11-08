@@ -112,15 +112,15 @@ function loadConfig() {
 function windows() {
   const out = execFileSync(
     "tmux",
-    ["-L", SOCKET, "list-windows", "-t", SESSION, "-F", "#{window_index}\t#{window_name}\t#{window_active}\t#{window_activity}"],
+    ["-L", SOCKET, "list-windows", "-t", SESSION, "-F", "#{window_index}\t#{window_name}\t#{window_active}\t#{window_activity}\t#{@claude_session_id}"],
     { encoding: "utf8" },
   );
   return out
     .trim()
     .split("\n")
     .map((l) => {
-      const [index, name, active, activity] = l.split("\t");
-      return { index: Number(index), name, active: active === "1", activity: new Date(Number(activity) * 1000) };
+      const [index, name, active, activity, sid] = l.split("\t");
+      return { index: Number(index), name, active: active === "1", activity: new Date(Number(activity) * 1000), sid: sid || "" };
     });
 }
 
@@ -144,6 +144,20 @@ function transcriptsByTitle() {
     }
   }
   return map;
+}
+
+/* Les fenêtres lancées par le relais (confier_a_claude_code) n'ont pas de
+   « custom-title » dans leur transcription : le relais les démarre avec
+   --session-id et note l'identifiant dans l'option tmux @claude_session_id.
+   Sans titre qui corresponde, on retombe sur ce fichier-là. Le titre garde
+   la priorité : l'option ne suit pas un /clear, le titre suit un /rename. */
+function transcriptBySessionId(sid) {
+  if (!/^[0-9a-f-]{36}$/.test(sid)) return null;
+  for (const dir of readdirSync(PROJECTS)) {
+    const path = join(PROJECTS, dir, `${sid}.jsonl`);
+    if (existsSync(path)) return { path, mtime: statSync(path).mtimeMs };
+  }
+  return null;
 }
 
 function cleanUserText(s) {
@@ -508,7 +522,7 @@ for (const w of windows()) {
     log(`${w.index}:${w.name} — exclue`);
     continue;
   }
-  const src = byTitle.get(w.name);
+  const src = byTitle.get(w.name) ?? transcriptBySessionId(w.sid);
   const entries = src ? entriesOf(src.path) : [];
   const texts = sanitize([w.name, ...entries.map((e) => e.t)], config);
   let [name, ...clean] = texts;

@@ -1,24 +1,25 @@
 {
   "curated": [
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "D'où vient le nom de Bob ?",
-    "How does Bob pick which parts of your articles to quote?",
+    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
+    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
     "What broke on a Thursday night with MongoDB?",
-    "Why is renumbering a k3s cluster harder than it looks?"
+    "Why is renumbering a k3s cluster harder than it looks?",
+    "How do your diagrams redraw themselves every night?"
   ],
-  "generated": "2026-11-07T09:34:22Z",
+  "generated": "2026-11-08T09:36:14Z",
   "openers": [
-    "Tu as installé quoi comme serveurs MCP ?",
-    "Comment ton serveur MCP envoie les SMS ?",
-    "How does your MCP text server send SMS without confirmation?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
+    "Comment ton serveur MCP envoie des textos sans confirmation ?",
+    "What's the idea behind your SMS MCP server?",
     "D'où vient le nom de Bob ?",
-    "How does Bob pick which parts of your articles to quote?",
+    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
+    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
     "What broke on a Thursday night with MongoDB?",
-    "Why is renumbering a k3s cluster harder than it looks?"
+    "Why is renumbering a k3s cluster harder than it looks?",
+    "How do your diagrams redraw themselves every night?"
   ],
   "written": [
-    "Comment ton serveur MCP envoie les SMS ?",
-    "How does your MCP text server send SMS without confirmation?"
+    "Comment ton serveur MCP envoie des textos sans confirmation ?",
+    "What's the idea behind your SMS MCP server?"
   ]
 }

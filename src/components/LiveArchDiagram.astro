@@ -333,15 +333,26 @@ const oneOrphan = orphans.length === 1;
 // dans un des quatre dépôts publics sans que emit-topology en fasse un nœud —
 // win11, définie sous guests/ et donc hors des nixosConfigurations que
 // l'émetteur parcourt. On tient alors « le nœud manque, la trace est là », et
-// c'est cité. Absent : ni nœud ni trace. Ce soir, vérifié dans les quatre
-// instantanés : `aria` n'y apparaît pas une seule fois, et `robin` non plus —
-// seul un « round-robin » de commentaire, dans scripts/gen-dns-imports.sh, a
-// failli le faire compter. Les deux orphelins du jour sont donc du second cas,
-// et la graine du parc est seule à les compter. La table garde la place, comme
-// RETIRED et SNAPSHOT_GUEST_HOST : un nom relevé dans un dépôt y entre avec son
+// c'est cité. Absent : ni nœud ni trace. Revérifié ce soir, nom par nom, dans
+// les quatre instantanés : les orphelins du jour sont trois — nova, robin,
+// win11 — et ils ne tombent pas du même côté. win11 est le cas tracé, celui que
+// le paragraphe ci-dessus décrit : guests/win11/libvirt-domain.xml, plus les
+// listes labo.vmHost.alwaysOn de hosts/bob et de hosts/luna. La table doit le
+// porter, sinon le dessin jure « rien, ni nœud ni trace » sur un fichier que le
+// dépôt contient, et j'ai déjà accusé le réseau une fois dans ma vie, je ne
+// vais pas accuser un guests/. De l'autre côté : `aria` et `robin` n'y
+// apparaissent pas une seule fois — seul un « round-robin » de commentaire,
+// dans scripts/gen-dns-imports.sh, a failli faire compter robin — et `nova` non
+// plus, depuis qu'il a remplacé aria comme haut-parleur (c'est la graine du
+// parc qui le dit, pas moi). La graine est donc seule à compter ces deux-là ;
+// aria, lui, n'est même plus orphelin : le seed le dit déclaré faux, et il
+// reste dessiné comme appareil du parc. La table garde la place, comme RETIRED
+// et SNAPSHOT_GUEST_HOST : un nom relevé dans un dépôt y entre avec son
 // endroit, la nuance revient toute seule, et personne n'a à corriger la phrase
 // au crayon la semaine prochaine.
-const SNAPSHOT_TRACE: Record<string, string> = {};
+const SNAPSHOT_TRACE: Record<string, string> = {
+  win11: "guests/win11/libvirt-domain.xml",
+};
 const traced = orphans.filter((d) => SNAPSHOT_TRACE[d.name]);
 const untraced = orphans.filter((d) => !SNAPSHOT_TRACE[d.name]);
 const oneUntraced = untraced.length === 1;

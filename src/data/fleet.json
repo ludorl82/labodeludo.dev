@@ -192,14 +192,24 @@
     },
     {
       "class": "sbc",
-      "iacDeclared": true,
+      "iacDeclared": false,
       "location": "wall-rack",
       "model": "Raspberry Pi 4",
       "name": "aria",
       "network": "vlan50",
       "rackOrder": 4,
-      "role": "futur haut-parleur de Bob (client LiveKit), en Wi-Fi ; pas un nœud k3s",
+      "role": "Pi 4 de réserve, hors de nixos-iac depuis 2026-11-08 (le haut-parleur de Bob est passé à nova) ; pas un nœud k3s",
       "spec": "arm64, 2 Go, Wi-Fi"
+    },
+    {
+      "class": "sbc",
+      "iacDeclared": true,
+      "location": "not-racked",
+      "model": "Raspberry Pi 5",
+      "name": "nova",
+      "network": "vlan50",
+      "role": "haut-parleur de Bob (client LiveKit) au bureau, en Wi-Fi, depuis 2026-11-04 ; pas un nœud k3s",
+      "spec": "arm64, 4 Go, Wi-Fi, ReSpeaker 2-Mics HAT et Jabra Speak2 40"
     },
     {
       "class": "sbc",
@@ -495,7 +505,7 @@
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-11-05T09:45:18Z",
+  "generated": "2026-11-08T16:50:48Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

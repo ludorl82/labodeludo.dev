@@ -334,12 +334,15 @@ const oneOrphan = orphans.length === 1;
 // win11, définie sous guests/ et donc hors des nixosConfigurations que
 // l'émetteur parcourt. On tient alors « le nœud manque, la trace est là », et
 // c'est cité. Absent : ni nœud ni trace. Revérifié ce soir, nom par nom, dans
-// les quatre instantanés : les orphelins du jour sont trois — nova, robin,
-// win11 — et ils ne tombent pas du même côté. win11 est le cas tracé, celui que
-// le paragraphe ci-dessus décrit : guests/win11/libvirt-domain.xml, plus les
-// listes labo.vmHost.alwaysOn de hosts/bob et de hosts/luna. La table doit le
-// porter, sinon le dessin jure « rien, ni nœud ni trace » sur un fichier que le
-// dépôt contient, et j'ai déjà accusé le réseau une fois dans ma vie, je ne
+// les quatre instantanés : les orphelins du jour sont deux — nova, robin — et
+// ils tombent du même côté, absent. win11 n'en est plus : la graine du parc a
+// rendu son drapeau à faux, elle le dit donc non déclaré elle-même, et il n'y
+// a plus de désaccord à nuancer entre les deux graines. Sa trace dans le dépôt,
+// elle, est toujours là et revérifiée : guests/win11/libvirt-domain.xml, plus
+// les listes labo.vmHost.alwaysOn de hosts/bob et de hosts/luna. La table la
+// garde donc, inactive — le jour où le drapeau repassera à vrai, le dessin ne
+// devra pas jurer « rien, ni nœud ni trace » sur un fichier que le dépôt
+// contient, et j'ai déjà accusé le réseau une fois dans ma vie, je ne
 // vais pas accuser un guests/. De l'autre côté : `aria` et `robin` n'y
 // apparaissent pas une seule fois — seul un « round-robin » de commentaire,
 // dans scripts/gen-dns-imports.sh, a failli faire compter robin — et `nova` non

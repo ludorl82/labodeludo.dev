@@ -3,11 +3,10 @@
     {
       "class": "access-point",
       "iacDeclared": false,
-      "location": "wall-rack",
+      "location": "not-racked",
       "model": "Ubiquiti UniFi UAP-AC-PRO",
       "name": "ap-01",
       "network": "vlan50",
-      "rackOrder": 3,
       "role": "Wi-Fi, géré par le contrôleur UniFi in-cluster",
       "spec": "bi-bande, PoE"
     },
@@ -91,7 +90,7 @@
       "model": "passerelle Hilo",
       "name": "hilo",
       "network": "vlan50",
-      "rackOrder": 8,
+      "rackOrder": 6,
       "role": "passerelle du programme Hilo, le programme de délestage de pointe d'Hydro-Québec — l'utilité rémunère la réduction de charge en hiver et rejoint la maison par ce boîtier"
     },
     {
@@ -136,11 +135,10 @@
     {
       "class": "nas",
       "iacDeclared": false,
-      "location": "wall-rack",
+      "location": "not-racked",
       "model": "QNAP TS-230",
       "name": "nas",
       "network": "vlan10",
-      "rackOrder": 10,
       "role": "NAS, serveur multimédia, export NFS pour le cluster"
     },
     {
@@ -158,7 +156,7 @@
       "model": "DP750",
       "name": "phone-02",
       "network": "vlan50",
-      "rackOrder": 9,
+      "rackOrder": 7,
       "role": "base téléphonique SIP"
     },
     {
@@ -187,17 +185,16 @@
       "model": "Home Assistant Green",
       "name": "automatron",
       "network": "vlan10",
-      "rackOrder": 7,
+      "rackOrder": 5,
       "role": "Home Assistant, domotique"
     },
     {
       "class": "sbc",
       "iacDeclared": false,
-      "location": "wall-rack",
+      "location": "not-racked",
       "model": "Raspberry Pi 4",
       "name": "aria",
       "network": "vlan50",
-      "rackOrder": 4,
       "role": "Pi 4 de réserve, hors de nixos-iac depuis 2026-11-08 (le haut-parleur de Bob est passé à nova) ; pas un nœud k3s",
       "spec": "arm64, 2 Go, Wi-Fi"
     },
@@ -219,7 +216,7 @@
       "name": "worker1",
       "network": "vlan10",
       "power": "ups-01",
-      "rackOrder": 5,
+      "rackOrder": 3,
       "role": "agent k3s",
       "spec": "arm64"
     },
@@ -231,7 +228,7 @@
       "name": "worker2",
       "network": "vlan10",
       "power": "ups-01",
-      "rackOrder": 6,
+      "rackOrder": 4,
       "role": "agent k3s, bastion, registre de conteneurs privé",
       "spec": "arm64, NVMe"
     },
@@ -387,7 +384,7 @@
       "model": "CyberPower OR700LCDRM1U",
       "name": "ups-01",
       "network": "out-of-band",
-      "rackOrder": 11,
+      "rackOrder": 8,
       "role": "onduleur, baie murale",
       "spec": "700 VA, 1U"
     },
@@ -398,7 +395,7 @@
       "model": "CyberPower OR700LCDRM1U",
       "name": "ups-02",
       "network": "out-of-band",
-      "rackOrder": 12,
+      "rackOrder": 9,
       "role": "onduleur, baie murale",
       "spec": "700 VA, 1U"
     },
@@ -505,7 +502,7 @@
     }
   ],
   "fleetVersion": 1,
-  "generated": "2026-11-09T10:24:45Z",
+  "generated": "2026-11-09T14:56:00Z",
   "racks": {
     "rolling-rack": {
       "kind": "sur roulettes, 2 montants",

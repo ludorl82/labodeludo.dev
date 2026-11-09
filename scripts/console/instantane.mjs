@@ -180,7 +180,8 @@ function chatWindow(dir) {
     const meta = Object.fromEntries(head[1].split("\n").map((l) => l.split(/:\s*(.*)/s).slice(0, 2)));
     if (meta.publiable !== "oui" || meta.sensible !== "non" || !/^\d{4}-\d{2}-\d{2}$/.test(meta.date ?? "")) continue;
     const at = `${meta.date}T12:00:00.000Z`;
-    const body = text.slice(head[0].length).replace(/^[\s\S]*?^## Échanges[^\n]*\n/m, "");
+    // « ## Écartés » : les échanges que la nuit a jugés sensibles. Ils ne sortent jamais du fichier.
+    const body = text.slice(head[0].length).replace(/^## Écartés[^\n]*\n[\s\S]*$/m, "").replace(/^[\s\S]*?^## Échanges[^\n]*\n/m, "");
     for (const block of body.split(/^(?=(?:Ludo|Claude)(?: \(vocal\))? :)/m)) {
       const m = block.match(/^(Ludo|Claude)(?: \(vocal\))? : ([\s\S]*)$/);
       if (m && m[2].trim()) entries.push({ r: m[1] === "Ludo" ? "u" : "a", t: m[2].trim().slice(0, MAX_CHARS), at });

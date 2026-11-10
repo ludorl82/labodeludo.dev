@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
     "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
     "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?"
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?"
   ],
-  "generated": "2026-11-09T09:33:45Z",
+  "generated": "2026-11-10T09:34:10Z",
   "openers": [
     "Tu as installé quoi comme serveurs MCP ?",
-    "Ton serveur MCP de textos envoie quoi ?",
-    "How does your text forwarding MCP work?",
-    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
+    "Ton serveur MCP envoie des textos ?",
+    "How does your SMS MCP server work?",
     "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
     "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?"
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?"
   ],
   "written": [
-    "Ton serveur MCP de textos envoie quoi ?",
-    "How does your text forwarding MCP work?"
+    "Ton serveur MCP envoie des textos ?",
+    "How does your SMS MCP server work?"
   ]
 }

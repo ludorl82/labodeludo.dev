@@ -1,0 +1,79 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const items = (await getCollection("nouvelles")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<BaseLayout
+  title="Le fil de Bob — Le labo de Ludo"
+  description="Chaque semaine, ce que les nouvelles versions des logiciels du labo changent chez nous, avec les mesures du banc d'essai. Souvent : rien."
+>
+  <a class="back" href="/">&larr; tous les articles</a>
+
+  <header class="page-header">
+    <h1>Le fil de Bob</h1>
+    <p class="lede">
+      Une fois par semaine, Bob passe en revue les nouveautés des logiciels qui
+      roulent vraiment au labo (k3s, Ollama, llama.cpp, NixOS, Home Assistant,
+      Frigate…) et dit ce que chacune change chez nous. Souvent : rien. Les
+      chiffres « maison » viennent du <a href="/banc/">banc d'essai</a>.
+    </p>
+  </header>
+
+  <ul class="fil">
+    {items.map((p) => (
+      <li>
+        <time datetime={p.data.pubDate.toISOString()}>
+          {p.data.pubDate.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
+        </time>
+        <a href={`/nouvelles/${p.id}/`}>{p.data.title}</a>
+        <p>{p.data.description}</p>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .page-header h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+  }
+  .lede {
+    color: var(--text-muted);
+    max-width: 60ch;
+  }
+  .fil {
+    list-style: none;
+    margin: 2rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 1.75rem;
+  }
+  .fil time {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+  }
+  .fil a {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  .fil p {
+    margin: 0.35rem 0 0;
+    color: var(--text-muted);
+  }
+</style>

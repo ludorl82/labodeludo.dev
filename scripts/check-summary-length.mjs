@@ -22,11 +22,12 @@ import { join } from "node:path";
 export const MAX_BULLETS = 5;
 export const MAX_WORDS = 120;
 
-const DIRS = ["src/content/blog", "src/content/blog-en"];
+const DIRS = ["src/content/blog", "src/content/blog-en", "src/content/nouvelles"];
 const HEAD = /^> \*\*(Résumé technique|Technical summary)\*\*.*$/m;
 const POLICY = "/politique-de-confidentialite/#les-outils-dintelligence-artificielle-du-labo";
 export const HEADING = {
   "src/content/blog": `> **Résumé technique** _([généré par IA](${POLICY}))_`,
+  "src/content/nouvelles": `> **Résumé technique** _([généré par IA](${POLICY}))_`,
   "src/content/blog-en": `> **Technical summary** _([AI generated](${POLICY}))_`,
 };
 

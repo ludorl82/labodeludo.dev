@@ -28,7 +28,7 @@ function* walk(dir) {
 }
 
 const targets = [];
-for (const dir of ["src/content/blog", "src/content/blog-en"]) {
+for (const dir of ["src/content/blog", "src/content/blog-en", "src/content/nouvelles"]) {
   for (const f of walk(dir)) {
     if (!/\.mdx?$/.test(f)) continue;
     const head = readFileSync(f, "utf8").slice(0, 2000);

@@ -1,0 +1,173 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CategoryChip from "../../components/CategoryChip.astro";
+import AuthorBadge from "../../components/AuthorBadge.astro";
+import AiNotice from "../../components/AiNotice.astro";
+import AuthorLine from "../../components/AuthorLine.astro";
+import ShareButtons from "../../components/ShareButtons.astro";
+import { primaryCategory } from "../../lib/category";
+import { authorFromTags, AUTHORS } from "../../lib/author";
+import { INVENTORY, inventoryForArticle } from "../../lib/inventory";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("nouvelles");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const category = primaryCategory(post.data.tags);
+const author = authorFromTags(post.data.tags);
+
+const hasEnglish = false;
+const relatedInventory: string[] = [];
+---
+
+<BaseLayout
+  title={`${post.data.title} — Le labo de Ludo`}
+  description={post.data.description}
+  heroImage={post.data.heroImage}
+  pubDate={post.data.pubDate}
+  authorName={AUTHORS[author].name}
+  translations={{
+    fr: `/nouvelles/${post.id}/`,
+    ...(hasEnglish ? { en: `/en/nouvelles/${post.id}/` } : {}),
+  }}
+>
+  <a class="back" href="/nouvelles/">&larr; le fil de Bob</a>
+
+  <article>
+    <header class="article-header">
+      <CategoryChip category={category} />
+      <h1>{post.data.title}</h1>
+      <div class="article-meta">
+        <time datetime={post.data.pubDate.toISOString()}>
+          {post.data.pubDate.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
+        </time>
+        <AuthorBadge author={author} />
+        {hasEnglish && (
+          <a class="lang-link" href={`/en/nouvelles/${post.id}/`}>English version</a>
+        )}
+      </div>
+      <AiNotice ia={post.data.ia} outils={post.data.iaOutils} certificat={post.data.certificatHumain} />
+    </header>
+
+    {post.data.heroImage && (
+      <img class="hero" src={post.data.heroImage} alt="" />
+    )}
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    {relatedInventory.length > 0 && (
+      <aside class="related-inventory">
+        <h2>Composants liés</h2>
+        <ul>
+          {relatedInventory.map((key) => (
+            <li><a href={`/inventaire/${key}/`}>{INVENTORY[key].name}</a></li>
+          ))}
+        </ul>
+      </aside>
+    )}
+
+    <ShareButtons url={new URL(`/nouvelles/${post.id}/`, Astro.site).toString()} title={post.data.title} lang="fr" />
+
+    <AuthorLine author={author} />
+  </article>
+</BaseLayout>
+
+<style>
+  .back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent-live);
+  }
+
+  .article-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0.75rem 0 0.5rem;
+  }
+
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-faint);
+  }
+
+  .hero {
+    margin: 2rem 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+  }
+
+  .lang-link {
+    color: var(--accent-live);
+    text-decoration: none;
+    margin-left: auto;
+  }
+
+  .lang-link:hover {
+    text-decoration: underline;
+  }
+
+  .related-inventory {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .related-inventory h2 {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    margin: 0 0 0.75rem;
+  }
+
+  .related-inventory ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .related-inventory a {
+    display: inline-block;
+    padding: 0.3em 0.75em;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .related-inventory a:hover {
+    border-color: var(--accent-live);
+    color: var(--accent-live);
+  }
+</style>

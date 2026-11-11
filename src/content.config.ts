@@ -65,6 +65,13 @@ const blogEn = defineCollection({
   schema: postSchema,
 });
 
+/* Le fil de Bob : un digest hebdomadaire de ce qui touche les logiciels du
+   labo. Même schéma que les articles (mention d'IA, tag `bob` => redigee). */
+const nouvelles = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/nouvelles" }),
+  schema: postSchema,
+});
+
 /* Terminal recordings. The .cast file is the artifact; this collection holds
    the framing around it — including the disclaimer, which is mandatory because
    every cast is a condensed reconstruction rather than a live capture. */
@@ -126,4 +133,4 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { blog, blogEn, casts, castsEn, pages };
+export const collections = { blog, blogEn, nouvelles, casts, castsEn, pages };

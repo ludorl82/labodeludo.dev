@@ -18,9 +18,9 @@ Names sanitized, and this one deserves a note: the leaked value shown on
 screen is the FICTIONAL name (`shrt.example`), not the real one the gate
 actually caught. A cast of a leak detector would otherwise publish the very
 thing the detector exists to stop. The `disclaimer` prop on the embed says
-so; see net-cfgs/asciicast-style.md, trap 3.
+so; see labo/asciicast-style.md, trap 3.
 
-Palette and line grammar per net-cfgs/asciicast-style.md.
+Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-iac-gate.py
 """

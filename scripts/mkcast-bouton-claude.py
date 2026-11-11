@@ -8,7 +8,7 @@ come from that session; timing is compressed and the investigation detours cut.
 Hostnames are sanitized: the VM hosting the console container is `console-vm`
 (the session itself runs inside that container — which is half the story).
 
-Palette and line grammar per net-cfgs/asciicast-style.md.
+Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-bouton-claude.py
 """

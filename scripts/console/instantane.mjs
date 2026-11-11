@@ -21,7 +21,7 @@
 //
 // L'ASSAINISSEMENT, dans l'ordre, fenêtre par fenêtre :
 //  1. exclusions privées : une fenêtre exclue n'apparaît pas du tout ;
-//  2. remplacements privés, vrai → fictif (net-cfgs/console-instantane.txt) ;
+//  2. remplacements privés, vrai → fictif (labo/console-instantane.txt) ;
 //  3. caviardage générique : adresses, MAC, courriels, domaines inconnus
 //     deviennent leur jumeau de documentation (allowlist.redact) ;
 //  4. les gardes de check-public-leaks.mjs, liste blanche et liste noire ;
@@ -53,7 +53,7 @@ const arg = (name, dflt) => {
 const flag = (name) => process.argv.includes(`--${name}`);
 
 const OUT = arg("out");
-const CONFIG = arg("config", join(homedir(), "git/ludorl82/net-cfgs/console-instantane.txt"));
+const CONFIG = arg("config", join(homedir(), "git/ludorl82/labo/console-instantane.txt"));
 const PROJECTS = arg("projects", join(homedir(), ".claude/projects"));
 const SOCKET = arg("socket", "console");
 const SESSION = arg("session", "claude");
@@ -61,6 +61,9 @@ const OLLAMA = arg("ollama", "http://bob:11434");
 const MODEL = arg("model", "qwen38-27b");
 const CACHE = arg("cache", join(homedir(), ".cache/console-instantane"));
 const SANS_RELECTURE = flag("sans-relecture");
+// Les chats de claude.ai déposés par chat_deposer (labo/conversations/), extraits du labo par le
+// pilote. Absent : pas de fenêtre « claude.ai ».
+const CONVERSATIONS = arg("conversations", "");
 
 const MAX_ENTRIES = 400; // par fenêtre, les plus récentes, en journées entières
 const MAX_CHARS = 6000; // par entrée
@@ -112,15 +115,15 @@ function loadConfig() {
 function windows() {
   const out = execFileSync(
     "tmux",
-    ["-L", SOCKET, "list-windows", "-t", SESSION, "-F", "#{window_index}\t#{window_name}\t#{window_active}\t#{window_activity}"],
+    ["-L", SOCKET, "list-windows", "-t", SESSION, "-F", "#{window_index}\t#{window_name}\t#{window_active}\t#{window_activity}\t#{@claude_session_id}"],
     { encoding: "utf8" },
   );
   return out
     .trim()
     .split("\n")
     .map((l) => {
-      const [index, name, active, activity] = l.split("\t");
-      return { index: Number(index), name, active: active === "1", activity: new Date(Number(activity) * 1000) };
+      const [index, name, active, activity, sid] = l.split("\t");
+      return { index: Number(index), name, active: active === "1", activity: new Date(Number(activity) * 1000), sid: sid || "" };
     });
 }
 
@@ -144,6 +147,49 @@ function transcriptsByTitle() {
     }
   }
   return map;
+}
+
+/* Les fenêtres lancées par le relais (confier_a_claude_code) n'ont pas de
+   « custom-title » dans leur transcription : le relais les démarre avec
+   --session-id et note l'identifiant dans l'option tmux @claude_session_id.
+   Sans titre qui corresponde, on retombe sur ce fichier-là. Le titre garde
+   la priorité : l'option ne suit pas un /clear, le titre suit un /rename. */
+function transcriptBySessionId(sid) {
+  if (!/^[0-9a-f-]{36}$/.test(sid)) return null;
+  for (const dir of readdirSync(PROJECTS)) {
+    const path = join(PROJECTS, dir, `${sid}.jsonl`);
+    if (existsSync(path)) return { path, mtime: statSync(path).mtimeMs };
+  }
+  return null;
+}
+
+/* La fenêtre « claude.ai » : les chats déposés dans labo/conversations/ que la nuit a jugés
+   publiables ET qui ne sont pas sensibles. Ils passent ensuite par TOUT le chemin des autres
+   fenêtres : remplacements privés, caviardage, listes, relecture, récapitulatif par jour. Seul
+   le récapitulatif sort, jamais le chat. Index 0 : avant `backlog` dans la barre. Aucun chat
+   publiable ce soir : pas de fenêtre (un onglet vide ne dit rien de plus que son absence). */
+function chatWindow(dir) {
+  if (!dir || !existsSync(dir)) return [];
+  const entries = [];
+  let latest = "";
+  for (const f of readdirSync(dir).sort()) {
+    if (!/^\d{4}-\d{2}-\d{2}-\d{4}-[a-z0-9-]+\.md$/.test(f)) continue;
+    const text = readFileSync(join(dir, f), "utf8");
+    const head = text.match(/^---\n([\s\S]*?)\n---\n/);
+    if (!head) continue;
+    const meta = Object.fromEntries(head[1].split("\n").map((l) => l.split(/:\s*(.*)/s).slice(0, 2)));
+    if (meta.publiable !== "oui" || meta.sensible !== "non" || !/^\d{4}-\d{2}-\d{2}$/.test(meta.date ?? "")) continue;
+    const at = `${meta.date}T12:00:00.000Z`;
+    // « ## Écartés » : les échanges que la nuit a jugés sensibles. Ils ne sortent jamais du fichier.
+    const body = text.slice(head[0].length).replace(/^## Écartés[^\n]*\n[\s\S]*$/m, "").replace(/^[\s\S]*?^## Échanges[^\n]*\n/m, "");
+    for (const block of body.split(/^(?=(?:Ludo|Claude)(?: \(vocal\))? :)/m)) {
+      const m = block.match(/^(Ludo|Claude)(?: \(vocal\))? : ([\s\S]*)$/);
+      if (m && m[2].trim()) entries.push({ r: m[1] === "Ludo" ? "u" : "a", t: m[2].trim().slice(0, MAX_CHARS), at });
+    }
+    if (at > latest) latest = at;
+  }
+  if (!entries.length) return [];
+  return [{ index: 0, name: "claude.ai", active: false, activity: new Date(latest), entries: entries.map((e, n) => ({ ...e, n })) }];
 }
 
 function cleanUserText(s) {
@@ -503,13 +549,13 @@ if (!OUT) throw new Error("--out <fichier> manquant");
 
 const byTitle = transcriptsByTitle();
 const result = [];
-for (const w of windows()) {
+for (const w of [...chatWindow(CONVERSATIONS), ...windows()]) {
   if (config.exclude.some((re) => re.test(w.name))) {
     log(`${w.index}:${w.name} — exclue`);
     continue;
   }
-  const src = byTitle.get(w.name);
-  const entries = src ? entriesOf(src.path) : [];
+  const src = w.entries ? null : (byTitle.get(w.name) ?? transcriptBySessionId(w.sid));
+  const entries = w.entries ?? (src ? entriesOf(src.path) : []);
   const texts = sanitize([w.name, ...entries.map((e) => e.t)], config);
   let [name, ...clean] = texts;
   let safe = entries.map((e, i) => ({ ...e, t: clean[i] }));
@@ -534,7 +580,7 @@ for (const w of windows()) {
   }
   safe = retirer(safe, dropped);
 
-  if (!src) {
+  if (!src && !w.entries) {
     log(`${w.index}:${w.name} — aucune transcription trouvée`);
     result.push({ ...base, name, status: "publiee", jours: [] });
     continue;
@@ -571,7 +617,7 @@ for (const w of windows()) {
     continue;
   }
   const jours = await recapitulatifs(w, safe, config, deny);
-  log(`${w.index}:${w.name} — publiée, ${jours.length} jour(s), ${entries.length - dropped.size} entrées lues, ${dropped.size} retirée(s) (${basename(src.path)})`);
+  log(`${w.index}:${w.name} — publiée, ${jours.length} jour(s), ${entries.length - dropped.size} entrées lues, ${dropped.size} retirée(s) (${src ? basename(src.path) : "chats déposés"})`);
   result.push({ ...base, name, status: "publiee", retirees: dropped.size, jours });
 }
 

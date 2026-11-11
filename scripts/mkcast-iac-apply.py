@@ -16,7 +16,7 @@ Names sanitized per the shared host map (worker3 → vm-01, tptpt.net →
 pub.example.com). The record shown was a throwaway created for this test
 and no longer exists in any form.
 
-Palette and line grammar per net-cfgs/asciicast-style.md.
+Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-iac-apply.py
 """

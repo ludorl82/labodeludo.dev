@@ -2,7 +2,7 @@
 """Build the asciicast for "le témoin" — the control device that ends a hunt.
 
 Condensed from the real session of 2026-09-10, the one documented in
-net-cfgs/history.md as "The wake word the office could not switch off". That
+labo/history.md as "The wake word the office could not switch off". That
 session had three stories in it; this recording tells one, and only one: an LED
 ring that went red at the wrong intensity, two plausible hypotheses chased in
 the wrong direction, and a single sentence from Ludo that killed both.
@@ -28,7 +28,7 @@ Two beats kept because they are the lesson rather than the plot:
 Names sanitized: the two satellites are voix-01 and voix-02 rather than their
 MAC-derived ids, entity ids follow the same shape, no domains and no
 addressing. Rooms are kept — the story is that the twin is in another room.
-Palette and line grammar per net-cfgs/asciicast-style.md.
+Palette and line grammar per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-le-temoin.py
 """

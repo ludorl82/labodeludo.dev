@@ -20,7 +20,7 @@ bother" — both real.
 
 Names sanitized: gpu-01 (GPU node), win-01 (the Windows host), node-01/02,
 pi-2 (the island Pi), nas, RFC 5737 addressing. Palette and line grammar
-per net-cfgs/asciicast-style.md.
+per labo/asciicast-style.md.
 
 Run from the repo root:  python3 scripts/mkcast-survivor-island.py
 """

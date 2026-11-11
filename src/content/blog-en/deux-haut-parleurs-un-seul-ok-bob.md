@@ -71,9 +71,11 @@ For the record, the model's measure at step 254 and window of 5: 0.30 false dete
 
 All of the above rely on a model trained with **real voices from the house**, and those voices were recorded with a tool we built for this: a private page, **eveil.tptpt.net**. It sit behind Cloudflare Access, open to two accounts only, and the server re-check the Access token itself on every request; without it, it is a 403. People there are pseudonyms, `locuteur-1` and `locuteur-2`, and each one see, hear and delete only their own takes. The recordings live on the NAS, not in git, not on S3.
 
-Here is how it look in practice, with cases that really happen.
+Here is how it look in practice. The screenshots below show the real page, run locally with **demo data**: synthetic sounds and invented scores, no voice from the house. The cases told around them, they really happen.
 
 **A series of takes.** The page show the phrase in big, and an instruction that change: close up, at 2 m, back turned, whispered, loud, fast, tired, TV on, next room. We start a hands-free series of 5: a beep before each take, you say "Ok Bob" in the instruction of the moment. You listen back, keep or redo; a progress bar aim at 50 takes per person. The sound is asked raw from the browser, with no echo cancellation, no noise reduction, no automatic gain, because the real device has none of that; the page bring it to 16 kHz mono and refuse takes too quiet, saturated or cut.
+
+![The recording screen of the wake-word page: the phrase "Ok Bob" in big letters, the instruction "De près, voix normale" (close up, normal voice), a progress bar at 23 takes out of 50, the red message "Parle !" (speak!) and the "series of 5, hands-free" box checked](/images/blog/eveil-serie-de-prises.png)
 
 **Phrases that must not wake it.** "OK bonne nuit", "au bout", "Bobby": three takes of each. These are hard negatives, like the ones in the July model, but in our own voices.
 
@@ -83,7 +85,13 @@ Here is how it look in practice, with cases that really happen.
 
 **Nova's wake-ups.** Each wake-up leave a clip, the 2.5 s before and the little after I talked about. We listen, then mark it "false wake-up": it become a negative of the word, or we delete it. On November 7 at 21:35, nova woke up on an almost silent clip: moved to the negatives. What the tool could have caught earlier: on November 4 at 11:41, Bob's speaker (then aria, who keep no sound) woke up on a chair creak, with a score of 0.917, the score of a real "Ok Bob". This is what lead to keep the clips. A clip not sorted in 14 days is deleted by itself.
 
+![The Wake-ups tab of the page: four nova clips to sort, each with its time, its score, the current model's verdict ("heard" or "NOT heard" with a percentage) and the buttons Listen, "False wake-up → negative" and Delete](/images/blog/eveil-tri-des-reveils.png)
+
+Confession on the way: the text of this tab still talk about aria, the old speaker. I did not fix it yet.
+
 **Training.** One button, "Train this word", reserved for Ludo, put down a request. A Cronicle event, every night at 23:00, start the training on a bob graphics card, when all three are idle, then drop the model, a report and the Voice PE configuration block on the NAS. Among other things, the per-person and per-hour measure I talked about above.
+
+![The "Entraîner ce mot" (train this word) button under the phrase "Ok Bob", with the message that confirm the request: the training will start at the next run, when a graphics card of bob is free](/images/blog/eveil-entrainer-un-mot.png)
 
 ### The Day the Page Said 404
 

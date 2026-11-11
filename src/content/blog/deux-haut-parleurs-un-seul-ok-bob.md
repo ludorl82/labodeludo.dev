@@ -71,9 +71,11 @@ Pour mémoire, la mesure du modèle au cran 254 et fenêtre de 5 : 0,30 fausse d
 
 Tout ce qui précède repose sur un modèle entraîné avec de **vraies voix de la maison**, et ces voix ont été enregistrées avec un outil qu'on a construit pour ça : une page privée, **eveil.tptpt.net**. Elle est derrière Cloudflare Access, ouverte à deux comptes seulement, et le serveur revérifie lui-même le jeton d'Access à chaque requête ; sans lui, c'est un 403. Les personnes y sont des pseudonymes, `locuteur-1` et `locuteur-2`, et chacune ne voit, n'écoute et n'efface que ses propres prises. Les enregistrements vivent sur le NAS, ni dans git, ni sur S3.
 
-Voici à quoi ça ressemble en pratique, avec des cas qui sont vraiment arrivés.
+Voici à quoi ça ressemble en pratique. Les captures ci-dessous montrent la vraie page, lancée en local avec des **données de démonstration** : des sons synthétiques et des scores inventés, aucune voix de la maison. Les cas racontés autour, eux, sont arrivés pour vrai.
 
 **Une série de prises.** La page affiche la phrase en gros, et une consigne qui change : de près, à 2 m, dos tourné, chuchoté, fort, vite, fatigué, télé allumée, pièce d'à côté. On lance une série de 5 mains libres : un bip avant chaque prise, on dit « Ok Bob » dans la consigne du moment. On réécoute, on garde ou on recommence ; une barre de progression vise 50 prises par personne. Le son est demandé brut au navigateur, sans annulation d'écho ni réduction de bruit ni gain automatique, parce que l'appareil réel n'a rien de tout ça ; la page le ramène à 16 kHz mono et refuse les prises trop basses, saturées ou coupées.
+
+![L'écran d'enregistrement de la page des mots d'éveil : la phrase « Ok Bob » en gros, la consigne « De près, voix normale », une barre de progression à 23 prises sur 50, le message « Parle ! » en rouge et la case « série de 5, mains libres » cochée](/images/blog/eveil-serie-de-prises.png)
 
 **Des phrases qui ne doivent pas réveiller.** « OK bonne nuit », « au bout », « Bobby » : trois prises de chaque. Ce sont des négatifs difficiles, du même genre que ceux du modèle de juillet, mais dans nos voix à nous.
 
@@ -83,7 +85,13 @@ Voici à quoi ça ressemble en pratique, avec des cas qui sont vraiment arrivés
 
 **Les réveils de nova.** Chaque réveil laisse un extrait, les 2,5 s d'avant et le peu d'après dont je parlais. On l'écoute, puis on le marque « faux réveil » : il devient un négatif du mot, ou on l'efface. Le 7 novembre à 21 h 35, nova s'est réveillée sur un extrait presque silencieux : déplacé dans les négatifs. Ce que l'outil aurait pu attraper plus tôt : le 4 novembre à 11 h 41, le haut-parleur de Bob (alors aria, qui ne gardait aucun son) s'est réveillé sur un craquement de chaise, avec un score de 0,917, celui d'un vrai « Ok Bob ». C'est ce qui a mené à garder les extraits. Un extrait qu'on n'a pas trié en 14 jours est effacé tout seul.
 
+![L'onglet Réveils de la page : quatre extraits de nova à trier, chacun avec son heure, son score, le verdict du modèle actuel (« entendu » ou « PAS entendu » avec un pourcentage) et les boutons Écouter, « Faux réveil → négatif » et Effacer](/images/blog/eveil-tri-des-reveils.png)
+
+Aveu au passage : le texte de cet onglet parle encore d'aria, l'ancien haut-parleur. Je ne l'ai pas encore corrigé.
+
 **Entraîner.** Un bouton, « Entraîner ce mot », réservé à Ludo, dépose une demande. Un événement Cronicle, tous les soirs à 23 h, lance l'entraînement sur une carte graphique de bob, quand les trois sont au repos, puis dépose le modèle, un rapport et le bloc de configuration du Voice PE sur le NAS. Entre autres, la mesure par personne et par heure dont je parlais plus haut.
+
+![Le bouton « Entraîner ce mot » sous la phrase « Ok Bob », avec le message qui confirme la demande : l'entraînement partira au prochain passage, quand une carte graphique de bob sera libre](/images/blog/eveil-entrainer-un-mot.png)
 
 ### Le jour où la page a fait 404
 

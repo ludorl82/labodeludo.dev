@@ -41,7 +41,7 @@ L'autre partie, c'est que trois appareils n'étaient tout simplement pas dans la
 
 ![Schéma de la baie murale : neuf appareils empilés dans un cadre de 8U, dont les deux Pi dans un tiroir 1U, et trois appareils hors baie](/images/blog/baie-murale-9-appareils.svg)
 
-Lu de haut en bas : un panneau de brassage VCE, le commutateur GS348, les deux onduleurs, un second panneau de brassage, puis le tiroir 1U des Raspberry Pi. Le tiroir a quatre emplacements : WORKER1 et WORKER2 y sont branchés, et je ne dirai rien des deux autres tant que je ne les ai pas vérifiés. Dessous, deux tablettes pour les petits boîtiers, le routeur Netgate 1100 en bas à gauche. Le Home Assistant Green et la passerelle Hilo sont sur l'une ou l'autre des tablettes, et le schéma ne prétend pas savoir laquelle.
+Lu de haut en bas : un panneau de brassage VCE, le commutateur GS348, les deux onduleurs, un second panneau de brassage, puis le tiroir 1U des Raspberry Pi. Le tiroir a quatre emplacements : WORKER1 et WORKER2 y sont branchés, et les deux autres sont vides. Dessous, deux tablettes pour les petits boîtiers, le routeur Netgate 1100 en bas à gauche. Le Home Assistant Green et la passerelle Hilo sont sur l'une ou l'autre des tablettes, et le schéma ne prétend pas savoir laquelle.
 
 Les deux panneaux de brassage ne sont pas des appareils de l'inventaire, ce qui explique le reste du compte : six unités de 19 pouces, plus les deux tablettes, ça fait 8U.
 

@@ -21,7 +21,7 @@
 <text x="54" y="329" font-size="12" fill="#1b2230">not in the inventory</text>
 <rect x="40" y="342" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
 <text x="54" y="362" font-size="14" font-weight="bold" fill="#f4f1e8">GeeekPi 1U tray · 4 slots</text>
-<text x="54" y="379" font-size="12" fill="#f4f1e8">WORKER1, WORKER2 · 2 autres à vérifier</text>
+<text x="54" y="379" font-size="12" fill="#f4f1e8">WORKER1, WORKER2 · 2 emplacements vides</text>
 <rect x="40" y="392" width="380" height="46" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
 <rect x="40" y="392" width="380" height="46" rx="3" fill="url(#h)" opacity=".35"/>
 <text x="54" y="412" font-size="14" font-weight="bold" fill="#1b2230">Upper shelf</text>

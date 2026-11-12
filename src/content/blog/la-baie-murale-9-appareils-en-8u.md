@@ -47,9 +47,11 @@ Les deux panneaux de raccordement ne sont pas dans l'inventaire, ce qui explique
 
 ## Et en vrai
 
-![La baie murale en juillet : le tiroir 1U des trois Raspberry Pi sous les panneaux de raccordement et les deux onduleurs, avec le cube IKEA du NAS juste à côté](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
+<!-- PHOTO À VENIR (Ludo) : la baie telle qu'elle est maintenant. Placer ici l'image, légende suggérée : « La baie aujourd'hui : le tiroir ne porte plus que worker1 et worker2. » Retirer ce commentaire en même temps. -->
 
-Cette photo date de juillet. Le Netgate 1100, le Home Assistant Green, la passerelle Hilo et le DP750 sont bel et bien dans la baie, mais ce sont de petits boîtiers : on les devine à peine sur l'image, d'où le schéma.
+![La baie murale en juillet : le tiroir 1U avec trois Raspberry Pi (COQUILLE, WORKER1, WORKER2) sous les panneaux de raccordement et les deux onduleurs, avec le cube IKEA du NAS juste à côté](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
+
+Cette photo date de juillet, et elle a vieilli : le tiroir y porte trois Raspberry Pi, alors qu'il n'en reste que deux. Celui qui était étiqueté COQUILLE, c'est aria, mon Pi 4 de rechange, rangé depuis le 8 novembre. Le Netgate 1100, le Home Assistant Green, la passerelle Hilo et le DP750 sont bel et bien dans la baie, mais ce sont de petits boîtiers : on les devine à peine sur l'image, d'où le schéma.
 
 ## La suite : la borne au plafond
 

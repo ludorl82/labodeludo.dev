@@ -47,9 +47,11 @@ The two patch panels aren't in the inventory, which explains the rest of the cou
 
 ## In real life
 
-![The wall rack in July: the 1U tray with the three Raspberry Pis below the patch panels and the two UPS units, with the IKEA cube holding the NAS right next to it](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
+<!-- PHOTO TO COME (Ludo): the rack as it is now. Place the image here, suggested caption: "The rack today: the tray now holds only worker1 and worker2." Remove this comment at the same time. -->
 
-This photo dates from July. The Netgate 1100, the Home Assistant Green, the Hilo gateway and the DP750 are indeed in the rack, but they're small boxes: you can barely make them out in the picture, hence the diagram.
+![The wall rack in July: the 1U tray with three Raspberry Pis (COQUILLE, WORKER1, WORKER2) below the patch panels and the two UPS units, with the IKEA cube holding the NAS right next to it](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
+
+This photo dates from July, and it has aged: the tray holds three Raspberry Pis in it, where only two remain. The one labelled COQUILLE is aria, my spare Pi 4, put away since November 8. The Netgate 1100, the Home Assistant Green, the Hilo gateway and the DP750 are indeed in the rack, but they're small boxes: you can barely make them out in the picture, hence the diagram.
 
 ## The sequel: the ceiling access point
 

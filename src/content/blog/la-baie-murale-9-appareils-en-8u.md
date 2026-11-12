@@ -43,6 +43,12 @@ L'autre partie, c'est que trois appareils n'étaient tout simplement pas dans la
 
 Hachurés, les quatre boîtiers de bureau ; en plein, le matériel au gabarit 19 pouces. Le chiffre à droite de chaque rangée est l'ordre d'empilage de l'inventaire. Je le précise parce que c'est exactement ce chiffre que j'avais mal lu : ce n'est pas un numéro d'unité.
 
+## Et en vrai
+
+![La baie murale en juillet : le tiroir 1U des trois Raspberry Pi sous les panneaux de raccordement et les deux onduleurs, avec le cube IKEA du NAS juste à côté](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
+
+Cette photo date de juillet. Le Netgate 1100, le Home Assistant Green, la passerelle Hilo et le DP750 sont bel et bien dans la baie, mais ce sont de petits boîtiers : on les devine à peine sur l'image, d'où le schéma.
+
 ## La suite : la borne au plafond
 
 Sortir la borne UniFi de la baie a fait remonter autre chose. Elle est au plafond du rez-de-chaussée, alimentée en PoE par un injecteur, et quand j'avais vérifié la chaîne d'alimentation en octobre, l'injecteur n'était **pas** sur onduleur. Donc à la première coupure de courant, le Wi-Fi tombe, et la caméra qui passe par là avec lui.
@@ -50,8 +56,6 @@ Sortir la borne UniFi de la baie a fait remonter autre chose. Elle est au plafon
 C'est un choix, pas un oubli : la caméra perdrait de toute façon son propre courant dans une vraie panne, et il ne reste aucune prise sur batterie libre dans les deux onduleurs. Mais je ne l'avais jamais écrit nulle part, et c'est ce genre de détail qu'on redécouvre à 2 h du matin, dans le noir.
 
 ## Mot de la fin
-
-Je n'ai pas de photo de la baie complète à jour pour cet article, seulement celles de juillet, qui ne montrent pas les boîtiers de bureau. Si ça vous intéresse, j'en ajouterai.
 
 Un inventaire qui compte douze appareils dans 8U avait raison de me ficher la puce à l'oreille : un chiffre qui ne rentre pas dans son contenant, c'est souvent la définition qui est mal lue, pas le contenant.
 

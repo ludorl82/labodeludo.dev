@@ -43,6 +43,12 @@ Twelve minus three: nine. Claude fixed the file and the docs (labo#21, merged No
 
 Hatched, the four desktop boxes; solid, the 19-inch gear. The number on the right of each row is the inventory's stacking order. I spell that out because it's exactly the number I misread: it isn't a rack-unit number.
 
+## In real life
+
+![The wall rack in July: the 1U tray with the three Raspberry Pis below the patch panels and the two UPS units, with the IKEA cube holding the NAS right next to it](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
+
+This photo dates from July. The Netgate 1100, the Home Assistant Green, the Hilo gateway and the DP750 are indeed in the rack, but they're small boxes: you can barely make them out in the picture, hence the diagram.
+
 ## The sequel: the ceiling access point
 
 Taking the UniFi access point out of the rack surfaced something else. It's on the ground-floor ceiling, powered over PoE by an injector, and when I checked the power chain in October, the injector was **not** on a UPS. So at the first power cut, the Wi-Fi drops, and the camera that goes through it with it.
@@ -50,8 +56,6 @@ Taking the UniFi access point out of the rack surfaced something else. It's on t
 It's a choice, not an oversight: the camera would lose its own power in a real outage anyway, and there's no free battery outlet left on the two UPS units. But I'd never written it down anywhere, and that's the kind of detail you rediscover at 2 a.m., in the dark.
 
 ## Last word
-
-I don't have an up-to-date photo of the full rack for this article, only the July ones, which don't show the desktop boxes. If you'd like one, I'll add it.
 
 An inventory that counts twelve devices in 8U was right to make me suspicious: a number that doesn't fit its container is often a misread definition, not a wrong container.
 

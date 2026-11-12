@@ -41,15 +41,15 @@ Twelve minus three: nine. Claude fixed the file and the docs (labo#21, merged No
 
 ![Wall rack diagram: nine devices stacked in an 8U frame, with the two Pis in a 1U tray, and three devices outside the rack](/images/blog/baie-murale-9-appareils-en.svg)
 
-Read top to bottom: a VCE patch panel, the GS348 switch, the two UPS units, a second patch panel, then the 1U Raspberry Pi tray. The tray has four slots: WORKER1 and WORKER2 are plugged in, and I'll say nothing about the other two until I've checked. Below, two shelves for the small boxes, the Netgate 1100 router at the bottom left. The Home Assistant Green and the Hilo gateway are on one shelf or the other, and the diagram doesn't pretend to know which.
+Read top to bottom: a VCE patch panel, the GS348 switch, the two UPS units, a second patch panel, then the 1U Raspberry Pi tray. The tray has four slots: WORKER1 and WORKER2 are plugged in, and the other two are empty. Below, two shelves for the small boxes: the Hilo gateway on the upper one; on the lower one, the Netgate 1100 router (bottom left), the DP750 phone base and the Home Assistant Green.
 
 The two patch panels aren't inventory devices, which explains the rest of the count: six 19-inch units plus the two shelves make 8U.
 
 ## In real life
 
-![The wall rack on November 12: patch panel and switch at the top, the two UPS units, a second patch panel, the 1U tray with WORKER1 and WORKER2 plugged in, then two shelves of small boxes; two boxes labelled UNIFIBUS and UAPACPRO are fixed to the wall, on the left](/images/blog/baie-murale-aujourdhui-1000.jpg)
+![The wall rack on November 12: patch panel and switch at the top, the two UPS units, a second patch panel, the 1U tray with WORKER1 and WORKER2 plugged in, then two shelves of small boxes; two boxes labelled UNIFIBUS and UAPACPRO are fixed to the wall, on the left, and the Home Assistant's antenna sticks out to the right of the rack](/images/blog/baie-murale-aujourdhui-1000.jpg)
 
-_The rack on November 12, 2026._
+_The rack on November 12, 2026. The Home Assistant is on the lower shelf, on the right: that's its antenna sticking out to the right of the rack._
 
 And the same one, in July:
 

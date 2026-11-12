@@ -21,18 +21,15 @@
 <text x="54" y="329" font-size="12" fill="#1b2230">not in the inventory</text>
 <rect x="40" y="342" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
 <text x="54" y="362" font-size="14" font-weight="bold" fill="#f4f1e8">GeeekPi 1U tray · 4 slots</text>
-<text x="54" y="379" font-size="12" fill="#f4f1e8">WORKER1, WORKER2 · 2 autres à vérifier</text>
+<text x="54" y="379" font-size="12" fill="#f4f1e8">WORKER1, WORKER2 · 2 emplacements vides</text>
 <rect x="40" y="392" width="380" height="46" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
 <rect x="40" y="392" width="380" height="46" rx="3" fill="url(#h)" opacity=".35"/>
 <text x="54" y="412" font-size="14" font-weight="bold" fill="#1b2230">Upper shelf</text>
-<text x="54" y="429" font-size="12" fill="#1b2230">DP750 · SIP phone base</text>
+<text x="54" y="429" font-size="12" fill="#1b2230">Hilo gateway · peak-shaving programme</text>
 <rect x="40" y="442" width="380" height="46" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
 <rect x="40" y="442" width="380" height="46" rx="3" fill="url(#h)" opacity=".35"/>
 <text x="54" y="462" font-size="14" font-weight="bold" fill="#1b2230">Lower shelf</text>
-<text x="54" y="479" font-size="12" fill="#1b2230">Netgate 1100 · router, bottom left</text>
-<rect x="34" y="389" width="392" height="102" rx="5" fill="none" stroke="#b5342b" stroke-width="3" stroke-dasharray="7 4"/>
-<text x="442" y="436" font-size="12" font-weight="bold" fill="#b5342b">Home Assistant Green and Hilo gateway</text>
-<text x="442" y="452" font-size="12" fill="#b5342b">on one of the two shelves</text>
+<text x="54" y="479" font-size="12" fill="#1b2230">Netgate 1100 · DP750 · Home Assistant Green</text>
 <text x="470" y="100" font-size="16" font-weight="bold" fill="#1b2230">Outside the rack</text>
 <rect x="470" y="114" width="250" height="56" rx="6" fill="#fff" stroke="#8a97ad" stroke-width="2" stroke-dasharray="5 3"/>
 <text x="482" y="138" font-size="14" font-weight="bold" fill="#1b2230">QNAP NAS</text>

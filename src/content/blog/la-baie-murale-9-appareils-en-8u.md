@@ -47,11 +47,16 @@ Les deux panneaux de brassage ne sont pas des appareils de l'inventaire, ce qui 
 
 ## Et en vrai
 
-<!-- PHOTO À VENIR (Ludo) : la baie telle qu'elle est maintenant. Placer ici l'image, légende suggérée : « La baie aujourd'hui. » (à compléter une fois les emplacements du tiroir vérifiés) Retirer ce commentaire en même temps. -->
+![La baie murale le 12 novembre : panneau de brassage et commutateur en haut, les deux onduleurs, un second panneau, le tiroir 1U où WORKER1 et WORKER2 sont branchés, puis deux tablettes de petits boîtiers ; les boîtiers d'alimentation de la borne UniFi sont vissés sur le mur, à gauche](/images/blog/baie-murale-aujourdhui-1000.jpg)
+
+_La baie le 12 novembre 2026._
+
+Et la même, en juillet :
+
 
 ![La baie murale en juillet : le tiroir 1U avec trois Raspberry Pi (COQUILLE, WORKER1, WORKER2) sous les panneaux de brassage et les deux onduleurs, avec le cube IKEA du NAS juste à côté](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
 
-Cette photo date de juillet, et elle a vieilli : le tiroir y porte trois Raspberry Pi, dont celui étiqueté COQUILLE, qui est aria, mon Pi 4 de rechange. Il est rangé depuis le 8 novembre et n'est plus dans le tiroir. Le Netgate 1100, le Home Assistant Green, la passerelle Hilo et le DP750 sont bel et bien dans la baie, mais ce sont de petits boîtiers : on les devine à peine sur l'image, d'où le schéma.
+La photo de juillet a vieilli : le tiroir y porte trois Raspberry Pi, dont celui étiqueté COQUILLE, qui est aria, mon Pi 4 de rechange. Il est rangé depuis le 8 novembre et n'est plus dans le tiroir. Le Netgate 1100, le Home Assistant Green, la passerelle Hilo et le DP750 sont bel et bien dans la baie, mais ce sont de petits boîtiers : on les devine à peine sur l'image, d'où le schéma.
 
 ## La suite : la borne au plafond
 

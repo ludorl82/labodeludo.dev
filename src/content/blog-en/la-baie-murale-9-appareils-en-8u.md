@@ -47,11 +47,16 @@ The two patch panels aren't inventory devices, which explains the rest of the co
 
 ## In real life
 
-<!-- PHOTO TO COME (Ludo): the rack as it is now. Place the image here, suggested caption: "The rack today." (to complete once the tray slots are checked) Remove this comment at the same time. -->
+![The wall rack on November 12: patch panel and switch at the top, the two UPS units, a second patch panel, the 1U tray with WORKER1 and WORKER2 plugged in, then two shelves of small boxes; the UniFi access point's power boxes are screwed to the wall, on the left](/images/blog/baie-murale-aujourdhui-1000.jpg)
+
+_The rack on November 12, 2026._
+
+And the same one, in July:
+
 
 ![The wall rack in July: the 1U tray with three Raspberry Pis (COQUILLE, WORKER1, WORKER2) below the patch panels and the two UPS units, with the IKEA cube holding the NAS right next to it](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
 
-This photo dates from July, and it has aged: the tray holds three Raspberry Pis, including the one labelled COQUILLE, which is aria, my spare Pi 4. It has been put away since November 8 and is no longer in the tray. The Netgate 1100, the Home Assistant Green, the Hilo gateway and the DP750 are indeed in the rack, but they're small boxes: you can barely make them out in the picture, hence the diagram.
+The July photo has aged: the tray holds three Raspberry Pis, including the one labelled COQUILLE, which is aria, my spare Pi 4. It has been put away since November 8 and is no longer in the tray. The Netgate 1100, the Home Assistant Green, the Hilo gateway and the DP750 are indeed in the rack, but they're small boxes: you can barely make them out in the picture, hence the diagram.
 
 ## The sequel: the ceiling access point
 

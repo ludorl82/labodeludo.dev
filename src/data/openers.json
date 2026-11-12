@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Pourquoi tu as débranché le NAS exprès ?",
-    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
-    "What happens to the cluster when you start a game?",
-    "Why did you split the bastion from the console?",
-    "What is the last thing still running when everything else is down?"
+    "Comment tes dessins se redessinent tout seuls la nuit ?",
+    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?",
+    "What happens to the cluster when you start a game?"
   ],
-  "generated": "2026-11-02T09:35:49Z",
+  "generated": "2026-11-12T09:35:31Z",
   "openers": [
-    "Comment migrer une VM sans stockage partagé ?",
     "Tu as installé quoi comme serveurs MCP ?",
-    "How do you run MCP servers on your lab machines?",
-    "Pourquoi tu as débranché le NAS exprès ?",
-    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
-    "What happens to the cluster when you start a game?",
-    "Why did you split the bastion from the console?",
-    "What is the last thing still running when everything else is down?"
+    "Tu as un GPU 3060 pour faire tourner le modèle ?",
+    "Why does gpt-oss-20b run at different speeds?",
+    "Comment tes dessins se redessinent tout seuls la nuit ?",
+    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?",
+    "What happens to the cluster when you start a game?"
   ],
   "written": [
-    "Tu as installé quoi comme serveurs MCP ?",
-    "How do you run MCP servers on your lab machines?"
+    "Tu as un GPU 3060 pour faire tourner le modèle ?",
+    "Why does gpt-oss-20b run at different speeds?"
   ]
 }

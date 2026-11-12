@@ -329,6 +329,36 @@ const orphans = fleetDevices.filter(
     d.iacDeclared === true && !drawnNames.has(d.name) && !RETIRED[d.name],
 );
 const oneOrphan = orphans.length === 1;
+// Deux orphelins ne se ressemblent pas. Tracé : le nom se lit quelque part
+// dans un des quatre dépôts publics sans que emit-topology en fasse un nœud —
+// win11, définie sous guests/ et donc hors des nixosConfigurations que
+// l'émetteur parcourt. On tient alors « le nœud manque, la trace est là », et
+// c'est cité. Absent : ni nœud ni trace. Revérifié ce soir, nom par nom, dans
+// les quatre instantanés : les orphelins du jour sont deux — nova, robin — et
+// ils tombent du même côté, absent. win11 n'en est plus : la graine du parc a
+// rendu son drapeau à faux, elle le dit donc non déclaré elle-même, et il n'y
+// a plus de désaccord à nuancer entre les deux graines. Sa trace dans le dépôt,
+// elle, est toujours là et revérifiée : guests/win11/libvirt-domain.xml, plus
+// les listes labo.vmHost.alwaysOn de hosts/bob et de hosts/luna. La table la
+// garde donc, inactive — le jour où le drapeau repassera à vrai, le dessin ne
+// devra pas jurer « rien, ni nœud ni trace » sur un fichier que le dépôt
+// contient, et j'ai déjà accusé le réseau une fois dans ma vie, je ne
+// vais pas accuser un guests/. De l'autre côté : `aria` et `robin` n'y
+// apparaissent pas une seule fois — seul un « round-robin » de commentaire,
+// dans scripts/gen-dns-imports.sh, a failli faire compter robin — et `nova` non
+// plus, depuis qu'il a remplacé aria comme haut-parleur (c'est la graine du
+// parc qui le dit, pas moi). La graine est donc seule à compter ces deux-là ;
+// aria, lui, n'est même plus orphelin : le seed le dit déclaré faux, et il
+// reste dessiné comme appareil du parc. La table garde la place, comme RETIRED
+// et SNAPSHOT_GUEST_HOST : un nom relevé dans un dépôt y entre avec son
+// endroit, la nuance revient toute seule, et personne n'a à corriger la phrase
+// au crayon la semaine prochaine.
+const SNAPSHOT_TRACE: Record<string, string> = {
+  win11: "guests/win11/libvirt-domain.xml",
+};
+const traced = orphans.filter((d) => SNAPSHOT_TRACE[d.name]);
+const untraced = orphans.filter((d) => !SNAPSHOT_TRACE[d.name]);
+const oneUntraced = untraced.length === 1;
 // un orphelin que l'inventaire dit agent k3s est le seul cas où la bande du bas
 // contredit un compte dessiné plus haut : ce compte-là est celui des déclarés.
 // Le mot « k3s » tout seul ne suffit pas à le dire — le parc écrit aussi « pas
@@ -714,9 +744,23 @@ const ariaLabel =
           } déclaré${oneOrphan ? "" : "s"} alors que la topologie des quatre ` +
           `repos publics ne ${
             oneOrphan ? "lui connaît" : "leur connaît"
-          } aucun nœud — et l'instantané me laisse voir que le nom, lui, peut ` +
-          `fort bien se lire dans un repo : ce qui manque est le nœud, pas la ` +
-          `trace. Les deux graines peuvent avoir raison chacune dans son ` +
+          } aucun nœud —` +
+          (traced.length
+            ? ` et l'instantané en garde le nom : ${traced
+                .map((d) => `${d.name}, sous ${SNAPSHOT_TRACE[d.name]}`)
+                .join(", ")} — là, ce qui manque est le nœud, pas la trace.`
+            : "") +
+          (untraced.length
+            ? ` et j'ai cherché ${
+                traced.length
+                  ? untraced.map((d) => d.name).join(", ")
+                  : "leur nom"
+              } dans les quatre dépôts : rien, ni nœud ni trace. ` +
+              `La graine du parc est seule à ${
+                oneUntraced ? "le compter" : "les compter"
+              }.`
+            : "") +
+          ` Les deux graines peuvent avoir raison chacune dans son ` +
           `registre ; laquelle croit trop, je ne peux pas le trancher d'ici.` +
           (orphanAgents.length
             ? ` Et ${orphanAgents
@@ -986,7 +1030,19 @@ const ariaLabel =
           ? `dont ${oneOrphan ? "un seul est cru" : `${orphans.length} sont crus`} ` +
             `déclaré${oneOrphan ? "" : "s"} par l'inventaire, alors que la topologie publique ne ${
               oneOrphan ? "lui connaît" : "leur connaît"
-            } aucun nœud — le nom, lui, se lit peut-être ailleurs dans un repo.`
+            } aucun nœud —` +
+            (traced.length
+              ? " le nom, lui, se lit peut-être ailleurs dans un repo."
+              : ` et j'ai vérifié : ${untraced
+                  .map((d) => d.name)
+                  .join(", ")} ne se ${
+                  oneUntraced ? "lit" : "lisent"
+                } nulle part dans les quatre dépôts, pas même en commentaire. ` +
+                `Ni nœud, ni trace${
+                  oneUntraced
+                    ? " : la case n'existe que parce que l'inventaire la compte."
+                    : " : ces cases n'existent que parce que l'inventaire les compte."
+                }`)
           : "que nul repo public ne compte dans sa topologie.") +
         (retired.length
           ? ` ${

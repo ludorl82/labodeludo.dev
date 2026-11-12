@@ -731,7 +731,7 @@
       "to": "app:unifi"
     }
   ],
-  "generated": "2026-11-02T09:33:14+00:00",
+  "generated": "2026-11-12T09:46:32+00:00",
   "nodes": [
     {
       "id": "access:cronicle",

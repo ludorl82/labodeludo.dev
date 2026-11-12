@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 580" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Wall rack diagram, top to bottom: patch panel, switch, two UPS units, patch panel, the two-Pi tray, then two shelves of small boxes; three devices outside the rack">
+<defs><pattern id="h" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#8a97ad" stroke-width="1.5"/></pattern></defs>
+<rect width="760" height="580" fill="#f4f1e8"/>
+<text x="40" y="44" font-size="22" font-weight="bold" fill="#1b2230">The wall rack, 8U</text>
+<text x="40" y="66" font-size="13" fill="#5a6b85">top to bottom, from Ludo's new photo</text>
+<rect x="26" y="82" width="408" height="420" rx="6" fill="#e6e1d3" stroke="#3a475c" stroke-width="3"/>
+<rect x="40" y="92" width="380" height="46" rx="3" fill="#c9c2b0" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="112" font-size="14" font-weight="bold" fill="#1b2230">VCE patch panel</text>
+<text x="54" y="129" font-size="12" fill="#1b2230">not in the inventory</text>
+<rect x="40" y="142" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="162" font-size="14" font-weight="bold" fill="#f4f1e8">Netgear GS348</text>
+<text x="54" y="179" font-size="12" fill="#f4f1e8">48-port switch</text>
+<rect x="40" y="192" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="212" font-size="14" font-weight="bold" fill="#f4f1e8">UPS #1</text>
+<text x="54" y="229" font-size="12" fill="#f4f1e8">CyberPower OR700 · 1U</text>
+<rect x="40" y="242" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="262" font-size="14" font-weight="bold" fill="#f4f1e8">UPS #2</text>
+<text x="54" y="279" font-size="12" fill="#f4f1e8">CyberPower OR700 · 1U</text>
+<rect x="40" y="292" width="380" height="46" rx="3" fill="#c9c2b0" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="312" font-size="14" font-weight="bold" fill="#1b2230">VCE patch panel</text>
+<text x="54" y="329" font-size="12" fill="#1b2230">not in the inventory</text>
+<rect x="40" y="342" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="362" font-size="14" font-weight="bold" fill="#f4f1e8">GeeekPi 1U tray · 4 slots</text>
+<text x="54" y="379" font-size="12" fill="#f4f1e8">WORKER1, WORKER2 · 2 autres à vérifier</text>
+<rect x="40" y="392" width="380" height="46" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
+<rect x="40" y="392" width="380" height="46" rx="3" fill="url(#h)" opacity=".35"/>
+<text x="54" y="412" font-size="14" font-weight="bold" fill="#1b2230">Upper shelf</text>
+<text x="54" y="429" font-size="12" fill="#1b2230">DP750 · SIP phone base</text>
+<rect x="40" y="442" width="380" height="46" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
+<rect x="40" y="442" width="380" height="46" rx="3" fill="url(#h)" opacity=".35"/>
+<text x="54" y="462" font-size="14" font-weight="bold" fill="#1b2230">Lower shelf</text>
+<text x="54" y="479" font-size="12" fill="#1b2230">Netgate 1100 · router, bottom left</text>
+<rect x="34" y="389" width="392" height="102" rx="5" fill="none" stroke="#b5342b" stroke-width="3" stroke-dasharray="7 4"/>
+<text x="442" y="436" font-size="12" font-weight="bold" fill="#b5342b">Home Assistant Green and Hilo gateway</text>
+<text x="442" y="452" font-size="12" fill="#b5342b">on one of the two shelves</text>
+<text x="470" y="100" font-size="16" font-weight="bold" fill="#1b2230">Outside the rack</text>
+<rect x="470" y="114" width="250" height="56" rx="6" fill="#fff" stroke="#8a97ad" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="482" y="138" font-size="14" font-weight="bold" fill="#1b2230">QNAP NAS</text>
+<text x="482" y="157" font-size="11.5" fill="#5a6b85">IKEA cube on the wall, left of the rack</text>
+<rect x="470" y="184" width="250" height="56" rx="6" fill="#fff" stroke="#8a97ad" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="482" y="208" font-size="14" font-weight="bold" fill="#1b2230">UniFi access point</text>
+<text x="482" y="227" font-size="11.5" fill="#5a6b85">ground-floor ceiling, PoE</text>
+<rect x="470" y="254" width="250" height="56" rx="6" fill="#fff" stroke="#8a97ad" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="482" y="278" font-size="14" font-weight="bold" fill="#1b2230">aria</text>
+<text x="482" y="297" font-size="11.5" fill="#5a6b85">spare Pi 4, stored</text>
+<rect x="470" y="328" width="22" height="16" rx="2" fill="#2e3a4f" stroke="#3a475c" stroke-width="1.5"/>
+<text x="502" y="340" font-size="12" fill="#3a475c">19-inch gear</text>
+<rect x="470" y="354" width="22" height="16" rx="2" fill="url(#h)" stroke="#3a475c" stroke-width="1.5"/>
+<text x="502" y="366" font-size="12" fill="#3a475c">Small desktop box</text>
+<rect x="470" y="380" width="22" height="16" rx="2" fill="#c9c2b0" stroke="#3a475c" stroke-width="1.5"/>
+<text x="502" y="392" font-size="12" fill="#3a475c">Panel (not in inventory)</text>
+<text x="40" y="532" font-size="13" fill="#3a475c">Nine inventory devices in 8U: six 19-inch units, plus two shelves of small boxes.</text>
+</svg>

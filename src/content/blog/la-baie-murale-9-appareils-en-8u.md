@@ -41,15 +41,15 @@ L'autre partie, c'est que trois appareils n'étaient tout simplement pas dans la
 
 ![Schéma de la baie murale : neuf appareils empilés dans un cadre de 8U, dont les deux Pi dans un tiroir 1U, et trois appareils hors baie](/images/blog/baie-murale-9-appareils.svg)
 
-Lu de haut en bas : un panneau de brassage VCE, le commutateur GS348, les deux onduleurs, un second panneau de brassage, puis le tiroir 1U des Raspberry Pi. Le tiroir a quatre emplacements : WORKER1 et WORKER2 y sont branchés, et les deux autres sont vides. Dessous, deux tablettes pour les petits boîtiers, le routeur Netgate 1100 en bas à gauche. Le Home Assistant Green et la passerelle Hilo sont sur l'une ou l'autre des tablettes, et le schéma ne prétend pas savoir laquelle.
+Lu de haut en bas : un panneau de brassage VCE, le commutateur GS348, les deux onduleurs, un second panneau de brassage, puis le tiroir 1U des Raspberry Pi. Le tiroir a quatre emplacements : WORKER1 et WORKER2 y sont branchés, et les deux autres sont vides. Dessous, deux tablettes pour les petits boîtiers : la passerelle Hilo sur celle du haut ; sur celle du bas, le routeur Netgate 1100 (en bas à gauche), la base DP750 et le Home Assistant Green.
 
 Les deux panneaux de brassage ne sont pas des appareils de l'inventaire, ce qui explique le reste du compte : six unités de 19 pouces, plus les deux tablettes, ça fait 8U.
 
 ## Et en vrai
 
-![La baie murale le 12 novembre : panneau de brassage et commutateur en haut, les deux onduleurs, un second panneau, le tiroir 1U où WORKER1 et WORKER2 sont branchés, puis deux tablettes de petits boîtiers ; deux boîtiers étiquetés UNIFIBUS et UAPACPRO sont fixés au mur, à gauche](/images/blog/baie-murale-aujourdhui-1000.jpg)
+![La baie murale le 12 novembre : panneau de brassage et commutateur en haut, les deux onduleurs, un second panneau, le tiroir 1U où WORKER1 et WORKER2 sont branchés, puis deux tablettes de petits boîtiers ; deux boîtiers étiquetés UNIFIBUS et UAPACPRO sont fixés au mur, à gauche, et l'antenne du Home Assistant dépasse à droite de la baie](/images/blog/baie-murale-aujourdhui-1000.jpg)
 
-_La baie le 12 novembre 2026._
+_La baie le 12 novembre 2026. Le Home Assistant est sur la tablette du bas, à droite : c'est son antenne qu'on voit dépasser à droite de la baie._
 
 Et la même, en juillet :
 

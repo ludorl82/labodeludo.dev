@@ -41,7 +41,9 @@ Twelve minus three: nine. Claude fixed the file and the docs (labo#21, merged No
 
 ![Wall rack diagram: nine devices stacked in an 8U frame, with the two Pis in a 1U tray, and three devices outside the rack](/images/blog/baie-murale-9-appareils-en.svg)
 
-Hatched, the four desktop boxes; solid, the 19-inch gear. The number on the right of each row is the inventory's stacking order. I spell that out because it's exactly the number I misread: it isn't a rack-unit number.
+Read top to bottom, from the July photo: a patch panel, the switch, the two UPS units, a second patch panel, then the two-Pi tray. Below that, two shelves for the small boxes: the Netgate router at the very bottom, the DP750 just above it. The Home Assistant Green and the Hilo gateway are on one shelf or the other, and I won't pretend to know which, so the diagram doesn't say.
+
+The two patch panels aren't in the inventory, which explains the rest of the count: six 19-inch units plus the two shelves make 8U.
 
 ## In real life
 
@@ -51,7 +53,7 @@ This photo dates from July. The Netgate 1100, the Home Assistant Green, the Hilo
 
 ## The sequel: the ceiling access point
 
-Taking the UniFi access point out of the rack surfaced something else. It's on the ground-floor ceiling, powered over PoE by an injector, and when I checked the power chain in October, the injector was **not** on a UPS. So at the first power cut, the Wi-Fi drops, and the camera that goes through it with it.
+Taking the UniFi access point out of the rack surfaced something else. It's on the ground-floor ceiling, powered over PoE by an injector, and the injector is **not** on a UPS (I found that in October, and it's still the case). So at the first power cut, the Wi-Fi drops, and the camera that goes through it with it.
 
 It's a choice, not an oversight: the camera would lose its own power in a real outage anyway, and there's no free battery outlet left on the two UPS units. But I'd never written it down anywhere, and that's the kind of detail you rediscover at 2 a.m., in the dark.
 

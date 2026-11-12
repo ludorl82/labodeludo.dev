@@ -41,7 +41,9 @@ L'autre partie, c'est que trois appareils n'étaient tout simplement pas dans la
 
 ![Schéma de la baie murale : neuf appareils empilés dans un cadre de 8U, dont les deux Pi dans un tiroir 1U, et trois appareils hors baie](/images/blog/baie-murale-9-appareils.svg)
 
-Hachurés, les quatre boîtiers de bureau ; en plein, le matériel au gabarit 19 pouces. Le chiffre à droite de chaque rangée est l'ordre d'empilage de l'inventaire. Je le précise parce que c'est exactement ce chiffre que j'avais mal lu : ce n'est pas un numéro d'unité.
+Lu de haut en bas, d'après la photo de juillet : un panneau de raccordement, le commutateur, les deux onduleurs, un second panneau, puis le tiroir des deux Pi. Dessous, deux étages pour les petits boîtiers : le routeur Netgate tout en bas, la base DP750 juste au-dessus. Le Home Assistant Green et la passerelle Hilo sont dans l'un ou l'autre de ces deux étages, et je ne prétends pas savoir lequel, alors le schéma ne le dit pas.
+
+Les deux panneaux de raccordement ne sont pas dans l'inventaire, ce qui explique le reste du compte : six unités de 19 pouces, plus les deux étages, ça fait 8U.
 
 ## Et en vrai
 
@@ -51,7 +53,7 @@ Cette photo date de juillet. Le Netgate 1100, le Home Assistant Green, la passer
 
 ## La suite : la borne au plafond
 
-Sortir la borne UniFi de la baie a fait remonter autre chose. Elle est au plafond du rez-de-chaussée, alimentée en PoE par un injecteur, et quand j'avais vérifié la chaîne d'alimentation en octobre, l'injecteur n'était **pas** sur onduleur. Donc à la première coupure de courant, le Wi-Fi tombe, et la caméra qui passe par là avec lui.
+Sortir la borne UniFi de la baie a fait remonter autre chose. Elle est au plafond du rez-de-chaussée, alimentée en PoE par un injecteur, et l'injecteur n'est **pas** sur onduleur (je l'avais constaté en octobre, et c'est toujours le cas). Donc à la première coupure de courant, le Wi-Fi tombe, et la caméra qui passe par là avec lui.
 
 C'est un choix, pas un oubli : la caméra perdrait de toute façon son propre courant dans une vraie panne, et il ne reste aucune prise sur batterie libre dans les deux onduleurs. Mais je ne l'avais jamais écrit nulle part, et c'est ce genre de détail qu'on redécouvre à 2 h du matin, dans le noir.
 

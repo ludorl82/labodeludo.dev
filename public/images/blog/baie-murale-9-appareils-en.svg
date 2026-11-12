@@ -1,52 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Wall rack diagram: nine devices in an 8U frame, and three devices outside the rack">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 580" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Wall rack diagram, top to bottom: patch panel, switch, two UPS units, patch panel, the two-Pi tray, then two shelves of small boxes; three devices outside the rack">
 <defs><pattern id="h" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#8a97ad" stroke-width="1.5"/></pattern></defs>
-<rect width="760" height="560" fill="#f4f1e8"/>
+<rect width="760" height="580" fill="#f4f1e8"/>
 <text x="40" y="44" font-size="22" font-weight="bold" fill="#1b2230">The wall rack, 8U</text>
-<text x="40" y="66" font-size="13" fill="#5a6b85">stacking order (fleet.json) — not rack-unit numbers</text>
-<rect x="26" y="82" width="408" height="416" rx="6" fill="#e6e1d3" stroke="#3a475c" stroke-width="3"/>
-<rect x="40" y="92" width="380" height="40" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
-<rect x="40" y="92" width="380" height="40" rx="3" fill="url(#h)" opacity=".35"/>
-<text x="54" y="109" font-size="14" font-weight="bold" fill="#1b2230">Netgate 1100</text>
-<text x="54" y="125" font-size="12" fill="#1b2230">router / firewall</text>
-<text x="408" y="117" text-anchor="end" font-size="13" fill="#1b2230">1</text>
-<rect x="40" y="136" width="380" height="40" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
-<text x="54" y="153" font-size="14" font-weight="bold" fill="#f4f1e8">Netgear GS348</text>
-<text x="54" y="169" font-size="12" fill="#f4f1e8">48-port switch</text>
-<text x="408" y="161" text-anchor="end" font-size="13" fill="#f4f1e8">2</text>
-<rect x="40" y="180" width="380" height="40" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
-<text x="54" y="197" font-size="14" font-weight="bold" fill="#f4f1e8">worker1</text>
-<text x="54" y="213" font-size="12" fill="#f4f1e8">Raspberry Pi 5 · k3s agent</text>
-<text x="408" y="205" text-anchor="end" font-size="13" fill="#f4f1e8">3</text>
-<rect x="40" y="224" width="380" height="40" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
-<text x="54" y="241" font-size="14" font-weight="bold" fill="#f4f1e8">worker2</text>
-<text x="54" y="257" font-size="12" fill="#f4f1e8">Raspberry Pi 5 · bastion, registry</text>
-<text x="408" y="249" text-anchor="end" font-size="13" fill="#f4f1e8">4</text>
-<rect x="40" y="268" width="380" height="40" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
-<rect x="40" y="268" width="380" height="40" rx="3" fill="url(#h)" opacity=".35"/>
-<text x="54" y="285" font-size="14" font-weight="bold" fill="#1b2230">Home Assistant Green</text>
-<text x="54" y="301" font-size="12" fill="#1b2230">home automation</text>
-<text x="408" y="293" text-anchor="end" font-size="13" fill="#1b2230">5</text>
-<rect x="40" y="312" width="380" height="40" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
-<rect x="40" y="312" width="380" height="40" rx="3" fill="url(#h)" opacity=".35"/>
-<text x="54" y="329" font-size="14" font-weight="bold" fill="#1b2230">Hilo gateway</text>
-<text x="54" y="345" font-size="12" fill="#1b2230">peak-shaving programme</text>
-<text x="408" y="337" text-anchor="end" font-size="13" fill="#1b2230">6</text>
-<rect x="40" y="356" width="380" height="40" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
-<rect x="40" y="356" width="380" height="40" rx="3" fill="url(#h)" opacity=".35"/>
-<text x="54" y="373" font-size="14" font-weight="bold" fill="#1b2230">DP750</text>
-<text x="54" y="389" font-size="12" fill="#1b2230">SIP phone base</text>
-<text x="408" y="381" text-anchor="end" font-size="13" fill="#1b2230">7</text>
-<rect x="40" y="400" width="380" height="40" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
-<text x="54" y="417" font-size="14" font-weight="bold" fill="#f4f1e8">UPS #1</text>
-<text x="54" y="433" font-size="12" fill="#f4f1e8">CyberPower OR700 · 1U</text>
-<text x="408" y="425" text-anchor="end" font-size="13" fill="#f4f1e8">8</text>
-<rect x="40" y="444" width="380" height="40" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
-<text x="54" y="461" font-size="14" font-weight="bold" fill="#f4f1e8">UPS #2</text>
-<text x="54" y="477" font-size="12" fill="#f4f1e8">CyberPower OR700 · 1U</text>
-<text x="408" y="469" text-anchor="end" font-size="13" fill="#f4f1e8">9</text>
-<rect x="34" y="177" width="392" height="90" rx="5" fill="none" stroke="#b5342b" stroke-width="3" stroke-dasharray="7 4"/>
-<rect x="230" y="212" width="150" height="22" rx="4" fill="#f4f1e8" stroke="#b5342b" stroke-width="1.5"/>
-<text x="305" y="228" text-anchor="middle" font-size="12" fill="#b5342b" font-weight="bold">GeeekPi 1U tray</text>
+<text x="40" y="66" font-size="13" fill="#5a6b85">top to bottom, from the July photo</text>
+<rect x="26" y="82" width="408" height="420" rx="6" fill="#e6e1d3" stroke="#3a475c" stroke-width="3"/>
+<rect x="40" y="92" width="380" height="46" rx="3" fill="#c9c2b0" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="112" font-size="14" font-weight="bold" fill="#1b2230">Patch panel</text>
+<text x="54" y="129" font-size="12" fill="#1b2230">cat 6 · not in the inventory</text>
+<rect x="40" y="142" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="162" font-size="14" font-weight="bold" fill="#f4f1e8">Netgear GS348</text>
+<text x="54" y="179" font-size="12" fill="#f4f1e8">48-port switch</text>
+<rect x="40" y="192" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="212" font-size="14" font-weight="bold" fill="#f4f1e8">UPS #1</text>
+<text x="54" y="229" font-size="12" fill="#f4f1e8">CyberPower OR700 · 1U</text>
+<rect x="40" y="242" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="262" font-size="14" font-weight="bold" fill="#f4f1e8">UPS #2</text>
+<text x="54" y="279" font-size="12" fill="#f4f1e8">CyberPower OR700 · 1U</text>
+<rect x="40" y="292" width="380" height="46" rx="3" fill="#c9c2b0" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="312" font-size="14" font-weight="bold" fill="#1b2230">Patch panel</text>
+<text x="54" y="329" font-size="12" fill="#1b2230">cat 6 · not in the inventory</text>
+<rect x="40" y="342" width="380" height="46" rx="3" fill="#2e3a4f" stroke="#3a475c" stroke-width="2"/>
+<text x="54" y="362" font-size="14" font-weight="bold" fill="#f4f1e8">GeeekPi 1U tray</text>
+<text x="54" y="379" font-size="12" fill="#f4f1e8">worker1 + worker2 · Raspberry Pi 5</text>
+<rect x="40" y="392" width="380" height="46" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
+<rect x="40" y="392" width="380" height="46" rx="3" fill="url(#h)" opacity=".35"/>
+<text x="54" y="412" font-size="14" font-weight="bold" fill="#1b2230">Small-box shelf</text>
+<text x="54" y="429" font-size="12" fill="#1b2230">DP750 · SIP phone base</text>
+<rect x="40" y="442" width="380" height="46" rx="3" fill="#fff" stroke="#3a475c" stroke-width="2"/>
+<rect x="40" y="442" width="380" height="46" rx="3" fill="url(#h)" opacity=".35"/>
+<text x="54" y="462" font-size="14" font-weight="bold" fill="#1b2230">Bottom shelf</text>
+<text x="54" y="479" font-size="12" fill="#1b2230">Netgate 1100 · router, at the very bottom</text>
+<rect x="34" y="389" width="392" height="102" rx="5" fill="none" stroke="#b5342b" stroke-width="3" stroke-dasharray="7 4"/>
+<text x="442" y="436" font-size="12" font-weight="bold" fill="#b5342b">Home Assistant Green and Hilo gateway</text>
+<text x="442" y="452" font-size="12" fill="#b5342b">on one shelf or the other</text>
 <text x="470" y="100" font-size="16" font-weight="bold" fill="#1b2230">Outside the rack</text>
 <rect x="470" y="114" width="250" height="56" rx="6" fill="#fff" stroke="#8a97ad" stroke-width="2" stroke-dasharray="5 3"/>
 <text x="482" y="138" font-size="14" font-weight="bold" fill="#1b2230">QNAP NAS</text>
@@ -57,9 +43,11 @@
 <rect x="470" y="254" width="250" height="56" rx="6" fill="#fff" stroke="#8a97ad" stroke-width="2" stroke-dasharray="5 3"/>
 <text x="482" y="278" font-size="14" font-weight="bold" fill="#1b2230">aria</text>
 <text x="482" y="297" font-size="11.5" fill="#5a6b85">spare Pi 4, stored</text>
-<rect x="470" y="354" width="22" height="16" rx="2" fill="#2e3a4f" stroke="#3a475c" stroke-width="1.5"/>
-<text x="502" y="366" font-size="12" fill="#3a475c">19-inch gear</text>
-<rect x="470" y="380" width="22" height="16" rx="2" fill="url(#h)" stroke="#3a475c" stroke-width="1.5"/>
-<text x="502" y="392" font-size="12" fill="#3a475c">Desktop box</text>
-<text x="40" y="528" font-size="13" fill="#3a475c">Nine devices, 8U: four desktop boxes, two Pis sharing one tray.</text>
+<rect x="470" y="328" width="22" height="16" rx="2" fill="#2e3a4f" stroke="#3a475c" stroke-width="1.5"/>
+<text x="502" y="340" font-size="12" fill="#3a475c">19-inch gear</text>
+<rect x="470" y="354" width="22" height="16" rx="2" fill="url(#h)" stroke="#3a475c" stroke-width="1.5"/>
+<text x="502" y="366" font-size="12" fill="#3a475c">Small desktop box</text>
+<rect x="470" y="380" width="22" height="16" rx="2" fill="#c9c2b0" stroke="#3a475c" stroke-width="1.5"/>
+<text x="502" y="392" font-size="12" fill="#3a475c">Panel (not in inventory)</text>
+<text x="40" y="532" font-size="13" fill="#3a475c">Nine inventory devices in 8U: six 19-inch units, plus two shelves of small boxes.</text>
 </svg>

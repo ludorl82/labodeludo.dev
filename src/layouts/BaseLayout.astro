@@ -242,6 +242,10 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
             ? "Tip: / to search, : for commands, ? for every shortcut."
             : "Astuce : / pour chercher, : pour les commandes, ? pour tous les raccourcis."}
         </p>
+        <p class="outils-link">
+          {lang === "en" ? "Free tools: " : "Outils gratuits : "}
+          <a href="https://telepitpit.com/">telepitpit.com</a>
+        </p>
       </footer>
     </div>
 
@@ -400,6 +404,16 @@ navItems.push({ href: "https://github.com/ludorl82", label: "GitHub" });
     align-items: stretch;
     flex-wrap: wrap;
     margin-top: 0.75rem;
+  }
+
+  .site-footer .outils-link {
+    margin-top: 0.4rem;
+  }
+
+  .site-footer .outils-link a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .site-footer .kbd-hint {

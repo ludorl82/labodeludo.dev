@@ -41,17 +41,17 @@ Twelve minus three: nine. Claude fixed the file and the docs (labo#21, merged No
 
 ![Wall rack diagram: nine devices stacked in an 8U frame, with the two Pis in a 1U tray, and three devices outside the rack](/images/blog/baie-murale-9-appareils-en.svg)
 
-Read top to bottom, from the July photo: a patch panel, the switch, the two UPS units, a second patch panel, then the two-Pi tray. Below that, two shelves for the small boxes: the Netgate router at the very bottom, the DP750 just above it. The Home Assistant Green and the Hilo gateway are on one shelf or the other, and I won't pretend to know which, so the diagram doesn't say.
+Read top to bottom: a VCE patch panel, the GS348 switch, the two UPS units, a second patch panel, then the 1U Raspberry Pi tray. The tray has four slots: WORKER1 and WORKER2 are plugged in, and I'll say nothing about the other two until I've checked. Below, two shelves for the small boxes, the Netgate 1100 router at the bottom left. The Home Assistant Green and the Hilo gateway are on one shelf or the other, and the diagram doesn't pretend to know which.
 
-The two patch panels aren't in the inventory, which explains the rest of the count: six 19-inch units plus the two shelves make 8U.
+The two patch panels aren't inventory devices, which explains the rest of the count: six 19-inch units plus the two shelves make 8U.
 
 ## In real life
 
-<!-- PHOTO TO COME (Ludo): the rack as it is now. Place the image here, suggested caption: "The rack today: the tray now holds only worker1 and worker2." Remove this comment at the same time. -->
+<!-- PHOTO TO COME (Ludo): the rack as it is now. Place the image here, suggested caption: "The rack today." (to complete once the tray slots are checked) Remove this comment at the same time. -->
 
 ![The wall rack in July: the 1U tray with three Raspberry Pis (COQUILLE, WORKER1, WORKER2) below the patch panels and the two UPS units, with the IKEA cube holding the NAS right next to it](/images/blog/rack-1u-pi-nodes-nas-helixfi-1000.jpg)
 
-This photo dates from July, and it has aged: the tray holds three Raspberry Pis in it, where only two remain. The one labelled COQUILLE is aria, my spare Pi 4, put away since November 8. The Netgate 1100, the Home Assistant Green, the Hilo gateway and the DP750 are indeed in the rack, but they're small boxes: you can barely make them out in the picture, hence the diagram.
+This photo dates from July, and it has aged: the tray holds three Raspberry Pis, including the one labelled COQUILLE, which is aria, my spare Pi 4. It has been put away since November 8 and is no longer in the tray. The Netgate 1100, the Home Assistant Green, the Hilo gateway and the DP750 are indeed in the rack, but they're small boxes: you can barely make them out in the picture, hence the diagram.
 
 ## The sequel: the ceiling access point
 

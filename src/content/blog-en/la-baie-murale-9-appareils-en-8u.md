@@ -47,7 +47,7 @@ The two patch panels aren't inventory devices, which explains the rest of the co
 
 ## In real life
 
-![The wall rack on November 12: patch panel and switch at the top, the two UPS units, a second patch panel, the 1U tray with WORKER1 and WORKER2 plugged in, then two shelves of small boxes; the UniFi access point's power boxes are screwed to the wall, on the left](/images/blog/baie-murale-aujourdhui-1000.jpg)
+![The wall rack on November 12: patch panel and switch at the top, the two UPS units, a second patch panel, the 1U tray with WORKER1 and WORKER2 plugged in, then two shelves of small boxes; two boxes labelled UNIFIBUS and UAPACPRO are fixed to the wall, on the left](/images/blog/baie-murale-aujourdhui-1000.jpg)
 
 _The rack on November 12, 2026._
 

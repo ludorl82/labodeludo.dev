@@ -47,7 +47,7 @@ Les deux panneaux de brassage ne sont pas des appareils de l'inventaire, ce qui 
 
 ## Et en vrai
 
-![La baie murale le 12 novembre : panneau de brassage et commutateur en haut, les deux onduleurs, un second panneau, le tiroir 1U où WORKER1 et WORKER2 sont branchés, puis deux tablettes de petits boîtiers ; les boîtiers d'alimentation de la borne UniFi sont vissés sur le mur, à gauche](/images/blog/baie-murale-aujourdhui-1000.jpg)
+![La baie murale le 12 novembre : panneau de brassage et commutateur en haut, les deux onduleurs, un second panneau, le tiroir 1U où WORKER1 et WORKER2 sont branchés, puis deux tablettes de petits boîtiers ; deux boîtiers étiquetés UNIFIBUS et UAPACPRO sont fixés au mur, à gauche](/images/blog/baie-murale-aujourdhui-1000.jpg)
 
 _La baie le 12 novembre 2026._
 

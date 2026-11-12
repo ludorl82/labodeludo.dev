@@ -13,3 +13,5 @@ On voit de plus en plus d’applications développées dans le nuage puis ce n�
 Comme DevOps, on travaille à rendre tout un environnement de déploiement continu et d’intégration continue disponible pour nos développeurs avec du code. Plus de machines à brancher manuellement ou à configurer manuellement. Simplement un logiciel qui déploie tout un environnement d’un clique de souris.
 
 Quand je regarde où j’étais au début de ma carrière et où j’en suis maintenant, je sais que j’ai beaucoup évolué. Je sais aussi que j’ai encore beaucoup à apprendre et que ça serait pas mal plus dur sans les systèmes disponibles librement sur le net et sans toute l’information partagée par d’autres pairs.
+
+Et pour un petit outil pratique, sans pistage et sans compte : le [calculateur d’IMC de telepitpit.com](https://telepitpit.com/imc). Le calcul se fait dans votre navigateur, rien n’est envoyé.

@@ -8,7 +8,7 @@ Dans l’informatique, c’est très commun d’avoir un laboratoire à la maiso
 
 La ligne entre la vie professionnelle et la vie personnelle est mince quand on carbure au plaisir d’accomplir des grandes choses. Quand je ne suis pas au travail en train de déployer des environnements avec du code, je suis à la maison en train de découvrir des technologies nouvelles.
 
-On voit de plus en plus d’applications développées dans le nuage puis ce n’est pas surprenant. On peut maintenant bâtir des applis et les mettre en production sans investissement initial en infrastructure. Pour moi ce pouvoir et cette liberté c’est la voie de la créativité et du succès. Le labo me sert d’ailleurs aussi à bâtir des outils publics, gratuits, sans pistage et sans compte : ils vivent sur [telepitpit.com](https://telepitpit.com/).
+On voit de plus en plus d’applications développées dans le nuage puis ce n’est pas surprenant. On peut maintenant bâtir des applis et les mettre en production sans investissement initial en infrastructure. Pour moi ce pouvoir et cette liberté c’est la voie de la créativité et du succès. Le labo me sert d’ailleurs aussi à bâtir des outils publics, gratuits, sans pistage et sans compte : ils vivent sur [tu.pitonnes.ca](https://tu.pitonnes.ca).
 
 Comme DevOps, on travaille à rendre tout un environnement de déploiement continu et d’intégration continue disponible pour nos développeurs avec du code. Plus de machines à brancher manuellement ou à configurer manuellement. Simplement un logiciel qui déploie tout un environnement d’un clique de souris.
 

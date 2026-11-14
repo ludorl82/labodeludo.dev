@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
     "Pourquoi tu as débranché le NAS exprès ?",
-    "How do your gaming rigs and your cluster share the graphics cards?",
+    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
     "What happens to the cluster when you start a game?",
-    "Why did you split the bastion from the console?"
+    "Why did you split the bastion from the console?",
+    "What is the last thing still running when everything else is down?"
   ],
-  "generated": "2026-11-13T09:35:32Z",
+  "generated": "2026-11-14T09:34:03Z",
   "openers": [
     "Tu as installé quoi comme serveurs MCP ?",
-    "Comment tu fais pour gérer la mémoire de Claude ?",
-    "Why did you store Claude's memory in a git repo?",
-    "Qu'est-ce que tu as appris en déplaçant tes partages NFS sur un SSD ?",
+    "Pourquoi tu as mis des caméras sur tes échanges avec Claude ?",
+    "How fast is gpt-oss-20b on a single 3060?",
     "Pourquoi tu as débranché le NAS exprès ?",
-    "How do your gaming rigs and your cluster share the graphics cards?",
+    "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
     "What happens to the cluster when you start a game?",
-    "Why did you split the bastion from the console?"
+    "Why did you split the bastion from the console?",
+    "What is the last thing still running when everything else is down?"
   ],
   "written": [
-    "Comment tu fais pour gérer la mémoire de Claude ?",
-    "Why did you store Claude's memory in a git repo?"
+    "Pourquoi tu as mis des caméras sur tes échanges avec Claude ?",
+    "How fast is gpt-oss-20b on a single 3060?"
   ]
 }

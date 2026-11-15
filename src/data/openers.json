@@ -2,23 +2,23 @@
   "curated": [
     "Pourquoi tu as débranché le NAS exprès ?",
     "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
-    "What happens to the cluster when you start a game?",
     "Why did you split the bastion from the console?",
-    "What is the last thing still running when everything else is down?"
+    "What is the last thing still running when everything else is down?",
+    "How do you publish your infrastructure without leaking secrets?"
   ],
-  "generated": "2026-11-14T09:34:03Z",
+  "generated": "2026-11-15T09:33:57Z",
   "openers": [
     "Tu as installé quoi comme serveurs MCP ?",
-    "Pourquoi tu as mis des caméras sur tes échanges avec Claude ?",
-    "How fast is gpt-oss-20b on a single 3060?",
+    "Pourquoi ton gpt-oss-20b tourne sur une seule 3060 ?",
+    "How fast does gpt-oss-20b run on a single 3060?",
     "Pourquoi tu as débranché le NAS exprès ?",
     "Comment tes postes de jeu et ton cluster se partagent les cartes graphiques ?",
-    "What happens to the cluster when you start a game?",
     "Why did you split the bastion from the console?",
-    "What is the last thing still running when everything else is down?"
+    "What is the last thing still running when everything else is down?",
+    "How do you publish your infrastructure without leaking secrets?"
   ],
   "written": [
-    "Pourquoi tu as mis des caméras sur tes échanges avec Claude ?",
-    "How fast is gpt-oss-20b on a single 3060?"
+    "Pourquoi ton gpt-oss-20b tourne sur une seule 3060 ?",
+    "How fast does gpt-oss-20b run on a single 3060?"
   ]
 }

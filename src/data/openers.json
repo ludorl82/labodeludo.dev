@@ -1,24 +1,24 @@
 {
   "curated": [
-    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?",
     "Pourquoi tu as séparé le bastion de la console ?",
-    "How do you publish your infrastructure without leaking secrets?",
+    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
     "Why did the cheapest model score like the biggest one?",
-    "How does Bob pick which parts of your articles to quote?"
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
-  "generated": "2026-11-17T09:34:24Z",
+  "generated": "2026-11-18T09:34:17Z",
   "openers": [
     "Tu as installé quoi comme serveurs MCP ?",
-    "Pourquoi ton GPT-oss ralentit-il sur certains moteurs ?",
-    "How many devices fit in your wall rack?",
-    "Qu'est-ce qui arrive au cluster quand tu commences une partie ?",
+    "Comment tu tiens neuf appareils en 8U ?",
+    "What changed with gpt-oss-20b on your 3060?",
     "Pourquoi tu as séparé le bastion de la console ?",
-    "How do you publish your infrastructure without leaking secrets?",
+    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
     "Why did the cheapest model score like the biggest one?",
-    "How does Bob pick which parts of your articles to quote?"
+    "How does Bob pick which parts of your articles to quote?",
+    "What broke on a Thursday night with MongoDB?"
   ],
   "written": [
-    "Pourquoi ton GPT-oss ralentit-il sur certains moteurs ?",
-    "How many devices fit in your wall rack?"
+    "Comment tu tiens neuf appareils en 8U ?",
+    "What changed with gpt-oss-20b on your 3060?"
   ]
 }

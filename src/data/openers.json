@@ -1,23 +1,23 @@
 {
   "curated": [
-    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "D'où vient le nom de Bob ?",
-    "How does Bob pick which parts of your articles to quote?",
+    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
     "What broke on a Thursday night with MongoDB?",
     "Why is renumbering a k3s cluster harder than it looks?",
-    "How do your diagrams redraw themselves every night?"
+    "How do your diagrams redraw themselves every night?",
+    "What did you learn moving your NFS shares to an SSD?"
   ],
-  "generated": "2026-11-19T09:33:39Z",
+  "generated": "2026-11-20T09:33:35Z",
   "openers": [
     "Tu as installé quoi comme serveurs MCP ?",
-    "C'est quoi la dernière chose qui reste en vie quand tout tombe chez toi ?",
     "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "D'où vient le nom de Bob ?",
-    "How does Bob pick which parts of your articles to quote?",
+    "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
     "What broke on a Thursday night with MongoDB?",
     "Why is renumbering a k3s cluster harder than it looks?",
-    "How do your diagrams redraw themselves every night?"
+    "How do your diagrams redraw themselves every night?",
+    "What did you learn moving your NFS shares to an SSD?"
   ],
   "written": []
 }

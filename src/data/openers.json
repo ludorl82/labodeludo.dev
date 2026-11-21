@@ -1,23 +1,23 @@
 {
   "curated": [
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "D'où vient le nom de Bob ?",
     "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
-    "What broke on a Thursday night with MongoDB?",
+    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
     "Why is renumbering a k3s cluster harder than it looks?",
     "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?"
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?"
   ],
-  "generated": "2026-11-20T09:33:35Z",
+  "generated": "2026-11-21T09:33:41Z",
   "openers": [
     "Tu as installé quoi comme serveurs MCP ?",
-    "Comment tu publies ton infrastructure sans donner tes secrets ?",
     "D'où vient le nom de Bob ?",
     "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
-    "What broke on a Thursday night with MongoDB?",
+    "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
     "Why is renumbering a k3s cluster harder than it looks?",
     "How do your diagrams redraw themselves every night?",
-    "What did you learn moving your NFS shares to an SSD?"
+    "What did you learn moving your NFS shares to an SSD?",
+    "Why did you unplug the NAS on purpose?"
   ],
   "written": []
 }

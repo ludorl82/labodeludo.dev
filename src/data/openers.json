@@ -1,23 +1,23 @@
 {
   "curated": [
-    "D'où vient le nom de Bob ?",
     "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
     "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
     "How do your diagrams redraw themselves every night?",
     "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?"
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
   ],
-  "generated": "2026-11-21T09:33:41Z",
+  "generated": "2026-11-22T09:33:40Z",
   "openers": [
     "Tu as installé quoi comme serveurs MCP ?",
-    "D'où vient le nom de Bob ?",
     "Pourquoi le modèle le moins cher a fait le même score que le plus gros ?",
     "Qu'est-ce qui a cassé un jeudi soir avec MongoDB ?",
-    "Why is renumbering a k3s cluster harder than it looks?",
+    "Pourquoi renuméroter les adresses IP d'un cluster k3s est plus dur qu'il en a l'air ?",
     "How do your diagrams redraw themselves every night?",
     "What did you learn moving your NFS shares to an SSD?",
-    "Why did you unplug the NAS on purpose?"
+    "Why did you unplug the NAS on purpose?",
+    "How do your gaming rigs and your cluster share the graphics cards?"
   ],
   "written": []
 }
